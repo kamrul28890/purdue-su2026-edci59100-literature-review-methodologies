@@ -1,0 +1,1002 @@
+                                                                    Automation in Construction 165 (2024) 105542
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                                Automation in Construction
+                                                            journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Recognizing temporary construction site objects using CLIP-based few-shot
+learning and multi-modal prototypes
+Yuanchang Liang a, * , Prahlad Vadakkepat, PhD a , David Kim Huat Chua, PhD b , Shuyi Wang b ,
+Zhigang Li b , Shuxiang Zhang b, c
+a
+    Department of Electrical and Computer Engineering, National University of Singapore, S117583, Singapore
+b
+    Department of Civil and Environmental Engineering, National University of Singapore, S117576, Singapore
+c
+    College of Civil Engineering, Tongji University, 200092 Shanghai, China
+
+
+
+
+A R T I C L E I N F O                                        A B S T R A C T
+
+Keywords:                                                    Visual understanding of temporary on-site objects is essential for robots and project management in construction.
+Construction sites                                           Implementation of deep learning algorithms is challenging on construction sites due to high data annotation cost,
+CLIP                                                         demanding computational power, and lack of large-scale training datasets. Recognizing on-site temporary objects
+Few-shot image classification (FSIC)
+                                                             demands the algorithms to learn in a data-efficient way. To fill this gap, a Contrastive Language–Image Pre-
+Computer vision
+                                                             training (CLIP)-based few-shot learning algorithm to recognize temporary objects with limited image samples
+Robots
+                                                             is proposed. The study builds ImageNet-based Similarity Cache with inter-class similarity distribution. The
+                                                             proposed algorithm is evaluated on a newly created TOCS dataset and on the public SODA dataset. Compared
+                                                             with CLIP zero-shot algorithm, the classification accuracy improves from 23.17% to 73.09% with 16-shot
+                                                             learning on SODA, and from 58.33% to 83.33% with 1-shot learning on TOCS. The study indicates that few-
+                                                             shot learning with vision language models (VLM) is promising to improve visual intelligence on construction
+                                                             sites.
+
+
+
+
+1. Introduction                                                                                   example, an automated material handling robot equipped with pick-
+                                                                                                  and-place capabilities must visually discern target materials amidst
+    AI-powered robotics is anticipated to play a significant role in the                          cluttered construction sites. This visual understanding of temporary
+future of the Architecture, Engineering, and Construction (AEC) sector                            construction resources greatly influences safety, quality, speed, and
+[1]. Incorporating robotic systems into construction offers benefits like                         profitability in construction. A typical example is the ability to detect
+decreased injuries, automation of repetitive tasks, and facilitating con­                         workers’ interactions with construction objects, enabling the monitoring
+struction in challenging or dangerous environments, such as disaster                              of productivity and safety hazards on sites [4].
+relief and extraterrestrial construction [2]. Both academia and industry                              Understanding temporary objects visually entails robots categorizing
+have directed their efforts towards developing autonomous construction                            objects by capturing images using digital cameras. Object classification,
+robots capable of performing diverse tasks on construction sites,                                 a fundamental computer vision task, assigns objects to predefined cat­
+encompassing structural assembly, additive manufacturing, and finish­                             egories based on spectral characteristics, shape, texture, and spatial
+ing tasks [2]. Computer vision is one of the critical perception abilities                        relationships with surrounding pixels [5]. In contemporary computer
+for AI-enabled robots to understand the site environment. Objects on                              vision, Deep Learning (DL)-based models have achieved remarkable
+construction sites can be divided into structural elements and temporary                          performance in tasks like image classification [6]. Despite high accuracy
+objects. In contrast to structural components found on construction sites,                        on public datasets, traditional computer vision algorithms demand
+temporary objects are positioned and relocated by workers as needed to                            hundreds or even thousands of images for robust neural network
+meet specific requirements for a limited duration. The visual under­                              training. Annotated datasets are a significant challenge for deploying
+standing of temporary items like materials, machinery, and tools aids in                          deep learning-based computer vision algorithms [4]. Implementing
+the automation of robotic construction for enhanced control. For                                  data-driven algorithms poses three primary challenges for recognizing
+
+
+
+    * Corresponding author.
+      E-mail address: e0572565@u.nus.edu (Y. Liang).
+
+https://doi.org/10.1016/j.autcon.2024.105542
+Received 19 October 2023; Received in revised form 5 June 2024; Accepted 7 June 2024
+Available online 21 June 2024
+0926-5805/© 2024 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+Y. Liang et al.                                                                                                         Automation in Construction 165 (2024) 105542
+
+
+temporary objects on construction sites. Firstly, construction domain             Existing research for on-site robots is focused on manipulation and
+datasets are often small-scale and limited in sharing due to privacy              programming within the individual construction task. On-site object
+concerns, making it impractical to have comprehensive datasets with               detection and classification have been adopted mainly for project
+various temporary objects and construction environment contexts.                  management [11]. In the last two decades, vision-based applications in
+Secondly, the expensive time and labor involved in data annotation                construction have undergone rapid evolution, driven by the swift
+hinders the development of large-scale datasets for unique construction           progress of computer vision algorithms [4]. A notable trend is that deep-
+sites, disrupting workflow integration [3]. Thirdly, construction sites           learning-based computer vision algorithms have been dominant in
+exhibit dynamic object movements, varying across temporal and spatial             various applications in construction.
+contexts [4]. Given neural networks’ limited generalization ability,                  Deep learning-based object detection algorithms can be classified as
+consistently recognizing novel objects throughout diverse construction            two categories: one-stage detection, such as You Only Look Once
+project phases poses a challenge. Therefore, computer vision algorithms           (YOLO), and two-stage detection, such as Faster R-CNN [12]. A Two-
+requiring fewer training samples and less training time are preferable for        stage detector generates region proposals first and classifies each re­
+construction sites.                                                               gion into object categories. In contrast, a one-stage detector treats
+    Few-shot image classification (FSIC) poses a significant challenge in         location as a regression problem and unifies the two targets (locations
+identifying novel objects with limited image samples. While recent                and categories) in a single framework.
+research has seen a surge in FSIC interest on public benchmarks, the                  Table 1 shows the algorithms, problem statement, training dataset,
+construction domain has received scant attention. Typically, a few-shot           and object detection accuracy in construction. Both the object detection
+image classification algorithm begins with training a base model on a             algorithms in Table 1 require large amounts of labeled data for training
+large-scale dataset containing objects from base classes. Subsequently,           to improve detection accuracy. Capturing on-site images and videos on
+the model is fine-tuned using a support set comprising only a few labeled         construction sites is a difficult task. Labeling objects in images and
+examples of novel classes. Finally, the model’s performance is evaluated          videos from construction sites is labor-intensive and time-consuming.
+on a test set containing novel classes. Previous FSIC research has focused        Due to the variety of temporary objects used in construction, it is not
+on acquiring meta-knowledge from the base dataset, which significantly            feasible to have a comprehensive image dataset for every object. Limited
+influences classification effectiveness [7]. However, our comprehension           training images will impact the performance of typical deep learning-
+of how to establish an optimal base dataset remains limited. The                  based computer vision algorithms. Few-shot learning is desirable
+requirement to train on a base dataset poses challenges for on-site               when limited training images are available.
+learning by construction robots. Therefore, we propose training-free
+[8] CLIP-based [9] few-shot learning for on-site temporary object
+classification.                                                                   2.2. Few-shot learning
+    The paper proposes a CLIP-based few-shot learning algorithm for
+temporary object recognition on construction sites. The work has two                  Although conventional machine learning algorithms typically
+major contributions. First, the study proposes an ImageNet-based Sim­             necessitate a substantial training dataset, humans exhibit the ability to
+ilarity Cache to enrich the discriminant features of few-shot images. The         learn and recognize new objects with just a few examples. To address
+proposed Similarity Cache is derived from few-shot training images and            this gap, the research community has explored various few-shot learning
+public ImageNet [10] text labels, thus independent of the manually                (FSL) algorithms to learn knowledge of novel objects in a data-efficient
+labeled class names. The design of the ImageNet-based Similarity Cache            way. FSL has been applied in computer vision tasks, including few-shot
+enables real-time on-site learning even in the absence of well-defined            image classification (FSIC), few-shot object detection (FSOD), and few-
+object names. By introducing inter-class similarity distribution as fea­          shot semantic segmentation [17]. Few-shot image classification aims to
+tures, the proposed algorithm achieves superior classification accuracy           achieve human-level object recognition ability by giving only a few
+compared with the state-of-the-art (SOTA) algorithms. Second, an image            number of training image samples [18]. FSIC has been well explored by
+classification dataset “Temporary Objects on Construction Site” (TOCS)            different types of algorithms based on transfer learning [19–21], meta-
+is created with 22 different object classes for few-shot on-site object           learning [22–25], and metric-learning [18,26]. Transfer learning algo­
+classification. For evaluating the proposed algorithm, the object detec­          rithms operate on the assumption that knowledge obtained from data in
+tion dataset SODA is modified by cropping the regions of interest for             the source domain can be transferred to the target domain through
+image classification. The study demonstrates the potential of few-shot            model fine-tuning. Meta-learning algorithms seek to learn generalizable
+learning with vision language models (VLM) to recognize temporary                 knowledge by training the model on several different classification
+objects on construction sites. VLM-based few-shot learning is promising           tasks. Metric learning algorithms focus on creating feature embeddings
+for recognizing construction objects utilizing Similarity Cache with
+open-source text labels, handcrafted text prompts and few-shot object             Table 1
+detection.                                                                        Application of object detection algorithms in construction.
+    The outline of the paper is arranged as follows. Section 2 reviews the         Algorithms    Problem statement     Training dataset   Detection     Author
+computer vision algorithms used in construction, few-shot learning, and                                                                   accuracy
+CLIP-based few-shot image classification. Section 3 introduces the pro­                          Detection of          3029 images for                  Fang
+posed algorithm and compares it with the existing algorithms. Section 4                          workers and           workers and 498                  et al.,
+                                                                                                                                          88.00%
+validates the proposed algorithm with extensive experiments on SODA                              equipment in real-    images for                       2018
+and TOCS datasets. Section 5 discusses the limitations of the work and                           time                  excavators                       [13]
+                                                                                                 Recognition of                                         Luo
+possible future work for improvement. Section 6 concludes the paper                                                    7790 images
+                                                                                   Faster R-     construction                                           et al.,
+with a summary of contributions and implications.                                    CNN         activities based on
+                                                                                                                       containing 22      78.20%
+                                                                                                                                                        2018
+                                                                                                                       categories
+                                                                                                 object detection                                       [14]
+2. Related work                                                                                  Productivity
+                                                                                                                                                        Wang
+                                                                                                                       2467 images for                  et al.,
+                                                                                                 analysis of crane                        93.19%
+                                                                                                                       buckets                          2022
+2.1. Object detection and classification in construction                                         transportation
+                                                                                                                                                        [15]
+                                                                                                 Detect personal                                        Kumar
+                                                                                                                       14,500 images
+    While AI-enabled computer vision holds promise for enhancing robot             YOLO
+                                                                                                 protective
+                                                                                                                       containing 6       76.86%
+                                                                                                                                                        et al.,
+intelligence at a higher level, the development of construction robots                           equipment in real                                      2022
+                                                                                                                       categories
+                                                                                                 time                                                   [16]
+equipped with intelligent vision capabilities is still in its early stages.
+
+                                                                              2
+Y. Liang et al.                                                                                                       Automation in Construction 165 (2024) 105542
+
+
+and effective distance measurement. FSIC algorithms have been vali­               [31] focuses on selecting significant feature channels via a prior
+dated on public computer vision datasets. However, a research gap ex­             refinement module. The selected feature channels have smaller inter-
+ists for few-shot image classification on challenging construction sites.         class similarity and higher inter-class disparity.
+Construction sites are highly dynamic and privacy-sensitive, making it
+difficult to collect large datasets of labeled images. A few recent studies       3. Few-shot CLIP adaptation with multimodal prototype
+have applied few-shot learning techniques to construction site data. For
+example, Cui et al. [27] proposed utilizing few-shot classification and               The few-shot image classification task is formulated as follows: Given
+contrast learning to recognize façade defects. Xu et al. [28] developed a         Support Set D support with only a few support images with labels for each
+meta-learning-based few-shot classifier for identifying structural dam­           object class, the query images from Query Set D query need to be classified
+ages from images. Kim et al. [29] applied few-shot object detection for           with pre-defined text labels. The notations mentioned in the paper are
+learning and monitoring novel objects such as excavators on construc­             summarized in Appendix. Inspired by Tip-Adapter and TIP-X, the paper
+tion sites.                                                                       proposes a training-free CLIP-based few-shot learning algorithm in
+                                                                                  Fig. 1. Unlike traditional few-shot classification, the proposed algorithm
+2.3. CLIP-based few-shot learning                                                 does not require meta-training with base classes. Instead, all object
+                                                                                  classes within Target Dataset are regarded as novel classes. CLIP-based
+    Contrastive Language–Image Pre-training (CLIP) [9] is a milestone             few-shot learning builds a training-free cache of support prototypes.
+study that unifies vision and language in a consistent feature space. The         Prediction is based on measuring the similarity between prototypes and
+critical insight of CLIP is to leverage natural language as a flexible            query images in the embedding space. Two crucial questions need to be
+prediction space to enable generalization and transfer. CLIP has ach­             answered for CLIP-based few-shot learning. (1) How can we build a
+ieved impressive zero-shot image classification performance on some of            cache with representative prototypes for each class? (2) How can we
+the public datasets. Inspired by CLIP, a new paradigm for few-shot image          effectively measure the similarity between the query image and pro­
+classification has been established by incorporating additional domain            totypes? Addressing these questions necessitates considering different
+knowledge into CLIP. Tip-Adapter [8] is a representative work that                similarities. Table 2 summarizes the definition of different similarities:
+combines CLP zero-shot prediction results with a visual cache. In the             inter-image similarity, image-text similarity, and distribution similarity.
+learning stage, Tip-Adapter proposed to use CLIP Image Encoder to                 Distribution similarity is the affinity between two distributions. Each
+extract visual embeddings from few-shot images and save them as “keys”            distribution is a series of Image-text similarities between one image and
+in a Cache model. In the prediction stage, the test image is encoded with         multiple text prompts.
+the same Image Encoder. The prediction label is obtained based on                     Fig. 1 shows the proposed algorithm with two phases. The training-
+“values” of cache features that share the greatest affinity. The Tip-X [30]       free caching phase builds Visual Cache and the Similarity Cache by
+algorithm has introduced image-text similarity between images and the             utilizing support images from D support . Subsequently, the prediction
+target dataset to provide better few-shot prediction performance. APE             phase predicts the label of the query image from the D query . The overall
+
+
+
+
+                                            Fig. 1. Few-shot prediction with Visual Cache and Similarity Cache.
+
+                                                                              3
+Y. Liang et al.                                                                                                                   Automation in Construction 165 (2024) 105542
+
+
+Table 2                                                                                     “Visual Encoder” and “Text Encoder” in Fig. 1, with frozen neural
+Different similarities.                                                                     network weights. Given a query image, the visual embedding Iquery ∈
+  Types of Similarity     Definition                                                        ℝ1×C can be derived with CLIP Image Encoder. With text prompts from N
+  Inter-image                                                                               labels in target dataset, text embedding Ttarget ∈ ℝN×C is derived using
+                          The similarity between two images in CLIP’s encoding space
+    similarity                                                                              CLIP Text Encoder.
+  Image-text              The similarity between an image and a text prompt in CLIP’s           In the first prediction branch of Fig. 1, “Zero-shot Classification”
+    similarity            encoding space.
+                                                                                            yields the predicted logits for N object classes as Logit zshot ∈ ℝ1×N . Cosine
+  Distribution            The similarity between two Image-text similarity
+    similarity            distribution.                                                     similarity between query visual features and N text prompts from the
+                                                                                            target dataset is measured as SIMquery target ∈ ℝ1×N in Eq. (1).
+                                                                                                                    (    )      (       )Τ
+prediction results are composed of three branches: Zero-shot Classifi­                      SIMquery target = norm Iquery *norm Ttarget                               (1)
+cation, Visual Cache Measure, and Similarity Cache Measure.                                                    (      )
+    Section 3.1 introduces the principles of CLIP zero-shot prediction.                         Where norm Iquery stands for L2 norm of each image features Iquery .
+                                                                                                  (        )T
+Section 3.2 introduces Visual Cache to adapt CLIP for temporary objects                     norm TimgNet stands for the transpose of L2 norm of text features Ttarget .
+recognition with few-shot images. Section 3.3 introduces the proposed                       To convert cosine similarity SIMquery target to predicted probabilities of
+ImageNet-based Similarity Cache. Section 3.4 compares the proposed                          each class, Logit zshot ∈ ℝ1×N are calculated by applying SoftMax function
+algorithm with the existing algorithms.                                                     in Eq. (2). Logitzshot contains the predicted probability of each class from
+                                                                                            CLIP zero-shot.
+                                                                                                                    (             )
+3.1. Zero-shot prediction from CLIP                                                          Logitzshot = SoftMax SIMquery target                                     (2)
+
+    Training contrastively on more than 400 million image-text pairs
+from the internet, CLIP [9] has learned powerful encoders for multi-                        3.2. Incorporate few-shot knowledge with visual cache
+modal representations. Fig. 2 (1) demonstrates the contrastive pre­
+training for maximizing the cosine similarity between matched image-                        3.2.1. Training-free caching with visual cache
+text pairs. With the trained Image Encoder and Text Encoder, CLIP en­                            CLIP has shown outstanding zero-shot recognition ability on various
+codes images and text into an aligned embedding space. In Fig. 2 (2), a                     public datasets. However, images of on-site temporary objects are usu­
+template “A photo of a [object]” is used to formulate text prompts by                       ally kept private due to regulations and privacy. CLIP zero-shot perfor­
+replacing “[object]” with text labels like “plane” and “car”. Text prompts                  mance on temporary objects is poor since it cannot access construction
+are encoded as text embeddings T1 , T2 , …, TN for N categories using                       images. Following Tip-Adapter [8], Visual Cache is utilized in the study
+CLIP Text Encoder. In Fig. 2 (3), the test image is encoded by CLIP Image                   to incorporate new knowledge of the few-shot images with original
+Encoder as I1 . The cosine similarity between I1 and T1 , T2 , …, TN is                     knowledge from CLIP.
+calculated to measure the affinity between the test image and N object                           To build Visual Cache, image embeddings of few-shot images and
+labels. The test image can be classified as the text label that shares the                  their class labels are saved as “key-value” pairs. Let N be the number of
+largest similarity.                                                                         classes in the target dataset and K be the number of images per class. The
+    With the off-the-shelf CLIP, Fig. 3 shows the similarity matrix be­                     total number of images in the Support Set is n = K × N. As shown in
+tween 8 images of temporary objects along the horizontal axis and 8 text                    Fig. 1, n support images are encoded by Visual Encoder as image em­
+prompts along the vertical axis. The values indicate the cosine similarity                  beddings Isupport ∈ ℝn×C in Eq. (3). The labels of support images are
+of different image-text pairs in the embedding space. The values on the                     encoded as One-Hot vectors Lsupport ∈ ℝn×N in Eq. (4). Visual Cache is
+diagonal line are the largest, indicating correct matching of 8 image-text                  created by caching Isupport and Lsupport as “key-value” pairs [8]. Image
+pairs. When two images have similar visual features, their cosine simi­                     features Isupport serves as weights for the prediction using Visual Cache.
+larity values with one same text prompt could be close. Notably, in the                     And Lsupport provides the true labels for the caches image features.
+red boxes, the similarity between the text prompt “This is a photo of a                                              (          )
+trowel” and the image “trowel” is 0.33, close to the similarity with image                   Isupport = VisualEncoder D support                                     (3)
+“shovel” as 0.31.
+    CLIP Image Encoder and CLIP Text Encoder are directly adopted as                        Lsupport = OneHot(Labels)                                                     (4)
+
+
+
+
+                                                                  Fig. 2. CLIP and zero-shot prediction [9].
+
+                                                                                        4
+Y. Liang et al.                                                                                                            Automation in Construction 165 (2024) 105542
+
+
+
+
+                                                     Fig. 3. CLIP zero-shot prediction on construction objects.
+
+
+                                                                                       knowledge to relate the textual names with the on-site images.
+3.2.2. Prediction with visual cache
+                                                                                           Given the constraints of existing Tip-X, this paper proposes to employ
+     Training-free Visual Cache is utilized for the second prediction
+                                                                                       abundant object labels from open source to create Similarity Cache. This
+branch in Fig. 1: “Visual Cache Measure”. With the same Visual Encoder,
+                                                                                       approach allows the creation of text prompts beyond the boundaries of
+the query image is encoded as Iquery . Following Tip-Adapter [8], the af­
+                                                                                       the Target Dataset. Specifically, this study creates ImageNet-based
+finity between Iquery and Isupport is calculated as Avis ∈ ℝ1×n in Eq. (5). The        Similarity Cache with ImageNet object labels. Given any image-text
+                (     )       (        )Τ
+term 1 − norm Iquery *norm Isupport is equivalent to Euclidean distance                pair, CLIP can generate a cosine similarity score. Fig. 4 shows CLIP
+between the query feature Iquery and few-shot images’ feature in Isupport .            zero-shot classification scores of temporary objects with the five most
+The exponential function converts query-key Euclidean distance to non-                 related text labels from CIFAR-100 dataset [32]. The “cone” exhibits the
+negative affinity Avis . Hyperparameter β controls the sharpness of the                highest similarity score with “rocket”, while the rope shares similarities
+function.                                                                              with a “snake”. The similarity distribution over different text labels is
+           (     [         (       )       (     )Τ ] )                                discriminant for each object class. The distinctive inter-class similarity
+ Avis = exp − β 1 − norm Iquery *norm Isupport                               (5)       distribution motivates this study to establish the Similarity Cache with
+                                                                                       open-source text labels.
+    Multiplying the affinity Avis with One-Hot encoding vector
+                                                                                           Specifically, text labels for building Similarity Cache are from open-
+Lsupport ∈ ℝ1×N , the confidence scores for each class are derived as
+                                                                                       source public datasets. In the study, M text prompts are created from
+Logit visʹ ∈ ℝ1×N in Eq. (6).
+                                                                                       ImageNet class labels. The basic template “This is a photo of X" is used
+Logit vis ’ = Avis Lsupport                                                 (6)        for text prompts, where X denotes the object name. TimgNet ∈ ℝM×C rep­
+                                                                                       resents the text features of ImageNet text prompts encoded by CLIP Text
+                                                                                       Encoder. By utilizing inter-class similarity distribution as features, this
+3.3. Enhancing CLIP with ImageNet-based similarity cache                               study calculates cosine similarity for support image features Isupport with
+                                                                                       ImageNet text features TimgNet , denoted as SIMsupport imgNet ∈ ℝn×M .
+3.3.1. Training-free caching with ImageNet-based similarity cache
+                                                                                       Mathematically, this is expressed as Eq. (7).
+    CLIP undergoes contrastive training to maximize inter-modal cosine
+                                                                                                                (        )     (        )T
+similarity, with less emphasis on prioritizing intra-modal similarity.                  SIMsupport imgNet = norm Isupport *norm TimgNet                        (7)
+Consequently, the similarity distances among intra-modal image fea­
+tures used in Tip-Adapter might not accurately adhere to the actual                       SIMsupport imgNet is saved as “keys” for Similarity Cache, alongside the
+distribution. Considering this gap, TIP-X [30] introduces the image-text               One-Hot encoding Lsupport as corresponding “values”. In this way, each
+similarity cache with text labels from Target Dataset. In this study, the              object class derives a similarity distribution over ImageNet text labels.
+cache of image-text similarity is referred to as the Similarity Cache. The             This distribution is unique for each class and could be utilized for
+study identifies two limitations of TIP-X for recognition of temporary                 characterizing the specific object.
+objects on construction sites. First, TIP-X necessitates text labels of
+Target Dataset. Naming object labels on construction sites consistently                3.3.2. Prediction with ImageNet-based similarity cache
+and accurately could be challenging without expert knowledge. Second,                     For the third prediction branch “Similarity Cache Measure” in Fig. 1,
+even if temporary objects are aptly named, CLIP may not have the                       prediction Logitsim from ImageNet-based Similarity Cache is derived.
+
+                                                                                   5
+Y. Liang et al.                                                                                                                     Automation in Construction 165 (2024) 105542
+
+
+
+
+                                                    Fig. 4. CLIP zero-shot classification scores with cross-dataset labels.
+
+
+Given the query image feature Iquery , cosine similarity distribution be­
+                                                                                                         (X − X.min)
+tween Iquery and TimgNet is calculated as SIMquery imgNet ∈ ℝ1×M in Eq. (8).               F(X, Y) =                  *(Y.max − Y.min) + Y.min                            (13)
+                                                                                                       (X.max − X.min)
+                      (      )     (        )Τ
+SIMquery imgNet = norm Iquery *norm TimgNet                                      (8)          The combined prediction from three prediction branches Logit ∈
+    The measure of affinity between query similarity distribution                          ℝ1×N is calculated in Eq. (14). Hyperparameters α1 and α2 are the
+SIMquery imgNet and support similarity distribution SIMsupport imgNet is crit­             weights of the learned few-shot knowledge from Visual Cache and
+ical. Instead of using Kullback-Leibler (KL) divergence as TIP-X, this                     ImageNet-based Similarity Cache. The predicted label is selected based
+study proposes to measure the affinity between similarity distributions                    on the N probability scores for object classes within Logit.
+with Eq. (9). Min-Max normalization is applied to the cosine similarity of                 Logit = Logit zshot + α1 *Logit vis + α2 *Logit sim                            (14)
+SIMquery imgNet and SIMsupport imgNet . The purpose of Min-Max normalization
+is to ensure that all features have the same scale and to bring the values
+of the features into a certain range. With the affinity of query distribu­                 3.5. Comparison with existing algorithms
+tion to the support distributions in Similarity Cache, prediction of
+                                                                                               This section compares the proposed algorithm with CLIP zero-shot,
+Logit simʹ in Eq. (10) is the matrix production of Asim and One-Hot of
+                                                                                           Tip-Adapter, and TIP-X. The features of different algorithms are
+support labels Lsupport .
+                                                                                           shown in Table 4. Tip-Adapter introduces Visual Cache and combines
+                  [       (                 )      (             )Τ ]
+                                                                          (9)              the prediction of Visual Cache with CLIP zero-shot prediction. TIP-X
+ Asim = MinMax norm SIMquerry imgNet *norm SIMsupport imgNet
+                                                                                           introduces Similarity Cache with labels of Target Dataset. In contrast,
+                                                                                           the proposed algorithm proposes ImageNet-based Similarity Cache.
+Logit sim ’ = Asim Lsupport                                                    (10)        Different caches are involved in the compared algorithms. Table 3
+                                                                                           summarizes the definition of different Caches.
+3.4. Formulation of unified prediction                                                         Compared with TIP-X, the proposed algorithm has three critical
+                                                                                           differences. The first difference is utilizing open-source text labels
+    The unified prediction result is the weighted sum of CLIP zero-shot                    (ImageNet) to create Similarity Cache. Noticing CLIP’s ability to
+prediction, Visual Cache prediction, and Similarity Cache prediction.
+In TIP-X, Asim is rescaled to the same range of Avis . However, the range of               Table 3
+Logit vis ’ and Logit sim ’ will change with the different number of learning              Comparison of caches.
+shots. Rather than following TIP-X to rescale Asim , this study rescales                    Types of          Source of       Require        Require        Data in the cache
+Logit vis ’ and Logit simʹ to the same range of Logit zshot in Eq. (11) and (12),           Caches            Text            training       label of
+                                                                                                              Prompts         images?        training
+denoted as Logit vis ∈ ℝ1×N and Logitsim ∈ ℝ1×N . The rescale function in
+                                                                                                                                             images?
+Eq. (13) normalizes a vector X is to the range of another vector Y. The
+       (X− X.min)                                                                                                                                           Image
+term (X.max− X.min) normalizes X to the range [0,1]. Multiplying the
+                                                                                            Visual Cache      N.A.            Yes            Yes
+                                                                                                                                                            embeddings
+normalized X with the range of Y and shifting the data to Y.min derives                                                                                     Image-text
+                                                                                            Similarity
+the aligned X and Y.                                                                                          Target                                        similarity
+                                                                                              Cache (TIP-                     Yes            Yes
+                                                                                                              Dataset                                       distribution
+                                                                                              X)
+Logit vis = rescale(Logitvis ’ , Logitzshot )                                  (11)                                                                         (Target Dataset)
+                                                                                                              Public                                        Image-text
+                                                                                            Similarity
+                      (                         )                                                             Datasets                                      similarity
+Logit sim = rescale Logit sim , Logit zshot
+                                 ’
+                                                                               (12)           Cache
+                                                                                                              (e.g.
+                                                                                                                              Yes            No
+                                                                                                                                                            distribution
+                                                                                              (Proposed)
+                                                                                                              ImageNet)                                     (ImageNet)
+
+
+                                                                                       6
+Y. Liang et al.                                                                                                                                                 Automation in Construction 165 (2024) 105542
+
+
+Table 4                                                                                                     Table 9
+Comparison of different algorithms.                                                                         Classification accuracy on SODA.
+  Algorithms                  CLIP              Tip-            TIP-X                 The Proposed           Few-shot Setup                     1                 2              4            8           16
+  Item                        Zero-shot         Adapter
+                                                                                                             CLIP zero-shot: 23.17
+  With few-shot                                                                                              Tip-Adapter                        24.61             28.01          34.97        40.79       53.77
+                              −                 +               +                     þ
+   knowledge?                                                                                                TIP-X                              43.21             55.04          60.39        60.66       69.33
+  With Visual Cache?          −                 +               +                     þ                      The Proposed Algorithm             48.42             56.29          62.41        63.85       73.07
+  With Similarity
+   Cache from Target          −                 −               +                     ¡
+   Dataset?
+  With Similarity                                                                                           Table 10
+   Cache from                 −                 −               −                     þ                     Classification accuracy on TOCS.
+   ImageNet?
+                                                                                                             Random Dataset           Split 1           Split 2       Split 3    Split 4      Split 5   Average
+  Measure of inter-                             Beta-           Beta-
+                              N.A.                                                    Beta-function          Splits
+   image similarity                             function        function
+  Measure of image-           cosine            cosine          cosine                cosine                 CLIP zero-shot           60.42             58.33         56.25      58.33        58.33     58.33
+   text similarity            similarity        similarity      similarity            similarity             Tip-Adapter              62.50             60.42         58.33      58.33        60.42     60.00
+                                                                                      Normalized             TIP-X                    83.33             81.25         75.0       75.0         72.92     77.50
+  Measure of
+                                                                KL-                   cosine                 The Proposed
+   distribution               N.A.              N.A.
+                                                                divergence            similarity Eq.           Algorithm              83.33             85.42         77.08      81.25        89.58     83.33
+   similarity
+                                                                                      (9)
+  Hyperparameters             N.A.              β, α1           β, α1 , α2            β, α1 , α2
+
+
+                                                                                                            Table 11
+Table 5                                                                                                     Computation time for different algorithms.
+Number of images per class for modified SODA.
+                                                                                                             Algorithms       Number of search                  Computation Time             Computation Time
+  Hook                Fence                  Board                  Vest                      Slogan                          steps for hyper                   (seconds) on TOCS            (seconds) on SODA
+                                                                                                                              parameter
+  672                 2586                   2252                   350                       1160
+  Hopper              Scaffold               Cutter                 Handcart                  Rebar          CLIP zero-shot   0                                 8.90                         9.10
+  537                 5240                   251                    414                       2233           Tip-Adapter      40,00                             31.80                        19.17
+  Helmet              Brick                  Wood                   Electric box              SUM            TIP-X            200,000                           126.67                       127.42
+  42                  825                    2824                   451                       19,837         The Proposed
+                                                                                                                              40,000                            75.10                        56.52
+                                                                                                               Algorithm
+
+
+Table 6
+Number of images in TOCS.                                                                                   Table 12
+  Bucket          Cardboard          Concrete           Concrete           Concrete          Cone           Classification accuracy with different matching functions.
+                  box                bar                block              vibrator
+                                                                                                             Accuracy on SODA
+  8               3                  3                  4                  5                 5
+                                                                                                             Few-shot Setup       1                 2              4             8           16         Average
+  Electric
+                                                        Lighting                             Mould
+    scissor       Hard hat           Ladder                                Metal bar                         KL-divergence
+                                                        tower                                block                                43.21             55.04          60.39         60.66       69.33      57.73
+    lift                                                                                                       (TIP-X)
+  3               5                  6                  2                  3                 4               Proposed Eq. (9)     44.49             55.08          59.68         62.31       70.65      58.44
+                                                                                             Steel           Accuracy on TOCS
+  PVC pipe        Rebar coil         Rebar              Sandbag            Shelf
+                                                                                             bar             Random Dataset       Split             Split          Split         Split       Split
+                                                                                                                                                                                                        Average
+  3               4                  6                  6                  3                 2                 Splits             1                 2              3             4           5
+                                                        Wood                                                 KL divergence
+  Trolley         Water tank         Wood bar                              SUM                                                    83.33             81.25          75.0          75.0        72.92      77.50
+                                                        frame                                                  (TIP-X)
+  5               3                  4                  3                  90                                Proposed Eq. (9)     81.25             87.5           79.17         83.33       85.42      83.33
+
+
+
+
+Table 7                                                                                                     Table 13
+Dataset split.                                                                                              Optimal hyperparameters with different learning shots.
+                        SODA                                                   TOCS                          Few-shot Setup                                 1            2           4         8         16
+  Training Set          1, 2, 4, 8, 16 images for each class                   1 image for each class        Test Accuracy on SODA                          48.42        56.29       62.41     63.85     73.07
+  Valid Set             2915 images                                            20 images                                         Search
+                                                                                                             Hyperparameters                                Optimal values in search scale
+  Test Set              3037 images                                            48 images                                         scale
+                                                                                                             β                   [0, 50]                    28.04        28.04       27.50     33.53     36.00
+                                                                                                             α1                  [0,200]                    9.50         9.50        12.57     60.00     170.00
+                                                                                                             α2                  [0,20]                     3.07         4.06        2.6       1.09      2.09
+Table 8
+Number of text prompts.
+                                         SODA          TOCS     ImageNet                                        The second difference is the measure of distribution similarity in
+                                                                                                            Similarity Cache. This study proposes Min-Max normalized cosine sim­
+  Template for text prompts              "This is a photo of X" (replace "X" with class name)
+  Number of classes                      14          22       1000
+                                                                                                            ilarity in Eq. (9) to measure the affinities of two distributions in Simi­
+                                                                                                            larity Cache. This contrasts with TIP-X, which employed KL-divergence
+                                                                                                            for measuring distributional affinity. While KL-divergence excels at
+measure similarity between any given image-text pairs, this study pro­                                      comparing probability distributions, the cosine similarity do not strictly
+poses utilizing open-source text prompts to build even stronger Simi­                                       adhere to such distributions. Instead, they represent geometric similar­
+larity Cache. The work specifically explores building the Similarity                                        ities between vectors. Furthermore, unlike KL-divergence which lacks
+Cache with text labels of publicly available ImageNet [10].
+
+                                                                                                        7
+Y. Liang et al.                                                                                                                         Automation in Construction 165 (2024) 105542
+
+
+Table 14                                                                                           4.1. Experiment settings
+Handcrafted text prompts.
+  Object          Text prompts                                                                     4.1.1. Pre-process of SODA dataset
+  labels                                                                                               While the publicly available SODA dataset is originally designed for
+                  A bucket is usually round container for catching, holding, or carrying           object detection tasks, this study tailored it for image classification. The
+  Bucket
+                  liquids or solids.                                                               original SODA dataset contains 19,846 images with 286,201 object in­
+  Hard hat
+                  A hard hat made of a strong material which is worn to protect the                stances across 15 object classes (Fig. 6). To adapt it for classification, we
+                  head especially of someone who builds buildings.                                 implemented a customization process, as illustrated in Fig. 5.
+                  A ladder is a vertical or inclined set of rungs or steps used for climbing
+  Ladder
+                  or descending.
+                                                                                                       This involved: 1) cropping Regions of Interest (ROIs) for each object
+                  Rebar (short for reinforcing bar), known when massed as reinforcing              using their annotated bounding boxes and class labels, and 2) applying
+  Rebar
+                  steel or reinforcement steel.                                                    specific filtering criteria. Considering the CLIP Image Encoder’s input
+  Rope
+                  A rope is a group of yarns, plies, fibers, or strands that are twisted or        requirement of 224 × 224 pixels, we excluded images with dimensions
+                  braided together into a larger and stronger form.
+                                                                                                   smaller than this threshold to ensure adequate resolution. Additionally,
+                  Traffic cones, also called pylons, witches’ hats, road cones, highway
+  Traffic cone    cones, safety cones, channelizing devices, construction cones, or just           images containing “person” are removed to maintain focus on tempo­
+                  cones.                                                                           rary site objects, aligning with the study’s objectives. These steps yiel­
+  Trolley         Construction trolleys are used to transport and carry heavy loads.               ded a customized SODA dataset for classification comprising 14 object
+                                                                                                   classes and 19,837 images (Table 5). Fig. 7 visualizes the image di­
+                                                                                                   mensions within this dataset, revealing a minimum width and height of
+symmetry, cosine similarity exhibits this desirable property. Therefore,
+                                                                                                   224 pixels and mean values of 436 pixels and 575 pixels for height and
+this study proposes a Min-Max normalized cosine similarity measure
+                                                                                                   width, respectively.
+(Eq. 9) to measure the affinity between query and support distributions.
+     The third difference is the mechanism for aggregating prediction
+                                                                                                   4.1.2. TOCS dataset
+logits. Eq. (15) details the approach used by TIP-X, while the proposed
+                                                                                                       This study introduces a new small-scale dataset for further evalu­
+algorithm adopts a different strategy, as shown in Eq. (16). TIP-X re­
+                                                                                                   ating the proposed algorithm’s capabilities: ‘Temporary Objects on
+scales Asim to the range of Avis as in Eq. (15). This study proposes to
+                                                                                                   Construction Site’ (TOCS) dataset. Captured directly at construction
+rescale Avis Lsupport and Asim Lsupport to the range of Logit zshot in Eq. (16). Let
+                                                                                                   sites, the TOCS dataset encompasses 90 images representing 22 distinct
+Aj denote the jth column of Asim , the rescaled Aj ∈ [0, 1]. Let Cj denote the
+                                                                                                   object classes, offering additional diversity and real-world complexity.
+jth column of Logit simʹ. Lij ∈ [0, 1] denotes the element of the ith row and                      Fig. 9 showcases example images from TOCS. Table 6 illustrates the
+                                                              ∑
+the jth column in Lsupport . It can be derived that Cj = ni=1 Aj Lij will be in                    class-wise image distribution, while Fig. 8 visualizes the overall image
+the range of [0, n]. Therefore, the range of Logit sim = Asim Lsupport depends
+                                                           ʹ
+                                                                                                   dimension distribution. Compared to SODA, the TOCS dataset offers a
+on n, the number of support images. Similarly, the range of Logit visʹ =                           smaller scale (90 images) but with substantially greater class diversity
+Avis Lsupport is changing with the n. The changing range of Logit visʹ and                         (22 classes). This deliberate design choice allows for focused evaluation
+Logit ʹ makes the ratio Logit                  : Logit ’ : Logit ’ inconsistent.                   of the algorithm’s adaptability to new classes and real-world construc­
+      sim                                   zshot         vis         sim
+Therefore, it is difficult to set proper α1 (the weight of Visual Cache) and                       tion scene variations, while minimizing resource requirements.
+α2 (the weight of Similarity Cache) in Eq. (15). In the proposed Eq. (16),
+Logit visʹ and Logit simʹ are rescaled into the range of CLIP zero-shot                            4.2. Build training-free caches
+Logit zshot . This modification makes the ratio between different predic­
+tion from three caches fixed as Logit zshot : Logit vis : Logit sim = 1 : α1 : α2 .                    To ensure rigorous evaluation of the proposed algorithm, each
+By fixing the ratio between wights of three prediction logits, the                                 dataset is divided into three splits as shown in Table 7: Training Set,
+hyperparameter search process would become more efficient (validated                               Validation set and Test Set. Training Set contains support images utilized
+in section 4.3.3).                                                                                 to build Visual Cache and Similarity Cache. Validation Set is adopted for
+                                                                                                   searching and optimizing hyperparameters β, α1 and α2 . The prediction
+logitTIP− X = Logit zshot + α1 *Avis Lsupport + α2 *rescale(Asim , Avis )Lsupport       (15)       accuracy is evaluated using query images in Test Set. For the SODA
+                                          (                          )                             dataset, the study evaluated few-shot classification accuracy across a
+logitproposed = Logit zshot + α1 *rescale Avis Lsupport , Logitzshot                               comprehensive range of shots (1, 2, 4, 8, and 16), offering an under­
+                            (                          )                                (16)
+              +α2 *rescale Asim Lsupport , Logit zshot                                             standing of performance under varying data constraints. In contrast, the
+                                                                                                   TOCS dataset, due to its inherently limited sample size per class, is
+4. Few-shot classification of on-site temporary objects                                            subjected to 1-shot classification evaluation to gauge its effectiveness in
+                                                                                                   extreme low-data scenarios. To facilitate direct comparison with exist­
+    To evaluate the performance of the proposed few-shot image clas­                               ing algorithms, the experiments adopted the Image Encoder and Text
+sification algorithm for on-site objects, experiments are conducted on a                           Encoder from the pretrained CLIP model with a ResNet-50 backbone.
+public dataset Site Object Detection Dataset (SODA) [33], and the newly                            Training images underwent preprocessing procedures aligned with
+developed dataset named Temporary Objects on Construction Site                                     CLIP’s requirements, including resizing to a fixed dimension of 224 ×
+(TOCS). Section 4.1 introduces the experiment setup and dataset details.                           224 pixels using the PyTorch library function “RandomResizedCrop”.
+Section 4.2 introduces the experiment details for building Visual Cache                            Adhering to the data augmentation strategy employed in Tip-Adapter,
+and Similarity Cache. Classification accuracy and computation effi­                                each training image is augmented through random scaling and flip­
+ciency compared to the existing algorithms are discussed in Section 4.3.                           ping with a predetermined probability.
+To validate each component in the proposed algorithm, Section 4.4                                      The preprocessed training images are subsequently encoded into
+discusses individual performance of different Caches (Section 4.4.1), the                          1024-dimensional training features using the off-the-shelf CLIP Image
+proposed Similarity Cache matching function (Section 4.4.2), hyper­                                Encoder. These features serve as “keys” within the Visual Cache, while
+parameters (Section 4.4.3), and text prompts (Section 4.4.4).                                      the corresponding One-Hot encoded labels constitute the “values”. In
+                                                                                                   parallel, the Similarity Cache is constructed. Text prompts are generated
+                                                                                                   from either the target datasets themselves (SODA and TOCS, adhering to
+                                                                                                   the TIP-X framework) or the ImageNet dataset (proposed approach).
+                                                                                                   Text labels for ImageNet-based Similarity Cache are derived from
+                                                                                                   ImageNet. The prompt template “This is a photo of X" is employed,
+
+                                                                                               8
+Y. Liang et al.                                                                                                          Automation in Construction 165 (2024) 105542
+
+
+
+
+                                                               Fig. 5. Preprocessing of SODA images.
+
+
+                                                                                     4.3. Few-shot classification performance
+
+                                                                                         The images from Validation Set are leveraged to optimize hyper­
+                                                                                     parameters β, α1 and α2 ,. The hyperparameter β governs the sharpness of
+                                                                                     the exponential function within Eq. (5), while α1 and α2 determine the
+                                                                                     weights assigned to predictions from the Visual Cache and Similarity
+                                                                                     Cache during their combined prediction in Eq. (14). The search ranges
+                                                                                     for the hyperparameters are meticulously defined based on their
+                                                                                     observed impact on validation accuracy. The hyperparameter β is
+                                                                                     explored within a range of 0.1 to 50, with 100 search steps. α1 is
+                                                                                     searched within a range of 0 to 200, adopting 20 steps, and α2 is
+                                                                                     examined within a range of 0 to 20, utilizing 20 steps. The parameter
+                                                                                     searching process identifies the optimal hyperparameter configuration
+                                                                                     that yields the highest prediction accuracy on the Validation Set. The
+                                                                                     derived optimal hyperparameters are subsequently employed for pre­
+                                                                                     diction tasks on the Test Set. The proposed algorithm’s performance is
+                                                                                     benchmarked against CLIP zero-shot, Tip-Adapter, and TIP-X, facili­
+                                                                                     tating a comprehensive evaluation of its efficacy.
+
+                                                                                     4.3.1. Accuracy comparison on SODA
+                                                                                         Fig. 10 and Table 9 present the few-shot classification accuracy of
+                                                                                     different algorithms on the SODA dataset. Among all the compared al­
+                  Fig. 6. Number of objects and images [33].                         gorithms, the proposed algorithm shows the highest classification ac­
+                                                                                     curacy across all different number of learning shots.
+except for the hand-crafted prompts in Section 4.4.4. Table 8 summa­                     CLIP zero-shot demonstrates a limited performance, achieving only
+rizes the number of classes within each dataset. Text prompts are                    23.17% accuracy. This highlights the challenge CLIP faces when dealing
+encoded into text embeddings using CLIP’s Text Encoder. The Similarity               with real-world temporary objects from diverse construction sites. Even
+Cache is formulated with cosine similarity scores between training                   with the same text labels, “Fence” and “Scaffolding” can manifest in
+image embeddings and text embeddings as “keys”, and One-Hot encoded                  vastly different shapes and colors across construction projects. Due to its
+labels as “values”.                                                                  limited exposure to images on construction sites, CLIP struggles to
+
+
+
+
+                                                        Fig. 7. Image dimensions of customized SODA.
+
+                                                                                 9
+Y. Liang et al.                                                                                                       Automation in Construction 165 (2024) 105542
+
+
+
+
+                                                              Fig. 8. Image dimensions in TOCS.
+
+
+
+
+                                                               Fig. 9. Sample images in TOCS.
+
+
+recognize these variations. While CLIP zero-shot only shows 23.17%                   visual features for matching. TIP-X further propels few-shot perfor­
+accuracy, Tip-Adapter exhibits a linear increase in accuracy with more               mance compared to Tip-Adapter, achieving 43.21% accuracy with only
+learning shots. At the 16-shot setup, it reaches 53.77%, suggesting the              one training shot, a substantial improvement over the Tip-Adapter’s
+effectiveness of its Visual Cache in learning class-specific visual features.        24.61%. This consistent outperformance across 2, 4, 8, and 16 shots
+With increasing shots, Visual cache provides a broader range of potential            underscores the efficacy of TIP-X’s Similarity Cache constructed with
+
+
+                                                                                10
+Y. Liang et al.                                                                                                    Automation in Construction 165 (2024) 105542
+
+
+
+
+                                                 Fig. 10. Few-shot classification performance on SODA.
+
+
+image-text similarity based on target text labels. Despite the notable          Similarity Cache, the inter-class similarity distribution with open-source
+improvement of both Tip-Adapter and TIP-X over CLIP zero-shot, the              text labels substantially improves classification accuracy. Similarity
+proposed algorithm surpasses all compared algorithms. With only one             Cache has shown stronger representation ability using text labels from
+available learning shot, the proposed algorithm exhibits a 23.81% ac­           ImageNet than Target Dataset. There are 1000 text labels in ImageNet
+curacy gain over Tip-Adapter and a 5.21% gain over TIP-X. The 5.21%             while only 14 text labels in modified SODA and 22 text labels in TOCS.
+gain translates to approximately 158 more accurately predicted images           More comprehensive inter-class similarity information is captured in
+on the SODA Test Set.                                                           ImageNet-based Similarity Cache.
+
+4.3.2. Accuracy comparison on TOCS                                              4.3.3. Computation efficiency comparison
+    The few-shot classification accuracy over TOCS dataset is shown in              This section compares the efficiency of the proposed algorithms with
+Fig. 11 and Table 10. Consistent with performance on SODA, the pro­             CLIP zero-shot, Tip-Adapter, and TIP-X. Despite achieving the highest
+posed algorithm demonstrates the top classification accuracy across all         classification accuracy, the proposed algorithm requires significantly
+dataset splits.                                                                 less computation time than TIP-X. This efficiency stems from TIP-X’s
+    Since the proposed TOCS dataset is relatively small, 1-shot perfor­         requirement for 200,000 optimization steps for searching hyper­
+mance is evaluated on 5 randomly generated Train-Valid-Test splits.             parameters (β, α1 , α2 ). In contrast, the proposed algorithm leverages
+Whereas CLIP zero-shot achieved only 23.17% accuracy on SODA, it                rescaled Logit vis and Logitsim , requiring only 40,000 search steps. The
+exhibits a significant jump to an average of near 58% on TOCS. This             computation time for each algorithm is shown in Table 11. All algo­
+improvement can be attributed to two factors. Firstly, textual de­              rithms are executed with a 1-shot setup on the same desktop equipped
+scriptions within TOCS are more nuanced, such as specifying the “Rebar          with an Nvidia RTX 2080 GPU. CLIP zero-shot exhibits the fastest
+coil” shape precisely. Secondly, objects like “Bucket” and “Hard hat” in        execution time on both datasets (under 10 s) due to its lack of hyper­
+TOCS are likely encountered by CLIP during its training, facilitating           parameter optimization. TIP-X and the proposed algorithm executes for
+easier recognition. With only one training image per class in Visual            a longer time than TIP-Adapter for optimizing weight of Similarity
+Cache, Tip-Adapter exhibits a modest 2% accuracy gain compared to               Cache α2 on Validation Set.
+CLIP zero-shot. In contrast, leveraging the Similarity Cache with TOCS’s
+labels, TIP-X achieves a substantial average accuracy of 78%. Ulti­
+                                                                                4.4. Ablation study
+mately, the proposed algorithm, empowered by both Visual Cache and
+ImageNet-based Similarity Cache, surpasses all compared algorithms
+                                                                                4.4.1. Comparison on different caches
+with an average accuracy of 83%. Notably, in Split 5, the proposed al­
+                                                                                   Eq. (14) defines the overall prediction as a weighted sum of indi­
+gorithm reaches a remarkable 89.58% accuracy, representing a 17%
+                                                                                vidual contributions from CLIP zero-shot, Visual Cache, and Similarity
+improvement over existing TIP-X.
+                                                                                Cache. To delve into the role of each component, this section analyzes
+    The consistent performance on SODA and TOCS reaffirms the
+                                                                                their independent performance. In Fig. 12 (a), “Visual” represents the
+effectiveness of the proposed algorithm. By introducing ImageNet-based
+                                                                                Visual Cache, “SODA sim” denotes the Similarity Cache with SODA’s
+
+                                                                           11
+Y. Liang et al.                                                                                                    Automation in Construction 165 (2024) 105542
+
+
+
+
+                                                 Fig. 11. Few-shot classification performance on TOCS.
+
+
+text labels, and “ImageNet sim” signifies the ImageNet-based Similarity         prediction accuracy. This implies that with more visual features, the
+Cache. Similarly, “TOCS sim” in Fig. 12 (b) stands for the Similarity           Visual Cache’s prediction accuracy increases faster than the Similarity
+Cache with TOCS’s text labels.                                                  Cache’s.
+   Fig. 12 (a) reveals the independent prediction accuracy of each cache            Fig. 12 (b) focuses on the 1-shot setting, where the ImageNet-based
+on SODA. In the 1-shot and 2-shot settings, the “ImageNet sim” dem­             Similarity Cache again demonstrates the highest average accuracy
+onstrates the best accuracy among all compared approaches. It achieves          across the five dataset splits. The difference in prediction accuracy on
+43% accuracy with only one training image, whereas the “SODA sim”               different splits can be attributed to randomly selecting one-shot learning
+reaches 32.45% in the same setting. This suggests that the 1000                 images. Notably, in Split 1, “ImageNet sim” achieves an impressive
+ImageNet text labels provide a more useful distribution of image-text           87.5% accuracy, compared to 73% for the “TOCS sim”. This substantial
+similarity features for each object class. However, for 4-shot setups           improvement, observed across all splits, underscores the effectiveness of
+and beyond, the Visual Cache surpasses all independent contributions in         leveraging open-source ImageNet text labels for enriching semantic
+
+
+
+
+                                   Fig. 12. Classification accuracy for independent caches on (a) SODA and (b) TOCS.
+
+                                                                           12
+Y. Liang et al.                                                                                                            Automation in Construction 165 (2024) 105542
+
+
+features and enhancing classification performance.                                    weight ratio of CLIP zero-shot, Visual Cache and Similarity Cache is 1:
+    To further elucidate the distinct representations learned by each                 α1 : α2 . If α1 or α2 equals to 1.0, it means Visual Cache or Similarity Cache
+Cache, Fig. 13 employs the t-SNE dimensionality reduction tool [34] to                has the same importance with the result of CLIP zero-shot.
+visualize the features of test images from the SODA dataset. Fig. 13(a)                    Table 13 presents the optimal hyperparameter values obtained
+visualizes the test image features Iquery for Visual Cache prediction.                through grid search on Validation Set to maximize accuracy. The
+Fig. 13 (b) displays the test similarity features SIMquery imgNet for Simi­           sharpness ratio β exhibits a moderate increase from 28.04 to 36.00 as the
+larity Cache prediction in the proposed algorithm. Each distinct color                number of learning shots increases from 1 to 16. The number of learning
+represents one of the 14 temporary object categories in the SODA Test                 shots suggests limited impact on the selection of β value. The weight of
+Set. Notably, compared to Iquery , the proposed SIMquery imgNet exhibits              Similarity Cache α2 changes from 1.09 to 4.06 with different learning
+superior intra-class clustering, evidenced by tighter clusters within each            shots. The value of α2 is consistently larger than 1, suggesting that
+category. Furthermore, the inter-class boundaries, the demarcations                   Similarity Cache has greater importance compared to CLIP zero-shot.
+between different categories, are visually more pronounced for                        This is particularly evident in the 1-shot and 2-shot setups, where α2
+SIMquery imgNet . This demonstrates the enhanced discriminative power of              values of 3.07 and 4.06, respectively. It indicates that Similarity Cache
+the proposed ImageNet-based Similarity Cache for distinguishing be­                   predictions are three to four times more impactful than CLIP zero-shot.
+tween various object classes.                                                         The weight of Visual Cache α1 shows a significant increase form 9.5 in
+                                                                                      the 1-shot setup to 170.0 in the 16-shot setup. This trend implies the
+4.4.2. Different matching functions for similarity cache                              growing dominance of Visual Cache as the number of learning shots
+    One major difference of the proposed algorithm from TIP-X lies in its             increases. The accumulating visual features within the Cache enhance its
+Similarity Cache Matching function, expressed in Eq. (9). This equation               reliability and predictive power. In contrast, Similarity Cache shows
+provides an effective approach to gauge the affinity between the cached               limited ability to be improved by more learning shots.
+similarity distribution SIMsupport imgNet and the query similarity distribu­
+tion Iquery . In contrast, TIP-X relies on KL-divergence to measure the af­           4.4.4. Study of text prompts
+finity between the query distribution and support distributions. To                       CLIP has learned a wide range of visual concepts directly from nat­
+facilitate a direct comparison, this section utilizes Target Dataset text             ural language. CLIP zero-shot classification is sensitive to the text
+labels within the proposed algorithm’s matching function, mimicking                   prompts that describe the images. This section compares the CLIP zero-
+the approach adopted by TIP-X. Table 12 presents the comparative                      shot classification performance using different text prompts. Two types
+classification accuracy for both SODA and TOCS datasets when                          of text prompts are compared: the basic text prompts and handcrafted
+employing different matching functions. The proposed Eq. (9) indicates                text prompts. Basic text prompt applies the template “This is a photo of
+higher classification accuracy on average for both SODA and TOCS. In                  X” by replacing “X” with object labels. Handcrafted text prompts are
+the 4-shot setup of SODA and Split 1 of TOCS, KL-divergence is slightly               created for each object using dictionaries and Wikipedia, shown in
+better than the proposed function. While the proposed function dem­                   Table 14. Fig. 14 shows CLIP zero-shot classification using text prompts
+onstrates overall effectiveness, surpassing the widely used KL-                       “This is a photo of X” and handcrafted text prompts in Table 14.
+divergence, the performance gap between the two approaches is not                     Handcrafted text prompts successfully rectify misclassifications pre­
+substantial. Both functions adequately capture the affinity between the               dicted by basic text prompts. This improvement arises from the enriched
+support and query distributions, suggesting that the choice may depend                contextual knowledge within the handcrafted prompts, enabling a more
+on specific dataset characteristics and task requirements.                            accurate matching with on-site objects. For example, the trolley is
+                                                                                      classified wrongly as “rebar” or “ladder” in the left part of Fig. 14. With
+4.4.3. Study of hyperparameters                                                       handcrafted text prompts in Table 14, the function of “trolley” is
+   The proposed algorithm has three hyperparameters, β in Eq. (5), α1                 described as “transport and carry heavy loads”. The specific description
+and α2 in Eq. (14). The sharpness of the exponential function is                      contributes to the correct classification in the right part of Fig. 14.
+controlled by β in Eq. (5). As Eq. (14) illustrates, the final prediction,            Similarly, for the photo of a buddle of buckets, the description of its
+represented by Logit, is a weighted sum of three components: CLIP zero-               shape as “round container” and its function of “catching, holding or
+shot, Visual Cache, and Similarity Cache. α1 and α2 determine the                     carrying liquids or solids” contributes to the improved classification in
+respective weights of the Visual Cache and Similarity Cache predictions,              the right part of Fig. 14. CLIP’s prior knowledge may include low-level
+which are rescaled to match the range of CLIP zero-shot. Their ratio                  knowledge such as colors, shapes of visual features and high-level se­
+defines the relative importance of each component. From Eq. (14), the                 mantic information such as the purpose of use for a tool or construction
+
+
+
+
+                                             Fig. 13. Visualization of features for (a) Iquery and (b) SIMquery imgNet .
+
+                                                                                 13
+Y. Liang et al.                                                                                                      Automation in Construction 165 (2024) 105542
+
+
+
+
+                                                Fig. 14. Zero-shot classification with different text prompts.
+
+
+material. Textual prompts with object related knowledge will signifi­             CLIP-based few-shot algorithms, the proposed algorithm introduces
+cantly improve CLIP zero-shot performance.                                        open-source object names to build Similarity Cache. Specifically, text
+                                                                                  labels from ImageNet are used to build image-text similarity distribution
+5. Discussions, applications and future work                                      as class prototypes. ImageNet-based Similarity Cache makes it practical
+                                                                                  for on-site learning without the input of well-defined object names.
+    Due to the lack of open-source datasets for on-site object classifica­            To Validate the performance of the proposed algorithm, the object
+tion, the proposed algorithm is evaluated on modified SODA and TOCS.              detection dataset SODA is modified for image classification. This study
+Regions of interest of original SODA images are cropped. The tight                also proposes TOCS dataset with 22 different types of on-site objects.
+bounding box may lose the context for pixels around the on-site tem­              Experiments on SODA and TOCS demonstrate the superior performance
+porary objects. The lack of background context partially accounts for the         of the proposed algorithm compared with all the baseline algorithms.
+relatively low accuracy of CLIP zero-shot prediction. Despite the pro­            While CLIP zero-shot achieves only 23.17% accuracy on SODA, the
+posed TOCS dataset having 22 categories of temporary objects, the total           proposed algorithm achieves 73.09% accuracy with only 16 shots of
+number of images is 90. The proposed algorithm could be evaluated                 learning images. With 1-shot learning, the proposed algorithm improves
+with more comprehensive construction datasets in future.                          the classification accuracy from 58% to 83% on the proposed TOCS. The
+    The proposed algorithm adopts the basic text prompt “This is a photo          proposed algorithm surpasses the state-of-the-art (SOTA) algorithm TIP-
+of X". In Section 4.4.4, CLIP has shown higher zero-shot classification           X by more than 5% accuracy with 1-shot learning on both SODA and
+accuracy for temporary objects with the help of detailed textual                  TOCS.
+prompts. To further improve the CLIP-based few-shot learning ability,                 The contributions of this paper are twofold. First, the proposed al­
+elaborate textual prompts can be explored.                                        gorithm introduces ImageNet-based Similarity Cache, enhancing the
+    The proposed algorithm introduces the open-source text labels for             CLIP-based few-shot classification accuracy using publicly available
+building Similarity Cache. The study focuses on text labels from                  open-source object labels. The proposed Similarity Cache matching
+ImageNet. Other text labels could be explored in future to provide inter-         function better evaluates the test feature with prototypes. Second, the
+class similarity distribution for building Similarity Cache. The criteria         TOCS dataset is proposed to evaluate the performance of the proposed
+for selecting these text labels will be useful.                                   algorithm. The SODA dataset for object detection is modified and
+    Besides object class recognition, object locations are useful for ro­         accommodated for few-shot image classification task. This work illus­
+botic construction and construction management. The proposed few-                 trates the possible future work to improve on-site visual intelligence by
+shot classification algorithm can potentially be applied for few-shot             utilizing VLM.
+object detection on construction sites. Object detection can be decom­                The limitation of this research has been identified as limited public
+posed into two sub-problems: object localization and classification.              dataset for validation and adoption of basic text prompts. Further
+Typical two-stage object detectors such as Faster R-CNN [35] extract              research is needed to investigate elaborate text prompts for VLM-based
+region proposals in the first stage and classify them in the second stage.        few-shot learning. Besides ImageNet text labels, other effective open-
+Region localization module in the first stage can be trained without              source text prompts could be explored to further improve the perfor­
+knowing the object class. The proposed CLIP-based few-shot image                  mance. There are also opportunities to adopt such training-free learning
+classification algorithm can be integrated with a class-agnostic locali­          algorithms for few-shot object detection (FSOD) on construction sites.
+zation module for few-shot object detection for construction objects.
+                                                                                  CRediT authorship contribution statement
+6. Conclusion
+                                                                                     Yuanchang Liang: Writing – review & editing, Writing – original
+    The recent success of vision-language foundation models like CLIP             draft, Visualization, Validation, Methodology, Formal analysis, Data
+has built a strong capability for feature extraction and cross-modality           curation, Conceptualization. Prahlad Vadakkepat: Writing – review &
+correlation. To address the challenging task of few-shot temporary ob­            editing, Supervision. David Kim Huat Chua: Writing – review & edit­
+ject recognition for robots and construction management, this paper               ing, Supervision, Resources. Shuyi Wang: Investigation, Data curation.
+proposes a CLIP-based few-shot image classification algorithm. The                Zhigang Li: Data curation. Shuxiang Zhang: Writing – review &
+proposed algorithm does not require any training to finetune the weights          editing.
+of the neural network. Knowledge from few-shot images is learned by
+building Visual Cache and Similarity Cache. Compared with existing
+
+                                                                             14
+Y. Liang et al.                                                                                                                               Automation in Construction 165 (2024) 105542
+
+
+Declaration of competing interest                                                                   Data availability
+
+    The authors declare that they have no known competing financial                                     Data will be made available on request.
+interests or personal relationships that could have appeared to influence
+the work reported in this paper.
+
+
+
+Appendix
+
+Summary of Notations
+
+
+  Symbol                            Explanation                                                                                                                               Dimension
+
+  D support                         Support Set
+  D query                           Query Set
+
+  N                                 Number of object classes
+  C                                 Number of channels for both image and text embeddings
+  K                                 Number of images per class                                                                                                                ℝ1×1
+  n                                 Total number of images in the support set (n = K × N)
+  M                                 Number of object classes in ImageNet
+
+  Ii                                Image embedding
+  Ti                                Text embedding                                                                                                                            ℝ1×C
+
+  Isupport                          Image embeddings of the Support Set                                                                                                       ℝn×C
+
+  Iquery                            Image embeddings of one query image from Query Set                                                                                        ℝ1×C
+
+  Ttarget                           Text embeddings of Target Dataset class labels                                                                                            ℝn×C
+
+  TimgNet                           Text embeddings of ImageNet class labels                                                                                                  ℝm×C
+
+  SIMsupport target                 Cosine similarity distribution between support images and Target Dataset’s labels                                                         ℝn×N
+
+  SIMsupport imgNet                 Cosine similarity distribution between support images and ImageNet labels                                                                 ℝn×M
+
+  SIMquery target                   Cosine similarity distribution between one query image and Target Dataset’s labels                                                        ℝ1×N
+
+  SIMquery target                   Cosine similarity distribution between one query image and ImageNet labels                                                                ℝ1×M
+
+  Avis                              The affinity between query visual feature and cached support visual features in Visual Cache
+                                                                                                                                                                              ℝ1×n
+  Asim                              The affinity between one query similarity distribution and cached support similarity distributions in Similarity Cache
+
+  Lsupport                          One-Hot encoding of object class labels                                                                                                   ℝn×N
+
+  Logitzshot                        Prediction logits of CLIP Zero-shot
+  Logitvis                          Prediction logits of Visual Cache
+                                                                                                                                                                              ℝ1×N
+  Logitsim                          Prediction logits of Similarity Cache
+  Logit                             Overall prediction logits
+
+
+
+
+References                                                                                               2022, Lecture Notes in Computer Science, Springer, Cham, Berlin, Heidelberg,
+                                                                                                         2022, pp. 493–510, https://doi.org/10.1007/978-3-031-19833-5_29.
+                                                                                                     [9] A. Radford, J.W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,
+ [1] S.K. Baduge, S. Thilakarathna, J.S. Perera, M. Arashpour, P. Sharafi, B. Teodosio,
+                                                                                                         A. Askell, P. Mishkin, J. Clark, Learning transferable visual models from natural
+     A. Shringi, P. Mendis, Artificial intelligence and smart vision for building and
+                                                                                                         language supervision, in: Proceedings of the 38th International Conference on
+     construction 4.0: machine and deep learning methods and applications, Autom.
+                                                                                                         Machine Learning, PMLR, 2021, pp. 8748–8763, in: https://proceedings.mlr.pr
+     Constr. 141 (2022) 104440, https://doi.org/10.1016/j.autcon.2022.104440.
+                                                                                                         ess/v139/radford21a.html (accessed April 9, 2024).
+ [2] N. Melenbrink, J. Werfel, A. Menges, On-site autonomous construction robots:
+                                                                                                    [10] J. Deng, W. Dong, R. Socher, L.-J. Li, Kai Li, Li Fei-Fei, ImageNet: A large-scale
+     towards unsupervised building, Autom. Constr. 119 (2020) 103312, https://doi.
+                                                                                                         hierarchical image database, in: 2009 IEEE Conference on Computer Vision and
+     org/10.1016/j.autcon.2020.103312.
+                                                                                                         Pattern Recognition, IEEE, Miami, FL, USA, 2009, pp. 248–255, https://doi.org/
+ [3] J. Teizer, Status quo and open challenges in vision-based sensing and tracking of
+                                                                                                         10.1109/CVPR.2009.5206848.
+     temporary resources on infrastructure construction sites, Adv. Eng. Inform. 29
+                                                                                                    [11] J. Yang, M.-W. Park, P.A. Vela, M. Golparvar-Fard, Construction performance
+     (2015) 225–238, https://doi.org/10.1016/j.aei.2015.03.006.
+                                                                                                         monitoring via still images, time-lapse photos, and video streams: now, tomorrow,
+ [4] S. Paneru, I. Jeelani, Computer vision applications in construction: current state,
+                                                                                                         and the future, Adv. Eng. Inform. 29 (2015) 211–224, https://doi.org/10.1016/j.
+     opportunities & challenges, Autom. Constr. 132 (2021) 103940, https://doi.org/
+                                                                                                         aei.2015.01.011.
+     10.1016/j.autcon.2021.103940.
+                                                                                                    [12] Z.-Q. Zhao, P. Zheng, S.-T. Xu, X. Wu, Object detection with deep learning: a
+ [5] X. Wu, D. Sahoo, S.C.H. Hoi, Recent advances in deep learning for object detection,
+                                                                                                         review, IEEE Trans. Neural Netw. Learn. Syst. 30 (2019) 3212–3232, https://doi.
+     Neurocomputing 396 (2020) 39–64, https://doi.org/10.1016/j.
+                                                                                                         org/10.1109/TNNLS.2018.2876865.
+     neucom.2020.01.085.
+                                                                                                    [13] W. Fang, L. Ding, B. Zhong, P.E.D. Love, H. Luo, Automated detection of workers
+ [6] W.-Y. Chen, Y.-C. Liu, Z. Kira, Y.-C.F. Wang, J.-B. Huang, A closer look at few-shot
+                                                                                                         and heavy equipment on construction sites: a convolutional neural network
+     classification, in: 7th International Conference on Learning Representations (ICLR
+                                                                                                         approach, Adv. Eng. Inform. 37 (2018) 139–149, https://doi.org/10.1016/j.
+     2019), New Orleans, LA, USA, 2019, https://doi.org/10.48550/arXiv.1904.04232.
+                                                                                                         aei.2018.05.003.
+ [7] L. Zhou, P. Cui, X. Jia, S. Yang, Q. Tian, Learning to select base classes for few-shot
+                                                                                                    [14] X. Luo, H. Li, D. Cao, F. Dai, J. Seo, S. Lee, Recognizing diverse construction
+     classification, in: 2020 IEEE/CVF Conference on Computer Vision and Pattern
+                                                                                                         activities in site images via relevance networks of construction-related objects
+     Recognition (CVPR), IEEE, Seattle, WA, USA, 2020, pp. 4623–4632, https://doi.
+                                                                                                         detected by convolutional neural networks, J. Comput. Civ. Eng. 32 (2018)
+     org/10.1109/CVPR42600.2020.00468.
+                                                                                                         04018012, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000756.
+ [8] R. Zhang, W. Zhang, R. Fang, P. Gao, K. Li, J. Dai, Y. Qiao, H. Li, Tip-adapter:
+                                                                                                    [15] D. Wang, X. Wang, B. Ren, J. Wang, T. Zeng, D. Kang, G. Wang, Vision-based
+     Training-free adaption of CLIP for few-shot classification, in: S. Avidan, G. Brostow,
+                                                                                                         productivity analysis of cable crane transportation using augmented reality–based
+     M. Cissé, G.M. Farinella, T. Hassner (Eds.), Computer Vision – ECCV 2022. ECCV
+                                                                                                         synthetic image, J. Comput. Civ. Eng. 36 (2022) 04021030, https://doi.org/
+                                                                                                         10.1061/(ASCE)CP.1943-5487.0000994.
+
+
+                                                                                               15
+Y. Liang et al.                                                                                                                              Automation in Construction 165 (2024) 105542
+
+[16] S. Kumar, H. Gupta, D. Yadav, I.A. Ansari, O.P. Verma, YOLOv4 algorithm for the                   Vancouver, Canada, 2020, pp. 16108–16118, https://doi.org/10.48550/
+     real-time detection of fire and personal protective equipments at construction sites,             ARXIV.1910.05199.
+     Multimed. Tools Appl. 81 (2022) 22163–22183, https://doi.org/10.1007/s11042-                 [25] C. Finn, P. Abbeel, S. Levine, Model-agnostic meta-learning for fast adaptation of
+     021-11280-6.                                                                                      deep networks, in: Proceedings of the 34th International Conference on Machine
+[17] Y. Song, T. Wang, P. Cai, S.K. Mondal, J.P. Sahoo, A comprehensive survey of few-                 Learning - Volume 70, PMLR, Sydney, NSW, Australia, 2017, pp. 1126–1135, in:
+     shot learning: evolution, applications, challenges, and opportunities, ACM Comput.                https://proceedings.mlr.press/v70/finn17a.html (accessed April 9, 2024).
+     Surv. 55 (2023) 1–40, https://doi.org/10.1145/3582688.                                       [26] G. Koch, R. Zemel, R. Salakhutdinov, Siamese neural networks for one-shot image
+[18] X. Li, X. Yang, Z. Ma, J.-H. Xue, Deep metric learning for few-shot image                         recognition, in: ICML Deep Learning Workshop, 2015. https://api.semanticscholar.
+     classification: a review of recent developments, Pattern Recogn. 138 (2023)                       org/CorpusID:13874643 (accessed April 9, 2024).
+     109381, https://doi.org/10.1016/j.patcog.2023.109381.                                        [27] Z. Cui, Q. Wang, J. Guo, N. Lu, Few-shot classification of façade defects based on
+[19] S.X. Hu, D. Li, J. Stuhmer, M. Kim, T.M. Hospedales, Pushing the limits of simple                 extensible classifier and contrastive learning, Autom. Constr. 141 (2022) 104381,
+     pipelines for few-shot learning: External data and fine-tuning make a difference, in:             https://doi.org/10.1016/j.autcon.2022.104381.
+     2022 IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR),                  [28] Y. Xu, Y. Bao, Y. Zhang, H. Li, Attribute-based structural damage identification by
+     IEEE, New Orleans, LA, USA, 2022, pp. 9058–9067, https://doi.org/10.1109/                         few-shot meta learning with inter-class knowledge transfer, Struct. Health Monit.
+     CVPR52688.2022.00886.                                                                             20 (2021) 1494–1517, https://doi.org/10.1177/1475921720921135.
+[20] H. Wang, H. Zhao, B. Li, Bridging multi-task learning and meta-learning: Towards             [29] J. Kim, S. Chi, A few-shot learning approach for database-free vision-based
+     efficient training and effective adaptation, in: M. Meila, T. Zhang (Eds.),                       monitoring on construction sites, Autom. Constr. 124 (2021) 103566, https://doi.
+     Proceedings of the 38th International Conference on Machine Learning, PMLR,                       org/10.1016/j.autcon.2021.103566.
+     2021, pp. 10991–11002, in: https://proceedings.mlr.press/v139/wang21ad.html.                 [30] V. Udandarao, A. Gupta, S. Albanie, SuS-X: Training-free name-only transfer of
+     (Accessed 9 April 2024).                                                                          vision-language models, in: 2023 IEEE/CVF International Conference on Computer
+[21] L. Khacef, V. Gripon, B. Miramond, GPU-based self-organizing maps for post-                       Vision (ICCV), IEEE, Paris, France, 2023, pp. 2725–2736, https://doi.org/10.1109/
+     labeled few-shot unsupervised learning, in: H. Yang, K. Pasupa, A.C.-S. Leung, J.                 ICCV51070.2023.00257.
+     T. Kwok, J.H. Chan, I. King (Eds.), Neural Information Processing, Springer                  [31] X. Zhu, R. Zhang, B. He, A. Zhou, D. Wang, B. Zhao, P. Gao, Not all features matter:
+     International Publishing, Cham, 2020, pp. 404–416, https://doi.org/10.1007/978-                   Enhancing few-shot CLIP with adaptive prior refinement, in: 2023 IEEE/CVF
+     3-030-63833-7_34.                                                                                 International Conference on Computer Vision (ICCV), IEEE, Paris, France, 2023,
+[22] X. Zhong, C. Gu, W. Huang, L. Li, S. Chen, C.-W. Lin, Complementing                               pp. 2605–2615, https://doi.org/10.1109/ICCV51070.2023.00246.
+     representation deficiency in few-shot image classification: A meta-learning                  [32] A. Krizhevsky, G. Hinton, Learning Multiple Layers of Features from Tiny Images,
+     approach, in: 2020 25th International Conference on Pattern Recognition (ICPR),                   University of Toronto, 2009. https://www.cs.toronto.edu/~kriz/cifar.html
+     IEEE, Milan, Italy, 2021, pp. 2677–2684, https://doi.org/10.1109/                                 (accessed April 9, 2024).
+     ICPR48806.2021.9412416.                                                                      [33] R. Duan, H. Deng, M. Tian, Y. Deng, J. Lin, SODA: a large-scale open site object
+[23] J. Xu, J.-F. Ton, H. Kim, A.R. Kosiorek, Y.W. Teh, MetaFun: Meta-Learning with                    detection dataset for deep learning in construction, Autom. Constr. 142 (2022)
+     iterative functional updates, in: Proceedings of the 37th International Conference                104499, https://doi.org/10.1016/j.autcon.2022.104499.
+     on Machine Learning, PMLR, 2020, pp. 10617–10627, in: https://proceedings.mlr.               [34] L. van der Maaten, G. Hinton, Visualizing data using t-SNE, J. Mach. Learn. Res. 9
+     press/v119/xu20i.html (accessed April 9, 2024).                                                   (2008) 2579–2605, http://jmlr.org/papers/v9/vandermaaten08a.html (accessed
+[24] M. Patacchiola, J. Turner, E.J. Crowley, M. O’Boyle, A. Storkey, Bayesian meta-                   April 9, 2024).
+     learning for the few-shot setting via deep kernels, in: Advances in Neural                   [35] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: towards real-time object detection
+     Information Processing Systems (NeurIPS 2020), Curran Associates, Inc.,                           with region proposal networks, IEEE Trans. Pattern Anal. Mach. Intell. 39 (2017)
+                                                                                                       1137–1149, https://doi.org/10.1109/TPAMI.2016.2577031.
+
+
+
+
+                                                                                             16
+

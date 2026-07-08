@@ -1,0 +1,972 @@
+                                                                  Automation in Construction 93 (2018) 148–164
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                               Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Computer vision aided inspection on falling prevention measures for                                                                                       T
+steeplejacks in an aerial environment
+                                      ⁎
+Qi Fanga,b, Heng Lib, , Xiaochun Luob, Lieyun Dinga, Hanbin Luoa, Chengqian Lia
+a
+    School of Civil Engineering &Mechanics, Huazhong University of Science & Technology, Wuhan, China
+b
+    Department of Building and Real Estate, The Hong Kong Polytechnic University, Hong Kong
+
+
+
+
+A R T I C LE I N FO                                         A B S T R A C T
+
+Keywords:                                                   Falling from height accidents are a major cause of fatalities on construction sites. Despite a lot of research
+Fall prevention                                             conducted on the enhancement of safety training and removal of hazardous areas, falling accidents remain a
+PPE                                                         major threat for steeplejacks. According to NOISH FACE reports, 75.1% of the fall from height decedents didn't
+Automated monitoring                                        use the Personal Fall Arrest Systems (PFAS), which shows insuﬃcient supervision of the use of Personal
+Computer vision
+                                                            Protective Equipment (PPE) by steeplejacks. Few scholars consider PFAS an important measure to prevent falls
+Deep learning
+                                                            and the existing studies on PPE inspections showed that they were unsuitable for the scenarios faced by stee-
+                                                            plejacks. This paper proposes an automated inspection method to check PPEs' usage by steeplejacks who are
+                                                            ready for aerial work beside exterior walls. An aerial operation scenario understanding method is proposed,
+                                                            which makes the inspection a preventative control measure and highly robust to noise. A deep-learning based
+                                                            occlusion mitigation method for PPE checking is introduced. We tested the performance of our method under
+                                                            various conditions and the experimental results demonstrate the reliability and robustness of our method to
+                                                            inspect falling prevention measures for steeplejacks and can help facilitate safety supervision.
+
+
+
+
+1. Introduction                                                                                 as well as Personal Fall Arrest Systems (PFAS), are necessary measures
+                                                                                                to prevent falls. The Duty to Have Fall Protection [8] and Fall Protection
+    Falls from height is one of the main causes of fatalities in the con-                       Systems Criteria and Practices [9] standards of the United States specify
+struction industry [1]. According to the data provided by the Bureau of                         how to construct safe platforms under various working environments at
+Labor Statistics, out of 937 fatal construction accidents in the United                         height, as well as a detailed description of how to use personal pro-
+States in 2015, 350 of them were caused by falls [2]. According to the                          tective equipment (PPE) for the work. In Great Britain, The Work at
+HSE's (Health and Safety Executive) summary, in Great Britain, falls                            Height Regulations stipulate that ‘every employer is required to carefully
+from height also remained the biggest cause of injury in the construc-                          inspect the fall protection measures of the whole aerial workplace and
+tion industry during 2016 [3,4]. Similarly, the National Institute for                          steeplejacks shall select suitable PPE according to their trades’ [10]. In
+Occupational Safety and Health suggest that fall accidents account for                          summary, necessary inspections and appropriate use of PPE assists in
+around 40% of fatal accidents and 30% of accidents resulting in injuries                        the development of a safe working environment at height.
+in Japan, and 40% of fatal accidents and 17% of non-fatal injuries in                               In view of the high frequency and severe consequence of falling
+Korea [5]. In addition, fall protection remains at the top of the safety                        from height accidents, a lot of research has focused on searching for
+violations lists of OSHA's (Occupational Safety and Health Adminis-                             every possible way to avoid such accidents from happening, e.g. by
+tration) reports since 2016 [6], where inadequate fall protection is one                        removal of hazardous areas, use of guardrail or safety net systems,
+of the major causes.                                                                            administrative controls or fall portents detection. However, due to
+    Most fatal falling from height accidents are in fact preventable [1].                       various unexpected situations, steeplejacks are inevitably faced with
+Plenty of standards and regulations about prevention measures have                              the risk of falling so the use of the PFAS is the protection measure most
+been implemented in various countries and regions to ensure the safety                          likely to save their lives. OSHA pointed out that PFAS are only required
+of steeplejacks. The Practical Guide to Working At Height, published by                         to be used in the working environment at height of 6 ft or more [11]. In
+the Hong Kong Housing Authority [7], points out that appropriate                                fact, in NIOSH FACE reports [12], it was found that at the time of the
+implementation of barriers, fences, guard-rails and working platforms,                          fall, 54.2% of the fall decedents did not have access to PFAS; 23.1% of
+
+
+    ⁎
+        Corresponding author.
+        E-mail address: bshengli@polyu.edu.hk (H. Li).
+
+https://doi.org/10.1016/j.autcon.2018.05.022
+Received 5 December 2017; Received in revised form 14 May 2018; Accepted 15 May 2018
+Available online 25 May 2018
+0926-5805/ © 2018 Elsevier B.V. All rights reserved.
+Q. Fang et al.                                                                                                        Automation in Construction 93 (2018) 148–164
+
+
+the PFAS status is present but not in use; and only 2.2% of the decedents          committed to the appropriate use of guardrail or safety net systems to
+fall from height of < 6 ft. In other words, a total of 75.1% of the fall           protect workers. Navon and Kolton attached sensors to guardrails to
+decedents are required to use PFAS but fail to do so.                              inspect their installation, and warnings will be issued whenever
+    Meanwhile, in certain speciﬁc situations, especially when dec-                 guardrails are missing or diﬀerent from the planned ones [22,23]. Zu-
+orating exterior walls, workers are occasionally exposed to dangerous              luaga and Albert [24] use virtual prototyping methods to check bridge
+working platforms (e.g. edges without barriers, fences, guard-rails etc.).         guardrails' usage. Cheung and Chan [25] directly invented a Rapid
+Therefore, a new automatic inspection method is urgently needed to                 Demountable Platform (RDP) device, which can be ﬂexibly applied to
+protect steeplejacks by enhancing the supervision of PFAS use at height.           prevent external workers from falling from height. Furthermore, ad-
+However, two aspects challenge the application of the automatic in-                ministrative controls are another method to help reduce falling acci-
+spection of a PFAS by computer vision methods. First, the usage of PFAS            dents by improving workers' safety awareness. Kaskutas, Dale, et al.
+is conditional and is only used when workers are at a height of 6 ft or            [26] found that groups trained by a foreman and apprentice in fall
+more [11]. The automatic supervision method is required to determine               prevention, greatly improved the safety awareness and working en-
+whether a worker is engaged in works at height before inspecting their             vironment of workers. Lin, Migliaccio, et al. [27] used a 3D training
+usage of PPE. On the other hand, the supervision of the PFAS is not                platform to promote the knowledge of canonical working procedures of
+limited to harness wearing but also rope anchor checking and wearing               falling protection. Evanoﬀ, Dale, et al. [28] focus on improving the
+hardhats [11,13].                                                                  workers' participation in training, such as hands-on practice, simula-
+    The aim of this paper is to promote the use of the PFAS in working             tions and reality-based training. These improved training methods
+environments at height beside exterior walls, since falling accidents              aimed at enhancing the safety behavior of workers when working at
+remain the leading cause for work fatalities in the construction industry          height. In addition, many researchers recognized workers' postures and
+in many countries, including the U.K. (44%) and the U.S. (35%)                     movement patterns by making them wear devices and then analyzing
+[14–16]. Supervision enhancement of the use of the PFAS in aerial work             the fall portents, thus reducing fall accidents [29–33].
+is one of the most eﬀective ways to ensure the safety of steeplejacks.                 Despite PFAS being one of the most important measures in pre-
+Few studies considered taking approaches to strengthen the inspection              venting fall accidents, few scholars work on the appropriate usage
+of the PPE use by steeplejacks and the existing studies on PPE mon-                checking of PFAS for the steeplejacks.
+itoring are not yet applied to PFASs. Accordingly, this paper proposes a
+novel method, based on computer vision, to automatically inspect the               2.2. Related research on PPEs inspection
+appropriate usage of PFASs among steeplejacks before they enter an
+aerial working environment. The core of this paper lies in two parts as                Despite few scholars focusing on the inspection of PFAS usage for
+follows: First, considering the scope of usage of PPE, this paper pro-             steeplejacks, a lot of research proceeds in other PPEs' inspection for
+poses a method of scenario recognition for aerial working environ-                 workers on construction sites. Here, PPEs refer to garments or equip-
+ments, which is used as the basis for judging whether PFASs are needed.            ment designed to protect the workers from being injured, mainly in-
+Second, we have a trained deep learning model to identify multiple                 cluding fall arrest systems, protective clothing, helmets, goggles and so
+PPEs. And the inspection of PPEs includes not only harness checking but            on [34]. The state-of-the-art studies for PPEs' inspections are introduced
+also webbing, anchoring and wearing hardhats. Our method can iden-                 below.
+tify and distinguish multiple combinations of unsafe behavior.                         Sensor based methods are widely used in PPEs' inspections due to
+                                                                                   their portability and ﬂexibility. Barro-Torres, Fernández-Caramés, et al.
+2. Literature review                                                               [35] attached RFID tags to all PPEs and a RFID reader was given to
+                                                                                   every worker at the same time. This way, the readers attached to the
+   This study focuses on preventing accidents caused by falls from                 workers could detect the presence of PPE that was worn by the workers.
+heights for steeplejacks through inspecting the appropriate use of PPEs.           Kelm, Laußat, et al. [36] used automated identiﬁcation (ID) and in-
+Thus, ﬁrstly, we reviewed solutions provided by related literature for             formation technologies (IT) to design a RFID portal that was positioned
+the falls from height prevention in Section 2.1. Then, related research            at the entrance of the construction site to check PPE compliance of
+on PPEs' inspection is discussed in Section 2.2. In fact, few scholars             personnel. If a RFID portal is placed beside the window, we can check
+considered the PFAS as an important measure to prevent fall accidents              the presence of PFAS when a steeplejack is going out through the
+and the existing studies on PPEs' inspection did not meet the require-             window. However, whether the harness is worn by the steeplejack and
+ment of speciﬁc scenarios for steeplejacks. Therefore, an introduction to          the hook has been anchored or not, can hardly be distinguished. Pod-
+the development of computer vision based object detection methods,                 górski, Majchrzycka, et al. [37] use the Internet of Things (IoT) tech-
+which were used in our solution, is followed in Section 2.3.                       nologies to create smart working environments in which not only PPEs'
+                                                                                   information, but also hazardous and strenuous factors, such as noise,
+2.1. Related research of fall prevention                                           exposure to toxic chemical substances, optical radiation and high or low
+                                                                                   temperatures are monitored. Dong, He, et al. [38] combine pressure
+    According to the provisions of OSHA [17] and the summary of Es-                sensing and Bluetooth to assess how the hardhats are worn. The sensor-
+maeil, Hallowell, et al. [18], removal of hazardous areas, use of                  based methods listed above are limited by their intrusive nature, which
+guardrails or safety net systems, administrative controls and PFAS,                is highly dependent on workers' active cooperation. Moreover, it's hard
+constitute the primary protection for steeplejacks.                                to conﬁrm the proper use of PPEs.
+    Scholars have done a lot of research on how to prevent construction                Besides sensor-based methods, the application of computer vision
+workers from falling at height. On the one hand, removal of hazardous              techniques in PPE monitoring is becoming more and more popular.
+areas by design optimization is a feasible solution. Qi, Issa, et al. [19]         Some scholars use vision based methods to determine whether workers
+expand on the IFC hierarchy to conduct compliance checking and op-                 are wearing hardhats or not. Du, Shehata, et al. [39] determine whether
+timize building designs for safety, which provides an opportunity to               the PPEs have been worn by comparing the color features of the target
+prevent workers from falling. Zhang, Sulankivi, et al. [20] developed a            area on workers with the predeﬁned template of the PPEs. Shrestha,
+BIM based prototype with safety rule checking algorithms which can                 Shrestha, et al. [40] improved the above method by adding more fea-
+identify and eliminate potential fall hazards in the planning phase.               ture information besides color to improve the recognition accuracy of
+Wang, Pradhananga, et al. [21] proposed a laser scanning method to                 PPEs. These handcrafted features deﬁned by researchers are based on
+identify fall risks by analyzing geometrical properties during the con-            an assumption that the template features are the same as the practical
+struction phase. On the other hand, some of the scholars have                      objects, which is often unrealistic. Park, Elsafty, et al. [41] proposed a
+
+                                                                             149
+Q. Fang et al.                                                                                                        Automation in Construction 93 (2018) 148–164
+
+
+system architecture of PPE use detection in which Histogram of Or-                 extracted region proposals through CNN and improved the detection
+iented Gradient (HOG) features are drawn from the video images and                 precision. Compared to Faster R-CNN, YOLO [54] is a faster but lower
+input into the Support Vector Machine (SVM) for classiﬁcation. Despite             precision algorithm with problems such as missing the detection of
+the accuracy that has exceeded Du and Shrestha's research, HOG                     small objects. Finally, SSD [55] inherits the advantages of both Faster
+methods are still limited by low accuracy (10.2% precision in the                  R-CNN and YOLO, and achieves both high precision and fast speed.
+PASCAL VOC 2006 [42]), which makes it unsuitable for practical use on                  Therefore, we have considered SSD as the object detection solution
+site. Along with the rapid development of deep-learning techniques,                that will be employed in this paper. In a SSD framework, similar to
+Fang, Li, et al. [43] put forward a deep learning based method to detect           other object detection methods, a feature map is extracted through a
+non-PPE use on site. The proposed method resulted in high precision,               VGG16 network. Next, SSD utilize feature maps from several diﬀerent
+high recall and fast speeds among various kinds of visual conditions on            layers to jointly analyze whether a default box is an object or not. Since
+construction sites. However, all the methods above were only designed              feature maps from diﬀerent levels are considered to have diﬀerent re-
+to detect target PPEs without considering their usage scopes and proper            ceptive ﬁeld sizes [56] and the previous object detection methods didn't
+manner of use. For example, hardhats are required to be worn every-                utilize such advantages, the feature maps' capture mode of SSD is su-
+where on site, while PFAS are only required when workers are at the                perior and analyzes an image more comprehensively. Meanwhile, de-
+height of 6 ft or more [11]. On the other hand, the proper use of PPEs             fault boxes of diﬀerent layers represent diﬀerent pixel sizes. Therefore,
+should also be inspected.                                                          SSD can detect objects of diﬀerent scales and won't ignore tiny objects
+    In summary, the existing studies on PPEs' inspections show that they           as with the YOLO method. Multiple convolutional feature layers are
+aren't suitable for steeplejacks, since they neither recognize PPEs' usage         positioned at the end of the network to synthesize feature maps from
+scenarios nor distinguish the proper usage of PPEs. PPEs are the last              diﬀerent layers. Compared with using a fully connected layer, adding
+safeguard for steeplejacks. Considering few scholars emphasized its                multiple convolutional feature layers to the end can greatly reduce the
+importance in preventing fall accidents and the existing studies on the            number of parameters and improve speed.
+PPEs' inspection program didn't meet the speciﬁc requirements of                       Multiple object tracking (MOT) is another frequently used technique
+steeplejacks, there is value in proposing an advanced method to auto-              in the computer vision ﬁeld [57]. The same objects across diﬀerent
+matically monitor the PPEs use before steeplejacks enter aerial working            frames are associated with MOT methods and coherent information on
+areas. We have considered deep-learning based techniques as a feasible             the dynamic changes in a video sequence is extracted at the same time.
+solution because of low extra costs (construction sites are generally              There are two alternative types of candidate MOT methods in this
+equipped with surveillance cameras), simple structures and high per-               study. Correlation ﬁlter based tracking methods [58–61] achieve higher
+formance in vision analysis. Meanwhile, the ﬁeld of computer vision                accuracy at the expense of speed, which limits their use in real-time
+has developed rapidly [44,45] and the application of vision-based                  application. In comparison, simple online and real-time tracking
+methods to monitor safety is expected to achieve great advances in the             (SORT) [57] is a much simpler framework that achieves a favorable
+near future [46–49]. The vision based approach enables us to create an             performance. Due to its real-time processing speed and low training
+eﬀective monitoring environment for steeplejacks to ensure the proper              cost, SORT is employed in this study.
+use of PPEs. Next, we'll review the development of computer vision                     SORT tracker predicts a new position of the moving object by
+algorithms that we have employed in this study.                                    combining the location information in the current frame and the dis-
+                                                                                   placement direction and speed from previous frames. The following is
+2.3. Related deep learning algorithms in computer vision                           the framework of SORT: Kalman ﬁlter [62] is used in the prediction
+                                                                                   algorithm, then the assignment of the objects across the frames is solved
+    Inspection of the appropriate usage of PFAS requires several tech-             by a Hungarian algorithm [63] by linking the new location of an un-
+niques in computer vision: object classiﬁcation, object detection and              known object detected in an adjacent frame and the predicted location
+tracking algorithms are introduced in the following paragraph.                     from the Kalman ﬁlter. Therefore, all the objects are managed and
+    CNN (convolutional neural network) is mainly used for image                    tracked in the video sequence.
+classiﬁcation [50], which aims to determine the category of an object in
+a close-up image. Meanwhile, CNN is the basic kernel of deep learning              3. Methodology
+methods used in computer vision. A complete CNN consists of multiple
+convolutional layers, rectiﬁed linear units (ReLU), pooling layers as                  This paper presents a novel framework to inspect the appropriate
+well as a fully connected layer. The convolutional layers are the core             usage of PPEs by steeplejacks working at height beside exterior walls.
+building block of a CNN. The parameters of learnable ﬁlters in these               Fig. 1. illustrates the overall framework of the proposed methods in-
+layers are ﬁne-tuned during the training phase. As a result, the learned           volving these two steps.
+ﬁlters are used to detect and extract speciﬁc types of features by con-
+volutional operation with the input images. The ReLU layer enhances or             3.1. Understanding aerial operation scenarios
+suppresses the signals from convolutional layers by nonlinear mapping.
+The pooling layer can progressively reduce the spatial size and the                    There are two kinds of camera layout schemes to capture the videos
+number of parameters, which is helpful to avoid over ﬁtting. The high-             of steeplejacks, which will be discussed here in detail. The ﬁrst scheme
+level reasoning is done by the fully connected layer. It outputs the ca-           is to arrange cameras outside the building and capture videos from a
+tegory conﬁdence for each object of the input image.                               far-ﬁeld perspective. Since the dense safety net and scaﬀolding severely
+    As CNN processes close-up images of only one speciﬁc object, ad-               obstruct the vision of cameras and the long-distance greatly impacts the
+ditional algorithms are needed to extract them. Therefore, object de-              resolution, it is hard for outdoor cameras to collect high quality videos.
+tection methods separate objects from the background ﬁrst and then                 Insuﬃcient resolution and severe obstruction of videos impacts the
+determine their categories through CNN. Girshick, Donahue, et al. [51],            performance of computer vision-based technologies. Considering the
+proposed a R-CNN model in which the localization and segmentation                  obstructed vision of the cameras, the worker may have been engaged in
+process is added to the framework of basic CNN. He, Zhang, et al. [52]             an aerial working area for a long time before he was found not to be
+added a SPP (spatial pyramid pooling) layer in the R-CNN model to                  using any PPE. A better scheme would warn the steeplejacks before
+avoid graphics distortion that is caused by warping or cropping. Ren,              they enter the danger zone. Therefore, this scheme isn't applicable to
+He, et al. [53] presented Fast R-CNN that accelerated the processing               construction sites mainly because of the obstruction and low resolution.
+speed of RCNN by reconstructing the internal structure in the model.                   The second scheme is to arrange the cameras inside the buildings
+Ren, He, et al. [53] put forward the Faster R-CNN method, which                    and facing the windows. Steeplejacks always go through a window to
+
+                                                                             150
+Q. Fang et al.                                                                                                              Automation in Construction 93 (2018) 148–164
+
+
+
+
+                                                    Fig. 1. Overall framework of the proposed method.
+
+
+                                                                                  Table 1
+                                                                                  Six categories of positions between a steeplejack and a window.
+                                                                                   No.   The steeplejack gets close enough to one edge of the window   Demonstration
+
+                                                                                         Top           Left         Right            Bottom
+
+                                                                                   1     x             x            x                ✓
+
+
+
+
+                                                                                   2     ✓             x            x                ✓
+
+
+
+                                                                                   3     x             ✓            ×                ✓
+
+
+
+
+                                                                                         x             x            ✓                ✓
+
+
+
+ Fig. 2. The diﬀerence between ground truths and detected bounding boxes.
+                                                                                   4     ✓             ✓            x                ✓
+
+reach the outside of a building for aerial work if the main structure of
+the building has been completed. This is a common procedure for the                      ✓             x            ✓                ✓
+
+steeplejacks who are engaged in equipment installation and exterior
+wall decoration during either the construction stage or the renovation             5     x             ✓            ✓                ✓
+of an old building. Therefore, if we install cameras in rooms that face
+the windows, every worker who is trying to get to the outside of a
+building through a window will be captured by the surveillance cam-
+                                                                                   6     ✓             ✓            ✓                ✓
+eras. The distance between the camera and steeplejacks indoors is much
+less than the distance between the camera and steeplejacks outdoors,
+and there are hardly any obstructions in the room, such as dense safety
+nets or scaﬀolding, which makes it much easier for indoor cameras to
+obtain high quality videos. Meanwhile, inspecting the usage of PPEs by            classiﬁer to recognize steeplejacks and inspect whether they have car-
+steeplejacks before they reach a danger area is a preventative control            ried out necessary safety measures before they take part in tasks at
+that guarantees the safety of steeplejacks. Therefore, our method is              height.
+designed to inspect the steeplejacks on the condition that it is the sce-             As the basis of the next step, the same objects (windows and
+nario of a worker who's going out through a window.                               workers) are required to be detected and matched in diﬀerent frames.
+    In comparison, scene recognition, which requires contextual rea-              First, an object detection method (SSD [55]) is used to detect key ob-
+soning in addition to object detection, is still an open challenge in re-         jects in an image frame of surveillance videos. Then, a SORT [57] based
+cent research for computer vision techniques [64]. Here, we propose an            tracking method is used to associate the same objects across frames in a
+aerial operation scenario understanding method by combining the                   video sequence.
+computer vision technologies and an aerial scenario calibration (ASC)                 Spatial interaction between objects is then analyzed as the key
+
+
+                                                                            151
+Q. Fang et al.                                                                                                     Automation in Construction 93 (2018) 148–164
+
+
+
+
+                                            Fig. 3. The procedure of aerial operation scenarios understanding.
+
+
+
+
+                                                 Fig. 4. The module of PPEs' inspection for steeplejacks.
+
+
+context information for scenario understanding. For a worker p and a              worker. The alternative video clip of the worker p is annotated as
+window q, if the spatial interactions between them in consecutive                 Γ = {f1, f2, ⋯, ft}. In each frame, the spatial interaction between the
+frames all meet the condition that area(p) ⋂ area(q) ≠ ∅, then the                worker and the window is calculated as Formula 1. Here, we deﬁne
+consecutive frames will be extracted as an alternative video clip for the         spatial interaction as Spq, which indicates the interaction between the
+
+
+                                                                            152
+Q. Fang et al.                                                                                                                        Automation in Construction 93 (2018) 148–164
+
+
+
+
+                                                              Fig. 5. Example of a camera's placement in a room.
+
+
+Table 2
+Information of training dataset.
+  Training model      Objective                                                      Training dataset                                   Number of images
+
+  ASC classiﬁer       Aerial operation scenario recognition                          A worker is totally inside a window                9000
+                                                                                                                                        (about 1500 for each category listed in
+                                                                                                                                        Table 1)
+                                                                                     A worker intersects with a window but isn't        9000
+                                                                                     inside it                                          (about 1500 for each category listed in
+                                                                                                                                        Table 1)
+  Binary CNN model    Elimination of distractors where steeplejacks getting in       A steeplejack is getting in through the window     2000
+                      through a window                                               A steeplejack is getting out through the           2000
+                                                                                     window
+  SSD model           Aerial operation scenario recognition                          Worker                                             2000
+                                                                                     Window                                             2000
+                      PPEs inspection                                                A worker wearing a hardhat                         2000
+                                                                                     A worker not wearing a hardhat                     2000
+                                                                                     A worker wearing a harness                         2000
+                                                                                     A worker not wearing a harness                     2000
+                                                                                     Anchorages linked with a webbing                   2000
+                                                                                     Anchorages not linked with a webbing               2000
+
+
+
+
+                                                              Fig. 6. Spatial interaction of two bounding boxes.
+
+
+
+
+                                                                                     153
+Q. Fang et al.                                                                                                               Automation in Construction 93 (2018) 148–164
+
+
+Table 3
+Spatial interaction computation procedure.
+  No.            Worker                                          Window                                           M                    N                        Si
+
+                 Xt,l      Yt,l        Xb,r          Yb,r        Xt,l        Yt,l         Xb,r         Yb,r       XM       YM          XN          YN
+
+  1              15        280         384           1278        140         298          529          657        140      298         384         657          0.2379
+  2              35        212         393           1257        148         305          533          661        148      305         393         661          0.2331
+  3              35        240         376           1267        155         303          541          660        155      303         376         660          0.2253
+  4              36        267         395           1217        144         310          530          667        144      310         395         667          0.2627
+  5              40        236         385           1205        156         301          543          658        156      301         385         658          0.2445
+  6              32        217         385           1248        152         306          540          665        152      306         385         665          0.2298
+  7              36        190         383           1246        142         297          530          657        142      297         383         657          0.2368
+  8              8         247         393           1278        164         303          546          656        164      303         393         656          0.2037
+  9              36        223         376           1251        146         302          524          651        146      302         376         651          0.2297
+  10             109       234         276           519         148         301          526          650        148      301         276         519          0.5863
+  …              …         …           …             …           …           …            …            …          …        …           …           …            …
+
+
+
+
+                                                 Fig. 7. Probability density distribution of positive/negative samples.
+
+
+Table 4                                                                                   worker p and the window q.
+Information of testing dataset.
+                                                                                                  area (p) ∩ area (q)
+  Testing objective         Classiﬁcations       Scenarios in      Number of              Spq =
+                                                 each category     testing video
+                                                                                                        area (p)
+                                                                   clips
+                                                                                          Where area(∗) represents the area of the bounding box of a worker or an
+  Impact of illumination    4 diﬀerent           24                1116                   object. Note that we deﬁne box areas by units of pixel2.
+                            luminous ﬂux                                                      Ideally, detecting a frame that the worker is totally inside of is
+  Impact of worker's        4 diﬀerent workers   24                1116
+     characteristics
+                                                                                          suﬃcient proof that he is trying to go out through the window.
+  Impact of window's        6 diﬀerent           16                1116                   Therefore, given a video clip of a worker in ideal status, if the max value
+     characteristics        windows                                                       of Spq equals 1, there must be a worker going out through the window.
+  Impact of occlusion       Diﬀerent occlusion   /                 400                    However, inaccuracies in training and limitations of the model will
+                            ratios
+                                                                                          produce noise and errors [65], which means diﬀerences exist in both
+                                                                                          scale and spatial location between the detected bounding boxes from
+                                                                                          the computer vision and the actual outlines of objects from human eyes.
+                                                                                          Fig. 2 represents the diﬀerence between ground truth and detected
+                                                                                          bounding boxes of both windows and workers (the green boxes indicate
+                                                                                          ground truth and the red boxes indicate detected bounding boxes).
+
+                                                                                    154
+Q. Fang et al.                                                                                                                       Automation in Construction 93 (2018) 148–164
+
+
+Table 5
+Test results under diﬀerent illumination, worker's and window's characteristics.
+  No.     Illumination               Worker   Window   Number of video clips   Number of inappropriate-PPEs-use steeplejacks          TP       FP   FN      Precision   Recall rate
+
+  1       Daylight: 750–1500 (lux)   P1       W1       9                       7                                                      7        1    0       0.875       1.000
+  2       Daylight: 750–1500 (lux)   P1       W2       12                      10                                                     9        0    1       1.000       0.900
+  3       Daylight: 750–1500 (lux)   P1       W3       12                      11                                                     11       1    0       0.917       1.000
+  4       Daylight: 750–1500 (lux)   P1       W4       15                      14                                                     13       1    1       0.929       0.929
+  …       …                          …        …        …                       …                                                      …        …    …
+  31      Daylight: 200–750 (lux)    P2       W1       13                      12                                                     12       0    0       1.000       1.000
+  32      Daylight: 200–750 (lux)    P2       W2       15                      14                                                     14       0    0       1.000       1.000
+  33      Daylight: 200–750 (lux)    P2       W3       9                       7                                                      6        0    1       1.000       0.857
+  34      Daylight: 200–750 (lux)    P2       W4       11                      10                                                     10       0    0       1.000       1.000
+  …       …                          …        …        …                       …                                                      …        …    …
+  63      Daylight: 20–200 (lux)     P3       W3       10                      8                                                      7        0    1       1.000       0.875
+  64      Daylight: 20–200 (lux)     P3       W4       11                      9                                                      7        1    2       0.875       0.778
+  65      Daylight: 20–200 (lux)     P3       W5       10                      8                                                      7        1    1       0.875       0.875
+  66      Daylight: 20–200 (lux)     P3       W6       11                      10                                                     8        1    2       0.889       0.800
+  …       …                          …        …        …                       …                                                      …        …    …
+  93      Lamplight: 50–500 (lux)    P4       W3       8                       6                                                      5        0    1       1.000       0.833
+  94      Lamplight: 50–500 (lux)    P4       W4       8                       6                                                      6        1    0       0.857       1.000
+  95      Lamplight: 50–500 (lux)    P4       W5       15                      13                                                     12       1    1       0.923       0.923
+  96      Lamplight: 50–500 (lux)    P4       W6       10                      9                                                      9        1    0       0.900       1.000
+
+
+
+                                                                                           Here, Spi indicates spatial interaction between the detected
+                                                                                       bounding boxes of a worker p and a window q in the ith frame of an
+                                                                                       alternative video clip. HT represents the hypothesis that the worker is
+                                                                                       going out through the window, and HF represents the hypothesis that
+                                                                                       the worker is not going out through the window. The problem of jud-
+                                                                                       ging whether the worker is going out through the window amounts to a
+                                                                                       naive Bayesian decision formulation [66].
+
+                                                                                                           P (Spi | HT ) × P (HT )
+                                                                                       P (HT | Spi) =
+                                                                                                                    P (Spi )                                                     (2)
+
+
+                                                                                                           P (Spi | HF ) × P (HF )
+                                                                                       P (HF | Spi) =
+                                                                                                                    P (Spi )                                                     (3)
+
+                                                                                           Given a prior probability that P(HT) = P(HF), we can get Formula 4:
+
+                                                                                       P (HT | Spi )       P (Spi | HT )
+                                                                                                       =
+                                                                                       P (HF | Spi )       P (Spi | HF )                                                         (4)
+
+                                                                                           Here, J(Spi) is used to indicate whether the worker p in the alter-
+                                                                                       native video clip is going out through the window:
+
+                                                                                                        P (Spi | HT )
+                                                                                       J (Spi) = log
+                                                                                                        P (Spi | HF )                                                            (5)
+
+                                                                                           To calculate J(Spi), P(Spi| HT) and P(Spi| HF) need to be solved ﬁrst. A
+                                                                                       large number of samples, X = (x1, x2, ⋯, xn), are collected and cate-
+   Fig. 8. Image frame examples under 4 diﬀerent illumination conditions.              gorized into HT or HF to observe their probability density distribution.
+                                                                                       Each sample is annotated with xj(Sj, Cj), where Sj is spatial interaction
+                                                                                       between the detected bounding boxes of a worker and a window in
+These errors in scale and location may cause a worker's bounding box to                frame j, which is calculated by Formula 1, and Cj refers to the category
+exceed the window's area. Thus, from the view of computer vision, the                  of sample (HT or HF). From the statistics analysis of these training
+case that the max value of Spq < 1 when a worker is actually inside a                  samples, we concluded the distribution functions for S in HT and HF
+window is common. It's inaccurate to judge the scenarios of aerial work                hypothesis respectively: FT(S) and FF(S). Let fT(S) and fF(S) be the cor-
+only by Spq = 1 and a new algorithm, considering the error inﬂuence                    responding probability density of FT(S) and FF(S). Therefore, given
+generated in computer vision detection process is needed.                              S = Spi, P(Spi| HT) and P(Spi| HF) are calculated respectively by Formula
+    Thus, an ASC classiﬁer is employed to solve the above problem.                     6 and 7.
+Given a video clip in which an intersection exists between a worker and
+a window, an ASC classiﬁer can determine whether the worker is inside                                             p (Spi ≤ S ≤ Spi + ∆S | HT )
+the window according to the knowledge learnt from abundant training                    p (Spi | HT ) = lim
+                                                                                                         ∆S → 0               ∆S
+samples. The advantage of the ASC classiﬁer is that it's highly robust to
+                                                                                                                  FT (Spi + ∆S ) − FT (Spi )
+noise and errors generated in vision based detection and tracking al-                                  = lim                                   = fT (Spi)
+gorithms, which makes it able to classify diﬀerent scenarios precisely.                                  ∆S → 0                ∆S                                                (6)
+
+
+                                                                                 155
+Q. Fang et al.                                                                                                                       Automation in Construction 93 (2018) 148–164
+
+
+
+
+Fig. 9. (a). Precision ratios under diﬀerent illumination levels
+(b). Recall rate ratios under diﬀerent illumination levels.
+
+
+Table 6                                                                                                          fT (Spi )
+Precision and recall rate ratios under diﬀerent illumination levels.                             J (Spi) = log
+                                                                                                                 fF (Spi )                                                   (8)
+  No.       Illumination                      Average precision     Average recall rate
+                                                                                                     Given Sτ where it meets the requirement that J(Sτ) = 0. It is noted
+  1         Daylight: 750–1500 (lux)          0.938                 0.956
+  2         Daylight: 200–750 (lux)           0.933                 0.953
+                                                                                                 that location errors and scaling errors are the main reasons that cause
+  3         Daylight: 20–200 (lux)            0.882                 0.885                        Sτ < 1. Only if the edge of a steeplejack's bounding box gets close
+  4         Lamplight: 50–500 (lux)           0.931                 0.963                        enough to a window's (for example, (∣xb, rq − xb, rp ∣ < ω(xb, rp − xt, lp),
+                                                                                                 where ω is a predeﬁned parameter, and other variables can be referred
+                                                                                                 to Fig. 6), the above errors might lead to a false recognition of the
+                          p (Spi ≤ S ≤ Spi + ∆S | HF )                                           steeplejack's edge exceeding the window's bounding box. Therefore, in
+p (Spi | HF ) = lim
+                 ∆S → 0               ∆S                                                         the circumstances where the steeplejack is actually inside the window,
+                          FF (Spi + ∆S ) − FF (Spi )                                             diﬀerent positions between the steeplejack and the window might cause
+             = lim                                     = fF (Spi)                                diﬀerent Sτ. As shown in Table 1, six categories of positions are deﬁned
+                 ∆S → 0              ∆S                                              (7)
+                                                                                                 in this paper, and each class is trained separately with its own dataset.
+   Therefore, given the probability density distribution curves of fT(S)                         Finally, we get six diﬀerent Sτ corresponding to the diﬀerent positions.
+and fF(S), J(Spi) is obtained by Formula 8.                                                          The entire program of detecting a steeplejack can be concluded as
+
+                                                                                           156
+Q. Fang et al.                                                                                                         Automation in Construction 93 (2018) 148–164
+
+
+                                                                                     may not always be accurate. Therefore, the PPEs' inspection program
+                                                                                     will be conducted for all key frames in the previous section. As men-
+                                                                                     tioned before, a SORT based tracking method can associate the same
+                                                                                     steeplejack in a video sequence.
+                                                                                         Take hardhat-wearing inspection as an example. Let Ehat+i (Ehat+i
+                                                                                     should be above the conﬁdence threshold τhat+) be the conﬁdence of
+                                                                                     detecting a steeplejack wearing a hardhat in frame i, and Ehat−i (Ehat−i
+                                                                                     should be above the conﬁdence threshold τhat−) be the conﬁdence of
+                                                                                     detecting a steeplejack not wearing a hardhat in frame i. There is one
+                                                                                     more situation where neither of these two cases is detected in frame i
+                                                                                     due to occlusion, and no result is counted in such a situation. Then, we
+                                                                                     sum up Ehat+i and Ehat−i in all key frames respectively, If
+                                                                                     ∑Ehat+i > ∑ Ehat−i, the steeplejack is considered to have been wearing a
+                                                                                     hardhat, and vice versa. The inspection process on harness-wearing and
+                                                                                     anchorage use are the same as for hardhat-wearing inspection. Only if
+                                                                                     (∑Ehat+i > ∑ Ehat−i)&(∑Eharn+i > ∑ Eharn−i)&(∑Each+i > ∑ Each−i) are
+                                                                                     all true in a video clip, the steeplejack is allowed to continue to enter
+                                                                                     the     aerial    environment.       If     (∑Ehat+i = ∑ Ehat−i = 0)   or
+                                                                                     (∑Eharn+ = ∑ Eharn− = 0)or(∑Each+ = ∑ Each−i = 0) is satisﬁed in a
+                                                                                              i           i                i
+
+                                                                                     video clip, it indicates that a severe occlusions problem exists in the
+                                                                                     video clip, which causes diﬃculties in detection for the computer vision
+                                                                                     technique. Otherwise the steeplejack will be alerted by a loudspeaker
+                                                                                     placed beside the window.
+
+                                                                                     4. Experiments and results
+
+                                                                                     4.1. Experimental preparation
+
+                                                                                     4.1.1. Placement scheme of cameras
+Fig. 10. Image frame examples including diﬀerent physical characteristics of             As discussed in the methodology section, we used real-time sur-
+workers.                                                                             veillance videos, captured by indoor cameras, to inspect fall protection
+                                                                                     measures for steeplejacks. To achieve a better performance, the place-
+                                                                                     ment scheme of cameras is required to follow four principles: 1.
+follows: First, all frames meet the condition that area(p)⋂area(q) ≠ ∅
+                                                                                     monitor every steeplejack, 2. ensure suﬃcient resolution, 3. minimize
+will be extracted as an alternative video clip. Given an arbitrary frame
+                                                                                     occlusion, and 4. reduce the cost of equipment. Therefore, we installed
+of a video clip, if the position of a worker and a window satisﬁes
+                                                                                     one camera for each room at the height of about two meters to mini-
+Spi > Sτj (noted that diﬀerent positions correspond to diﬀerent Sτj), this
+                                                                                     mize occlusion, as shown in Fig. 5. The speciﬁc location of the camera
+frame is selected as a candidate frame. Then the appearance features of
+                                                                                     was varied to coincide with the location of windows. If the room is so
+the worker in this frame is extracted by a simple binary CNN model to
+                                                                                     large that it causes insuﬃcient resolution, or there are so many win-
+further determine whether he is getting out or in through the window.
+                                                                                     dows that a camera can't cover all of them, increasing the number of
+Only the frames in which the scenario is determined as getting out will
+                                                                                     cameras is the recommended practice to apply to speciﬁc circum-
+be preserved and further examined in the next section, while the others
+                                                                                     stances.
+will be eliminated. All the frames to be inspected are deﬁned as key
+frames, which means a steeplejack getting out through a window is
+                                                                                     4.1.2. Training process
+detected in all these frames. The complete process of understanding
+                                                                                         The training dataset consists of three parts corresponding to three
+aerial operation scenarios is presented in Fig. 3.
+                                                                                     models to be trained separately, see Table 2. First, image frames were
+                                                                                     collected in which workers intersect with windows so as to extract
+3.2. Inspection of appropriate usage of PPEs                                         spatial interaction between the worker and the window to train the ASC
+                                                                                     classiﬁer. Second, all of the positive samples (Spi > Sτj) were divided
+    The previous section provides an analysis of scenarios to determine              into two classes (getting out or getting in) to train a binary CNN model.
+if a worker is trying to get through a window to engage in aerial work               Third, in the aerial scenarios recognition program, two kinds of images
+outside, and this section applies a SSD detector to inspect the appro-               (workers and windows) are collected in the dataset. In the PPE in-
+priate usage of both FPAS and hardhats. Appropriate usage of FPAS                    spection program, six classes of diﬀerent images (cropped images of
+requires a steeplejack to wear the harness and hang the connector with               workers with/without hardhat and harness, anchorages linked/not
+a webbing on to the anchorage ﬁxed on the wall. As for hardhats,                     linked with webbing) are added to train a SSD model.
+steeplejacks are asked to wear them on their head rather than hold                       Here, we will introduce the detailed process of training the ASC
+them in their hands or lay them down on the ground.                                  classiﬁer. The ASC classiﬁer learns knowledge of classiﬁcation by dis-
+    The speciﬁc process of inspecting the appropriate usage of PPEs is               tinguishing the features of positive samples from negative samples in
+represented in Fig. 4. First, we trained a SSD model to detect six dif-              the training dataset. Therefore, the collection of a thorough training
+ferent scenarios as follows: a worker with hardhat, a worker without                 dataset with diversiﬁed samples is a key step for a well-trained ASC
+hardhat, a worker with harness, a worker without harness, an ancho-                  classiﬁer. First, we divided image frames, in which bounding boxes of
+rage that is linked with the connector by a webbing and an anchorage                 workers and windows intersect into the six categories mentioned in
+that isn't. However, due to the inﬂuence of poor illumination and oc-                Table 1 (ω = 0.1), and each category is trained separately by calcu-
+clusions, the target objects (hardhat, harness and webbing) may not be               lating the distribution of Spi using Excel and Origin [67]. Then image
+detected simultaneously in an image frame for a steeplejack who has                  frames in the same category were manually annotated as two classes.
+been equipped with PPEs appropriately. Also, the result in one frame                 We deﬁned the classiﬁcation principle as follows: those frames where a
+
+                                                                               157
+Q. Fang et al.                                                                                                                                Automation in Construction 93 (2018) 148–164
+
+
+
+
+Fig. 11. (a). Precision ratios under diﬀerent physical characteristics of workers
+(b). Recall rate ratios under diﬀerent physical characteristics of workers.
+
+
+Table 7                                                                                   The detailed coordinate relation can be referred to in Fig. 6.
+Precision and recall rate ratios under diﬀerent physical characteristics of                  2. If ((xM < xN) ∩ (yM < yN)) is true, the bounding boxes of worker
+workers.                                                                                  p and window q intersect with each other.
+                                                                                                                (x − x ) × (yM − yN )
+  No.            Worker          Average precision          Average recall rate              3. Calculate Spi = pM pN        p    p   if step 2 is satisﬁed. A part of the
+                                                                                                                  (xt , l − xb, r ) × (yt , l − yb, r )
+                                                                                          computation procedure is shown in Table 3.
+  1              P1              0.903                      0.939
+  2              P2              0.941                      0.945                             The calculated values Spi for all the positive samples and negative
+  3              P3              0.931                      0.932                         samples were put into the ASC classiﬁer and the probability density
+  4              P4              0.909                      0.940                         distribution was then analyzed. The density distributions of Spi are
+                                                                                          shown in Fig. 7, from which we get Sτ for six categories, respectively.
+                                                                                          The results are: Sτ1 = 0.91, Sτ2 = 0.90, Sτ3 = 0.88, Sτ4 = 0.85
+worker is totally inside the window were classiﬁed into positive sam-                     Sτ5 = 0.83, Sτ6 = 0.80.
+ples, while the others were classiﬁed into negative samples.
+    Next, we calculated the spatial interaction for each sample ac-
+cording to Formula 1, since the SSD detector returns the top left co-                     4.2. Performance test
+ordinates (xt, l, yt. l) and the bottom right coordinates (xb, r, yb. r) of the
+bounding box, we calculated the area(p) ⋂ area(q) according to the                            To verify the applicability of our method in diﬀerent scenarios of
+following steps:                                                                          practical use, we proposed 96 diﬀerent scenarios (4 illumination con-
+    1. Calculate the coordinates of M and N, and xM = max (xt, lp, xt, lq),               ditions×4 workers×6 windows) to collect diversiﬁed testing video
+yM = max (yt, lp, yt, lq), xN = min (xb, rp, xb, rq), yN = max (yb, rp, yb, rq).          clips as shown in Table 4. In each scenario we collected 8–15 video clips
+                                                                                          to test the detection precision of this scenario. For example, scenario 1
+
+                                                                                    158
+Q. Fang et al.                                                                                                       Automation in Construction 93 (2018) 148–164
+
+
+
+
+                                        Fig. 12. Image frame examples including diﬀerent window characteristics.
+
+
+contains the set of multiple video clips in which worker p1 is trying to          repeatedly climb through the window and video clips aimed at these
+get through a window w1 in the daylight: 750–1500 (lux) condition.                scenarios were collected. Results in Fig. 11 and Table 7 show that the
+And the video clips in each scenario are diﬀerent in two aspects: (1)             individual characteristics had little eﬀect on the performance of our
+diﬀerent PPEs use by the worker, (2) a diﬀerent occlusion ratio caused            proposed method.
+by the disruption of other workers. These 96 scenarios comprise the
+testing data for experiment of the impact of varying illumination,                4.2.3. Impact of window characteristics
+physical characteristics of workers and windows. Test results of these                Diﬀerent sizes and ratios of windows might cause diﬀerent positions
+96 scenarios are presented in Table 5. In addition, we collected another          (see Table. 1) of a steeplejack when climbing through the window,
+200 video clips where there were severe obstructions, to combine with             which would lead to diﬀerent Sτ (see Fig. 7). However, whether all of
+the 200 video clips that were randomly selected from the above testing            these will ﬁnally impact the performance is still unknown and the third
+data. These 400 video clips comprise the testing data for an experiment           experiment was set for this validation. We found six diﬀerent windows
+of the impact of varying occlusion ratios. Finally, a total of 1316 video         (shown in Fig. 12) to conduct this experiment and workers were asked
+clips were collected in the test dataset.                                         to repeatedly climb through them. The results in Fig. 13 and Table 8
+    The following paragraphs are the statistical analysis of the testing          demonstrate that the impact of window characteristics on performance
+results. The 96 scenarios (1116 video clips) were divided into diﬀerent           is negligible.
+categories according to diﬀerent testing objectives. For example, to test
+the impact of diﬀerent illumination, the 96 scenarios were divided into           4.2.4. Impact of occlusion
+4 categories. Such means of classiﬁcation will help to show the impact                 Construction sites are always occupied by many workers as well as
+of diﬀerent inﬂuences more explicitly. As for the occlusion experiment,           much equipment and materials. The messiness on site might at times
+we set a special experiment, and the experiment details are shown                 cause severe occlusion to the cameras. Since our proposed method is
+below.                                                                            based on surveillance video by cameras, putting equipment and mate-
+                                                                                  rials neatly is an eﬀective way to avoid occlusion. However, the moving
+4.2.1. Impact of illumination                                                     workers inevitably still sometimes cause occlusion (shown in Fig. 14).
+     Considering the time of a day, the weather condition and the                 This paper selects 400 video clips of varying ratios of occlusion to test
+lighting design of the room greatly inﬂuence the illumination in a room,          the impact of occlusion. First, we need to verify the occlusion ratio of
+we collected a lot of video clips under diﬀerent illumination conditions.         each video clip. For every image frame in a video clip, we manually
+We used a luminometer to measure the luminous ﬂux of the working                  annotated the occlusion ratios of the ﬁve target objects (i.e., window,
+environment, and the illumination condition is divided into 4 classes,            worker, hardhat, harness and anchorage) according to self-subjective
+i.e., 750–1500 (lux) in daylight (bright), 200–750 (lux) in daylight              judgment, and the ratios of the ﬁve were averaged to represent the
+(middle), 20–200 (lux) in daylight (dim), 50–500 (lux) in lamplight (at           occlusion ratio of this frame. The occlusion ratio of a video clip is de-
+night), as shown in Fig. 8. The test results show that the illumination           ﬁned as the average value of the occlusion ratios of all the key frames in
+hardly aﬀected the video detection. As shown in Fig. 9 and Table 6, the           it. Then, the selected 400 video clips were used to test our method, and
+precision and recall rate are almost the same in the visual condition of          the results of all the clips in the same interval of occlusion ratio are
+“200–1500 (lux) in daylight” and “50–500 (lux) in lamplight”, while               computed separately. We deﬁned 10 intervals of occlusion ratio
+the performance in low lux condition (under 200 (lux)) in daylight is a           (0–10%, 10%–20%,⋯, 90%–100%) and calculated the average value of
+bit lower.                                                                        each interval (5%, 15%, ⋯) to represent this interval, which is shown in
+                                                                                  Fig. 15 and Table 9. It's observed that both the precision and recall rate
+4.2.2. Impact of workers' physical characteristics                                slightly decline as the occlusion ratio increases when the occlusion ratio
+    Diversiﬁed appearance features (i.e., height, weight and clothes)             of a video clip is < 60%. However, when the occlusion ratio exceeds
+and the various postures of workers climbing through the window,                  60%, we observe a dramatic drop in the performance of our method.
+might inﬂuence the performance of the SSD detector and SORT tracker.                   Precision [68] is deﬁned as the ratio of TP to TP + FP and measures
+An experiment was set to test the existence of this eﬀect. Four workers           the reliability of the detection. TP is the number of inappropriate-PPEs-
+(shown in Fig. 10) of diﬀerent appearance and dress were employed to              use steeplejacks and where the test results are correct. TP + FP is the
+
+                                                                            159
+Q. Fang et al.                                                                                                            Automation in Construction 93 (2018) 148–164
+
+
+
+
+Fig. 13. (a). Precision ratios under diﬀerent window characteristics
+(b). Recall rate ratios under diﬀerent window characteristics.
+
+
+Table 8                                                                                doesn't change as much as the recall rate since occlusion won't cause
+Precision and recall rate ratios under diﬀerent window characteristics.                misjudgments with our method. However, considering that occlusion
+  No.            Window          Average precision         Average recall rate         will reduce the number of key video frames, it might cause insuﬃcient
+                                                                                       samples to judge the diﬀerence between ∑E+ and ∑E− and ﬁnally lead
+  1              W1              0.917                     0.942                       to a slight decrease in precision.
+  2              W2              0.910                     0.930
+  3              W3              0.935                     0.923
+  4              W4              0.903                     0.943                       5. Discussion
+  5              W5              0.933                     0.970
+  6              W6              0.926                     0.926
+                                                                                           First, it noted that this paper is aimed at regular windows instead of
+                                                                                       sliding glass doors, since the aerial scenarios recognition method is
+number of steeplejacks detected as inappropriate-PPEs-use based on the                 based on spatial interactions between a worker and a window, which
+method. Recall [68] is the ratio of TP to TP+ FN. TP+ FN and means                     doesn't apply to sliding glass doors. Moreover, outside the sliding glass
+the actual number of inappropriate-PPEs-use steeplejacks. If one of the                door is a balcony instead of a suspended environment, which is dif-
+PPEs is totally obstructed in a video clip (that is (∑Ehat+i = ∑ Ehat−i = 0)           ferent from our hypothesis. Furthermore, our method generally applies
+or (∑Eharn+i = ∑ Eharn−i = 0) or (∑Each+i = ∑ Each−i = 0)), there will be              to high-rise buildings with many regular windows, such as the Public
+no results in the detection. This situation can lead to a missed detection             Rental Housing and Home Ownership Scheme Housing in Hong Kong.
+problem for the inappropriate-PPEs-use steeplejack and has a sig-                          In this section we will verify the feasibility of the proposed method
+niﬁcant impact on the recall rate. On the other hand, the precision                    in terms of technical applicability and cost. Multiple possible solutions
+                                                                                       (indoor positioning techniques and manual supervision) are presented
+
+                                                                                 160
+Q. Fang et al.                                                                                                         Automation in Construction 93 (2018) 148–164
+
+
+
+
+                                                 Fig. 14. Image frame examples including diﬀerent occlusion rate.
+
+
+
+
+Fig. 15. (a). Precision ratios under diﬀerent occlusion rate
+(b). Recall rate ratios under diﬀerent occlusion rate.
+
+
+and compared to our method in the following paragraphs.                              application of these techniques in our study are facing several chal-
+    Indoor positioning is a system to locate the workers and objects                 lenges. First, it would be a large expense and heavy work to build and
+using radio waves or other sensory information. Since the purpose of                 maintain such a dense RFID tags environment. It's noted that the
+this study is to monitor the PPEs use of steeplejacks, the positioning               changing working environment in the room greatly inﬂuence the po-
+techniques are required to ﬁrst determine whether the steeplejack is                 sitioning precision and requires frequent calibration. Second, the dense
+indoors or outside the building (in an aerial working area). Considering             deployment of RFID tags may inﬂuence daily construction work in
+that the thickness of the wall is only about 0.2 m, the adopted posi-                room. The dense tags are also easy to be damaged by the frequent
+tioning technique won't be applicable in this study unless its accuracy              movements of workers.
+achieves < 0.2 m. Although the newest technologies of indoor posi-                       Compared to indoor positioning, our proposed method is able to
+tioning can achieve enough precision for distinguishing between out-                 accurately recognize those who are ready for outside work with lower
+doors and indoors in dense passive RFID tags environment [69–72], the                cost, less maintenance eﬀort and less disruption to the construction
+
+
+                                                                               161
+Q. Fang et al.                                                                                                            Automation in Construction 93 (2018) 148–164
+
+
+Table 9
+Test results under diﬀerent occlusion rates.
+  No.            Occlusion rate   Number of video clips   Number of inappropriate-PPEs-use steeplejacks     TP       FP        FN        Precision       Recall rate
+
+  1              5%               28                      26                                                24       1         2         0.960           0.923
+  2              15%              34                      31                                                28       2         3         0.933           0.903
+  3              25%              37                      31                                                28       2         3         0.933           0.903
+  4              35%              69                      57                                                51       3         6         0.944           0.895
+  5              45%              55                      50                                                42       3         8         0.933           0.840
+  6              55%              59                      52                                                40       3         12        0.930           0.769
+  7              65%              29                      29                                                14       2         15        0.875           0.483
+  8              75%              24                      20                                                3        1         17        0.750           0.150
+  9              85%              33                      27                                                2        1         25        0.667           0.074
+  10             95%              32                      28                                                1        1         27        0.500           0.036
+
+
+
+work, although several limitations still exist in its applicability.                  mitigate occlusion inﬂuence. Also the inspection of PPEs includes not
+     First, the performance of our method is highly robust to the change              only harness checking but also webbing, anchoring and wearing hard-
+of illumination, individual characteristics and window characteristics.               hats. Moreover, experiment results indicate that our framework elim-
+The results show that that they all achieve an average precision and                  inates the impact of the noise and error that was generated in vision
+recall of over 0.9 in the above experiments. As to occlusion problems,                based detection and tracking algorithms, and achieves a favorable
+since we have combined the results of multiple frames to determine the                performance.
+behavior of steeplejacks, the impact of occlusion has been greatly re-
+duced. As long as at least one Ehat+i or Ehat−i is detected in the video
+                                                                                      6. Conclusion
+clip, we can almost determine if the steeplejacks have been wearing a
+hardhat, and similarly for the inspection of harness and anchorage
+                                                                                          Despite various research being devoted to fall prevention, such as
+usage. However, the performance of our method can be slightly im-
+                                                                                      the removal of hazardous areas and the use of guardrails or safety net
+proved if the occlusion ratio of a video clip decreases (see Fig. 15).
+                                                                                      systems, little research focuses on supervising the appropriate use of
+     The second limitation of our method is that it needs to put at least
+                                                                                      PPEs. PPEs are a last protection measure that guarantees the safety of
+one camera per room for automated surveillance. It seems diﬃcult, but
+                                                                                      steeplejacks in case accidents happen, but they don't attract enough
+it's still realistic in practical use. Considering that a room won't be as
+                                                                                      attention from researchers. This paper proposed an automated inspec-
+wide as the construction site, an ordinary camera with lower resolution
+                                                                                      tion method based on deep-learning assisted computer vision tech-
+is enough to meet the requirements for monitoring. The price of this
+                                                                                      nology for the safety measures of steeplejacks. We considered that the
+kind of camera is about 200 HKD. Suppose there are 10 rooms that need
+                                                                                      best solution to prevent fall accidents is to thoroughly inspect the safety
+to be monitored, the total cost of the cameras will only be about 2000
+                                                                                      measures of steeplejacks before they enter an aerial working area.
+HKD. Cameras are one-time investments and all the cameras can be
+                                                                                      Therefore, we proposed an ASC classiﬁer to detect the steeplejacks who
+recycled or preserved for later use. However, if we employ a surveyor to
+                                                                                      are going through a window into an aerial working area. Then, an
+manually monitor the behavior of steeplejacks in 10 rooms, the labor
+                                                                                      advanced object detector SSD and CNN classiﬁer were employed in this
+cost will be at least 20,000 HKD per month according to the minimum
+                                                                                      paper to judge whether a steeplejack has been made adequately safe.
+wage level for the construction sites of Hong Kong. It should, though, be
+                                                                                          Due to advanced and thorough learning methods and the high re-
+noted that the surveyor would ﬁnd it very hard to manage since he
+                                                                                      solution of the images, we achieved a high precision and recall rate.
+would have to monitor 10 rooms at the same time.
+                                                                                      Also, the experiment results show that our method is robust to most
+     Third, the inspection for anchorage use by our method might not
+                                                                                      changing scenarios, such as illumination, individual and window
+always be right. If the anchorage is linked with another webbing that
+                                                                                      characteristics, and partial occlusion (our method still achieves high
+doesn't belong to a steeplejack, this steeplejack is still mistaken for
+                                                                                      performance when the occlusion ratio is < 0.6). We make a detailed
+having hung his webbing correctly. This situation is the result of the
+                                                                                      comparison with other solutions in terms of technical applicability and
+separate judgment of two conditions; whether a steeplejack is wearing a
+                                                                                      cost, including indoor positioning and manual checking. Also, a com-
+harness and whether an anchorage is linked with a webbing. Another
+                                                                                      puter vision-based solution proves to be the most cost-eﬀective solution
+solution is to view the harness, webbing and anchorage as a whole. A
+                                                                                      for solving safety monitoring of aerial work. Another limitation of this
+detection algorithm is employed to analyze this ensemble. However, a
+                                                                                      paper is that it can't distinguish between the anchorages that link to
+bounding box for this ensemble is an oversized area with a high pro-
+                                                                                      empty webbings from the ones that connect to the workers' harnesses.
+portion of useless background, which brings a lot of noise and disrup-
+                                                                                      Considering that this would mean that the workers were cheating the
+tion to the extracted features and is not an ideal solution to ensure the
+                                                                                      method, and such behavior would not beneﬁt them but put them in
+detection of the ensemble. Viewed from another perspective, few
+                                                                                      danger, it's expected that workers would rarely take such actions. We
+workers would hang their safety belts on the anchorage and leave.
+                                                                                      recommend that future research focuses on reward and punishment of
+     This study has made three major contributions to knowledge.
+                                                                                      steeplejacks after the detection of inappropriate use of PPEs using our
+Firstly, we proposed a method to prevent falling accidents from a new
+                                                                                      method.
+perspective of checking the appropriate usage of PPEs for the steeple-
+jacks, which is diﬀerent from other researchers' solutions. We have
+considered a thorough inspection program by detecting six diﬀerent                    Acknowledgement
+scenarios for steeplejacks, which not only requires the wearing of a
+harness, but also to hang the webbing on the anchorage and wear                          We are thankful for the ﬁnancial support of 1) the National 12th
+hardhats. Secondly, we proposed an aerial operation scenario under-                   Five-Year Plan Major Scientiﬁc and Technological Issues (NFYPMSTI)
+standing method by combining the computer vision technologies and                     through Grant 2015BAK33B04; 2) The Research Grants Council of
+an ASC classiﬁer to detect steeplejacks. The scenario understanding                   Hong Kong grant entitled “Proactively Monitoring Construction
+method makes the inspection a preventative control measure and more                   Progress by Integrating 3D Laser-scanning and BIM” (PolyU 152093/
+applicable to the site. Thirdly, the PPEs checking method can eﬀectively              14E); and 3) National Science Foundation of China (grant
+                                                                                      no.51678265).
+
+                                                                                162
+Q. Fang et al.                                                                                                                                Automation in Construction 93 (2018) 148–164
+
+
+References                                                                                              1016/j.jsr.2012.08.020.
+                                                                                                   [27] K. Lin, G. Migliaccio, R. Azari, C. Lee, J. De la Llata, Developing 3D safety training
+                                                                                                        materials on fall related hazards for limited English proﬁciency (LEP) and low lit-
+ [1] Occupational Safety and Health Administration, OSHA's Fall Prevention Campaign,                    eracy (LL) construction workers, J. Comput. Civ. Eng. (2012) 113–120, http://dx.
+     https://www.osha.gov/stopfalls/index.html, (2017) (Last accessed on 8 September                    doi.org/10.1061/9780784412343.0015.
+     2017).                                                                                        [28] B. Evanoﬀ, A.M. Dale, A. Zeringue, M. Fuchs, J. Gaal, H.J. Lipscomb, V. Kaskutas,
+ [2] Bureau of Labor Statistics, Census of Fatal Occupational Injuries Summary, 2015,                   Results of a fall prevention educational intervention for residential construction,
+     https://www.bls.gov/news.release/cfoi.nr0.htm, (2016) (Last accessed on 8                          Saf. Sci. 89 (2016) 301–307, http://dx.doi.org/10.1016/j.ssci.2016.06.019.
+     September 2017).                                                                              [29] A.L. Cheng, C. Georgoulas, T. Bock, Fall detection and intervention based on
+ [3] Health and Safety Executive, Kinds of Accident in Great Britain, 2016, http://www.                 wireless sensor network technologies, Autom. Constr. 71 (2016) 116–136, http://
+     hse.gov.uk/statistics/causinj/kinds-of-accident.pdf, (2016) (Last accessed on 8th                  dx.doi.org/10.1016/j.autcon.2016.03.004.
+     September 2017).                                                                              [30] H. Jebelli, C.R. Ahn, T.L. Stentz, Comprehensive fall-risk assessment of construction
+ [4] Health and Safety Executive Fatal Injuries Arising From Accidents at Work in Great                 workers using inertial measurement units: validation of the gait-stability metric to
+     Britain: Headline Results, http://www.hse.gov.uk/statistics/fatals.htm, (2017)                     assess the fall risk of iron workers, J. Comput. Civ. Eng. 30 (3) (2015) 04015034,
+     (Last accessed on 13 Nov 2017).                                                                    http://dx.doi.org/10.1061/(ASCE)CP.1943-5487.0000511.
+ [5] National Institute for Occupational Safety and Health, Research and Practice for              [31] K. Yang, C.R. Ahn, M.C. Vuran, S.S. Aria, Semi-supervised near-miss fall detection
+     Fall Injury Control in the Workplace: Proceedings of International Conference on                   for ironworkers with a wearable inertial measurement unit, Autom. Constr. 68
+     Fall Prevention and Protection, https://www.cdc.gov/niosh/docs/2012-103/pdfs/                      (2016) 194–202, http://dx.doi.org/10.1016/j.autcon.2016.04.007.
+     2012-103.pdf, (2010) (Last accessed on 13 Nov 2017).                                          [32] K. Yang, S. Aria, C.R. Ahn, T.L. Stentz, Automated detection of near-miss fall in-
+ [6] Commonly Used Statistics, Occupational Safety and Health Administration, (2017)                    cidents in iron workers using inertial measurement units, Construction Research
+     https://www.osha.gov/oshstats/commonstats.html (Last accessed on 13 Nov                            Congress 2014, 2014, pp. 935–944, , http://dx.doi.org/10.1061/9780784413517.
+     2017).                                                                                             096.
+ [7] Hong Kong Housing Authority, Practical Guide to Working at Height: Ensuring Safe              [33] K. Yang, H. Jebelli, C. Ahn, M. Vuran, Threshold-based approach to detect near-miss
+     Work Practices, http://www.housingauthority.gov.hk/mini-site/site-safety/                          falls of iron workers using inertial measurement units, International Workshop on
+     common/resources/article/pdf/publications/safety-handbooks-and-booklets/Eng_                       Computing in Civil Engineering, 2015, pp. 148–155, , http://dx.doi.org/10.1061/
+     web_version.pdf, (2012) (Last accessed on 8th September 2017).                                     9780784479247.019.
+ [8] Occupational Safety and Health Administration, Duty to Have Fall Protection,                  [34] Personal protective equipment, https://en.wikipedia.org/wiki/Personal_protective_
+     https://www.osha.gov/pls/oshaweb/owasrch.search_form?p_doc_type=                                   equipment (Last accessed on 29 March 2018).
+     INTERPRETATIONS&p_toc_level=3&p_keyvalue=1926.501&p_status=CURRENT                            [35] S. Barro-Torres, T.M. Fernández-Caramés, H.J. Pérez-Iglesias, C.J. Escudero, Real-
+     (Last accessed on 29 March 2018).                                                                  time personal protective equipment monitoring system, Comput. Commun. 36 (1)
+ [9] Occupational Safety and Health Administration, Fall Protection Systems Criteria                    (2012) 42–50, http://dx.doi.org/10.1016/j.comcom.2012.01.005.
+     and Practices, https://www.osha.gov/pls/oshaweb/owasrch.search_form?p_doc_                    [36] A. Kelm, L. Laußat, A. Meins-Becker, D. Platz, M.J. Khazaee, A.M. Costin,
+     type=INTERPRETATIONS&p_toc_level=3&p_keyvalue=1926.502&p_status=                                   M. Helmus, J. Teizer, Mobile passive radio frequency identiﬁcation (RFID) portal
+     CURRENT (Last accessed on 29 March 2018).                                                          for automated and rapid control of personal protective equipment (PPE) on con-
+[10] The Work at Height Regulations, http://www.legislation.gov.uk/uksi/2005/735/                       struction sites, Autom. Constr. 36 (2013) 38–52, http://dx.doi.org/10.1016/j.
+     introduction/made, (2005) (Last accessed on 29 March 2018).                                        autcon.2013.08.009.
+[11] Personal Fall Arrest Systems, https://www.osha.gov/SLTC/etools/construction/                  [37] D. Podgórski, K. Majchrzycka, A. Dąbrowska, G. Gralewicz, M. Okrasa, Towards a
+     falls/fallarrest.html (Last accessed on 29 March 2018).                                            conceptual framework of OSH risk management in smart working environments
+[12] X.S. Dong, J.A. Largay, S.D. Choi, X. Wang, C.T. Cain, N. Romano, Fatal falls and                  based on smart PPE, ambient intelligence and the internet of things technologies,
+     PFAS use in the construction industry: ﬁndings from the NIOSH FACE reports,                        Int. J. Occup. Saf. Ergon. 23 (1) (2017) 1–20, http://dx.doi.org/10.1080/
+     Accid. Anal. Prev. 102 (2017) 136–143, http://dx.doi.org/10.1016/j.aap.2017.02.                    10803548.2016.1214431.
+     028.                                                                                          [38] S. Dong, Q. He, H. Li, Q. Yin, Automated PPE misuse identiﬁcation and assessment
+[13] Occupational Safety & Health Administration, Determining the Need for Hard Hat                     for safety performance enhancement, International Conference on Construction and
+     and Eye Protection on Construction Sites, https://www.osha.gov/pls/oshaweb/                        Real Estate Management, 2015, pp. 204–214, , http://dx.doi.org/10.1061/
+     owasrch.search_form?p_doc_type=INTERPRETATIONS&p_toc_level=3&p_                                    9780784479377.024.
+     keyvalue=1926.100&p_status=CURRENT, (2004) (Last accessed on 29 March                         [39] S. Du, M. Shehata, W. Badawy, Hard hat detection in video sequences based on face
+     2018).                                                                                             features, motion and color information, 3rd International Conference on Computer
+[14] Health and Safety Executive, Causal Factors in Construction Accidents, http://                     Research and Development, Vol. 4 IEEE, 2011, pp. 25–29, , http://dx.doi.org/10.
+     www.hse.gov.uk/research/rrpdf/rr156.pdf, (2003) (Last accessed on 8th                              1109/ICCRD.2011.5763846.
+     September 2017).                                                                              [40] K. Shrestha, P.P. Shrestha, D. Bajracharya, E.A. Yfantis, Hard-hat detection for
+[15] R. K., J. N., Occupational accident patterns and prevention measures in construction               construction safety visualization, J. Constr. Eng. Manag. 2015 (2015), http://dx.
+     sites in Nairobi County Kenya, Am. J. Civ. Eng. 4 (5) (2016) 254–263.                              doi.org/10.1155/2015/721380.
+[16] Bureau of Labor Statistics, National Census of Fatal Occupational Injuries in 2011,           [41] M.-W. Park, N. Elsafty, Z. Zhu, Hardhat-wearing detection for enhancing on-site
+     https://www.bls.gov/news.release/archives/cfoi_09202012.pdf, (2011) (Last ac-                      safety of construction workers, J. Constr. Eng. Manag. 141 (9) (2015) 04015024, ,
+     cessed on 8 September 2017).                                                                       http://dx.doi.org/10.1061/(ASCE)CO.1943-7862.0000974.
+[17] Construction eTool-Falls, https://www.osha.gov/SLTC/etools/construction/falls/                [42] P. Ott, M. Everingham, Implicit color segmentation features for pedestrian and
+     mainpage.html (Last accessed on 14 September 2017).                                                object detection, IEEE 12th International Conference on Computer Vision, IEEE,
+[18] B. Esmaeil, M. Hallowell, M. Roucheray, Developing a framework for measuring the                   2009, pp. 723–730, , http://dx.doi.org/10.1109/ICCV.2009.5459238.
+     eﬀectiveness of common fall prevention/protection practices, International                    [43] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-use
+     Conference on Sustainable Design, Engineering, and Construction 2012, 2012, pp.                    by a deep learning method from far-ﬁeld surveillance videos, Autom. Constr. 85
+     719–726, , http://dx.doi.org/10.1061/9780784412688.086.                                            (2018) 1–9, http://dx.doi.org/10.1016/j.autcon.2017.09.018.
+[19] J. Qi, R.R. Issa, S. Olbina, J. Hinze, Use of building information modeling in design         [44] M.J. Skibniewski, Research trends in information technology applications in con-
+     to prevent construction worker falls, J. Comput. Civ. Eng. 28 (5) (2013) A4014008,                 struction safety engineering and management, Front. Eng. Manag. 1 (3) (2014)
+     http://dx.doi.org/10.1061/(ASCE)CP.1943-5487.0000365.                                              246–259, http://dx.doi.org/10.15302/j-fem-2014034.
+[20] S. Zhang, K. Sulankivi, M. Kiviniemi, I. Romo, C.M. Eastman, J. Teizer, BIM-based             [45] H. Guo, Y. Yu, M. Skitmore, Visualization technology-based construction safety
+     fall hazard identiﬁcation and prevention in construction safety planning, Saf. Sci.                management: a review, Autom. Constr. 73 (2017) 135–144, http://dx.doi.org/10.
+     72 (2015) 31–45, http://dx.doi.org/10.1016/j.ssci.2014.08.001.                                     1016/j.autcon.2016.10.004.
+[21] J. Wang, N. Pradhananga, J. Teizer, Automatic fall risk identiﬁcation using point             [46] J. Seo, S. Han, S. Lee, H. Kim, Computer vision techniques for construction safety
+     cloud data in construction excavation, Computing in Civil and Building                             and health monitoring, Adv. Eng. Inform. 29 (2) (2015) 239–251, http://dx.doi.
+     Engineering, 2014, pp. 981–988, , http://dx.doi.org/10.1061/9780784413616.                         org/10.1016/j.aei.2015.02.001.
+     122.                                                                                          [47] L. Ding, W. Fang, H. Luo, P.E. Love, B. Zhong, X. Ouyang, A deep hybrid learning
+[22] R. Navon, O. Kolton, Algorithms for automated monitoring and control of fall ha-                   model to detect unsafe behavior: integrating convolution neural networks and long
+     zards, J. Comput. Civ. Eng. 21 (1) (2007) 21–28, http://dx.doi.org/10.1061/(ASCE)                  short-term memory, Autom. Constr. 86 (2018) 118–124.
+     0887-3801(2007)21:1(21).                                                                      [48] Q. Fang, H. Li, X. Luo, L. Ding, T.M. Rose, W. An, Y. Yu, A deep learning-based
+[23] R. Navon, O. Kolton, Model for automated monitoring of fall hazards in building                    method for detecting non-certiﬁed work on construction sites, Adv. Eng. Inform. 35
+     construction, J. Constr. Eng. Manag. 132 (7) (2006) 733–740, http://dx.doi.org/10.                 (2018) 56–68, http://dx.doi.org/10.1016/j.aei.2018.01.001.
+     1061/(ASCE)0733-9364(2006)132:7(733).                                                         [49] W. Fang, L. Ding, B. Zhong, P.E. Love, H. Luo, Automated detection of workers and
+[24] C.M. Zuluaga, A. Albert, Preventing falls: choosing compatible fall protection sup-                heavy equipment on construction sites: a convolutional neural network approach,
+     plementary devices (FPSD) for bridge maintenance work using virtual prototyping,                   Adv. Eng. Inform. 37 (2018) 139–149, http://dx.doi.org/10.1016/j.aei.2018.05.
+     Saf. Sci. (2017), http://dx.doi.org/10.1016/j.ssci.2017.08.006.                                    003.
+[25] E. Cheung, A.P. Chan, Rapid demountable platform (RDP)—a device for preventing                [50] Y. LeCun, Y. Bengio, G. Hinton, Deep learning, Nature 521 (7553) (2015) 436–444,
+     fall from height accidents, Accid. Anal. Prev. 48 (2012) 235–245, http://dx.doi.org/               http://dx.doi.org/10.1038/nature14539.
+     10.1016/j.aap.2011.05.037.                                                                    [51] R. Girshick, J. Donahue, T. Darrell, J. Malik, Rich feature hierarchies for accurate
+[26] V. Kaskutas, A.M. Dale, H. Lipscomb, B. Evanoﬀ, Fall prevention and safety com-                    object detection and semantic segmentation, Proc. IEEE Conf. Comput. Vis. Pattern
+     munication training for foremen: report of a pilot project designed to improve re-                 Recognit. (2014) 580–587, http://dx.doi.org/10.1109/CVPR.2014.81.
+     sidential construction safety, J. Saf. Res. 44 (2013) 111–118, http://dx.doi.org/10.          [52] K. He, X. Zhang, S. Ren, J. Sun, Spatial pyramid pooling in deep convolutional
+
+
+                                                                                             163
+Q. Fang et al.                                                                                                                                Automation in Construction 93 (2018) 148–164
+
+
+     networks for visual recognition, European Conference on Computer Vision,                           2015.12.
+     Springer, 2014, pp. 346–361, , http://dx.doi.org/10.1109/TPAMI.2015.2389824.                  [62] R.E. Kalman, A new approach to linear ﬁltering and prediction problems, J. Basic
+[53] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: towards real-time object detection               Eng. 82 (1) (1960) 35–45, http://dx.doi.org/10.1115/1.3662552.
+     with region proposal networks, Adv. Neural Inf. Proces. Syst. (2015) 91–99, http://           [63] H.W. Kuhn, The Hungarian method for the assignment problem, Nav. Res. Logist. 2
+     dx.doi.org/10.1109/TPAMI.2016.2577031.                                                             (1–2) (1955) 83–97, http://dx.doi.org/10.1002/nav.3800020109.
+[54] J. Redmon, S. Divvala, R. Girshick, A. Farhadi, You only look once: uniﬁed, real-             [64] S. Aarthi, S. Chitrakala, Scene Understanding—A Survey, 2017 International
+     time object detection, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (2016)                      Conference on Computer, Communication and Signal Processing, IEEE, 2017, pp.
+     779–788, http://dx.doi.org/10.1109/CVPR.2016.91.                                                   1–4, http://dx.doi.org/10.1109/ICCCSP.2017.7944094.
+[55] W. Liu, D. Anguelov, D. Erhan, C. Szegedy, S. Reed, C.-Y. Fu, A.C. Berg, SSD: Single          [65] G. Papadopoulos, P.J. Edwards, A.F. Murray, Conﬁdence estimation methods for
+     shot multibox detector, European Conference on Computer Vision, Springer, 2016,                    neural networks: a practical comparison, IEEE Trans. Neural Netw. 12 (6) (2001)
+     pp. 21–37.                                                                                         1278–1287, http://dx.doi.org/10.1109/72.963764.
+[56] Z. Bolei, A. Khosla, A. Lapedriza, A. Oliva, A. Torralba, Object Detectors Emerge in          [66] J.D. Rennie, L. Shih, J. Teevan, D.R. Karger, Tackling the poor assumptions of naive
+     Deep Scene CNNS, (2015).                                                                           bayes text classiﬁers, Proceedings of the 20th International Conference on Machine
+[57] A. Bewley, Z. Ge, L. Ott, F. Ramos, B. Upcroft, Simple online and realtime tracking,               Learning (ICML-03), 2003, pp. 616–623.
+     IEEE International Conference on Image Processing, IEEE, 2016, pp. 3464–3468, ,               [67] Origin, https://www.originlab.com/, (2018) (Last accessed on 29 March 2018).
+     http://dx.doi.org/10.1109/ICIP.2016.7533003.                                                  [68] D.M. Powers, Evaluation: from precision, recall and F-measure to ROC, informed-
+[58] W. Choi, Near-online multi-target tracking with aggregated local ﬂow descriptor,                   ness, markedness and correlation, J. Mach. Learn. Technol. 2 (2011) 37–63.
+     IEEE International Conference on Computer Vision, 2015, pp. 3029–3037, , http://              [69] Z. Wang, N. Ye, R. Malekian, F. Xiao, R. Wang, TrackT: accurate tracking of RFID
+     dx.doi.org/10.1109/ICCV.2015.347.                                                                  tags with mm-level accuracy using ﬁrst-order Taylor series approximation, Ad Hoc
+[59] C. Kim, F. Li, A. Ciptadi, J.M. Rehg, Multiple hypothesis tracking revisited, IEEE                 Netw. 53 (2016) 132–144, http://dx.doi.org/10.1016/j.adhoc.2016.09.026.
+     International Conference on Computer Vision, 2015, pp. 4696–4704, , http://dx.                [70] Research and Practice for Fall Injury Control in the Workplace, https://www.cdc.
+     doi.org/10.1109/ICCV.2015.533.                                                                     gov/niosh/docs/2012-103/pdfs/2012-103.pdf (Last accessed on 29 March 2018).
+[60] L. Leal-Taixé, A. Milan, I. Reid, S. Roth, K. Schindler, Motchallenge 2015: towards a         [71] D. Zhang, L.T. Yang, M. Chen, S. Zhao, M. Guo, Y. Zhang, Real-time locating sys-
+     benchmark for multi-target tracking, IEEE Conference on Computer Vision and                        tems using active RFID for internet of things, IEEE Syst. J. 10 (3) (2016)
+     Pattern Recognition, 2015.                                                                         1226–1235, http://dx.doi.org/10.1109/JSYST.2014.2346625.
+[61] J.H. Yoon, M.-H. Yang, J. Lim, K.-J. Yoon, Bayesian multi-object tracking using               [72] T. Liu, L. Yang, Q. Lin, Y. Guo, Y. Liu, Anchor-free backscatter positioning for RFID
+     motion context from multiple objects, IEEE Winter Conference on Applications of                    tags with high accuracy, IEEE Conference on Computer Communications, 2014, pp.
+     Computer Vision, IEEE, 2015, pp. 33–40, , http://dx.doi.org/10.1109/WACV.                          379–387, , http://dx.doi.org/10.1109/INFOCOM.2014.6847960.
+
+
+
+
+                                                                                             164
+

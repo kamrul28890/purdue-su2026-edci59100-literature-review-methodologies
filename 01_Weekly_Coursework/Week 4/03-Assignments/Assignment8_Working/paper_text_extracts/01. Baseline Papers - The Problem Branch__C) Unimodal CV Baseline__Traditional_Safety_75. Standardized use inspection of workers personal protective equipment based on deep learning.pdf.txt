@@ -1,0 +1,893 @@
+                                                                         Safety Science 150 (2022) 105689
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                                             Safety Science
+                                                          journal homepage: www.elsevier.com/locate/safety
+
+
+
+
+Standardized use inspection of workers’ personal protective equipment
+based on deep learning
+Jiaqi Li a, b, Xuefeng Zhao a, b, *, Guangyi Zhou a, c, Mingyuan Zhang d
+a
+  School of Civil Engineering, Dalian University of Technology, 116024 Dalian, China
+b
+  State Key Laboratory of Coastal and Offshore, Dalian University of Technology, 116024 Dalian, China
+c
+  Northeast Branch China Construction Eighth Engineering Division Corp., Ltd, 116002 Dalian, China
+d
+  Department of Construction Management, Dalian University of Technology, 116024 Dalian, China
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Falling from height (FFH) and object strike (OS) accidents frequently occur at construction sites, threatening
+Openpose                                                  personnel safety and affecting the construction quality. In the hierarchy of controls, personal protective equip­
+Object detection                                          ment (PPE) is the most easily achievable measure. However, the presence of hazards and the differentiation in
+Convolutional neural network
+                                                          subjective protection awareness make PPE the least effective control measure. Therefore, it is necessary to
+Deep learning
+Fall prevention
+                                                          promote proper and standardized use of PPE to meet the requirements from the perspective of administrative
+Personnel protective equipment                            control. Taking two behaviors that can lead to OS and FFH accidents as a research case—loosening the hardhat
+                                                          and not using the safety harness’s hook—this study proposes a deep-learning-based inspection method. First, we
+                                                          established a detection model for hardhats and hooks based on You Only Look Once v5. Thereafter, the object-
+                                                          detection model and Openpose algorithm were applied to recognize 1200 video clips containing three unsafe
+                                                          behaviors and one safe behavior and generate 1200 data files that vary in a time series. Finally, a one-
+                                                          dimensional convolutional neural network (1D-CNN) model was trained with the data of 600 videos, and the
+                                                          model was used to test the data of the other 600 videos. The accuracy attained was 0.9467 in the experimental
+                                                          scenario. Using the proposed method, the improper use of PPE can be determined without affecting the normal
+                                                          behavior of individuals, which can improve the efficiency of safety management.
+
+
+
+
+1. Introduction                                                                                 approximately 33% of these accidents related to falls (Dong et al., 2021).
+                                                                                                In addition, a study from 2003 to 2010 showed that fatalities due to
+    The interaction of humans, machines, materials, methods, environ­                           traumatic brain injury accounted for 25% of all construction fatalities
+ment, and other factors at construction sites complicates the overall                           (Konda et al., 2016).
+management, resulting in frequent accidents. According to the data                                  The United States’ National Institute for Occupational Safety and
+provided by the Ministry of Housing and Urban-Rural Development                                 Health (NIOSH) has divided the hierarchy of control (HOC) into five
+(MOHURD) of the People’s Republic of China (Ministry of Housing and                             levels. The control effects from the least effective to the most effective
+Urban-Rural Development), the annual number of construction safety                              are Personal Protective Equipment (PPE), Administrative Controls (AC),
+accidents in mainland China from 2014 to 2019 was 522, 442, 634, 692,                           Engineering Controls (EC), Substitution, and Elimination (U.S. NIOSH).
+734, and 773, respectively, with the number of fatalities increasing from                       In the long run, effective control measures can reduce the management
+648 in 2014 to 904 in 2019. Falling from height (FFH) and object                                costs of construction safety, but the investment costs are also higher in
+striking (OS) accidents, the two most frequent types of accidents,                              the short term. Elimination, for example, refers to the complete removal
+accounted for 52% and 14% of the total number of accidents, respec­                             of hazards from the system and the environment; it is the most difficult
+tively (Ministry of Housing and Urban-Rural Development). Similarly,                            measure to implement, but once achieved, it has the potential to obtain a
+according to the Bureau of Labor Statistics (BLS) of the United States, the                     permanent solution. Since effective control measures are difficult to
+number of construction fatalities in the US has gradually increased from                        implement and costly, AC and PPE are the two methods used more
+933 to 1066 between 2014 and 2019 (Bureau of Labor Statistics), with                            frequently, which are also consistent with the management benefits that
+
+
+
+    * Corresponding author at: School of Civil Engineering, Dalian University of Technology, 116024 Dalian, China.
+      E-mail address: zhaoxf@dlut.edu.cn (X. Zhao).
+
+https://doi.org/10.1016/j.ssci.2022.105689
+Received 8 March 2021; Received in revised form 8 December 2021; Accepted 20 January 2022
+Available online 7 February 2022
+0925-7535/© 2022 Elsevier Ltd. All rights reserved.
+J. Li et al.                                                                                                                    Safety Science 150 (2022) 105689
+
+
+most builders want in short-term construction. Specifically, providing            machine learning algorithm, artificial feature extraction is required for
+PPE to workers to protect them from physical injury is the easiest control        input data, whereas CNN can automatically extract data features.
+measurement. Several countries have also made PPE mandatory. For                      In the 1990s, Lecun proposed the first CNN model, LeNet (Lecun
+example, the General Administration of Quality Supervision, Inspection,           et al., 1998), and this model was used to recognize handwritten numbers
+and Quarantine (GAQSIQ) in mainland China and the Occupational                    in pictures reaching a recognition accuracy of up to 99.05%. Subse­
+Safety and Health Administration (OSHA) in the United States have                 quently, the CNN has been continuously improved and optimized, and a
+stipulated that a hardhat must be worn during construction work, and a            variety of forms has been developed such as AlexNet (Krizhevsky et al.,
+safety harness must be used if the task is performed at heights (GB/T             2017), ZFNet (Zeiler and Fergus, 2014), VGGNet (Simonyan and Zis­
+11651-2008; Occupational Safety & Health Administration). However,                serman, 2014), GoogleNet (Szegedy et al., 2015); and ResNet (He et al.,
+even though PPE has been worn, it can still be used and maintained                2016). Initially, CNNs were mainly used in image classification. With the
+incorrectly, leading to PPE’s inability to reduce the number of accident          advent of a series of algorithms, CNNs could be applied to object
+casualties significantly. It can also be seen from the data provided by           detection. The R-CNN algorithm (Girshick et al., 2014) was of great
+MOUHURD and BLS that the number of FFH accidents and OS accidents                 significance for the use of CNNs for actual object detection. The subse­
+have been at a relatively high level in the past few years, even though           quent Fast R-CNN (Girshick, 2015) and Faster R-CNN (Ren et al., 2017)
+the regulations on PPE have been gradually improved over time.                    compensated for the shortcomings of R-CNN and improved the detection
+Therefore, AC is also needed to regulate workers’ behavior and ensure             speed. The emergence of FCN (Shelhamer et al., 2017) and Mask R-CNN
+that they are properly using their PPE. External supervision is needed to         (He et al., 2020) has made image segmentation technology increasingly
+achieve this measure, which precisely reflects that AC is more difficult to       mature. The advent of lightweight algorithms such as MobileNet-SSD
+achieve than PPE in the HOC. To address the lack of manual supervision            (Howard et al., 2017; Sandler et al., 2018) and You Only Look Once
+coverage and to control supervision costs, an intelligent inspection              (YOLO) (Redmon et al., 2016; Redmon and Farhadi, 2017; Redmon and
+method is required to monitor the construction workers’ safety and                Farhadi, 2018; Bochkovskiy et al., 2020; Ultralytics) has made object
+ensure proper use of PPE.                                                         detection easy on mobile terminals without using cloud servers. Open­
+    In recent years, a considerable amount of deep learning-related               pose (Cao et al., 2017) is another application of CNNs. Its basic network
+literature in engineering construction has focused on PPE (Du et al.,             is VGG-19. Openpose can finally realize the positioning of keypoints and
+2011; Dong et al., 2015; Shrestha et al., 2015; Park et al., 2015; Fang           joints of the human body, which can be used for posture estimation and
+et al., 2018; Fang et al., 2018; Fang et al., 2018; Mneymneh et al., 2019;        action recognition. The rapid development of deep learning techniques
+Wu et al., 2019; Wang et al., 2020; Tang et al., 2020; Nath et al., 2020;         has also led to the rapid advancement of computer vision, with appli­
+Chen and Demachi, 2021). However, most studies have only focused on               cations in various fields, such as structural health monitoring (Zhang
+whether PPE is worn (Du et al., 2011; Dong et al., 2015; Shrestha et al.,         and Yuen, 2021; Adel et al., 2021; Zou et al., 2019; Zhang and Yuen,
+2015; Park et al., 2015; Q. Fang et al., 2018; W. Fang et al., 2018;              2021), medical purposes (Setio et al., 2016; Gulshan et al., 2016), and
+Mneymneh et al., 2019; Wu et al., 2019; Wang et al., 2020; Tang et al.,           transportation (Ammour et al., 2017; Huval et al., 2015; Alqizwini et al.,
+2020; Nath et al., 2020; Chen and Demachi, 2021), overlooking the                 2017).
+proper use of the PPE from the perspective of AC in the HOC. In the case
+of the most frequent FFH and OS accidents, for example, if a worker has           2.2. Computer vision application in detection of protective equipment
+not used the hook of the safety harness as required, or has loosened the
+hardhat, the safety risk would significantly increase. The rapid devel­               Among the PPE types, hardhats can protect individuals’ heads, and
+opment of deep learning technology has made it possible to solve this             they are a primary prevention measure against OS accidents. Safety
+problem. Therefore, we propose a deep learning-based approach for                 harnesses can reduce the risk of FFH. This section lists some of the
+standardized inspection of the use of PPE to promote its proper use from          studies that have applied computer vision techniques to identify these
+an AC perspective. To this end, we selected two types of unregulated              two types of protective equipment in recent years.
+uses of PPE, namely loosening hardhats and not using hooks of safety                  Du et al. (2011) proposed a method based on machine learning and
+harnesses before beginning with the task, which may cause significant             image processing to identify the hardhat in a video. This method mainly
+injuries, specifically when working at heights. We first developed a deep         applied Haar-like face features and then detected the hardhat by the
+learning-based object detection model for detecting and locating the              color above the face area. Dong et al. (2015) developed a real-time
+hardhat and safety harness hooks. The trained computer vision model               location system and a virtual structure to monitor and evaluate the
+was used to detect a 9-s video and obtain a document arranged in a time           wearing of PPE automatically. Shrestha et al. (2015) introduced a
+sequence containing the coordinates of the detected hardhat and the               method for identifying safety hardhats using edge detection algorithms.
+safety harness hook. We then extracted the skeleton keypoint data of              Park et al. (2015) judged whether the workers in the construction site’s
+individuals using another computer vision model, Openpose. Finally,               video were wearing hardhats based on the spatial position relationship
+the output results of the first two steps were integrated. A one-                 between the detected human body and the hardhat. Q. Fang et al. (2018)
+dimensional convolutional neural network (1D-CNN) was used to                     and W. Fang et al. (2018) both applied the Faster R-CNN algorithm, with
+determine whether the video clip contained improper use of PPE.                   the former applying it to detect whether workers are wearing hardhats
+    The remainder of this paper is organized as follows. Section 2 out­           and the latter using it to detect the usage of safety harness, and the
+lines the related works. Section 3 describes the proposed method in               detection accuracies were 95.7% and 80%, respectively. Q. Fang et al.
+detail. Section 4 presents the results based on computer vision models.           (2018) also applied a deep learning algorithm to detect the wearing of
+Section 5 reports the recognition experiments based on the 1D-CNN.                hardhat and safety harnesses in a high-altitude operation scene that
+Sections 6 and 7 outline the discussion and conclusions, respectively.            involved working alongside a window and achieved good results in
+                                                                                  various scenarios. Mneymneh et al. (2019) created a new vision-based
+2. Literature review                                                              safety inspection framework that efficiently and quickly identified
+                                                                                  construction workers who were not wearing hardhats and issued
+2.1. Deep learning technology application in computer vision                      warnings accordingly. Based on SSD, Wu et al. (2019) proposed a one-
+                                                                                  stage method based on CNN, which was used to monitor automatically
+   Convolutional neural networks (CNNs) are one of the most common                whether construction workers wear hardhats and recognize the corre­
+deep learning network structures. Inspired by the biological natural              sponding colors with mean average precision (mAP) of up to 83.89%.
+visual cognitive mechanism, CNNs have the characteristics of sharing              Wang et al. (2020) presented an end-to-end monitoring network with a
+weights and significantly reducing model complexity. In the traditional           MobileNet model for the backbone network, and the method accurately
+
+                                                                              2
+J. Li et al.                                                                                                                          Safety Science 150 (2022) 105689
+
+
+identified construction personnel who were not wearing hardhats. Tang                 algorithm in pose recognition, and it can output up to 25 keypoints with
+et al. (2020) proposed a human–object interaction recognition model for               high accuracy and speed. The recognition performance of Openpose was
+PPE verifications, which can identify the usage of a wide range of PPE                verified in Section 4.3 (Fig. 1).
+that is not limited to hardhats and safety harnesses. Nath et al. (2020)                  Finally, when identifying whether a video contains improper use of
+introduced three YOLO-based deep learning methods to detect whether                   PPE, it needs to be input to the above-mentioned computer vision al­
+construction workers wear safety hardhats and jackets. Chen and                       gorithms. The coordinates of the hardhat, safety harness, and part of the
+Demachi (2021) described a solution to combine object detection and                   skeleton keypoints are extracted and integrated. The coordinate values
+individual detection to identify the improper use of hardhats.                        are then converted into relative values and input to the 1D-CNN to
+    From a HOC perspective, AC is a more effective way to prevent OS                  complete the final classification. Section 3.4 introduces the relevant
+and FFH accidents than PPE, and it involves measures such as keeping                  principles involved in the 1D-CNN we designed. The reason for selecting
+individuals away from tower crane hooks (Yang et al., 2019), not                      1D-CNN as a classifier is that it can quickly and automatically extract
+allowing passage over the support of a construction structure (Fang                   features from the data without manual effort. In Section 5, we describe
+et al., 2019), prohibiting actions at the edge of a building that is at risk of       the process of creating a dataset using the detection data obtained by
+falling (Yu et al., 2017), and ensuring that protective equipment is used             YOLO v5 and Openpose, and the testing results of 1D-CNN. Fig. 2 is the
+properly. However, although the above-mentioned research results have                 research framework.
+significantly contributed to this field, none of the studies have focused
+on the problem of loose hardhats. Regarding safety harnesses, only Fang               3.1. Collection of videos
+et al. (2018) noted the possibility of workers wearing a safety harness
+but not using the hook when working at height. However, that study                        This study takes the scene of workers working on the stairs on the top
+only identified the hook as a target. In most cases, detecting the hook as            floor of a building, as shown in Fig. 3, as an example to explore the
+a target alone does not indicate that it is being used correctly. In sum­             feasibility of the proposed method. In this scenario, the distance be­
+mary, as far as we know, few studies have identified whether safety                   tween the workers and the falling plane below was 3 m. According to the
+harnesses and hardhats are being used correctly and in a standardized                 National Standard of the People’s Republic of China GB3608-2008
+manner simultaneously from an AC perspective.                                         “Classification of High-Altitude Operations,” (GB/T 3608-2008)
+                                                                                      “Working at heights is defined as the work performed at a high place
+3. Methods                                                                            greater than 2 m above the datum plane for highness of falling, where
+                                                                                      there is a possibility of people falling down from that high place.” It is
+   Based on the research gap identified from the existing literature, the             assumed that the worker has been wearing hardhats and safety har­
+idea of combining the characteristics of human joints with hardhats and               nesses according to the relevant requirements. In this case, before the
+hooks of safety harnesses was formed, and we tried to judge whether                   formal task begins, the worker needs to fix the safety harness hook on a
+PPE was correctly used through the characteristic relationship between                stable end and firmly put on the hardhat. This scenario is selected as a
+them. Therefore, this study proposes a new recognition method that                    case to detect whether the worker is using these PPE units in a stan­
+combines an object detection algorithm with the pose estimation                       dardized manner.
+algorithm.                                                                                Table 1 lists the irregularities that may occur concerning hardhats
+   First, we collected the research material in the form of videos and                and hooks of safety harnesses. When using the hardhat, the jaw strap is
+defined the behavior of improper use of the hardhat and safety harness                mainly used to fix the hardhat. The main part of the hardhat plays the
+hook, which is presented in Section 3.1. Then, an object detection                    role of protecting the head. If the main part of the hardhat is loose, it will
+method to recognize and locate the hardhat and safety harness hook is                 more likely cause the hardhat to fall off than the loose jaw strap, thus
+described in Section 3.2. The YOLO v5 algorithm was adopted, which                    exposing the head to a dangerous environment. Meanwhile, considering
+can achieve real-time detection and has good sensitivity to small objects.            that computer vision may be non-sensitive to loose jaw straps, this
+Section 4.1 describes the dataset for training YOLO v5, which was                     article selects whether the hardhat is loosened as a case study to
+created by extracting images from the research material introduced in                 determine whether the hardhat is used properly. Currently, there is no
+Section 3.1. Section 4.2 is the process of establishing the YOLO v5                   clear data standard to define what state of the hardhat is loosened;
+model.                                                                                therefore, the authors define a visible tilt of the hardhat (tilt angle be­
+   The reason for extracting the human joints data is that it can be                  tween 30◦ and 45◦ ) as a loose condition. When the tilt angle is less than
+judged whether the hardhat is loose by the spatial position relationship              approximately 30◦ , the majority of the head is still in a protected state.
+between the facial features of the human body and the hardhat. It is also             As the tilt angle gradually increases, the possibility of the hardhat falling
+possible to evaluate whether the worker has used the hook correctly                   off will also increase. When the tilt angle is greater than about 45◦ , the
+through the logical relationship between the wrist and the hook’s co­                 protective effect of the hardhat will be significantly weakened. There­
+ordinate value. Section 3.3 describes the Openpose algorithm for                      fore, we take 30◦ to 45◦ as the danger value range to be detected and
+detecting an individual’s skeleton keypoints. Openpose is a classical                 warned. In the collected video clips, the hardhat’s tilt angle is also
+
+
+
+
+                                                   Fig. 1. Structure of convolutional neural network VGGNet.
+
+                                                                                  3
+J. Li et al.                                                                                                                           Safety Science 150 (2022) 105689
+
+
+
+
+                                                                  Fig. 2. Framework of this research.
+
+
+                                                                                       mainly in this range.
+                                                                                           The improper behaviors that may occur when using the safety
+                                                                                       harness are not using the hook when working to pursue efficiency in the
+                                                                                       movements and loosening the straps to be more comfortable when
+                                                                                       moving. Owing to the strap structure, if the strap is only slightly loose, it
+                                                                                       can still work together with the hook to ensure that workers do not fall.
+                                                                                       If the strap buckle is not fastened tightly, resulting in a highly loose
+                                                                                       strap, it increases the risk of falling. However, without the hook, once
+                                                                                       the worker misses his (or her) footing, the worker will fall resulting in a
+                                                                                       direct casualty. Meanwhile, considering that computer vision may not
+                                                                                       be sensitive to loose straps, this study considers whether the safety
+                                                                                       harness hook is used before the task begins as the research case of
+                                                                                       whether the safety harness is used properly.
+                                                                                           The purpose of this article is to distinguish four situations that may
+                                                                                       occur before the formal start of the task: 1. The hardhat is properly worn,
+                                                                                       and the safety harness hook is properly used (YY); 2. The hardhat is not
+                                                                                       properly worn, but the safety harness hook is properly used (NY); 3. The
+                                                                                       hardhat is properly worn, but the safety harness hook is not used (YN); 4.
+                   Fig. 3. Simulation of the aerial work scene.                        The work starts directly without the hardhat and the safety harness hook
+                                                                                       being properly worn (NN). These abbreviations will be used in the
+                                                                                       remainder of this article.
+Table 1
+                                                                                           In total, 150 videos for each of these four situations were recorded,
+Improper behaviors related to hardhat and safety harness.
+                                                                                       and then the 600 recorded videos were mirrored to achieve the purpose
+  Hardhat                 Loosening the hardhat          Loosening the jaw strap
+                                                                                       of data set expansion. Finally, 1200 videos of 9 s in length with a reso­
+  Safety harness          Not using the hook             Making the straps loose       lution of 1080 × 1080 and a frame rate of 30 fps were produced, which
+                                                                                       means that the recorded video contained 30 images per second. Fig. 4
+                                                                                       presents an example of the recorded video images for YY and NY. In YN
+
+
+                                                                                   4
+J. Li et al.                                                                                                                    Safety Science 150 (2022) 105689
+
+
+
+
+                                                                     (a) YY case
+
+
+
+
+                                                                     (b) NY case
+                                                        Fig. 4. Conditions of the aerial work scene.
+
+
+and NN, the character simulated some stair handrail repair or in situ             two instead of pooling layers. When outputting the results, large, me­
+movements without moving the hook to the fixed end.                               dium, and small objects were predicted using three scales. When
+                                                                                  designing anchor boxes, different sizes were also designed for large,
+3.2. Object detection                                                             medium, and small objects to improve the detection performance of
+                                                                                  small objects. Meanwhile, for better feature extraction, YOLO v3 intro­
+    In general, object detection algorithms can be classified as one- and         duced a residual connection.
+two-stage. One-stage is represented by the YOLO family (Redmon et al.,                To further enhance the performance of YOLO v3, YOLO v4 (Boch­
+2016; Redmon and Farhadi, 2017; Redmon and Farhadi, 2018; Boch­                   kovskiy et al., 2020) and v5 (Ultralytics) have made several improve­
+kovskiy et al., 2020; Ultralytics), while two-stage algorithms include            ments. They have in common the use of Mosaic data enhancement, use
+Faster R-CNN (Ren et al., 2017) and Mask R-CNN (He et al., 2020). The             of the CSPDarkNet-53 as the backbone, use of a feature pyramid network
+one-stage approach typically uses the backbone network directly to                (FPN) and path aggregation network (PAN) structure in Neck, and
+predict the object, without the region proposed network, which is often           application of CIOU as the loss function. The difference is that YOLO v5
+applied in the two-stage approach and therefore is faster. In addition,           uses adaptive anchor box computation at the input level, applies the
+after continuous development in recent years, the accuracy of one-stage           focus structure in backbone, introduces cross-stage partial connections
+approaches has been enhanced significantly. Therefore, in this study,             (CSP) in Neck, and uses SiLu as the activation function.
+YOLO v5, the most advanced one-stage algorithm, was selected as the                   Fig. 5 shows a flow chart of YOLO v5. When predicting the image, the
+object detection algorithm to recognize the hardhats and safety harness           original image is first scaled to 640 × 640, and after the features are
+hooks.                                                                            extracted by CSPDarkNet and spatial pyramid pooling, it is processed by
+    YOLO v1 was proposed by Redmon in 2016 (Redmon et al., 2016). It              FPN and PAN. This method makes the high-level and low-level features
+divided the image into 7 × 7 grids and then predicted the objects in the          better fused, thus improving the accuracy. Finally, objects are output
+grid directly by a CNN. However, since each grid can only predict one             from three scales to recognize large, medium, and small objects. In this
+object, the overlapping objects are challenging to detect, and small              study, we use the weights of YOLO v5m in training the detection model
+objects are likely to be undetected. The subsequent YOLO v2 (Redmon               of PPE, and the m and n in Fig. 5 are taken as 0.75 and 0.67, respectively.
+and Farhadi, 2017) introduced batch normalization, which normalizes
+the input of each layer and makes convergence easier. In terms of                 3.3. Openpose
+network structure, YOLO v2 applied DarkNet-19 and eliminated the
+fully connected layer. YOLO v2 also introduced anchor boxes, making it                Openpose is one of the state-of-the-art algorithms in pose estimation,
+possible to predict more objects. Nevertheless, as YOLO v2 only                   which can output up to 25 keypoints of an individual (Cao et al., 2017).
+considered the output after the fifth down-sampling, it failed to solve the       It also has the function of finger movement estimation and facial
+problem of difficult detection of small objects.                                  expression estimation. We selected it as the output tool for skeleton
+    The most significant improvement of YOLO v3 (Redmon and Far­                  keypoints owing to its advantages of fast processing speed and high
+hadi, 2018) was the modified network structure, which applied                     accuracy.
+DarkNet-53 to achieve down-sampling by convolution with a stride of                   Openpose is a bottom-up human posture recognition method that
+
+                                                                              5
+J. Li et al.                                                                                                                        Safety Science 150 (2022) 105689
+
+
+
+
+                                                            Fig. 5. Network structure of YOLO v5.
+
+
+can realize pose estimation of human motion, facial expression, and
+finger movement (Cao et al., 2017). Openpose first uses the first ten               St = ρt (F, St− 1 , Lt− 1 ), ∀t⩾2
+                                                                                                                                                                (1)
+                                                                                    Lt = ϕt (F, St− 1 , Lt− 1 ), ∀t⩾2
+layers of the VGG-19 CNN to extract the F feature from the input image.
+Then, feature F is processed through a continuous multistage network.                   In the procedure, iterate repeatedly until the network converges.
+Each stage (t) of the network contains two branches. The output results             Next, determine whether the two parts (dj1 and dj2) are connected
+are the part confidence map (St) and part affinity map (Lt). Finally, the           through PAFs and calculate the linear integral on the line of dj1 and dj2. If
+feature representation of the part affinity fields (PAFs) is used to save the                          ̅̅̅→
+                                                                                    the direction of dj1 dj2 is consistent with that of L*c(p), the value of the
+position and direction information of the body’s support area. As shown
+                                                                                    linear integral E (Cao et al., 2017) will be very large, and these two parts
+in Fig. 6, Openpose uses an iterative CNN network to detect key parts of
+                                                                                    are likely the torso.
+the human body. Each CNN network has two branches, namely CNN_S
+                                                                                         ∫ u=1
+and CNN_L. The networks in the first and subsequent stages differ in                                       dj2 − dj1
+                                                                                    E=         Lc (P(u))⋅               du                                   (2)
+form. The two network branches at each stage are used to calculate the                    u=0             ‖dj2 − dj1 ‖2
+part confidence maps and part affinity maps. It can also be observed
+                                                                                        Finally, traverse all the collocations, calculate the integral sum, and
+from the figure that the input feature F received in the first stage of the
+                                                                                    determine the torso of each part of the body. Two adjacent torsos must
+network is processed by the network to obtain S1 and L1. From the
+                                                                                    have shared joint points, and all the skeletons can be obtained by
+second stage, the input of the stage (t) network includes three parts: St− 1,
+                                                                                    combining all the torsos through the joint points. Fig. 7 shows the image
+Lt− 1, and F. The input of each stage network is given by Eq. (1) (Cao
+                                                                                    of the joint points obtained after applying Openpose, illustrating the
+et al., 2017):
+                                                                                    position represented by each keypoint number.
+
+
+
+
+                                               Fig. 6. Network architecture of keypoints detected by Openpose.
+
+                                                                                6
+J. Li et al.                                                                                                                           Safety Science 150 (2022) 105689
+
+
+                                                                                        Openpose are extracted and then summarized with the results output by
+                                                                                        YOLO v5.
+                                                                                            In this study, there were 1200 270 × 24 data files. If traditional
+                                                                                        machine learning algorithms are used to identify these data, manual
+                                                                                        feature extraction is required, which is cumbersome. The convolutional
+                                                                                        and pooling layers of the CNN can directly extract features, eliminating
+                                                                                        the need for manual feature extraction. Although traditional CNNs are
+                                                                                        generally used to deal with RGB image issues, images are essentially
+                                                                                        matrix problems. Therefore, it is feasible to apply CNNs to identify ar­
+                                                                                        rays of these data (Harbola and Coors, 2019; Lu et al., 2020; Xu et al.,
+                                                                                        2020).
+                                                                                            Table 2 and Fig. 9 present the network structure of the 1D-CNN
+                                                                                        designed in this study. The input size is 270, with a total of 24 chan­
+                                                                                        nels through three convolutional layers and three pooling layers, and
+                                                                                        then through the flattened layer and two dense layers, to achieve the
+                                                                                        final output classification. Unlike the traditional CNN used to process
+                                                                                        image issues, the kernel size of the convolutional layer and pooling layer
+                                                                                        of the CNN designed in this study has only one dimension. Therefore, it
+               Fig. 7. Individual skeleton keypoints detected by Openpose.
+                                                                                        is called a 1D-CNN.
+
+3.4. One dimensional convolutional neural network                                       3.4.1. Convolution layers
+                                                                                            The purpose of setting a convolution layer is to expand the longitu­
+     Each video recorded in this article contained 270 images. Input a                  dinal depth of the matrix. The convolution layer consists of a convolu­
+video into the YOLO v5 and Openpose model, and then a 270 × 8 and                       tion kernel. The depth of the kernel must be the same as that of the input
+270 × 75 data files will be obtained, respectively. The 8-column data of                matrix. Taking the Conv2 layer as an example, the input size is 135,
+the former are the coordinates of the hardhat and safety harness hook,                  depth is 16, size and depth of the convolution kernel are 10 and 16,
+which are Ymax, Ymin, Xmax, and Xmin. The 75-column data of the latter                  respectively, and kernel number is 32. Once there is convolution, the
+are the X coordinates, Y coordinates, and confidence scores of the 25                   kernel moves one step from top to bottom and convolutes with the input
+keypoints.                                                                              matrix to generate a new matrix with a depth of 32. If the “Padding” is
+     Fig. 8 shows a sample of the worn properly and worn improperly                     the same, the output vector’s length is the same as the input. If the
+hardhats in this study. In Section 3.1, we have already mentioned that                  “Padding” is Valid, the length of the output is 135 − 10 + 1 = 126.
+when there is a significant tilt of the hardhat that may cause falling off              Fig. 10(a) illustrates the principle of the convolution layers with a simple
+(tilt angle between approximately 30◦ and 45◦ ), it can be considered a                 column vector.
+case of loose hardhat. It can be observed that when a hardhat is loose, its
+coordinates in the image will change, and the relative distance between                 3.4.2. Pooling layers
+it and the individual’s skeleton keypoints will also change. Among the                      The main function of the pooling layer is to reduce the dimensions of
+25 keypoints output by Openpose, the distance of the hardhats from the                  the input matrix and extract features. As mentioned before, when the
+human eye and ear is closer than that from other parts, and thus the                    Conv2 operation is completed, the matrix is input into the pooling layer.
+variation in the relative distance between the hardhat and the eye as                   The size is 135, and the kernel size and stride are all four. From top to
+well as the ear will be more significant. Therefore, the coordinates of the             bottom, a maximum value is selected for every four elements. If the
+eyes and ears (keypoints 15 to 18) are extracted to enable the 1D-CNN to                “Padding” is the same, 135 is filled to 136, which can be divided by 4,
+extract the change features of the data better when the hardhat is loose.               and the output size is 34. If the “Padding” is valid, the integer part after
+     If the worker uses the hook correctly, the coordinates around the                  division is taken, that is 31. Fig. 10(b) explains the pooling layer prin­
+wrist (keypoints 3, 4, 6, and 7) and the hook will reflect the same tra­                ciple with the output shown in Fig. 10(a).
+jectory. If the hook is not used, it will not be reflected. Finally, the co­
+ordinates of points 3, 4, 6, 7, 15, 16, 17, and 18 from the data output by
+
+
+
+
+                                                   Fig. 8. Relative position relationship between the hardhat and eyes.
+
+                                                                                    7
+J. Li et al.                                                                                                                     Safety Science 150 (2022) 105689
+
+
+Table 2
+Details of the designed one-dimensional convolutional neural network (1D-CNN).
+  Layers            Input shape           Kernel size          Kernel number             Strides          Padding           Activation            Output shape
+
+  Conv1             (270,24)              10                   16                        1                Same              Relu                  (270,16)
+  Pooling1          (270,16)              2                    None                      2                Valid             None                  (135,16)
+  Conv2             (135,16)              10                   32                        1                Same              Relu                  (135,32)
+  Pooling2          (135,32)              4                    None                      4                Same              None                  (34,32)
+  Conv3             (34,32)               10                   64                        1                Same              Relu                  (34,64)
+  Pooling3          (34,64)               4                    None                      4                Valid             None                  (8,64)
+  Flatten           (8,64)                None                 None                      None             None              None                  (512)
+  Dense             (512)                 None                 None                      None             None              Relu                  (128)
+  Dense             (128)                 None                 None                      None             None              Softmax               (4)
+
+
+
+
+                                                              Fig. 9. Structure of the 1D-CNN.
+
+
+
+
+                               (a) Convolution Layer                                                  (b) Pooling Layer
+                                                  Fig. 10. Principles of convolution layer and pooling layer.
+
+
+3.4.3. Dense layer                                                                 of 1 × 128. Then, the final vector of size four is obtained by the Softmax
+    The dense layer plays the role of “classifier” in the entire CNN.              function in Dense2, corresponding to YY, NY, YN, and NN.
+Suppose the operations of the convolution layer, pooling layer, and
+activation function are used to map the original data to the hidden layer          3.4.4. Activation function
+feature space. In that case, the dense layer plays the role of mapping the             The activation function exists in the convolution and dense layers.
+learned “distributed feature representation” to the sample label space. In         The activation function activates a portion of the neurons in the neuron
+Fig. 9, after Pooling3 and Flatten, the input data are expanded into a             network and transmits the activation information back to the next layer
+vector of 1 × 512, and Dense1 processes 512 nodes to generate a vector             of the neural network. It is used to add nonlinear factors to compensate
+
+
+                                                                               8
+J. Li et al.                                                                                                                            Safety Science 150 (2022) 105689
+
+
+for the inadequate expression of the linear model. As shown in Fig. 11,           Table 3
+the common nonlinear activation functions are sigmoid, tanh, and ReLu.            PPE status.
+Currently, ReLu is one of the most popular functions.                                             YY                   NY                     YN            NN
+
+                                                                                   Harness’s      Original position,   Original position,     Original      Original
+4. Results based on computer vision algorithms                                      hook          in movement,         in movement,           position      position
+                                                                                                  fixed                fixed
+4.1. Dataset for YOLO v5                                                           Hardhat        Firm                 Loose                  Firm          Loose
+
+
+    The dataset used in this study to train the YOLO v5 model contained
+3208 images. Of these, 50% were from the originally recorded videos.              Table 4
+The other 50% were obtained from the videos after horizontal mirroring            Source of images in dataset.
+to expand the dataset and avoid overfitting. As presented in Table 3, the                                 Hook position of YY               Hook position of NY
+videos of YY and NY contain various statuses of safety harness hooks and
+                                                                                   Number of images       Original Position     250         Original Position       260
+hardhats. Therefore, the images of the dataset were all selected from YY                                  In movement           1102        In movement             1080
+and NY, of which there were 1604 images in each. Table 4 lists the                                        Fixed                 252         Fixed                   264
+source of the dataset images.
+    Since the video recording uses a frame rate of 30 fps, once the hook of
+the safety harness exceeds this rate when moving with the arm, the                all the images of the validation set were tested. The precision and recall
+moving object will be blurred in the video. To ensure that the trained            were calculated for different IOUs, and their relationships were deter­
+YOLO v5 has better detection capabilities for blurred moving objects, a           mined. When the precision-recall curve envelope area is close to 1, the
+total of 2182 images of the safety harness hook in various positions in           trained model has better detection and classification performance; this
+the air were considered in the dataset. In addition, because of the               area is also called AP. From the AP, the mAP can be obtained, which
+application of Mosaic data augmentation, the possibility of overfitting in        represents the overall detection ability of the model. In this study, the
+YOLO v5 is further reduced.                                                       threshold IOU was set to 0.5 to obtain AP@50 and mAP@50.
+                                                                                      To validate the effectiveness of the YOLO v5 model, two classical
+4.2. Detection results of YOLO v5 model                                           object detection algorithms, SSD (Sandler et al., 2018) and Faster R-CNN
+                                                                                  (Ren et al., 2017), were selected for comparison in this study. The AP,
+    For training and validation, 80% and 20% of the images in the                 mAP, and time consumed to detect a single image are listed in Table 5. It
+dataset were used, respectively. The parameters used to train YOLO v5             can be observed that YOLO v5 has an advantage in both detection ac­
+were as follows: initial learning rate of 0.01, batch size of 8, and 500          curacy and speed. Fig. 12 presents the detection results for the images
+epochs. The average precision (AP) and mAP were used to evaluate                  corresponding to Fig. 4. In most cases, the trained detection model can
+object detection performance. The numerical values of AP and mAP are              accurately locate and detect the hardhat and safety harness hook from
+closely related to precision and recall. The calculation method for pre­          different angles. Although there is still unrecognition when the hook
+cision and recall is shown in Eq. (3) (Powers, 2011):                             moves too fast, the beginning and end positions can be correctly posi­
+                                                                                  tioned, and the conditions for subsequent research are available.
+precision =
+               TP                                                                     Then, a video from each of the four types was selected and input into
+            TP + FP
+                                                                       (3)        the trained detection model. Fig. 13 shows the relationship between the
+             TP                                                                   coordinates of the detected boxes with time. It can be observed that the
+  recall =
+           TP + FN                                                                coordinates of the hook in (a) and (b) are significantly different from
+    According to the above equations, when a validation set image                 those in (c) and (d). This is because the hook will have a moving track
+contains a hook, if the detection model correctly detects it as a hook, the       when workers use it correctly. It can also be found that the loose hardhat
+image is marked as a true positive (TP). If the detector mistakenly judges        does not show apparent characteristics in these curves.
+the object as a hardhat, the image is marked as a false negative (FN). If
+the detector misjudges the hardhat as the hook, the image is marked as a          4.3. Recognition results based on Openpose
+false positive (FP) for the hook.
+    When the intersection over union (IOU) is greater than a certain                  Although the difference between the hook coordinates can be seen in
+value, the result is output. When the IOU threshold is set differently, the       Fig. 13, its trajectory does not fully explain its correct use. It needs to be
+precision and recall values will also change; therefore, the two param­           combined with the upper limb coordinates in the skeleton keypoints for
+eters cannot be used to evaluate the performance directly. After training,        further confirmation. Moreover, when the hardhat is tilted and loos­
+                                                                                  ened, no apparent features can be observed from the curves in Fig. 13
+                                                                                  alone. As mentioned earlier, when the hardhat is loose, the relative
+                                                                                  positional relationship between it and the five sense organs will change
+                                                                                  significantly; therefore, we must extract the five sense coordinates
+                                                                                  contained in Openpose. Therefore, in this section, we use the open-
+                                                                                  source algorithm Openpose described in Section 3.3, and input the
+                                                                                  video into it to obtain images with keypoints. The output results of the
+                                                                                  images corresponding to Fig. 4 by Openpose are listed in Fig. 14, and it
+                                                                                  can be observed that each predicted keypoint is in good agreement with
+
+                                                                                  Table 5
+                                                                                  Average precision (AP) and mean average precision (mAP).
+                                                                                                         AP-hardhat           AP-hook            mAP             time
+
+                                                                                   YOLO v5               0.996                0.986              0.991           0.019 s
+                                                                                   SSD                   0.981                0.943              0.962           0.037 s
+                                                                                   Faster R-CNN          0.999                0.975              0.987           0.166 s
+                  Fig. 11. Common activation functions.
+
+                                                                              9
+J. Li et al.                                                                                                                         Safety Science 150 (2022) 105689
+
+
+
+
+                                                                   Fig. 12. Detection results.
+
+
+the actual situation.                                                                 Therefore, relative values must be adopted when creating the datasets.
+    Fig. 15 shows the coordinate curves of keypoints 3, 4, 6, 7, 15, 16, 17,          The calculation method for the relative values is shown in Eq. (4). To
+and 18 after the four videos corresponding to Fig. 13 are output by the               eliminate the influence of the worker’s position, we subtracted the X and
+Openpose algorithm. The figure shows that when the safety harness                     Y coordinates of point 1 output by Openpose from a total of 24 sets of
+hook is used correctly, the coordinate values of RWrist_Y and Hook_Y                  extracted coordinate values. Subsequently, to eliminate the influence of
+present a similar shape. Moreover, the coordinates of the eyes and ears               the distance between the worker and the lens, all relative coordinate
+also present a shape similar to the coordinates of the hardhat above.                 values were divided by the distance between point 0 and point 1 output
+    When Openpose outputs the coordinate value, it also outputs the                   by Openpose. Finally, as shown in Fig. 18, 24 training set files corre­
+confidence score of this frame. The closer the score is to 1, the closer it is        sponding to 24 channels were obtained, and each training set file was an
+to the true value. Each video will have 270 confidence scores. For each               array of 600 × 270. The first number, 600, is composed of 150 sets of
+video, the average confidence score of these 8 points is calculated. Then,            data contributed by each category, and 270 is the coordinate value of the
+based on 300 videos of each category, the mean confidence score of each               9 s video output.
+point is calculated. These mean values are listed in Table 6. It can be
+observed that the confidence score of each point is at a relatively high              5.2. Experiment results
+level. Combining the results listed in Figs. 14 and 15, it can be consid­
+ered that the coordinate values output by Openpose are reliable and can                   Of the data in the training set, 90% were used to train and fit the
+be applied to the next step.                                                          model. When the model was established, the remaining 10% was used to
+                                                                                      evaluate the trained model preliminarily. The batch size represents the
+5. Experiment based on one-dimensional convolutional neural                           number of samples trained in each step of the CNN. In this study, the
+network                                                                               batch size was 4. The learning rate determines the speed at which the
+                                                                                      model converges. In this study, the learning rate was set at 0.0001, and
+5.1. Dataset                                                                          the number of epochs was set at 300. One epoch was equal to one
+                                                                                      training session with all the samples in the training set. There were 540
+    The curves in Figs. 13 and 15 show only a few apparent features,                  sets of data used for training, and the number of iterations was 40000.
+most of which are difficult to understand, especially on the issue of                 Figs. 19 and 20 show the loss and accuracy curves versus the iterations,
+whether the hardhat is loose. Therefore, the 1D-CNN is designed with a                respectively. Fig. 19 shows that as the number of training iterations
+strong ability to extract data features as a tool for subsequent analysis.            increases, the loss value decreases, stabilizing at the end of the training.
+    As mentioned above, 300 video clips for each category were recorded               It can be observed that the network model converged. As depicted in
+for a total of 1200 videos. From these, 600 videos were selected to train             Fig. 20, the accuracy continues to increase with iteration. By the end of
+the 1D-CNN in Fig. 9 and the other 600 videos to test the classification              the training, the training accuracy and validation accuracy reached 1.00
+performance. Before making the dataset, the trained YOLO v5 and                       and 0.95, respectively.
+Openpose models were used to detect these videos and output coordi­                       Finally, another 600 videos that were not involved in the training set
+nate data. Fig. 16 shows the detection results for the same video using               were used to test the trained 1D-CNN model. The test results are pre­
+these two algorithms.                                                                 sented in Tables 7–10. From the data in the table, the trained 1D-CNN
+    After inputting all the videos, the X and Y coordinates of points 3, 4,           model shows good recognition ability. The precision of each category
+6, 7, 15, 16, 17, and 18 in Fig. 16(a) and all coordinate values in Fig. 16           and the recall values do not appear to be significantly different, and both
+(b) are extracted and integrated. As shown in Fig. 17, when the worker’s              reach 0.9 or more. Most of the errors that occur are reflected in the
+location in the video is different, and the distance between the worker               detection of whether the hardhat is worn loose. The final recognition
+and the lens is different, the output coordinates will be quite different.            accuracy rate is 0.9467. The recognition accuracy of the standardized
+
+                                                                                 10
+J. Li et al.                                                                                                                        Safety Science 150 (2022) 105689
+
+
+
+
+                                               Fig. 13. Curves of coordinates of hardhat and hook versus time.
+
+
+use of hardhats and safety harnesses reached 0.9531 and 0.9965,                          In terms of the theoretical approach, we realize that it may be
+respectively. Considering that the ratio of the training set to the test set         challenging to obtain good results for the problems presented in this
+in this study reached 1:1, which is different from the 8:2 or even higher            paper if only object detection algorithms are used. For example, in some
+set by most researchers, this also illustrates the reliability of the trained        cases, from a two-dimensional image, if the hook of the safety harness at
+model and the proposed method.                                                       the fixed end happens to be located in front of the chest, it will likely be
+                                                                                     confused with the case where the safety harness hook is not used. Noting
+6. Discussion                                                                        the relationship between the positions of the hardhat and the head and
+                                                                                     the hook of the safety harness and the hand, a framework for fusing the
+    The main contributions of this study are as follows:                             object detection algorithm with the individual’s pose estimation algo­
+    In terms of safety management, previous studies on PPE are mostly                rithm is proposed to further improve the theoretical approach related to
+limited to the lowest level of the HOC, that is, detecting whether workers           PPE.
+are using PPE, and the higher levels are not applied to monitor if the PPE               On the technical side, the object detection algorithm is used for the
+is being used correctly. In the long term, the lower the level in the HOC,           detection of two categories only, the hardhat and safety harness hook,
+the higher is the management cost. Although advanced computer vision                 and the skeleton keypoint algorithm is used to determine the location of
+technology has eased the management pressure to a certain extent, the                the keypoints related to the PPE. A 1D-CNN is designed to classify the
+number of casualties every year due to FFH and OS accidents is still high.           obtained data, which can detect the improper use of PPE in video clips
+Hence, it is necessary to focus on whether PPE is being used properly at             from three angles under the conditions pre-defined in this study. The
+the AC level. The method proposed herein addresses the problem of PPE                accuracy reached 0.9531 for the loosening of the hardhat on the head
+monitoring from the AC perspective. It can detect the loosening of                   and 0.9965 for the issue of not using the hook of the safety harness. For
+hardhats on the head and the non-use of harness hooks when working at                comparison, we selected two classical classification algorithms, BP
+height, two types of improper use of PPE that can easily result in injuries          neural network (Rumelhart et al., 1986) and support vector machine
+to the workers themselves. In practical application, it can be combined              (SVM) (Cortes and Vapnik, 1995). The input data of the BP neural
+with safety training to require workers to be checked for standardized               network and SVM are the feature values that need to be extracted
+use of PPE by the method we propose. When a worker begins the task                   manually. In this study, 17 feature values, including mean, variance,
+directly without using PPE properly, he or she can be alerted and                    kurtosis, skewness, and others, were extracted for the classification.
+warned.                                                                              Table 11 lists the results. It can be observed that the classification
+
+                                                                                11
+J. Li et al.                                                                    Safety Science 150 (2022) 105689
+
+
+
+
+                               Fig. 14. Output by Openpose.
+
+
+
+
+               Fig. 15. Curves of coordinates output by Openpose versus time.
+
+
+
+
+                                             12
+J. Li et al.                                                                                                                Safety Science 150 (2022) 105689
+
+
+Table 6
+Mean average confidence score of each keypoint.
+               Relbow(3)           Rwrist(4)        Lelbow(6)             Lwrist(7)            Reye(15)       Leye(16)       Rear(17)            Lear(18)
+
+  YY           0.8100              0.8077           0.8112                0.8056               0.8937         0.9008         0.7959              0.8134
+  NY           0.8155              0.8193           0.8150                0.8149               0.9029         0.9058         0.7814              0.7937
+  YN           0.7996              0.7891           0.7738                0.7655               0.8901         0.8915         0.7708              0.7738
+  NN           0.8368              0.8394           0.8300                0.8340               0.9064         0.9089         0.7958              0.7952
+
+
+
+
+                                                  Fig. 16. Coordinates output by Openpose and YOLO v5.
+
+
+
+
+                               (a) Influence of location                                        (b) Influence of distance
+                                                                  Fig. 17. Influence factor.
+
+
+
+
+                                                             Fig. 18. Details of the training set.
+
+
+
+
+                                                                              13
+J. Li et al.                                                                                                                                           Safety Science 150 (2022) 105689
+
+
+                                                                                               Table 10
+                                                                                               Test results for standardized use of safety harness.
+                                                                                                Recognized as         YY           YN            Recognized as            NY        NN
+
+                                                                                                YY                    143          1             NY                       142       1
+                                                                                                YN                    0            140           NN                       0         143
+                                                                                                Accuracy              0.9965                     Accuracy                 0.9965
+                                                                                                Mean Accuracy                      0.9965
+
+
+
+
+                                                                                               Table 11
+                                                                                               Comparison results for data classification.
+                                                                                                                        Accuracy        Accuracy-hardhat         Accuracy-safety harness
+
+                                                                                                1D-CNN (ours)           0.9467          0.9531                   0.9965
+                                                                                                BP Neural Network       0.775           0.8033                   0.9710
+                                                                                                SVM                     0.703           0.707                    0.97
+
+
+
+                                Fig. 19. Loss curves.                                          accuracy of 1D-CNN is significantly higher, and 1D-CNN can automat­
+                                                                                               ically extract features during prediction, which is not available in ma­
+                                                                                               chine learning algorithms. It can be seen, the results obtained by
+                                                                                               applying the method designed in this study validate the feasibility of
+                                                                                               using the coordinates of protective equipment and skeleton keypoints to
+                                                                                               identify the standardized use of PPE, further illustrating the effective­
+                                                                                               ness of using 1D-CNN to deal with the data classification problem.
+                                                                                                   Tables 12 and 13 present a comparison between some of the deep
+                                                                                               learning-based studies related to PPE and this paper. As can be observed,
+                                                                                               the purpose and methodology of this study are different from those of
+                                                                                               previous studies. Our method can identify whether PPE is used properly
+                                                                                               from the perspective of AC, and the results obtained are comparable.
+                                                                                                   However, this study also has some limitations and shortcomings that
+                                                                                               need to be addressed in the future.
+                                                                                                   The first is the dataset. A complete dataset will help to apply the
+                                                                                               results of this study to actual projects more quickly. The current research
+                                                                                               object of this study uses stair work as an example. In the future, multi-
+                                                                                               person work and different scenes should be considered in the dataset,
+                                                                                               and more different angles and different light conditions should be
+                                                                                               covered.
+                            Fig. 20. Accuracy curves.                                              Second, in the future, to solve the problem that the hook is prone to
+                                                                                               target loss when the moving speed is too fast, we can try to use the object
+                                                                                               tracking method or use a camera with a higher frame rate.
+Table 7                                                                                            Finally, in terms of application objects, the problem of irregular use
+Test results of the 1D-CNN.                                                                    not only affects hardhats and safety harnesses but also goggles, protec­
+  Recognized as               YY              NY               YN                  NN          tive clothing, gloves, etc. Therefore, in the future, it is necessary to
+  YY                          143             7                1                   0
+                                                                                               extend the method developed in this study to the inspection of various
+  NY                          7               142              1                   1           types of PPE to improve the safety of the construction site comprehen­
+  YN                          0               1                140                 6           sively. In addition, when using hardhats and safety harnesses, it also has
+  NN                          0               0                8                   143         the problem of loose jaw straps and shoulder straps, which are not
+  Accuracy                    0.9467
+                                                                                               considered in this paper because the computer vision technology is not
+
+                                                                                               Table 12
+Table 8                                                                                        Different deep learning-based studies related to hardhat’s monitoring.
+Precision and recall value.
+                                                                                                                Objective                 Method                      HOC      Accuracy
+                  YY               NY         YN              NN                Average
+                                                                                                Fang et al.     Identify whether the      Faster R-CNN                PPE      0.957
+  Precision       0.9533           0.9467     0.9333          0.9533            0.9415            (Fang         worker is wearing a
+  Recall          0.947            0.9404     0.9523          0.947             0.9467            et al.,       hardhat;
+                                                                                                  2018)
+                                                                                                Wang et al.     Identify whether the      MobileNet with with         PPE      0.894
+                                                                                                  (Wang         worker is wearing a       Multi-Scale Features
+Table 9                                                                                           et al.,       hardhat;                  and a Top-Down
+Test results for standardized use of hardhat.                                                     2020)                                   Module
+  Recognized as        YY            NY       Recognized as            YN          NN           Nath et al.     Identify whether the      YOLO v3                     PPE      0.7397
+                                                                                                  (Nath         worker is wearing a
+  YY                   143           7        YN                       140         6              et al.,       hardhat;
+  NY                   7             142      NN                       8           143            2020)
+  Accuracy             0.9532                 Accuracy                 0.9529                   Ours            Determine if the          YOLO v5 + Openpose          AC       0.9531
+  Mean Accuracy                      0.9531                                                                     hardhat is loose when     + 1D CNN
+                                                                                                                the hardhat has been
+                                                                                                                worn
+
+
+                                                                                          14
+J. Li et al.                                                                                                                                  Safety Science 150 (2022) 105689
+
+
+Table 13                                                                             Declaration of Competing Interest
+Different deep learning-based studies related to safety harness’s monitoring.
+                   Objective              Method              HOC    Accuracy            The authors declare that they have no known competing financial
+                                                                                     interests or personal relationships that could have appeared to influence
+  Fang et al. (    Identify whether the   Faster R-CNN +      PPE    0.8
+    Fang et al.,   worker is wearing a    Harness detection                          the work reported in this paper.
+    2018)          safety harness;        netwok
+  Chen et al. (    Identify whether the   YOLO v3 +           PPE    0.9337          Acknowledgements
+    Chen and       worker is wearing a    Openpose + Scene
+    Demachi,       safety harness;        graph
+    2021)                                 identification
+                                                                                        This work was supported in part by the Science and Technology
+  Ours             Determine if the       YOLO v5 +           AC     0.9965          Research and Development Program of China Construction Eighth En­
+                   hook is used when      Openpose + 1D                              gineering Division Co., Ltd under Grant 2019-3-17, and in part by the
+                   the safety harness     CNN                                        Key Research and Development Program of Liaoning Province under
+                   has been worn
+                                                                                     Grant 2019010237-JH8/103.
+
+sensitive enough to them. Therefore, it is necessary to explore a feasible           References
+and effective method to address this issue in the future.
+                                                                                     Adel, M., Yoloyama, H., Tatsuta, H., et al., 2021. Early damage detection of fatigue
+                                                                                         failure for RC deck slabs under wheel load moving test using image analysis with
+7. Conclusion                                                                            artificial intelligence. Eng. Struct. 246 (3) https://doi.org/10.1109/
+                                                                                         ACCESS.2019.2943599.
+                                                                                     Alqizwini, M., Barjasteh, I., Alqassab, H., Radha, H., 2017. Deep learning algorithm for
+    PPE is considered to be the least effective control measure in the                   autonomous driving using GoogLeNet. In: IEEE Intelligent Vehicles Symposium,
+hierarchy of controls. To improve the effectiveness of PPE and to reduce                 pp. 89–96. https://doi.org/10.1109/IVS.2017.7995703.
+the frequency of FFH and OS accidents, it is necessary to monitor the                Ammour, N., Alhichri, H., Bazi, Y., Benjdira, B., Alajlan, N., Zuair, M., 2017. Deep
+                                                                                         learning approach for car detection in UAV imagery. Remote Sens. 9 (4), 312–326.
+behavior of using PPE from the perspective of AC. The authors took the                   https://doi.org/10.3390/rs9040312.
+FFH and OS accident as the research background and selected a high-                  Bochkovskiy, A., Wang, C., Liao, H.M., 2020. YOLOv4: Optimal speed and accuracy of
+altitude staircase working scene as a research case, proposed a com­                     object detection. ArXiv: Comput. Vis. Patt. Recogn. https://arxiv.org/abs/2
+                                                                                         004.10934.
+puter vision-based standardized use inspection method of PPE.
+                                                                                     Bureau of Labor Statistics. Industries at a Glance: Construction. https://www.bls.gov/
+    First, four usage scenarios of PPE are defined, including one standard               iag/tgs/iag23.htm.
+behavior and three non-standard behaviors, namely: 1. The hardhat is                 Cao, Z., Simon, T., Wei, S., Sheikh, Y., 2017. Realtime Multi-person 2D Pose Estimation
+properly worn, and the safety harness hook is properly used (YY); 2. The                 Using Part Affinity Fields. In: IEEE Conference on Computer Vision and Pattern
+                                                                                         Recognition, pp. 1302–1310. https://doi.org/10.1109/CVPR.2017.143.
+hardhat is not properly worn, but the safety harness hook is properly                Chen, S., Demachi, K., 2021. Towards on-site hazards identification of improper use of
+used (NY); 3. The hardhat is properly worn, but the safety harness hook                  personal protective equipment using deep learning-based geometric relationships
+is not used (YN); 4. The work starts directly without the hardhat and the                and hierarchical scene graph. Autom. Constr. 125, 103619. https://doi.org/
+                                                                                         10.1016/j.autcon.2021.103619.
+safety harness hook being properly worn (NN). For each situation, 300                Cortes, C., Vapnik, V., 1995. Support-vector networks. Mach. Learn. 20 (3), 273–1197.
+videos were recorded. Then, we extracted 3208 images from the videos                     https://doi.org/10.1007/BF00994018.
+as a data set, established a YOLO v5 model that can detect the hardhat               Dong, X., Brown, S., Brooks, R.D., 2021. Trends of Fatal Falls in the U.S. Construction
+                                                                                         Industry. In: Proceedings of the 21st Congress of the International Ergonomics
+and the safety harness hook, the mAP is 0.991. The coordinates of the                    Association, pp. 221. https://doi.org/10.1007/978-3-030-74608-7_39.
+hardhat and safety harness hook were output using the detection model.               Dong, S., He, Q., Li, H., Yin, Q., 2015. Automated PPE Misuse Identification and
+Using Openpose, an open-source project of Carnegie Mellon University,                    Assessment for Safety Performance Enhancement. ICCREM 2015: Environ. Sustain.
+                                                                                         Build. https://doi.org/10.1061/9780784479377.024.
+the coordinates of keypoints 3, 4, 6, 7, 15, 16, 17, and 18 were extracted.
+                                                                                     Du, S., Shehata, M., Badway, W., 2011. Hardhat detection in video sequences based on
+Finally, to eliminate the influence of the operator’s spatial position on                face features, motion and color information. In: 2011 3rd International Conference
+the coordinate values, all the coordinates were integrated into a time                   on Computer Research and Development, pp. 25–29. https://doi.org/10.1109/
+                                                                                         ICCRD.2011.5763846.
+series, and the relative values were calculated. A 1D-CNN model is
+                                                                                     Fang, W., Ding, L., Luo, H., Love, P.E.D., 2018. Falls from heights: A computer vision-
+trained using the relative coordinate values of 600 videos, and the actual               based approach for safety harness detection. Autom. Constr. 91, 53–61. https://doi.
+test is performed using the data of another 600 videos. The final                        org/10.1016/j.autcon.2018.02.018.
+recognition accuracy rate is 0.9467 in the experimental scenario. The                Fang, Q., Li, H., Luo, X., Ding, L., Luo, H., Li, C., 2018. Computer vision aided inspection
+                                                                                         on falling prevention measures for steeplejacks in an aerial environment. Autom.
+recognition accuracy of the standardized use of hardhats and safety                      Constr. 93, 148–164. https://doi.org/10.1016/j.autcon.2018.05.022.
+harnesses reached 0.9531 and 0.9965, respectively. Compared with the                 Fang, Q., Li, H., Luo, X., Ding, L., Luo, H., Rose, T.M., An, W., 2018. Detecting non-
+classification algorithms BP neural network and SVM, the accuracy is                     hardhat-use by a deep learning method from far-field surveillance videos. Autom.
+                                                                                         Constr. 85, 1–9. https://doi.org/10.1016/j.autcon.2017.09.018.
+significantly higher, which illustrates the feasibility of the proposed              Fang, W., Zhong, B., Zhao, N., Love, P.E.D., Luo, H., Xue, J., Xu, S., 2019. A deep
+method.                                                                                  learning-based approach for mitigating falls from height with computer vision:
+    With the further improvement of the method in the future, it can be                  Convolutional neural network. Adv. Eng. Inf. 39, 170–177. https://doi.org/10.1016/
+                                                                                         j.aei.2018.12.005.
+used together with safety training to monitor and regulate workers’                  GB/T 11651-2008. Code of practice for selection of personal protective equipments.
+behavior when using PPE from the perspective of AC in practical ap­                  GB/T 3608-2008. Classification of High Altitude Operations.
+plications, to reduce the number of casualties in accidents.                         Girshick, R., 2015. Fast r-cnn. In: Proceedings of the IEEE International conference on
+                                                                                         computer vision, pp. 1440–1448. https://doi.org/10.1109/ICCV.2015.169.
+                                                                                     Girshick, R., Donahue, J., Darrell, T., Malik, J., 2014. Rich feature hierarchies for
+CRediT authorship contribution statement                                                 accurate object detection and semantic segmentation. Proc. Comput. Vis. Patt.
+                                                                                         Recogn. 580–587. https://doi.org/10.1109/CVPR.2014.81.
+                                                                                     Gulshan, V., Peng, L., Coram, M., Stumpe, M.C., Wu, D., Narayanaswamy, A.,
+   Jiaqi Li: Writing – original draft, Methodology, Investigation, Vali­
+                                                                                         Venugopalan, S., Widner, K., Madams, T., Cuadros, J., Kim, R., Raman, R., Nelson, P.
+dation, Software, Data curation, Conceptualization. Xuefeng Zhao:                        C., Mega, J.L., Webster, D.R., 2016. Development and Validation of a Deep Learning
+Writing – review & editing, Supervision, Conceptualization, Resources,                   Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs.
+Funding acquisition. Guangyi Zhou: Resources, Supervision. Min­                          JAMA 316 (22), 2402. https://doi.org/10.1001/jama.2016.17216.
+                                                                                     Harbola, S., Coors, V., 2019. One dimensional convolutional neural network
+gyuan Zhang: Project administration, Supervision.                                        architectures for wind prediction. Energy Convers. Manage. 195, 70–75. https://doi.
+                                                                                         org/10.1016/j.enconman.2019.05.007.
+                                                                                     He, K., Zhang, X., Ren, S., Sun, J., 2016. Deep residual learning for image recognition.
+                                                                                         Proc. Comput. Vis. Patt. Recogn. 770–778. https://doi.org/10.1109/CVPR.2016.90.
+
+
+
+
+                                                                                15
+J. Li et al.                                                                                                                                               Safety Science 150 (2022) 105689
+
+He, K., Gkioxari, G., Dollar, P., Girshick, R., 2020. Mask R-CNN. IEEE Trans. Pattern            Sandler, M., Howard, A., Zhu, M., Zhmoginov, A., Chen, L., 2018. MobileNetV2: Inverted
+    Anal. Mach. Intell. 42 (2), 386–397. https://doi.org/10.1109/                                    residuals and linear bottlenecks. ArXiv: Comput. Vis. Patt. Recogn. https://arxiv.
+    TPAMI.2018.2844175.                                                                              org/abs/1801.04381.
+Howard, A.G., Zhu, M., Chen, B., Kalenichenko, D., Wang, W., Weyand, T.,                         Setio, A.A.A., Ciompi, F., Litjens, G., Gerke, P., Jacobs, C., van Riel, S.J., Wille, M.M.W.,
+    Andreetto, M., Adam, H., 2017. MobileNets: Efficient convolutional neural networks               Naqibullah, M., Sanchez, C.I., van Ginneken, B., 2016. Pulmonary nodule detection
+    for mobile vision applications. ArXiv: Comput. Vis. Patt. Recogn. https://arxiv.                 in CT images: False positive reduction using multi-view convolutional networks.
+    org/abs/1704.04861.                                                                              IEEE Trans. Med. Imag. 35 (5), 1160–1169. https://doi.org/10.1109/
+Huval, B., Wang, T., Tandon, S., Kiske, J., Song, W., Pazhayampallil, J., Andriluka, M.,             TMI.2016.2536809.
+    Rajpurkar, P., Migimatsu, T., Chengyue, R., Mujica, F.A., Coates, A., Ng, A.Y., 2015.        Shelhamer, E., Long, J., Darrell, T., 2017. Fully convolutional networks for semantic
+    An empirical evaluation of deep learning on highway driving. ArXiv: Robotics. htt                segmentation. IEEE Trans. Pattern Anal. Mach. Intell. 39 (4), 640–651. https://doi.
+    ps://arxiv.org/abs/1504.01716.                                                                   org/10.1109/TPAMI.2016.2572683.
+Konda, S., Tiesman, H., Reichard, A., 2016. Fatal traumatic brain injuries in the                Shrestha, K., Shrestha, P.P., Bajracharya, D., Yfantis, E.A., 2015. Hard-Hat Detection for
+    construction industry, 2003-2010. Am. J. Ind. Med. 59, 212–220. https://doi.org/                 Construction Safety Visualization. J. Constr. Eng. 2015, 1–8. https://doi.org/
+    10.1002/ajim.22557.                                                                              10.1155/2015/721380.
+Krizhevsky, A., Sutskever, I., Hinton, G.E., 2017. ImageNet classification with deep             Simonyan, K., Zisserman, A., 2014. Very deep convolutional networks for large-scale
+    convolutional neural networks. Proc. Neural Inform. Process. Syst. 60 (6), 84–90.                image recognition. ArXiv. https://arxiv.org/abs/1409.1556.
+    https://doi.org/10.1145/3065386.                                                             Szegedy, C., Liu, W., Jia, Y., Sermanet, P., Reed, S., Anguelov, D., Erhan, D.,
+Lecun, Y., Bottou, L., Bengio, Y., Haffner, P., 1998. Gradient-based learning applied to             Vanhoucke, V., Rabinovich, A., 2015. Going deeper with convolutions. Proc.
+    document recognition. Proc. IEEE 86 (11), 2278–2324. https://doi.org/10.1109/                    Comput. Vis. Patt. Recogn. 1–9. https://doi.org/10.1109/CVPR.2015.7298594.
+    5.726791.                                                                                    Tang, S., Roberts, D., Golparvar-Fard, M., 2020. Human-object interaction recognition
+Lu, G., Wang, Y., Yang, H., Zou, J., 2020. One-dimensional convolutional neural                      for automatic construction site safety inspection. Autom. Constr. 120, 103356.
+    networks for acoustic waste sorting. J. Cleaner Prod. 271, 122393. https://doi.org/              https://doi.org/10.1016/j.autcon.2020.103356.
+    10.1016/j.jclepro.2020.122393.                                                               U.S. NIOSH. Hierarchy of Controls. https://www.cdc.gov/niosh/topics/hierarchy/.
+Ministry of Housing and Urban-Rural Development of the People’s Republic of China.               Ultralytics. YOLO v5. https://github.com/ultralytics/yoloV5.
+    http://www.mohurd.gov.cn/.                                                                   Wang, L.u., Xie, L., Yang, P., Deng, Q., Du, S., Xu, L., 2020. Hardhat-Wearing Detection
+Mneymneh, B.E., Abbas, M., Khoury, H., 2019. Vision-Based Framework for Intelligent                  Based on a Lightweight Convolutional Neural Network with Multi-Scale Features and
+    Monitoring of Hardhat Wearing on Construction Sites. J. Comput. Civil Eng. 33 (2),               a Top-Down Module. Sensors 20 (7), 1868. https://doi.org/10.3390/s20071868.
+    04018066. https://doi.org/10.1061/(ASCE)CP.1943-5487.0000813.                                Wu, J., Cai, N., Chen, W., Wang, H., Wang, G., 2019. Automatic detection of hardhats
+Nath, N.D., Behzadan, A.H., Paal, S.G., 2020. Deep learning for site safety: Real-time               worn by construction personnel: A deep learning approach and benchmark dataset.
+    detection of personal protective equipment. Autom. Constr. 112, 103085. https://                 Autom. Constr. 106, 102894. https://doi.org/10.1016/j.autcon.2019.102894.
+    doi.org/10.1016/j.autcon.2020.103085.                                                        Xu, Z., Zhao, J., Yu, Y., Zeng, H., 2020. Improved 1D-CNNs for behavior recognition
+Occupational Safety & Health Administration. Safety and Health Regulations for                       using wearable sensor network. Comput. Commun. 151, 165–171. https://doi.org/
+    Construction: Head protection. https://www.osha.gov/laws-regs/regulations/stan                   10.1016/j.comcom.2020.01.012.
+    dardnumber/1926/1926.100.                                                                    Yang, Z., Yuan, Y., Zhang, M., Zhao, X., Zhang, Y., Tian, B., 2019. Safety distance
+Park, M., Elsafty, N., Zhu, Z., 2015. Hardhat-Wearing Detection for Enhancing On-Site                identification for crane drivers based on Mask R-CNN. Sensors 19 (12), 2789–2801.
+    Safety of Construction Workers. J. Constr. Eng. Manage. 141 (9) https://doi.org/                 https://doi.org/10.3390/s19122789.
+    10.1061/(ASCE)CO.1943-7862.0000974, pp. 04015024.1–04015024.16.                              Yu, Y., Guo, H., Ding, Q., Li, H., Skitmore, M., 2017. An experimental study of real-time
+Powers, D.M., 2011. Evaluation: from precision, recall and F-measure to ROC,                         identification of construction workers’ unsafe behaviors. Autom. Constr. 82,
+    informedness, markedness and correlation. J. Mach. Learn. Technol. 2, 37–63.                     193–206. https://doi.org/10.1016/j.autcon.2017.05.002.
+    https://doi.org/10.9735/2229-3981.                                                           Zeiler, M.D., Fergus, R., 2014. Visualizing and understanding convolutional networks. In:
+Redmon, J., Farhadi, A., 2018. YOLOv3: An incremental improvement. ArXiv: Comput.                    Proceedings of European Conference on Computer Vision, pp. 818–833. https://doi.
+    Vis. Patt. Recogn. https://arxiv.org/abs/1804.02767.                                             org/10.1007/978-3-319-10590-1_53.
+Redmon, J., Divvala, S.K., Girshick, R., Farhadi, A., 2016. You only look once, real-time        Zhang, Y., Yuen, K., 2021. Bolt damage identification based on orientation-aware center
+    object detection. In: Proceedings of the IEEE Conference on Computer Vision and                  point estimation network. Struct. Health Monit. https://doi.org/10.1177/
+    Pattern Recognition, pp. 779–788. https://doi.org/10.1109/CVPR.2016.91.                          14759217211004243.
+Redmon, J., Farhadi, A., 2017. YOLO9000: Better, faster, stronger. In: Proceedings of the        Zhang, Y., Yuen, K.-V., 2021. Crack detection using fusion features-based broad learning
+    IEEE Conference on Computer Vision and Pattern Recognition, pp. 6517–6525.                       system and image processing. Comput.-Aided Civ. Infrastruct. Eng. 36 (12),
+    https://doi.org/10.1109/CVPR.2017.690.                                                           1568–1584.
+Ren, S., He, K., Girshick, R., Sun, J., 2017. “Faster R-CNN”: towards real-time object           Zou, Z., Zhao, X., Zhao, P., Qi, F., Wang, N., 2019. CNN-based statistics and location
+    detection with region proposal networks. IEEE Trans. Pattern Anal. Mach. Intell. 6               estimation of missing components in routine inspection of historic buildings. J. Cult.
+    (39), 1137–1149. https://doi.org/10.1109/TPAMI.2016.2577031.                                     Heritage 38, 221–230. https://doi.org/10.1016/j.culher.2019.02.002.
+Rumelhart, D.E., Hinton, G.E., Williams, R.J., 1986. Learning representation by back-
+    propagating errors. Nature 323 (3), 533–536. https://doi.org/10.1038/323533a0.
+
+
+
+
+                                                                                            16
+

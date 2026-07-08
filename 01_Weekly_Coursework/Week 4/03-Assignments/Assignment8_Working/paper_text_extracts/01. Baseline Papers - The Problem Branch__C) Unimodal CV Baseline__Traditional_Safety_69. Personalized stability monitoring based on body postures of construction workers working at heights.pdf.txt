@@ -1,0 +1,877 @@
+                                                                            Safety Science 162 (2023) 106104
+
+
+                                                                       Contents lists available at ScienceDirect
+
+
+                                                                                 Safety Science
+                                                              journal homepage: www.elsevier.com/locate/safety
+
+
+
+
+Personalized stability monitoring based on body postures of construction
+workers working at heights
+Pinsheng Duan a, b, Yang Miang Goh b, Jianliang Zhou a, *
+a
+    School of Mechanics and Civil Engineering, China University of Mining and Technology, Xuzhou, Jiangsu 221116, China
+b
+    Department of the Built Environment, College of Design and Engineering, National University of Singapore, 4 Architecture Dr, Singapore 117566, Singapore
+
+
+
+
+A R T I C L E I N F O                                         A B S T R A C T
+
+Keywords:                                                     Fall from heights accidents are one of the most frequent causes of death in the construction industry. Many fall-
+Construction workers                                          from-height accidents are related to stability issues and stability is critical for construction workers working at
+Stability monitoring                                          heights. Thus, stability monitoring of workers is important for proactive accident prevention. However, workers’
+Posture recognition
+                                                              stability is highly personalized due to differences in workers’ physical characteristics and habits. Little attention
+Working at height
+Gaussian mixture model
+                                                              has been paid to the personalized posture-based stability analysis of workers working at heights. This study
+                                                              proposes a personalized stability monitoring framework based on workers’ body posture patterns when working
+                                                              at heights. The proposed method includes two main components: posture recognition and stability monitoring.
+                                                              First, OpenPose is used to extract the coordinates of workers’ posture key points from video clips. Two posture
+                                                              features, duration and count, are extracted to reflect workload and frequency. Secondly, a two-stage stability
+                                                              monitoring framework, including instability detection and instability evaluation, is designed based on the
+                                                              Gaussian model and Gaussian mixture model. Finally, the proposed framework is validated by on-site con­
+                                                              struction videos of workers working at height. The validation results showed the accuracy of 84.38% and the
+                                                              precision of 81.25% in identifying the stable status of a subject. The robustness of the personalised monitoring
+                                                              method was validated through comparisons with five other workers. The study provides a practical reference for
+                                                              active safety monitoring for workers with high fall-from-height risk. It also helps to extend personalized and
+                                                              adaptive behaviour-based safety training for construction workers.
+
+
+
+
+1. Introduction                                                                                     addition, current approaches do not detect abnormal events until after
+                                                                                                    they have occurred, which is not conducive to proactive safety man­
+    The construction industry is a high-risk industry, and about 80–90 %                            agement (Chen et al., 2019). Thus, there is a need for further research on
+of accidents are due to human-related causes (Salminen and Tallberg,                                personalized safety monitoring methods.
+1996; Zhang and Fang, 2013). Falling from height is the leading cause of                                Workers working at heights always need to be in a stable position to
+fatal injury (Chi and Han, 2013). Although measures have been devel­                                prevent serious fall-from-height accidents. Changes in the posture of
+oped to prevent serious fall from height accidents, e.g., mandatory                                 workers during work will bring about changes in the individual’s centre
+personal safety protection equipment, they still occur frequently.                                  of gravity and stability. Once stability is lost, the risk of accidents will
+Studies show that a common cause of these accidents is ineffective                                  increase significantly. Moreover, workers’ postural stability at height is
+monitoring of workers’ behaviours (Xia et al., 2018). Each construction                             highly personalized due to differences in workers’ physical character­
+worker’s safety performance is closely related to the workers’ individ­                             istics and habits (Cyma et al., 2018). Thus, a personalized stability
+ualised behavioural patterns, which are influenced by the different types                           monitoring method for workers working at heights is important to
+of work, habits, experience, and other characteristics (Duan et al.,                                facilitate proactive accident prevention. However, there is a lack of
+2022a). However, current safety monitoring systems do not consider the                              attention to personalized stability analysis of workers working at height.
+behavioural patterns of different workers, and they typically use a fixed                           In the medical field, to maximize the treatment effects and minimize side
+safety threshold for all workers which result in frequent activation of                             effects, the personalized medical theory suggests tailoring treatment
+false alarms (Chen et al., 2019; Guo et al., 2016; Yan et al., 2018). In                            measures according to each patient’s predicted response or disease risks
+
+
+    * Corresponding author.
+      E-mail address: zhoujianliang@cumt.edu.cn (J. Zhou).
+
+https://doi.org/10.1016/j.ssci.2023.106104
+Received 22 June 2022; Received in revised form 22 December 2022; Accepted 13 February 2023
+Available online 20 February 2023
+0925-7535/© 2023 Elsevier Ltd. All rights reserved.
+P. Duan et al.                                                                                                                  Safety Science 162 (2023) 106104
+
+
+(Snyderman, 2012). Accordingly, statistical features of workers’ posture         be achieved (MassirisFernández et al., 2020). Thus, the first step in using
+patterns can be used to represent the workers’ normal or acceptable              body postures in safety monitoring is to specify and classify the work
+status, and posture patterns that deviate from the norm can trigger alerts       actions for monitoring. According to Presti and Cascia (2016), action
+to supervisors (Kim et al., 2017; Yan et al., 2018).                             classification methods can be categorised into: joint-based representa­
+    Drawing inspiration from personalized medical theory, this study             tions, mined joint-based descriptors, dynamics-based descriptors,
+proposes a novel approach for monitoring workers’ stability when                 similarity-based descriptors, and computer vision-based descriptors.
+working at heights. The basic concept is that when the observed                  Based on images, construction safety knowledge, and ergonomic prin­
+stability-related action pattern of a worker deviates from the expected          ciples, Guo et al. (2018) simplified dynamic motion into a static posture
+personalized action pattern, it can be regarded as a leading indicator of        to identify unsafe behaviour and developed a skeleton-based real-time
+fall from height. The proposed approach aims to uncover latent safety            unsafe behaviour recognition method. In addition, Han et al. (2014)
+information of construction workers working at height through auto­              established a set of unsafe motion templates. They then used the simi­
+matic monitoring of observable action sequences. More specifically, the          larity between the templates and the 3D human skeleton motion model
+purpose of this paper is to propose a robust personalized stability              extracted from videos of workers’ motions to identify unstable move­
+monitoring framework based on the body postures of construction                  ments on the ladders. Their study used motion data and similarity to
+workers working at heights. To develop and illustrate the approach, this         identify the unstable status of workers. Similarly, Chen et al. (2019)
+study focuses on construction workers installing external wall insu­             determined the safety risk of workers’ ladder climbing through simi­
+lation. This is the first study to develop a personalized posture-based          larity of worker’s posture to typical postures given by experts. In addi­
+stability monitoring approach for construction workers working at                tion, Chen et al. (2021) proposed a worker posture coding scheme,
+heights. The proposed method can also serve as a reference for devel­            which can directly transform workers’ body parts into a normalized 3D
+oping personalized safety monitoring approaches for other types of               skeleton for safety monitoring. Combined with safety regulations and
+work.                                                                            normalized skeleton, different posture targets can be described for safety
+    The paper is organized as follows: Section 2 reviews past literature         behaviour monitoring. Table 1 summarises research in the construction
+on posture-based safety and personalized construction safety monitoring          industry that has previously applied action recognition methods and
+approaches. Section 3 elaborates on the OpenPose algorithm, which is             their results.
+used to extract pose-related features. In combination with the Gaussian              Previous studies observed unsafe behaviour based on changes in
+mixture model, features of multiple postures are integrated to establish a       posture. However, the review shows that there is a lack of research
+more robust personalized stability monitoring model. Section 4 de­               focusing on posture-based stability analysis. Since stability is a key
+scribes how construction site videos are collected and used to validate          factor in fall-from-height accidents, the following section will review
+the proposed framework. Lastly, Section 5 summarizes the main results            stability monitoring research in the construction industry.
+and provides some limitations of this study for future research.
+                                                                                 2.2. Stability monitoring research in construction
+2. Literature review
+                                                                                     On-site monitoring is a crucial safety management process to ensure
+2.1. Posture-related research in construction                                    construction safety. Construction safety monitoring still depends on
+                                                                                 human inspection and observation, which is labour-intensive, costly,
+    The construction industry is still heavily dependent on manual la­           inefficient, and error-prone (Awolusi et al., 2018; Chian et al., 2022; Goh
+bour. Construction workers’ work postures are a valuable source of               et al., 2022). To ensure effective safety monitoring, the project manager
+safety and productivity information that helps managers better control           has to formulate cumbersome monitoring processes and enforce strict
+the construction process (Xu et al., 2022). Scholars have used posture           monitoring standards. Due to the resources needed, individualized or
+information in different research areas, such as productivity analysis           personalized monitoring used to be infeasible. However, with the
+(Khosrowpour et al., 2014), workload analysis (Yu et al., 2019), and             increasing adoption of technology in the construction industry, the use
+safety management (Han and Lee, 2013). There are many approaches for             of computer vision, sensors, and building information models to facili­
+studying construction workers’ postures. For example, Alwasel et al.             tate detailed construction safety monitoring has gradually become
+(2017) used inertial measurement units (IMUs) and cameras to collect             attainable (Awolusi et al., 2018; Duan et al., 2022b). Two streams of
+the kinematic data of masons, which were analysed using a support                research that tap on this monitoring data are reviewed: personalised
+vector machine algorithm to classify the working postures of expert and          safety management methods and stability monitoring of construction
+non-expert masons. This produced a training system to improve the                workers.
+health and productivity of apprentice masons. In addition, Roberts et al.            Personalised safety management methods have received research
+(2020) proposed a novel activity analysis framework for ergonomics               attention. For example, Tang et al. (2022) developed a personalized
+analysis of individual construction workers based on deep learning and           human factors analysis and classification system (HFACS) to monitor
+computer vision. The analysis framework estimates workers’ two-                  workers’ real-time or near real-time status. The study defined person­
+dimensional posture and predicts workers’ activities. Furthermore, Yu            alized management indicators and data collection methods for unsafe
+et al. (2019) proposed an automatic ergonomic load calculation model             behaviours. Guo et al. (2019) proposed a content-based and collabora­
+and established a detailed and accurate evaluation method based on               tive filtering-based method for recommending personalized safety
+biomechanical analysis.                                                          training content. In addition, Yan et al. (2018) developed a worker-
+    Information about whether a construction worker is behaving safely           centred torso posture analysis system from the perspective of person­
+can be obtained by observing changes in their posture. For instance, Han         alized medicine.
+and Lee (2013) identified unsafe behaviour by comparing workers’ be­                 Due to the strong correlation between body movement patterns and
+haviours and unsafe behaviour templates. In this study, using the                incidents of slips, trips, and falls and (Yang and Ahn, 2019), stability
+example of ladder climbing, the authors use computer vision to detect            monitoring has attracted significant attention in recent years. For
+the posture of workers and calculate their similarity to pre-collected           example, Yang et al. (2017) proposed a collective perception method,
+posture templates to obtain safety information (Han and Lee, 2013).              which can perceive and evaluate the gait stability abnormalities of
+In addition, MassirisFernández et al. (2020) determined workers’ er­            workers to identify the risk of falling at construction sites. Furthermore,
+gonomic risk by comparing body posture angles with standard norms.               Yang and Ahn (2019) proposed that the stability of workers can be
+By calculating Rapid Upper Limb Assessment scores from angles detec­             analysed without knowing the threshold for identifying abnormality by
+ted by computer vision, an automatic and accurate risk assessment can            investigating the spatial correlation of abnormal gait of workers. In
+
+                                                                             2
+P. Duan et al.                                                                                                                                         Safety Science 162 (2023) 106104
+
+
+Table 1
+Previous studies of workers’ action recognition for construction health and safety.
+  Action class                                                         Data collection method      Classification method                 Performance                   Article
+
+  Standing, squatting, sitting, stooping, bending, and crawling        Computer vision-            Linear discriminant analysis          Dataset-1 error rate:5.2      (Ray and
+                                                                       OpenNI                                                            %, dataset-2 error            Teizer, 2012)
+                                                                                                                                         rate: 19.69 %
+  Back-bending, arm-raising, and knee-bending                          Computer vision -           Support Vector Machine                Overall accuracy: 78.4 %      (Seo and Lee,
+                                                                       morphological                                                     − 88.6 %                      2021)
+                                                                       variations
+  Working overhead, kneeling, back bending forward, squatting,         IMU-based motion            Support Vector Machine                Overall accuracy: 94.01 %     (Chen et al.,
+   neck bending, and reaching                                          capturing system                                                  ~100 %                        2017)
+
+  Overhead working, squatting, stooping, semi-squatting, and one-      Wearable insole             Supervised machine learning           Overall accuracy: over 99     (Antwi-Afari
+   legged kneeling                                                     pressure system             classifiers                           %                             et al., 2018)
+
+  Static bending, kneel on one leg and both legs, literal bend,        Low-cost wearable           Convolutional Neural Networks         Macro F1 Score: 0.870         (Zhao and
+    transitional movements between postures, overhead work with        IMUs                        with Long Short-Term Memory                                         Obonyo,
+    one arm or both arms, squatting, standing, and without the knee                                (LSTM) layers,                                                      2020)
+    touching ground
+
+  Gearing up, hammering, masonry, painting, roughcasting, sawing,      Wearable MEMS-IMUs          Supervised machine learning           Average balanced              (Sanhudo
+   screwing, sitting, standing still, and walking                                                  classifiers                           accuracy: 85.54 % −           et al., 2021)
+                                                                                                                                         94.66 %
+  Standing, bending-up, bending, bending-down, squatting-up,           Wearable IMUs               LSTM networks                         Overall accuracy: 95.93 %     (Kim and Cho,
+    squatting, squatting-down, walking, twisting, working                                                                                − 97.60 %                     2021)
+    overhead, kneeling-up, kneeling, kneeling-down, and using
+    stairs
+
+
+
+another study, Umer et al. (2018) developed a static balance monitoring                         approaches, there is still a lack of research on personalized stability
+tool, which uses a wearable IMU and smartphone to actively track and                            management based on individualized stability patterns. The main rea­
+monitor on-site construction personnel. Yoon et al. (2022) found that                           sons are the difficulties in collecting and managing personalized data
+workers’ gait significantly impacts their physical stability. Finally, Khan                     due to its complex and dynamic nature (Tang et al., 2022), the large
+et al. (2021) proposed a correlation-based method to monitor unsafe                             number of construction workers, the variety of work, and the heavy
+behaviours of mobile scaffolds and construction workers working at                              workload (Jeelani et al., 2021). Therefore, this paper proposes to mea­
+heights.                                                                                        sure the stability of different working at height workers based on their
+    Although recent studies have developed stability monitoring                                 historical posture characteristics. This will help to improve personalized
+
+
+
+
+                        Original videos
+                                                                                                                                    Posture sequence
+                                                                      Postural types and representation
+
+                                                                        FBB               Angle threshold                          Feature extraction
+                                                                                                                                       algorithm
+                                                                          FAR
+                        Skeleton detected                                                      Arm-raising
+                                                                          FKB
+                                                                                           Back-bending                                 Features
+                                                                                           Knee-bending                       Duration    Count
+                                                                                                Standing                      Work load Frequency
+
+
+                         (1) Skeleton detection                           (2) Posture identification                              (3) Feature extraction
+
+                              (6) Validation                           (5) Instability detection               (4) Personalized stability monitor
+
+                                                                  Single posture                  Multiple posture
+                            Feasibility test                                                         features
+                                                                     feature
+
+                              Subject’s                       Gaussian Models                    Gaussian Mixture
+                                                                                                                                     Instability detection
+                             personalized                       parameters                       Model parameters
+                              threshold
+                                                                                    Threshold
+
+                           Robustness test
+                                                                                       Stability                                     Instability evaluation
+
+                                                                          Fig. 1. Research framework.
+
+                                                                                           3
+P. Duan et al.                                                                                                                    Safety Science 162 (2023) 106104
+
+
+safety management of construction workers working at height.
+
+3. Methodology
+
+3.1. Research framework
+
+    Fig. 1 illustrates the framework for monitoring the stability of con­
+struction workers working at height. The framework includes five
+modules: skeleton detection, posture identification, feature extraction,
+personalized stability monitoring, instability detection, and validation.
+Skeleton detection is achieved through computer vision techniques.
+Compared to other skeleton extraction techniques (e.g., wearable sen­
+sors), this method has the advantage of being cost-effective and does not
+cause additional disruption to operations at height (Chian et al., 2021;
+MassirisFernández et al., 2020). Firstly, workers’ skeleton and relative
+joint coordinates are detected based on images extracted from video
+frames. Postures that can reflect the stability of workers and behaviours
+are identified based on joint-related information. The time and duration
+of the posture are recorded based on the real-time feature extraction
+algorithm. Secondly, the collected features are imported into the
+personalized stability monitoring module and fed into a Gaussian model
+(GM) and a Gaussian mixture model (GMM) to calculate workers’
+personalized threshold for two-stage instability monitoring of stability
+detection and evaluation. Finally, the stability of worker is obtained by
+comparing his pose sequence features with the thresholds set. Other
+workers’ pose sequence features are collected and compared with the
+initial worker’s personalised threshold to analyse the robustness of the
+personalized method. Details of the modules, processes, and algorithms
+are illustrated in the following sections.
+                                                                                                  Fig. 2. Joints number and name in OpenPose.
+3.2. Skeleton detection
+                                                                                   warning, and management (Chen et al., 2021). Construction workers’
+    As the fundamental component of human behaviour, accurately
+                                                                                   safety risks can be recognized from some leading postures (Yu et al.,
+detecting postures from video sequences is crucial for stability moni­
+                                                                                   2017), which affect workers’ stability and safety, regardless of trade and
+toring. This study uses OpenPose (Cao et al., 2021) to detect workers’
+                                                                                   age (DiDomenico et al., 2010; Umer et al., 2018). For example, falling
+postures and record body joint information. OpenPose is a bottom-up
+                                                                                   from height is a common accident type in construction. Many fall from
+approach (the body nodes are detected first, and then the limbs are
+                                                                                   height accidents occur when a worker becomes unbalanced during
+formed) for detecting human posture from digital images and videos.
+                                                                                   changes in the worker’s centre of gravity. Therefore, when workers
+OpenPose allows real-time extraction of joint position. Compared with
+                                                                                   adjust their postures frequently, the likelihood of falling from height
+other human posture detection methods, OpenPose is superior in accu­
+                                                                                   increases. Meanwhile, the leading postures should involve a consider­
+racy (Cao et al., 2021). It has shown promising results in construction
+                                                                                   able movement of human body parts and be repetitive to facilitate
+research, such as ergonomic risk assessment (MassirisFernández et al.,
+                                                                                   identification (Sherafat et al., 2020).
+2020) and safety helmet wearing detection (Gu et al., 2021). The algo­
+                                                                                       Table 1 lists leading postures that are indicative of postural stability
+rithmic structure of OpenPose can be described as follows: first, primary
+                                                                                   when working at height. The main postures in construction include
+features of human posture are extracted from the video frame. Two-
+                                                                                   standing, climbing, bending, squatting, kneeling, sitting, and lying. In
+branched parallel CNN are then used to predict different body parts’
+                                                                                   this study, three unstable postures that have a significant relationship
+confidence maps and affinity fields. Finally, the part association and the
+                                                                                   with changes in the centre of gravity are selected as leading postures.
+whole skeleton of the person are generated based on bipartite matching
+                                                                                   The three unstable postures include arm-raising (AR), back-bending
+from graph theory (Cao et al., 2021). The OpenPose algorithm enables
+                                                                                   (BB), and knee-bending (KB). In addition, standing (ST) is listed as the
+users to extract 18, 25 or 70 joint positions from images, including facial
+                                                                                   posture representing the normal state. Referring to the practical
+and finger contours (Cao et al., 2021). Among these, the 25-joint model
+                                                                                   parameter used in ergonomics risk assessment (MassirisFernández et al.,
+has advantages in terms of recognition speed and efficiency compared to
+                                                                                   2020; Yan et al., 2017), Table 2 shows the posture representation
+other models, and has been widely used in construction-related research
+                                                                                   method. Angles between different joint pairs are calculated by using the
+(Li et al., 2022; MassirisFernández et al., 2020). Therefore, the 25-joints
+                                                                                   Cosine Rule.
+model is selected in this study. The joint numbers and names are
+depicted in Fig. 2. The joint data extracted from videos will then be
+transferred to the second and third module as the input for posture                3.4. Feature extraction
+recognition.
+                                                                                        OpenPose extracts posture features of the construction workers
+3.3. Posture identification                                                        based on leading postures and video frames. First, Fig. 3 illustrates the
+                                                                                   detailed workflow for recognising different postures. Frames extracted
+   Postures, a fundamental element of human behaviour, can be                      from video clips are used as inputs. The workflow outputs a vector of
+considered a critical predictive feature of behaviours (Chen et al., 2021).        postures. It is noted that multiple postures may be detected in the same
+For example, workers on a platform face a high risk of falling when they           frame. If a posture is detected in the frame, the value corresponding to
+awkwardly extend their bodies over the platform. These awkward pos­                the output in the vector will be 1 for ST, 2 for AR, 3 for BB, and 4 for KB.
+tures can provide valuable information for safety training, early                  If a posture is not detected, a value of 0 will be provided. However, based
+
+                                                                               4
+P. Duan et al.                                                                                                                                    Safety Science 162 (2023) 106104
+
+
+Table 2                                                                                       workflow outputs the input video and a row vector composed of four
+Leading postures and identification method.                                                   numbers representing different postures of each frame. Then these
+  Posture         Angle name        Involved joint     Formula             Threshold          vectors of different frames are combined to a postural matrix with a size
+  description                       numbers                                                   of 1 × 4n for feature extraction.
+  Arm-raising     Left shoulder      ∠03, 02, 09        FAR = max(SL,      FAR ∈ [90◦ ,           Subsequently, an algorithm (see Algorithm 1) extracts the count and
+    (AR)          (SL)                                  SR)                180◦ ]             duration of postures, which are used to indicate the stability of the
+                  Right              ∠06, 05, 12                                              worker. The algorithm calculates the duration and number of leading
+                  shoulder                                                                    postures by recording the start and end time of the pose clips in the video
+                  (SR)
+  Back-bending    Back-bend          ∠01, 08, y-        FBB = BB           FBB ∈ [20◦ ,
+                                                                                              frame. A higher frequency or duration of leading postures in the same
+    (BB)          (BB)               axis                                  180◦ ]             period indicates that the worker is more likely to be unstable.
+  Knee-bending    Left Knee          ∠09, 10, 11        FKB = 180◦ -       FKB ∈ [20◦ ,        Algorithm 1 Pseudo code of postural feature extraction (For arm-raising)
+    (KB)          (KL)                                  min(KL, KR)        180◦ ]
+                                                                                                 Input: frame_action, Frames per second (FPS)
+                  Right knee         ∠12, 13, 14
+                                                                                                 Output: duration, count
+                  (KR)
+                                                                                                 for each i = 1 to length(frame_action) do
+  Standing (ST)   FAR ∈ [0◦ , 90◦ ) AND FBB ∈ [0◦ , 20◦ ) AND FKB ∈ [0◦ , 20◦ )
+                                                                                                   if frame_action [i] == 2 & frame_action[i-1]!= 2 then
+                                                                                                      start = i * (1/FPS)
+                                                                                                      count = count + 1
+on the data collected, the leading postures in Table 2 last for about 0.5–1                        else if frame_action [i]!= 2 & frame_action[i-1] == 2 then
+s (about 8–15 frames), which can cause the values in the vector to vary                               end = i * (1/FPS)
+across time. However, construction workers usually cannot change their                                duration = end – start
+posture so quickly. Thus, as a form of smoothing, the posture with the                             end if
+                                                                                                 end for
+higher frequency across each set of 10 frames will be chosen as the
+                                                                                                 return duration, count
+representative posture for each set. In the example depicted in Fig. 4, a
+segment consisting of 10 frames is included, lasting approximately 0.7 s.
+The recognition results show that the worker’s gestures in most of these
+frames are arm-raising. However, two of the frames are recognised as
+                                                                                              3.5. Personalized stability monitoring
+standing, with a standing time of only about 0.1 s. These are transient
+gestures and not representative of overall activity in the set. Therefore,
+                                                                                                  The overall process of the personalized stability monitoring is illus­
+the worker’s poses in these 10 frames were classified based on the
+                                                                                              trated in Fig. 5. The stability monitoring process is divided into two
+posture with the highest frequency, i.e., arm-raising. Eventually, the
+                                                                                              stages: (1) instability detection and (2) instability evaluation. The
+
+
+
+
+                  Fig. 3. Workflow for the recognition of different postures. AR: arm-raising; BB: back-bending; KB: knee-bending; ST: standing.
+
+
+
+
+                                                              Fig. 4. Example for correction of recognition results.
+
+                                                                                          5
+P. Duan et al.                                                                                                                    Safety Science 162 (2023) 106104
+
+
+former is meant to detect possible instances of instability, whereas the          unstable in terms of one feature, it is possible that the posture is actually
+latter conducts a further evaluation to confirm the detected instability.         stable. To enhance the robustness of the monitoring system and avoid
+An important characteristic of the proposed stability monitoring                  misjudgement, the corresponding posture data will be input into stage 2
+approach is the use of individual workers’ historical data for parameter          for further instability evaluation. If a worker is assessed to be unstable,
+updating. During instability detection (stage 1), if a construction worker        which indicates exposure to a higher risk of falling, supervisors can then
+is detected to be in a stable state, the corresponding posture data will be       provide additional safety education or safety corrective measures for the
+stored in the safe posture sequence database to update personalized               worker together with the stored video frames.
+parameters used for future anomaly detection. Since there are 2 features
+used for judgment in stage 1, personalized parameters may frequently
+exceed the threshold. This means that even if the worker appears to be
+
+
+
+
+                                                         Fig. 5. Personalized stability monitoring.
+
+                                                                              6
+P. Duan et al.                                                                                                                                                             Safety Science 162 (2023) 106104
+
+
+3.6. Instability detection                                                                     (continued )
+                                                                                                Algorithm 2 Pseudo code of personalized stability monitor of construction
+    According to personalized medical theory (Snyderman, 2012; Yan                              workers based on GMM
+et al., 2018), the statistical average of a patient’s behaviour reflects his                    3. M step. Update GMM parameters λ2. For each Gaussian component, update
+or her acceptable status. Thus, the abnormal behaviours of workers can                              parameters using Eq. 3–5.
+be detected and evaluated based on different statistics (Kim et al., 2017).                     N = length (Xin)
+                                                                                                         1 ∑N
+Generally, basic features for daily behaviour obeys Gaussian-like prob­                         ωnew
+                                                                                                  i    =             P(i|xin , λinit ) (3)
+                                                                                                         N t=1
+ability distributions (GPD) (Meng et al., 2017). Hence, the Gaussian                                     ∑N
+                                                                                                            t=1 P(i|xin , λinit )xin
+                                                                                                μnew                                   (4)
+density function f(x)~N (μ, σ2) is used in this study to describe expected                       i    = ∑     N
+                                                                                                              t=1 P(i|xin , λinit )
+patterns of each worker. The parameters of GPD includes λ1 = {μ, σ },                           ∑new
+                                                                                                       = ∑N
+                                                                                                                      1             ∑N
+                                                                                                                                            P(i|xin , λinit )(xin − μnew               )(xin − μnew      )T (5)
+                                                                                                    i                                                                            i                     i
+where μ refers to the average count and duration of different postures                                        t=1 P(i|xin , λinit )
+                                                                                                                       ∑
+                                                                                                                                        t=1
+
+
+and σ is the standard deviation. These parameters are calculated based                          λ2 = {ωnewi    , μnew
+                                                                                                                  i   , new
+                                                                                                                          i    }
+                                                                                                4. Set the likelihood threshold according to L, to detect unstable status.
+on the posture data extracted from the videos. The normal range for
+                                                                                                L = loglikelihood (Xin | λ2)
+human behaviours is set as P = [μ-2σ , μ + 2σ] (Meng et al., 2017). If a                        M = length(L)
+worker’s behaviour exceeds the upper limit, it is identified as a possible
+                                                                                                                                          √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                                                                                                                                                            (                                 )2
+                                                                                                                                          √
+                                                                                                                   1 ∑M                   √ 1 ∑M                          1 ∑M
+instance of instability. On the other hand, posture sequences that are                          Threshold =
+                                                                                                                  M      i=1
+                                                                                                                             Li − 3 × √
+                                                                                                                                             M        i=1
+                                                                                                                                                                Li −
+                                                                                                                                                                         M          i=1
+                                                                                                                                                                                          Li         (6)
+within the interval [μ-2σ, μ + 2σ ] is stored in the stable posture se­
+                                                                                                Score = loglikelihood (Xinn, λ2)
+quences database. Otherwise, it will be transferred to second stage of                          if Score < Threshold then
+evaluation.                                                                                        Status = “Stable”
+    GMM is additionally used in this study to further evaluate if the                           else
+detected instability is correctly detected (stage 2). GMM is an extension                          Status = “Unstable”
+                                                                                                end if
+of the Gaussian model, which uses a combination of multiple Gaussian                            return Status, λ2
+distributions to describe the data distribution. The parameter proba­
+bility density function is expressed as the weighted sum of Gaussian
+component density, as shown in Eq. (1). Compared with other methods,                           4. Validation and results
+GMM gives statistical inferences of each Gaussian distribution compo­
+nent and can be used to comprehensively analyse the anomaly posture                               Actual on-site construction activities are analysed to validate the
+sequence based on collected data (Li et al., 2016).                                            proposed framework. The proposed method was implemented in the
+                                                                                               Python 3.7 environment, 64-bit Windows 10 system. With the PyTorch
+           ∑
+           K                   ∑
+p(x|λ) =         ωi g(x|μi ,    )                                                    (1)       as a backend, those processes are accelerated based on an NVIDIA
+           i=1                 i                                                               GeForce GTX 1080Ti GPU.
+                              ∑
+    In which,λ2 = \{ ωi, μi , i \} are the parameter of GMM, K is the
+number of Gaussian distributions, ω is the mixed weight of multiple                            4.1. Data collection
+                                                    ∑
+Gaussian distributions, and meets the constraint Ki=1 ωi = 1, μi is the
+                                                           ∑ ∑                                     The suspended scaffold is common construction equipment in which
+mean vector of component gaussian distribution g(x|μi , i ), i is the
+                                                                                               the hoisting mechanism is driven by the steel wire rope to lift the plat­
+corresponding covariance matrix. For personalized stability monitor, we
+                                                                                               form along the vertical surface during the high-rise building construc­
+use the observed posture features as inputs and outputs workers’ specific
+                                                                                               tion. It is mainly used to provide a movable platform for facade
+GMM parameters λ2 for hidden risk state. The component Gaussian
+                                                                                               construction workers. Although the equipment has safety railings, there
+distribution number K is selected as 4. The most popular and mature
+                                                                                               are still potential safety hazards associated with posture changes. First,
+expectation–maximization algorithm (EM) (Dempster et al., 1977) is
+                                                                                               during the construction of special-shaped exterior walls, it is necessary
+adopted to calculate the model parameters λ2.
+                                                                                               to lean over and even climb out of the suspended scaffold at height.
+    The model training input is expressed as Xin, including the features
+                                                                                               Second, Frequent and large movements lead to the increase of platform
+extracted from multiple monitoring segments. The log probabilities
+                                                                                               swing amplitude, which may cause a breakdown of the platform.
+score was calculated for each monitoring segment. The stability moni­
+                                                                                                   A seven day data collection period on the construction site was
+toring threshold is set as the mean of all segment scores minus three
+                                                                                               carried out. The main work of all studied workers during the study was
+times the standard deviation, as shown in Eq. (6) (Hosseinzadeh et al.,
+                                                                                               paving an external wall insulation board. To collect the key body nodes
+2006). When a new monitoring segment is inputted, the log-likelihood
+                                                                                               of construction workers as much as possible without interfering with the
+score of the segment is calculated and compared with the threshold. If
+                                                                                               normal operation of the platform, the camera was fixed on the basket as
+the values are less than the threshold of corresponding features, it can be
+                                                                                               shown in Fig. 6. Data collection was split: the first day for a pre-
+judged that the construction worker is unstable in the current segment,
+                                                                                               experiment test, four days of data collection for the training of the
+as shown in Algorithm 2. Otherwise, the clip of stable status will be
+                                                                                               method, and two days for the validation. On all days of the experiment,
+recorded in the sequence database for personalized adjustment of
+                                                                                               data was captured from 8am to 5 pm. The video frame rate collected by
+posture features.
+                                                                                               the camera is 15 frames per second. By referring to previous research
+  Algorithm 2 Pseudo code of personalized stability monitor of construction
+                                                                                               (Luo et al., 2020), five minute video slices were selected to form the data
+  workers based on GMM
+                                                                                               sets. Due to the weather, some video clips did not capture any workers.
+  Input: Vectors of postural features, Xin                                                     The final number of video clips in the data set for the subject A is 80. He
+     Vectors of new postural features, Xinn
+     The number of Gaussian components, K
+                                                                                               is 36 years old and has more than 10 years of work experience.
+  Output: Status, GMM parameters λ2                                                                The two-day validation was used to verify the feasibility and
+  1. Initialize GMM parameters λinit                                                           robustness of the personalized stability monitoring method described in
+  2. E step. For each data sample, determine the a posteriori probability for each             this study. The video acquisition standards used were consistent to that
+    Gaussian component i.
+                                     ∑                                                         used in the first five days. On the first day, five other clips were obtained
+                       ωi g(xin |μi , i )
+  P(i|xin , λinit ) = ∑K                  ∑ (2)                                                of Subject A. On the second day, five new construction workers were
+                       j=1 ωj g(xin |μj ,  j)
+                                                                                               monitored. Workers B and C were engaged in plastering the internal and
+                                                            (continued on next column)
+                                                                                               external walls of the building, respectively. Worker D was engaged in
+                                                                                               tile paving. Workers E and F were responsible for installing the indoor
+
+                                                                                           7
+P. Duan et al.                                                                                                               Safety Science 162 (2023) 106104
+
+
+
+
+                                                                                                     Camera
+
+
+
+
+                                                      Fig. 6. Installation location of the camera.
+
+
+ceiling. Five clips are extracted from each of the videos of the workers       posture sequence, as shown in Fig. 7. The actual count and duration of
+working. These workers belong to different construction trades and             different postures can be calculated based on the sequence. Fig. 8(a)-(d)
+usually need to work at heights due to the nature of their work. The new       shows worker postural skeleton extraction results, as well as some
+construction workers’ construction videos were obtained online due to          typical examples of false recognition errors (Fig. 8(e)-(h)). The marked
+the small number of workers working at height on the site. The data            video length is 5 min, a total of 4500 frames. Comparing the results of
+collection criteria and requirements for the online videos, and video          the feature extraction with ground truth in Table 3, the performance for
+properties (frame rate, video duration, etc.) were consistent with those       feature extraction was analysed. The result shows that the error of action
+collected in the field. The final data set includes 30 video clips.            features identified is within 5 %, which can meet the needs of stability
+                                                                               monitoring. Subsequently, the construction video clips of construction
+4.2. Posture identification and feature extraction                             workers were analysed to calculate personalized parameters.
+
+
+    A video clip was chosen from the proposed database to test the             4.3. Personalized stability monitoring
+feature extraction performance. The postures of the construction worker
+in the video were annotated manually through a software when the                  The actual stability of construction workers in the video was deter­
+video was viewed, the annotation result was determined as ground               mined by human judgement. The judge is an expert with extensive
+truth. The video annotation research tool ANVIL is used to determine the       experience in on-site safety management. Based on his knowledge, a
+
+
+
+
+                                                           Fig. 7. User interface of ANVIL.
+
+                                                                           8
+P. Duan et al.                                                                                                                       Safety Science 162 (2023) 106104
+
+
+
+
+                                                         Fig. 8. Examples of posture identification results.
+
+
+
+Table 3
+Performance metrics of feature extraction.
+                     Duration/s                        Count
+
+                     Model            Truth            Model            Truth
+
+  Overall            312.00           308.13           82               79
+  AR                  22.00            36.60           17               16
+  BB                  62.67            76.00           20               16
+  KB                  10.00             6.53           9                14
+  ST                 217.33           189.00           36               33
+
+
+
+worker was judged to be unstable if the video showed a lot of bending,
+leaning out, and other movements that could cause a shift in the centre
+of gravity. 48 videos judged to be stable were selected to calculate the
+personalized parameters of the subject A. The parameter λ = {λ1, λ2} =                           Fig. 10. The count of different postures based on GM.
+{μ, σ , ωi, μi, Σ i} (i = 1, 2) reflects the stability of workers as calculated
+based on the proposed method. The λ1 is calculated based on GM, and
+                                                                                      outward during operation. Bending, particularly with the upper limbs
+the other one λ2 is calculated by GMM.
+                                                                                      bending beyond the area of the scaffold, poses a certain risk of falling
+    Figs. 9-10 shows the fitted curve of based on worker’s postural fea­
+                                                                                      from height.
+tures and GM for calculating worker’s personalized stability monitoring
+                                                                                          The sklearn package in python is used to establish GMMs for extract
+interval [μ-2σ, μ + 2σ]. The reasonable duration within the 5-minute
+                                                                                      posture features (duration and count), with the three parameters λ2 =
+video slices of AR is [0 s, 38.08 s], and the reasonable number of oc­
+                                                                                      {ωi, μi, Σ i} (i = 1, 2) being calculated based on the EM algorithm. Among
+currences is [0, 18.57]; the reasonable duration of BB is [0 s, 96.38 s],
+                                                                                      them, the calculated weight of components are as follows: for the
+and the reasonable number of occurrences is [0.70, 31.14]; the
+                                                                                      duration, the weight of component Gaussian distributions is ω1=
+reasonable duration of KB is [0 s, 25.87 s], and the reasonable number of
+                                                                                      {0.2283, 0.2908, 0.3767, 0.1042}. For the number of occurrences, the
+occurrences is [0, 23.30]; the reasonable duration of ST is [192.43 s,
+                                                                                      weight of component Gaussian distributions is ω2= {0.1439, 0.2659,
+295.87 s], and the reasonable number of occurrences is [5.33, 43.21].
+                                                                                      0.2918, 0.2983}. The related GMM curve is shown in Figs. 9-10.
+The worker was detected standing most of the time in the dataset, with a
+                                                                                      Different from instability detection module, the instability evaluation
+few instances knee-bending. On the suspended scaffold, the worker
+                                                                                      considers the change characteristics of various postures, which can
+mainly works on the external wall of the building and must bend
+                                                                                      avoid misjudgement and has higher robustness. The log-likelihood of
+                                                                                      each posture feature of each video clip is calculated in turn, and the
+                                                                                      threshold is calculated according to the method described in Section 3.
+                                                                                      The final threshold for the feature of duration is − 17.68, and that of
+                                                                                      count is − 16.00.
+
+                                                                                      4.4. Instability detection and validation
+
+                                                                                          A validation experiment was conducted to verify that the feasibility
+                                                                                      and robustness of stability detection method proposed in this study. The
+                                                                                      validation data set can be divided into two parts: the first part is the
+                                                                                      construction videos of the construction worker in the formal experiment
+                                                                                      for feasibility test, which is recorded as subject A. The second part is the
+                                                                                      videos of five other construction workers for robustness test, which are
+                                                                                      recorded as subject B, C, D, E, and F.
+
+             Fig. 9. The duration of different postures based on GM.
+
+                                                                                  9
+P. Duan et al.                                                                                                                     Safety Science 162 (2023) 106104
+
+
+4.4.1. Feasibility test                                                              this calculated threshold is personalized to subject A.
+    The feasibility of the monitoring framework is validated based on
+videos of subject A. The number of validation videos is 32. Based on                 5. Discussion
+human judgement, there are 15 clips judged to be stable, and 17 clips
+that are unstable. The instability monitoring results are shown in                       This paper proposes a personalized stability monitoring method
+Figs. 11–12. In Fig. 12, a column height of 1 means unstable and 2 means             based on body postures for construction workers working at height. It
+stable. First, according to the results of instability detection, most of the        consists of five components: skeleton detection, posture representation,
+changes observed for posture features fall within reasonable ranges.                 feature extraction, personalized stability monitoring, and instability
+However, the duration of BB and KB clearly exceeded the stable range.                detection. OpenPose is used to extract the workers’ digital skeleton co­
+Taking the first 20 video clips in Fig. 12 as an example, the results of             ordinates from the monitoring video. A leading posture is used to
+instability detection show that many clips are detected to be unstable.              describe a variety of statuses of workers working at heights. Posture
+Second, the performance of the proposed instability monitoring method                features of workers are further extracted from workers’ posture
+is evaluated with reference to the performance metrics in machine                    sequence. The personalized stability parameters are identified in the
+learning (Chian et al., 2022). This is because there is no unified standard          stability monitoring module based on GM and GMM. The validation
+for the classification performance of posture description currently. The             results show that identification accuracy for a particular subject is 84.38
+main evaluation metrics include accuracy, precision, recall, and F1                  % and the precision is 81.25 %. By comparing the personalised stability
+score. The result shows that the accuracy for the verification videos is             parameters with those of 5 other workers, the robustness of the per­
+84.38 %, the precision is 81.25 %, the F1 score is 86.67 %, and the recall           sonalised monitoring method is validated.
+is 83.87 %. These indicators show that the proposed stability monitoring                 This study is the first to use computer vision to study the posture of
+framework can identify the stability of workers working at height.                   construction workers working at height to determine their personalized
+Moreover, project managers can analyse the main types of unstable                    stability. As a proactive monitoring method, this study has achieved
+postures of worker instability by combining the results of these two                 desirable results in stability monitoring and doing so based on a
+modules.                                                                             personalized system. The method is based on surveillance video to judge
+                                                                                     worker stability, without relying on constant human judgement or
+4.4.2. Robustness test                                                               expensive wearable devices. Currently, the method only considers the
+    The robustness of the monitoring framework is validated by judging               features of workers’ postures. If this is combined with the characteristics
+the stability of other workers using subject A’s individual parameters.              of workers’ different backgrounds, personalities, or habits, a more
+The robustness test includes including five new male construction                    comprehensive individualized safety monitoring system for workers can
+workers other than the subject A. The movements of these workers in the              be established. By formulating differentiated stability monitoring and
+clips are all stable according to human judgement. First, stability                  correction programs, personalized safety training programs can be
+detection was conducted to analyse whether other workers’ posture                    customized for different construction workers, thereby improving the
+feature parameters are within the subject A’s reasonable interval. The               level of active safety management in the construction industry. Ulti­
+results are shown in Fig. 13. Their posture features at heights shows                mately, the method can be extended to other tasks that have high de­
+completely different characteristics and many of the features are outside            mands on postural stability by changing the monitored objects.
+the reasonable range of subject A. Due to the differences between in­                    The contributions of this research are follows. Firstly, this study
+dividuals, the reasonableness of their stability cannot be determined by             provided insight into the implementation of proactive site surveillance
+subject A’s personalized parameters.                                                 by introducing a posture-based personalized stability monitoring
+    Second, the instability evaluation results of the construction workers           method. Based on previous studies (Yang and Ahn, 2019), unsafe
+as reflected by each feature parameter is described based on the GMM.                behaviour of workers working at height is closely linked to changes in an
+Results are shown in Figs. 14-15. The red dotted line is the calculated              individual’s centre of gravity and stability. However, most personalized
+instability evaluation threshold of subject A. Any scores lower than                 monitoring methods in existing studies use unified monitoring param­
+suggest that the subjects are unstable. Most of their scores are signifi­            eters for individualized monitoring of different workers. Little attention
+cantly lower than the threshold set from subject A. While the workers’               has been paid to the personalized stability monitoring based on con­
+performance in the video clips fully complies with safety regulations, the           struction workers differentiated expected postural patterns. Moreover,
+model suggests the opposite. This shows that it is unreasonable to use               because of different types of work and different personality character­
+this threshold to monitor the stability of other workers. This verifies that         istics, stability-related information will be hidden in workers’ normal
+
+
+
+
+                                                    Fig. 11. Feasibility test results of instability detection.
+
+                                                                                10
+P. Duan et al.                                                                                                                         Safety Science 162 (2023) 106104
+
+
+
+
+                                                      Fig. 12. Feasibility test results of instability evaluation.
+
+
+
+
+                                                      Fig. 13. Robustness test results of instability detection.
+
+
+
+
+             Fig. 14. Duration comparison of instability evaluation.                                Fig. 15. Count comparison of instability evaluation.
+
+operation postures. This study uses a personalized pattern to set a                    height, but also can help managers to dig out the main types of unstable
+threshold for stability as demonstrated workers working at height. The                 postures why construction workers are in the unstable status from the
+feasibility and robustness of this method is demonstrated studies of                   video. The method can also be utilized to obtain some insights into
+workers on a construction site. Secondly, Gaussian mixture model is                    anomalous behaviours other than stability. For example, the fatigue of
+applied to establish a two-stage personalized stability monitoring                     construction workers may lead to abnormal knee bending.
+framework for construction workers working at height. Compared to                          The proposed personalised stability monitoring method has practical
+traditional safety monitoring systems in previous studies, the Gaussian                implications for the safety of workers working at height. The study
+mixture model is established by integrating multiple postural features                 shows that the method can be easily implemented in construction pro­
+for stability evaluation. The proposed method is not only helpful for                  jects to proactively identify workers with a tendency to be unstable. One
+managers to evaluate the instability of construction workers working at                of the advantages of the method is its ability to monitor workers without
+
+
+                                                                                  11
+P. Duan et al.                                                                                                                              Safety Science 162 (2023) 106104
+
+
+interfering with their work or requiring workers to wear additional                 China (Number: 72171224), the Humanities and Social Sciences Foun­
+sensors. Furthermore, the accuracy of the system can be improved for                dation of China’s Education Ministry (Number: 19YJAZH122), Graduate
+each individual worker if managers regularly collect video clips of the             Innovation Program of China University of Mining and Technology
+workers working to update the personalized parameters. Abnormalities                (Number: 2021WLKXJ033), and the Doctor Joint-Training Program of
+in workers’ behavioural parameters can also be automatically moni­                  China Scholarship Council (Number: 202106420087)
+tored and managers can investigate proactively. A personalized or
+adaptive behaviour-based safety programme can be created for workers                References
+working at heights, where the observations and feedback are facilitated
+by the proposed method. Safety personnel can proactively coach and                  Alwasel, A., Sabet, A., Nahangi, M., Haas, C.T., Abdel-Rahman, E., 2017. Identifying
+                                                                                        poses of safe and productive masons using machine learning. Autom. Constr. 84,
+train workers who are prone to instability and have higher fall-from-                   345–355. https://doi.org/10.1016/j.autcon.2017.09.022.
+heights risk.                                                                       Antwi-Afari, M.F., Li, H., Yu, Y., Kong, L., 2018. Wearable insole pressure system for
+                                                                                        automated detection and classification of awkward working postures in construction
+                                                                                        workers. Autom. Constr. 96, 433–441. https://doi.org/10.1016/j.
+6. Conclusion                                                                           autcon.2018.10.004.
+                                                                                    Awolusi, I., Marks, E., Hallowell, M., 2018. Wearable technology for personalized
+    Workers’ stability is an important factor influencing the safety of                 construction safety monitoring and trending: review of applicable devices. Autom.
+                                                                                        Constr. 85, 96–106. https://doi.org/10.1016/j.autcon.2017.10.010.
+construction workers working at heights. Many automatic after-the-                  Cao, Z., Hidalgo, G., Simon, T., Wei, S.E., Sheikh, Y., 2021. OpenPose: realtime multi-
+event monitoring systems do not consider the behavioural patterns of                    person 2D pose estimation using part affinity fields. IEEE Trans. Pattern Anal. Mach.
+different workers and give false alarms, which is not conducive to active               Intell. 43, 172–186. https://doi.org/10.1109/TPAMI.2019.2929257.
+                                                                                    Chen, H., Luo, X., Zheng, Z., Ke, J., 2019. A proactive workers’ safety risk evaluation
+safety management. This is due to workers displaying personalised
+                                                                                        framework based on position and posture data fusion. Autom. Constr. 98, 275–288.
+patterns of stability, with different characteristics. This study presents a            https://doi.org/10.1016/j.autcon.2018.11.026.
+two-stage stability monitoring framework based on the posture features              Chen, H., Luo, X., Zhu, Z., 2021. A worker posture coding scheme to link automatic and
+of construction workers working at height. Field experiments verify the                 manual coding. Autom. Constr. 125, 103630 https://doi.org/10.1016/j.
+                                                                                        autcon.2021.103630.
+feasibility and robustness of the proposed method. The proposed method              Chen, J., Qiu, J., Ahn, C., 2017. Construction worker’s awkward posture recognition
+has significant practical implications in terms of increasing active safety             through supervised motion tensor decomposition. Autom. Constr. 77, 67–81.
+monitoring in the construction industry, assisting project stakeholders in              https://doi.org/10.1016/j.autcon.2017.01.020.
+                                                                                    Chi, S., Han, S., 2013. Analyses of systems theory for construction accident prevention
+taking the initiative to control the workers’ safety. It also provides a                with specific reference to OSHA accident reports. Int. J. Proj. Manag. 31, 1027–1041.
+foundation for formulating a reasonable behaviour-based safety man­                     https://doi.org/10.1016/j.ijproman.2012.12.004.
+agement plan prior to possible construction safety accidents.                       Chian, E., Fang, W., Goh, Y.M., Tian, J., 2021. Computer vision approaches for detecting
+                                                                                        missing barricades. Autom. Constr. 131, 103862. https://doi.org/10.1016/j.
+    There are some limitations in this study that may be resolved by                    autcon.2021.103862.
+future research. Due to the specific tasks used for this study, the per­            Chian, E.Y.T., Goh, Y.M., Tian, J., Guo, B.H.W., 2022. Dynamic identification of crane
+sonalised stability monitoring focused predominantly on males. While                    load fall zone: a computer vision approach. Saf. Sci. 156, 105904. https://doi.org/
+                                                                                        10.1016/j.ssci.2022.105904.
+the practical validation for different genders needs to be further studied.         Cyma, M., Marciniak, K., Tomczak, M., Stemplewski, R., 2018. Postural stability and
+Key body node extraction based on OpenPose will be affected by light,                   physical activity of workers working at height. Am. J. Mens. Health 12, 1068–1073.
+angle, obstacles, and so on. Although the worker’s skeleton can be                      https://doi.org/10.1177/1557988318774996.
+                                                                                    Dempster, A.P., Laird, N.M., Rubin, D.B., 1977. Maximum likelihood from incomplete
+completely extracted most of the time, during the on-site data collection,
+                                                                                        data via the EM algorithm. J. R. Stat. Soc. Ser. B 39, 1–22. https://doi.org/10.1111/
+it was found that if too many construction materials are placed on the                  j.2517-6161.1977.tb01600.x.
+platform, the key points of knee and foot posture will be blocked. In               DiDomenico, A., McGorry, R.W., Huang, Y.H., Blair, M.F., 2010. Perceptions of postural
+addition, the key point coordinates of construction workers extracted in                stability after transitioning to standing among construction workers. Saf. Sci. 48,
+                                                                                        166–172. https://doi.org/10.1016/j.ssci.2009.07.006.
+this paper are two-dimensional, which will lead to deviation in some                Duan, P., Zhou, J., Fan, W., 2022a. Safety tag generation and training material
+posture judgments. For example, if the worker bends over the lens, it will              recommendation for construction workers: a persona-based approach. Eng. Constr.
+be difficult to extract the action features in the video accurately.                    Archit. Manag. https://doi.org/10.1108/ECAM-12-2021-1143 ahead-of-p.
+                                                                                    Duan, P., Zhou, J., Tao, S., 2022b. Risk events recognition using smartphone and
+Therefore, more advanced algorithms can be considered to extract a                      machine learning in construction workers’ material handling tasks. Eng. Constr.
+three-dimensional skeleton of workers. To extend this method to other                   Archit. Manag. ahead-of-p. doi: 10.1108/ECAM-10-2021-0937.
+tasks, it would be worthwhile to further investigate how to continuously            Goh, Y.M., Tian, J., Chian, E.Y.T., 2022. Management of safe distancing on construction
+                                                                                        sites during COVID-19: a smart real-time monitoring system. Comput. Ind. Eng. 163,
+collect videos of workers working at height in other trades.                            107847 https://doi.org/10.1016/j.cie.2021.107847.
+                                                                                    Gu, Y., Wang, Y., Shi, L., Li, N., Zhuang, L., Xu, S., 2021. Automatic detection of safety
+CRediT authorship contribution statement                                                helmet wearing based on head region location. IET Image Process. 15, 2441–2453.
+                                                                                        https://doi.org/10.1049/ipr2.12231.
+                                                                                    Guo, S.Y., Ding, L.Y., Luo, H.B., Jiang, X.Y., 2016. A Big-Data-based platform of workers’
+   Pinsheng Duan: Conceptualization, Methodology, Software, Vali­                       behavior: observations from the field. Accid. Anal. Prev. 93, 299–309. https://doi.
+dation, Writing- original draft. Yang Miang Goh: Methodology,                           org/10.1016/j.aap.2015.09.024.
+                                                                                    Guo, S., Ding, L., Zhang, Y., Skibniewski, M.J., Liang, K., 2019. Hybrid recommendation
+Writing- review & editing. Jianliang Zhou: Supervision, Funding
+                                                                                        approach for behavior modification in the Chinese construction industry. J. Constr.
+acquisition.                                                                            Eng. Manag. 145, 04019035. https://doi.org/10.1061/(asce)co.1943-
+                                                                                        7862.0001665.
+                                                                                    Guo, H., Yu, Y., Ding, Q., Skitmore, M., 2018. Image-and-skeleton-based parameterized
+Declaration of Competing Interest
+                                                                                        approach to real-time identification of construction workers’ unsafe behaviors.
+                                                                                        J. Constr. Eng. Manag. 144, 04018042. https://doi.org/10.1061/(asce)co.1943-
+    The authors declare that they have no known competing financial                     7862.0001497.
+interests or personal relationships that could have appeared to influence           Han, S., Lee, S., 2013. A vision-based motion capture and recognition framework for
+                                                                                        behavior-based safety management. Autom. Constr. 35, 131–141. https://doi.org/
+the work reported in this paper.                                                        10.1016/j.autcon.2013.05.001.
+                                                                                    Han, S., Lee, S., Peña-Mora, F., 2014. Comparative study of motion features for
+Data availability                                                                       similarity-based modeling and classification of unsafe actions in construction.
+                                                                                        J. Comput. Civ. Eng. 28, A4014005. https://doi.org/10.1061/(ASCE)CP.1943-
+                                                                                        5487.0000339.
+    Data will be made available on request.                                         Hosseinzadeh, D., Krishnan, S., Khademi, A., 2006. Keystroke identification based on
+                                                                                        Gaussian mixture models. In: ICASSP, 2006 IEEE International Conference on
+                                                                                        Acoustics Speech and Signal Processing Proceedings. pp. III–III. doi: 10.1109/
+Acknowledgements                                                                        icassp.2006.1660861.
+
+    This study is funded by the National Natural Science Foundation of
+
+                                                                               12
+P. Duan et al.                                                                                                                                              Safety Science 162 (2023) 106104
+
+Jeelani, I., Asadi, K., Ramshankar, H., Han, K., Albert, A., 2021. Real-time vision-based          Sherafat, B., Ahn, C.R., Akhavian, R., Behzadan, A.H., Golparvar-Fard, M., Kim, H.,
+     worker localization & hazard detection for construction. Autom. Constr. 121,                      Lee, Y.-C., Rashidi, A., Azar, E.R., 2020. Automated methods for activity recognition
+     103448 https://doi.org/10.1016/j.autcon.2020.103448.                                              of construction workers and equipment: state-of-the-art review. J. Constr. Eng.
+Khan, N., Saleem, M.R., Lee, D., Park, M.W., Park, C., 2021. Utilizing safety rule                     Manag. 146, 03120002. https://doi.org/10.1061/(asce)co.1943-7862.0001843.
+     correlation for mobile scaffolds monitoring leveraging deep convolution neural                Snyderman, R., 2012. Personalized health care: from theory to practice. Biotechnol. J. 7,
+     networks. Comput. Ind. 129, 103448 https://doi.org/10.1016/j.                                     973–979. https://doi.org/10.1002/biot.201100297.
+     compind.2021.103448.                                                                          Tang, N., Hu, H., Xu, F., Yeoh, J.K.W., Chua, D.K.H., Hu, Z., 2022. A personalized Human
+Khosrowpour, A., Niebles, J.C., Golparvar-Fard, M., 2014. Vision-based workface                        Factors Analysis and Classification System (HFACS) for construction safety
+     assessment using depth images for activity analysis of interior construction                      managementbased on context-aware technology. Enterp. Inf. Syst. 16, 141–166.
+     operations. Autom. Constr. 48, 74–87. https://doi.org/10.1016/j.                                  https://doi.org/10.1080/17517575.2021.1878283.
+     autcon.2014.08.003.                                                                           Umer, W., Li, H., Lu, W., Szeto, G.P.Y., Wong, A.Y.L., 2018. Development of a tool to
+Kim, H., Ahn, C.R., Yang, K., 2017. Identifying safety hazards using collective bodily                 monitor static balance of construction workers for proactive fall safety management.
+     responses of workers. J. Constr. Eng. Manag. 143, 04016090. https://doi.org/                      Autom. Constr. 94, 438–448. https://doi.org/10.1016/j.autcon.2018.07.024.
+     10.1061/(ASCE)CO.1943-7862.0001220.                                                           Xia, N., Zou, P.X.W., Liu, X., Wang, X., Zhu, R., 2018. A hybrid BN-HFACS model for
+Kim, K., Cho, Y.K., 2021. Automatic recognition of workers’ motions in highway                         predicting safety performance in construction projects. Saf. Sci. 101, 332–343.
+     construction by using motion sensors and long short-term memory networks.                         https://doi.org/10.1016/j.ssci.2017.09.025.
+     J. Constr. Eng. Manag. 147, 04020184. https://doi.org/10.1061/(asce)co.1943-                  Xu, M., Nie, X., Li, H., Cheng, J.C.P., Mei, Z., 2022. Smart construction sites: a promising
+     7862.0002001.                                                                                     approach to improving on-site HSE management performance. J. Build. Eng. 49,
+Li, L., Hansman, R.J., Palacios, R., Welsch, R., 2016. Anomaly detection via a Gaussian                104007 https://doi.org/10.1016/j.jobe.2022.104007.
+     Mixture Model for flight operation and safety monitoring. Transp. Res. Part C Emerg.          Yan, X., Li, H., Wang, C., Seo, J.O., Zhang, H., Wang, H., 2017. Development of
+     Technol. 64, 45–57. https://doi.org/10.1016/j.trc.2016.01.007.                                    ergonomic posture recognition technique based on 2D ordinary camera for
+Li, J., Zhao, X., Zhou, G., Zhang, M., 2022. Standardized use inspection of workers’                   construction hazard prevention through view-invariant features in 2D skeleton
+     personal protective equipment based on deep learning. Saf. Sci. 150, 105689 https://              motion. Adv. Eng. Informatics 34, 152–163. https://doi.org/10.1016/j.
+     doi.org/10.1016/j.ssci.2022.105689.                                                               aei.2017.11.001.
+Luo, H., Liu, J., Fang, W., Love, P.E.D., Yu, Q., Lu, Z., 2020. Real-time smart video              Yan, X., Li, H., Zhang, H., Rose, T.M., 2018. Personalized method for self-management of
+     surveillance to manage safety: a case study of a transport mega-project. Adv. Eng.                trunk postural ergonomic hazards in construction rebar ironwork. Adv. Eng.
+     Informatics 45, 101100. https://doi.org/10.1016/j.aei.2020.101100.                                Informatics 37, 31–41. https://doi.org/10.1016/j.aei.2018.04.013.
+MassirisFernández, M., Fernández, J.Á., Bajo, J.M., Delrieux, C.A., 2020. Ergonomic risk        Yang, K., Ahn, C.R., 2019. Inferring workplace safety hazards from the spatial patterns of
+     assessment based on computer vision and machine learning. Comput. Ind. Eng. 149,                  workers’ wearable data. Adv. Eng. Informatics 41, 100924. https://doi.org/
+     106816 https://doi.org/10.1016/j.cie.2020.106816.                                                 10.1016/j.aei.2019.100924.
+Meng, L., Miao, C., Leung, C., 2017. Towards online and personalized daily activity                Yang, K., Ahn, C.R., Vuran, M.C., Kim, H., 2017. Collective sensing of workers’ gait
+     recognition, habit modeling, and anomaly detection for the solitary elderly through               patterns to identify fall hazards in construction. Autom. Constr. 82, 166–178.
+     unobtrusive sensing. Multimed. Tools Appl. 76, 10779–10799. https://doi.org/                      https://doi.org/10.1016/j.autcon.2017.04.010.
+     10.1007/s11042-016-3267-8.                                                                    Yoon, J., Lee, B., Chun, J., Son, B., Kim, H., 2022. Investigation of the relationship
+Presti, L.L., Cascia, M.L., 2016. 3D skeleton-based human action classification: a survey.             between Ironworker’s gait stability and different types of load carrying using
+     Pattern Recognit. 53, 130–147. https://doi.org/10.1016/j.patcog.2015.11.019.                      wearable sensors. Adv. Eng. Informatics 51, 101521. https://doi.org/10.1016/j.
+Ray, S.J., Teizer, J., 2012. Real-time construction worker posture analysis for ergonomics             aei.2021.101521.
+     training. Adv. Eng. Informatics 26, 439–455. https://doi.org/10.1016/j.                       Yu, Y., Guo, H., Ding, Q., Li, H., Skitmore, M., 2017. An experimental study of real-time
+     aei.2012.02.011.                                                                                  identification of construction workers’ unsafe behaviors. Autom. Constr. 82,
+Roberts, D., Torres Calderon, W., Tang, S., Golparvar-Fard, M., 2020. Vision-based                     193–206. https://doi.org/10.1016/j.autcon.2017.05.002.
+     construction worker activity analysis informed by body posture. J. Comput. Civ. Eng.          Yu, Y., Li, H., Umer, W., Dong, C., Yang, X., Skitmore, M., Wong, A.Y.L., 2019. Automatic
+     34, 04020017. https://doi.org/10.1061/(asce)cp.1943-5487.0000898.                                 biomechanical workload estimation for construction workers by computer vision
+Salminen, S., Tallberg, T., 1996. Human errors in fatal and serious occupational                       and smart insoles. J. Comput. Civ. Eng. 33, 04019010. https://doi.org/10.1061/
+     accidents in Finland. Ergonomics 39, 980–988. https://doi.org/10.1080/                            (asce)cp.1943-5487.0000827.
+     00140139608964518.                                                                            Zhang, M., Fang, D., 2013. A cognitive analysis of why Chinese scaffolders do not use
+Sanhudo, L., Calvetti, D., Martins, J.P., Ramos, N.M.M., Mêda, P., Gonçalves, M.C.,                   safety harnesses in construction. Constr. Manag. Econ. 31, 207–222. https://doi.org/
+     Sousa, H., 2021. Activity classification using accelerometers and machine learning                10.1080/01446193.2013.764000.
+     for complex construction worker activities. J. Build. Eng. 35, 102001 https://doi.            Zhao, J., Obonyo, E., 2020. Convolutional long short-term memory model for
+     org/10.1016/j.jobe.2020.102001.                                                                   recognizing construction workers’ postures from wearable inertial measurement
+Seo, J., Lee, S., 2021. Automated postural ergonomic risk assessment using vision-based                units. Adv. Eng. Informatics 46, 101177. https://doi.org/10.1016/j.
+     posture classification. Autom. Constr. 128, 103725 https://doi.org/10.1016/j.                     aei.2020.101177.
+     autcon.2021.103725.
+
+
+
+
+                                                                                              13
+

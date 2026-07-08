@@ -1,0 +1,1038 @@
+                                                                  Automation in Construction 146 (2023) 104703
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                                Automation in Construction
+                                                           journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Transformer-based deep learning model and video dataset for unsafe action
+identification in construction projects
+Meng Yang a,b , Chengke Wu a , Yuanjun Guo a,b,e , Rui Jiang a , Feixiang Zhou c , Jianlin Zhang d ,
+Zhile Yang a,b,e ,∗
+a
+    Shenzhen Institute of Advanced Technology, Chinese Academy of Sciences, Shenzhen 518055, China
+b University of Chinese Academy of Sciences, Beijing 100049, China
+c School of Computing and Mathematical Sciences, University of Leicester, Leicester LE1 7RH, UK
+d
+    China Construction Science and Technology Group Cooperation, Room 703, G3 Building, TCL international E-city Nanshan, Shenzhen, China
+e
+    Guangdong Institute of Carbon Neutrality, Building 41, Huangshaping Innovation Park, Phase I, Guanshao City, Wujiang District, Shaoguan, China
+
+
+
+ARTICLE                  INFO                               ABSTRACT
+
+Keywords:                                                   A large proportion of construction accidents are caused by unintentional and unsafe actions and behaviors.
+Action recognition                                          It is of significant difficulties and ineffectiveness to monitor unsafe behaviors using conventional manual
+Construction safety                                         supervision due to the complex and dynamic working conditions on construction sites. Recently, surveillance
+Transformer
+                                                            videos and computer vision (CV) techniques have been increasingly adopted to automatically identify risky
+Deep learning
+                                                            behaviors. However, the challenge remains that spatial and temporal features in video clips cannot be
+                                                            effectively captured and fused by current CV models. To address this challenge, this paper describes a deep
+                                                            learning model named Spatial Temporal Relation Transformer (STR-Transformer), where spatial and temporal
+                                                            features of work behaviors are simultaneously extracted in paralleling video streams and then fused by
+                                                            a specially designed module. To verify the effectiveness of the STR-Transformer, a customized dataset is
+                                                            developed, including seven categories of construction worker behaviors and 1595 video clips. In numerical
+                                                            experiments and case studies, the STR-Transformer achieves an average precision of 88.7%, 4.0% higher than
+                                                            the baseline model. The STR-Transformer enables more accurate and reliable automatic safety surveillance
+                                                            on construction projects, and is expected to reduce accident rates and management costs. Moreover, the
+                                                            performance of STR-Transformer relies on efficient feature integration, which may inspire future studies to
+                                                            identify, extract, and fuse richer features when applying CV-based deep learning models in construction
+                                                            management.
+
+
+1. Introduction                                                                                 could be avoided if unsafe behaviors during the construction processes
+                                                                                                could be detected in time and addressed in an appropriate manner.
+    Safety has long been a serious challenge in the construction in-                                Construction workers’ behavior monitoring mainly relied on human
+dustry. According to Ministry of Emergency Management of China,                                 supervision in the past, but this approach has many limitations. On
+the death toll in the Chinese construction industry was 1752 during                             the one hand, manual identification of unsafe movements is inaccurate
+the first half of 2018 [1]. In USA, an average of 5136 workers died                             and delayed due to the large number of workers and complex condi-
+while working on construction sites annually from 2016 to 2020 [2].                             tions on large construction sites [7]. On the other hand, supervision
+Also note that the construction accident rate remains high in recent                            tasks require additional safety engineers, which will inevitably increase
+years despite continuously released safety regulations, manuals, and
+                                                                                                project management costs [8]. In recent years, with the development of
+standards [3,4]. Construction accidents are mainly caused by unsafe
+                                                                                                smart construction technology, some studies in sensor monitoring field
+behaviors of construction workers. Jiang et al. [5] and Heinrich et al.
+                                                                                                have to some extent solved these problems. Various sensors help collect
+[6] reported that approximately 80%–88% of all accidents occurring
+during construction were caused by unsafe human behaviors. On con-                              information related to worker movements by recognizing specific sig-
+struction sites, most accidents are visually identical. Casualty and losses                     nals [9–11]. However, these wearable sensors used to extract signals
+
+
+
+     ∗ Corresponding author.
+    E-mail addresses: yangmeng@siat.ac.cn (M. Yang), ck.wu@siat.ac.cn (C. Wu), yj.guo@siat.ac.cn (Y. Guo), rui.jiang@siat.ac.cn (R. Jiang),
+fz64@leicester.ac.uk (F. Zhou), zhang-jl@cscec.com (J. Zhang), zl.yang@siat.ac.cn (Z. Yang).
+
+https://doi.org/10.1016/j.autcon.2022.104703
+Received 16 June 2022; Received in revised form 9 November 2022; Accepted 3 December 2022
+Available online 14 December 2022
+0926-5805/© 2022 Elsevier B.V. All rights reserved.
+M. Yang et al.                                                                                                        Automation in Construction 146 (2023) 104703
+
+
+usually need to be attached to the body while working, potentially                   ∙ A Transformer-based model named STR-Transformer is devel-
+leading to physical interference with the worker’s movements [12].                     oped, which can well extract the spatial–temporal features for the
+    To this end, surveillance cameras are increasingly deployed on con-                construction sites unsafe action recognition task. Experimental
+struction sites, which enables remote automatic monitoring of project                  results prove that the proposed model outperforms the state-of-
+elements, e.g., structures, machines, materials, as well as workers.                   the-art (SOTA) methods on a standard dataset developed in this
+Thousands of real-time images and videos are collected every day,                      study.
+covering the entire construction site. When efficiently handled, these               ∙ A RPFFM is proposed, which can be added to various deep
+valuable data can enable Artificial Intelligence (AI) methods, thereby                 learning models to enhance their fusion ability for multimodal
+                                                                                       features and improve recognition precision.
+largely reducing human effort in safety management and reduce project
+                                                                                     ∙ A novel dataset (i.e., CMA) is proposed for action recognition
+costs [13]. Many studies have therefore applied computer vision (CV)
+                                                                                       application on construction sites. This dataset includes seven com-
+to monitoring the wearing status of personal protective equipment
+                                                                                       mon worker behaviors, while also allowing flexible expansion.
+(PPE) on construction sites, such as hard hats and vests [14–16].
+Meanwhile, some research uses CV-based methods to avoid workers                       The remaining of this paper is organized as follows. Section 2
+falling from heights (FFH) [17,18]. However, these studies often use              provides a review of the development of action recognition models
+image-based methods, detecting objects in discrete images rather than             on construction sites, including the current work of Transformer and
+recognizing consecutive actions. As a result, complex behaviors that              its applications. Section 3 describes the proposed Transformer-based
+require temporal information in consecutive video frames cannot be                model in detail and Section 4 presents the dataset of worker actions.
+accurately identified to determine whether they are risky.                        In Section 5, details of experiment implementation are presented and
+    This issue has been addressed in several recent studies in the field of       the experimental research results are analyzed and compared. Findings
+                                                                                  and limitations are discussed in Sections 6 and 7 presents conclusions.
+action recognition [19,20], which aims to analyze and identify actions
+that occur within a short period in videos. Such methods have also
+                                                                                  2. Related work
+been applied in studies attempting to recognize worker actions in
+construction projects. However, these studies all have one or several             2.1. Detecting unsafe behavior through signals or images
+of the following limitations: (1) Most skeleton-based studies [21–23]
+extract and classify skeleton features instead of directly recognizing                Extensive efforts have been made to monitor unsafe behaviors
+worker actions from videos, which ignore important visual features;               through various signals collected from workers on construction sites.
+(2) Several studies [24–27] have identified worker movements directly             Li et al. [12] combined convolutional neural network (CNN) with long
+from videos. However, much attention has been paid to spatial features            short-term memory (LSTM) [29] to predict unsafe movements from
+within each area of the frame. The connections between different areas            acceleration signals. Bangaru et al. [11] identified activities of builders
+of the whole frame were ignored since the convolution kernel cannot               through electromyography and inertial measurement unit. Antwi-Afari
+model the dependencies beyond the receptive field; (3) They focus on              et al. [30] used wearable equipment to identify awkward working
+the feature extraction ability of the model without fully considering             postures. Jung et al. [10] proposed a human activity classification
+the fusion of spatial and temporal features in video clips. Improper              model based on a sound recognition method. Lee et al. [31] developed
+fusion strategy may probably lead to loss of information, reduction               a new audio-based event detection system for automated construction
+of feature representation ability, and a decrease in model precision.             safety surveillance. However, some wearable sensors used to extract
+                                                                                  signals can potentially lead to physical interference in the worker’s
+Besides, most of the existing datasets [15,28] are private and/or are
+                                                                                  movements. Due to the low dimensionality of the signals and limited
+proposed for only a few specific behaviors (e.g., climbing and smoking).
+                                                                                  information it carries, the model cannot fully learn the features of the
+As a result, existing models within the same publicly available datasets
+                                                                                  signals. In addition, the specific signal required for the research can
+are difficult, if possible, to be fully compared; and existing datasets can
+                                                                                  be easily interfered by other signals on construction sites, resulting in
+hardly extend well to subsequent studies of unsafe behaviors.                     extra time for subsequent data cleaning.
+    To address these limitations of current studies, a Transformer-based              Failing to wear PPE on construction sites is an unsafe behavior that
+model, i.e., Spatial Temporal Relation Transformer (STR-Transformer),             can result in various accidents such as FFH. Many injuries and deaths
+is proposed in this paper to recognize unsafe actions of construction             could be avoided if workers have worn proper PPE. Several studies have
+workers from videos. A Spatial Feature Encoder (SFE) based on Trans-              attempted to use CV techniques to automatically monitor the appropri-
+former is developed to extract spatial features in each frame, where a            ate use of PPE in images. For example, Fang et al. [28,32] proposed an
+unique self-attention mechanism is employed to aggregate information              automated inspection method to check the appropriate usage of PPE
+about scenes and objects in each frame. An additional 3D convolutional            for working at height. Nath et al. [14] detected whether workers were
+neural network (3D CNN) is applied as a Temporal Feature Encoder                  wearing hard hats and vests through deep learning methods. Xiong
+(TFE) to extract temporal information about the movement of objects               and Tang [15] proposed a pose-guided anchoring framework to address
+from the video. The SFE and TFE will process different types of in-               the challenges of multi-class PPE detection in a workspace. Yang et al.
+puts to generate multimodal features, such as RGB frames and RGB                  [16] applied a deep learning model to detect whether workers were
+difference frames, and can effectively perform both spatial extraction            wearing helmets. Chian et al. [17] developed two CV-based detection
+                                                                                  methods to automatically detect missing barricades. Fang et al. [18]
+enabled by the Transformer and temporal extraction enabled by 3D
+                                                                                  developed a visual model to identify construction workers traversing
+CNN. In addition, the fusion of spatial and temporal features largely
+                                                                                  on the structure and determine the relative positioning of the workers
+affects the final prediction performance. Therefore, a Relative Position
+                                                                                  and the structural support. These image-based methods focus more
+Feature Fusion Model (RPFFM) is proposed, which enhances spatial
+                                                                                  on recognizing and localizing objects in images rather than recogniz-
+features and position correlations in each frame, while producing fused           ing actions. For example, unsafe actions with easily identified objects
+temporal–spatial features for final prediction. Furthermore, a novel              (e.g., not wearing a helmet) are usually distinguished by determining
+dataset, named Construction Meta Action (CMA) is built, containing                whether the object (e.g., the helmet) can be identified from an image.
+1595 video clips and seven classes of worker actions. These videos are            However, complex unsafe behaviors usually last for a period of time,
+collected from Youtube considering data availability, and the actions             making them difficult to be accurately identified by these image-based
+in the CMA dataset represent daily behaviors of workers and can be                methods. For example, ‘‘Fall Down’’ requires temporal information in
+reused in many scenarios. In summary, this paper makes the following              consecutive video frames to determine whether they are dangerous
+contributions:                                                                    because the information from only one frame can be misleading.
+
+                                                                              2
+M. Yang et al.                                                                                                       Automation in Construction 146 (2023) 104703
+
+
+2.2. Detecting unsafe behavior through videos                                    greatly facilitated the introduction of CV techniques into architectural
+                                                                                 applications. However, with the advent of the digital twin era, the
+    To address limitations in detecting unsafe behaviors from signals            amount of data is growing exponentially, and unsafe behaviors to be
+or images, researchers have attempted to identify unsafe behaviors               identified are getting more and more complex. Current methods, which
+by understanding videos. Recently, deep learning based approaches                are based on CNN and LSTM, are difficult to meet such demands due to
+have been widely used in human action recognition, animal behavior               the following shortcomings: (1) The convolution kernel cannot model
+analysis [33–35] and smart construction [36,37]. Among them, two-                dependencies beyond the receptive field, resulting in the inability to
+stream-based methods and 3D-CNN-based methods are two well-known                 learn long-range spatial–temporal information well. (2) LSTM has a
+deep learning models for action recognition. Two-stream-based meth-              long-term memory function and has certain advantages when dealing
+ods [20,38,39] usually have two different networks to handle different           with sequence modeling problems. However, when the temporal se-
+types of inputs, such as RGB images, RGB difference images and Optical           quence is too long or the number of LSTM layers is very deep, the
+Flow. The two networks are trained separately and features extracted
+                                                                                 computation can be very time-consuming due to the failure to perform
+by them will be fused in the middle or at the end to get a final
+                                                                                 parallel computing across layers.
+prediction. This method can help obtain diverse features with very high
+precision as long as kinds of features are well integrated. 3D-CNN-based
+methods [19,40,41] use 3D convolutional kernels to extract both spatial          2.3. Transformer and applications
+and temporal features in one operation from a video clip, which extend
+the 2D convolutional kernels with an extra dimension. Due to the heavy               To address the issues of CNN and LSTM, Transformer [54] stands
+computational burden of 3D CNN, some studies [42–44] proposed new                out. Transformer is originally proposed to solve natural language pro-
+3D convolution operations to reduce the computation cost. Others [45–            cessing (NLP) tasks. Due to its computational efficiency and scalability,
+48] also designed a variety of modules that could be directly added              many studies have introduced Transformer to CV tasks [55–58]. Trans-
+to various networks to improve the ability of feature extraction of the
+                                                                                 former can apply a self-attention mechanism to capture local and
+original networks.
+                                                                                 global long-range dependencies, which is far beyond the receptive
+    With the development of deep learning models for action recogni-
+                                                                                 field of traditional convolutional filters. Moreover, Transformer can
+tion tasks, many researchers have introduced these models into con-
+                                                                                 be computed in parallel, which can greatly reduce the computation
+struction engineering to detect unsafe actions of workers or construc-
+                                                                                 time compared to LSTM. Ensuring Transformer for better extracting
+tion equipment. Existing studies often identify abnormal behaviors by
+                                                                                 features of images or videos is a key challenge for its application in
+modeling worker skeleton data. For example, Han and Lee [49] em-
+                                                                                 CV. Raghu et al. [59] explored the differences between Transformer
+ployed a stereo camera to extract 2D skeleton points and reconstructed
+3D human skeleton point coordinates to monitor unsafe behaviors.                 and CNN to find out a way Transformer could solve the CV tasks.
+Roberts et al. [21] built a skeleton-based model to estimate and track           Dosovitskiy et al. [55] applied the standard Transformer directly to
+worker poses and outputs action labels. Li and Li [8] solved the                 images. By splitting the images into patches and providing a linear
+occlusion problem of construction workers’ action recognition with               sequence embedding of these patches, which are treated the same way
+the skeleton-based model. Ding et al. [22] proposed a temporal seg-              as tokens in the NLP application, the lowest level of modifications
+ment graph convolutional network to model skeleton data and fuse                 was made to ensure its best performance. Arnab et al. [60] devel-
+features in the temporal dimension for action recognition. Subedi and            oped four pure-Transformer models that can efficiently encode and
+Pradhananga [23] employed a depth sensor camera to get the skele-                process massive spatial and temporal features of the videos. Bertasius
+tal positional data and then proposed a machine learning method to               et al. [61] proposed a spatially and temporally based self-attention
+identify the actions. These skeleton-based models are two-stage models           method that adapted the standard Transformer architecture to videos
+that first extract skeleton information from the videos, and then classify       by directly learning spatiotemporal features from a sequence of frame-
+worker actions through the skeleton rather than video frames. The                level patches. Liu et al. [62] proposed a shifted window mechanism
+performance of the first-stage skeleton extraction model has a great             to calculate the attention in the spatiotemporal domain, which can
+impact on the final result, and these models tend to be time-consuming           achieve better results in reducing the amount of model parameters. Fan
+because their two stages cannot be parallelized.                                 et al. [63] connected the seminal idea of multiscale feature hierarchies
+    As such, researchers start to identify worker behaviors directly from        with Transformer models. Yan et al. [64] used separate encoders to
+videos. Luo et al. [27] propose a two-stream network and a new fusion            represent different views of the input videos and fused information
+strategy to recognize workers’ activities in site surveillance videos.           across views through lateral connections. Tolstikhin et al. [65] replaced
+However, the fusion strategy used to merge the results of two streams            the attention in Transformer with multi-layer perceptions to verify the
+is still relatively simple, which may lead to information loss. Ding             necessity of the attention mechanism .
+et al. [25] proposed a hybrid deep learning model based on LSTM to
+                                                                                     Due to the excellent performance of Transformer in various tasks,
+automatically extract and recognize workers’ actions of climbing and
+                                                                                 researchers have recently applied Transformer to the construction in-
+dismounting from a ladder. This method obtains 25 feature vectors of
+                                                                                 dustry. Shamsabadi et al. [66] employed Vision Transformer (ViT)
+∈ R2048 from a video and feeds them into the LSTM model, making
+                                                                                 for crack detection in civil infrastructure. Wang and Su [67] pro-
+it time-consuming. Luo et al. [24] introduced a discriminative model
+                                                                                 posed a novel Transformer-based crack segmentation model. Zhou et al.
+that combined deep activity features and contextual information to
+improve its ability of action recognition. Yang et al. [50] conducted            [68] applied Transformer to a point cloud classification task. Moon
+a study using Dense Trajectories [51] to recognize workers’ actions.             et al. [69] used Bidirectional Encoder Representation from Transform-
+At the same time, it is also very important to monitor the operation             ers (BERT) [70] to automatically detect contractual risk clauses from
+status of construction equipment. Jung et al. [26] applied a 3D-CNN-             construction specifications. In these studies, Transformer has shown
+based method to recognize the action of construction equipment such              stronger feature extraction capabilities than CNN and LSTM. However,
+as excavators and trucks from videos. Kim et al. [52] employed CNN               to the best of the authors’ knowledge, no research has been done
+and Double-layer LSTM to identify the working status of excavators.              on applying Transformer to automatically identifying unsafe worker
+Bügler et al. [53] integrated two vision-based sensing methods to                behaviors on construction sites. This study introduces Transformer to
+generate productivity information regarding excavation operations. In            the task of recognizing unsafe actions of construction workers, and the
+conclusion, a large number of articles have been published on the                performance is proven to be better than CNN-based and LSTM-based
+identification of construction worker behaviors. These studies have              models.
+
+                                                                             3
+M. Yang et al.                                                                                                              Automation in Construction 146 (2023) 104703
+
+
+
+
+                                                      Fig. 1. Main architecture of STR-Transformer.
+
+
+3. Method                                                                       3.1.1. Spatial feature encoder
+                                                                                    The Transformer [54,55,71] is applied as the SFE to extract spatial
+    In this section, the proposed SFE, TFE, RPFFM are introduced in             features. Specifically, 𝑘 frames are sampled from each video follow-
+detail. The overall architecture of the STR-Transformer is shown in             ing the sampling method in Temporal Segment Network (TSN) [20],
+Fig. 1. Two well-known deep learning models, Transformer and 3D                 producing the input sequence 𝑇 = (𝑇1 , 𝑇2 , … , 𝑇𝑘 ). Each frame 𝑇𝑖 ∈
+CNN, are applied to encode spatial and temporal features, respectively.         R𝐻×𝑊 ×𝐶 will be reshaped into a sequence of flattened 2D patches 𝑥𝑖 ∈
+Two types of video data, RGB and RGB difference video clips, are                      2
+                                                                                R𝑁×(𝑃 ×𝐶) , where H, W, C is the height, width, and number of channels
+fed into the SFE and TFE separately to generate multimodal features.            of original frame, respectively; 𝑃 is the width/height of each patch,
+Finally, a RPFFM is adopted to fuse and enhance the two types of                respectively; 𝑁 = 𝐻𝑊 ∕𝑃 2 is the number of patches. In order to satisfy
+features for the final prediction.                                              the input dimension 𝐷 of the transformer, the patches are flattened
+    Currently, mainstream Transformer-based action recognition mod-                                                                             2
+                                                                                and reshaped to 𝐷 with a trainable linear projection 𝐸 ∈ R(𝑃 ×𝐶)×𝐷
+els usually add a temporal attention module to the spatial attention
+                                                                                following the equation below:
+module, which changes the original architecture of the Transformer and
+makes the pre-trained weights unable to be applied to the new model.            𝑧0 = [𝑥𝑐𝑙𝑎𝑠𝑠 ; 𝑥1𝑖 𝐸; 𝑥2𝑖 𝐸; ...; 𝑥𝑁
+                                                                                                                   𝑖 𝐸] + 𝐸𝑝𝑜𝑠                                      (1)
+Inspired by two-stream network, in the STR-Transformer, an additional
+TFE based on 3D CNN is added to extract temporal features with-                 where 𝑧0 is the patch embedding, which is the output of Eq. (1); 𝑥𝑐𝑙𝑎𝑠𝑠
+out changing the original architecture. Moreover, a RPFFM consisting            is learnable classification embedding and 𝐸𝑝𝑜𝑠 ∈ R(𝑁+1)×𝐷 represents
+of three sub-models is developed to enhance the spatial and tempo-              the standard learnable position embedding [55]. Then, 𝑧0 is fed into
+ral features based on channel importance and position relationship,             the Transformer encoder, producing the output 𝑆𝑖 as follows:
+thereby improving the effectiveness of feature fusion. The advantage
+                                                                                𝑧′𝑙 = 𝑀𝑆𝐴(𝐿𝑁(𝑧𝑙−1 )) + 𝑧𝑙−1          𝑙 = 1...𝐿                                      (2)
+of the model design is that Transformer models pre-trained on other
+large datasets can be directly transferred to the task in hand, thereby
+avoiding training a Transformer from scratch and saving enormous                𝑧𝑙 = 𝑀𝐿𝑃 (𝐿𝑁(𝑧′𝑙 )) + 𝑧′𝑙       𝑙 = 1...𝐿                                           (3)
+computational costs.
+                                                                                𝑆𝑖 = 𝐿𝑁(𝑧0𝐿 )                                                                       (4)
+3.1. Feature extraction
+                                                                                where 𝐿𝑁 is the layer normalization [72]; 𝐿 represents the number
+    Videos can be naturally decomposed into spatial and temporal                of Transformer Encoder; 𝑀𝑆𝐴 represents the Multi-head self-attention
+features. The spatial domain is formed by individual frames and carries         (MSA) mechanism which is defined as follows:
+information about scenes and objects depicted in the video. On the
+other hand, the temporal domain covers different frames and carries             [𝑄, 𝐾, 𝑉 ] = 𝑧𝑈𝑞𝑘𝑣                                                                  (5)
+information of the movements and changes of movements of the ob-
+server (i.e., the camera) and objects [38]. Both spatial and temporal                                   𝑄𝐾 𝑇
+                                                                                𝑆𝐴(𝑄, 𝐾, 𝑉 ) = 𝑆𝑜𝑓 𝑡𝑀𝑎𝑥( √ )𝑉                                                       (6)
+features play essential roles in video understanding.                                                     𝑑
+
+                                                                            4
+M. Yang et al.                                                                                                          Automation in Construction 146 (2023) 104703
+
+
+where 𝑄, 𝐾, 𝑉 ∈ R(𝑁+1)×𝑑 indicate the query, key, and value matrices;             3.2.2. Relation-attention model
+𝑧 is the input of 𝑀𝑆𝐴, and 𝑈𝑞𝑘𝑣 ∈ R𝐷×3𝑑 is the learnable parameters to                In STR-Transformer, the spatial features extracted by SFE are treated
+calculate 𝑄, 𝐾, 𝑉 ; 𝑑 represents the dimension of query, key, and value;          as local features because they contain the information in each frame,
+𝑆𝐴 is the standard self-attention mechanism; 𝑆𝑜𝑓 𝑡𝑀𝑎𝑥 represents the              and the channel enhancement feature generated by CAM is regarded
+softmax function. The MSA performs self-attention operations 𝑛_𝑚𝑠𝑎                as the global feature because it inherently contains the contents of the
+times and then concatenates the results as follows:                               whole video. The relation between local features and global feature
+                                                                                  represents the correlation of information carried by each frame and
+𝑀𝑆𝐴(𝑧) = [𝑆𝐴1 (𝑧); 𝑆𝐴2 (𝑧); ...; 𝑆𝐴𝑛_𝑚𝑠𝑎 (𝑧)]𝑈𝑚𝑠𝑎   𝑈𝑚𝑠𝑎 ∈ R𝐷×𝐷        (7)
+                                                                                  the entire video. Learning such relation can increase the precision
+where 𝑈𝑚𝑠𝑎 is the learnable parameters in the Multi-head self-attention;          and reliability of action recognition [74,76]. The two features are
+𝑀𝐿𝑃 represents the Multi-Layer Perception defined as follows:                     concatenated as [𝑆𝑖 ; 𝛩𝑎𝑙𝑝ℎ𝑎 ] and then fed into a FC layer to evaluate
+                                                                                  the relation-attention weight 𝛽 as follows:
+𝑀𝐿𝑃 (𝑥) = 𝐹 𝐶(𝐺𝑒𝑙𝑢(𝐹 𝐶(𝑥)))                                            (8)
+                                                                                  𝛽𝑖 = 𝜎(𝐹 𝐶([𝑆𝑖 ; 𝛩𝑎𝑙𝑝ℎ𝑎 ]))                                                 (14)
+where 𝑥 is the input vector; 𝐹 𝐶 represents the fully connected (FC)
+layer, and 𝐺𝑒𝑙𝑢 represent the GELU function. All 𝑘 frames in the                  where 𝛽𝑖 is the relation-attention weight of the 𝑖th feature, and the
+input video will go through the SFE, and the final output is 𝑆 =                  𝜎 donates the sigmoid function. As such, with the self-attention and
+(𝑆1 , 𝑆2 , … , 𝑆𝑘 ).                                                              relation-attention weights, the model will generate two new features
+                                                                                  𝛷𝑖 and 𝛩𝑏𝑒𝑡𝑎 , which are taken by the third sub-model, i.e., the DTM.
+3.1.2. Temporal feature encoder
+     Considering the widely known capacity of the 3D-CNN-based model              𝛷𝑖 = 𝛼𝑖 𝛽𝑖 [𝑆𝑖 ; 𝛩𝑎𝑙𝑝ℎ𝑎 ]                                                   (15)
+in terms of processing consecutive images, it is applied as the TFE                       ∑𝑘
+to extract temporal features in videos [19]. The RGB difference im-                             𝛷𝑖
+                                                                                  𝛩𝑏𝑒𝑡𝑎 = ∑𝑘𝑖=1                                                               (16)
+age between two consecutive frames can effectively reveal the ap-                              𝛼
+                                                                                           𝑖=1 𝑖 𝛽𝑖
+pearance change, therefore facilitating identification of motion salient
+regions [20]. Thus, the proposed TFE takes RGB difference image                   3.2.3. Directional timing model
+sequence as the input. First, for the input RGB image sequence 𝑇 =                   The CAM and RAM focus more on the features in each frame.
+(𝑇1 , 𝑇2 , … , 𝑇𝑘 ), the RGB difference sequence 𝐷𝑖𝑓 𝑓 is generated as fol-       However, the time information across frames is also important. Thus,
+lows:                                                                             a LSTM is applied to learn the motion changes in videos and enhance
+                                                                                  the representation of temporal features as follows:
+𝐷𝑖𝑓 𝑓𝑖 = 0       𝑖=1                                                   (9)
+                                                                                  𝑂, ℎ𝑡 , 𝑐𝑡 = 𝐿𝑆𝑇 𝑀(𝛷, ℎ𝑡−1 , 𝑐𝑡−1 )                                         (17)
+𝐷𝑖𝑓 𝑓𝑖 = 𝑇𝑖 − 𝑇𝑖−1     𝑖 = 2...𝑘                                      (10)        where 𝑂 is the output of LSTM; ℎ, 𝑐 is the learned parameters of LSTM.
+    Then 𝐷𝑖𝑓 𝑓 ∈ R𝑘×𝐶×𝐻×𝑊      will go through the 3D-CNN-based model             Then, the three features are stacked and fed into another FC layer to
+as follows:                                                                       produce the Timing-Attention weight as follows:
+
+𝑀 = 𝑅𝑒𝑙𝑢(𝐵𝑁(𝐶𝑜𝑛𝑣3𝐷(𝐷𝑖𝑓 𝑓 )))                                          (11)        𝛾𝑖 = 𝜎(𝐹 𝐶([𝑂𝑖 ; 𝑀; 𝛩𝑏𝑒𝑡𝑎 ]))                                               (18)
+
+where 𝐶𝑜𝑛𝑣3𝐷 represents 3D convolution operations; 𝐵𝑁 is the batch                where 𝜎 denotes the sigmoid function. The DTM aggregates all the
+normalization (BatchNorm) operation; 𝑅𝑒𝑙𝑢 is the relu activation func-            features above to generate 𝛩𝑔𝑎𝑚𝑚𝑎 , which will be the input of the final
+tion; 𝑀 is the output of TFE.                                                     classifier and softmax function to produce the prediction 𝑌 of the action
+                                                                                  in the current video.
+                                                                                              ∑𝑘
+3.2. Relative position feature fusion model                                                       𝛼𝑖 𝛽𝑖 𝛾𝑖 [𝑂𝑖 ; 𝑀; 𝛩𝑏𝑒𝑡𝑎 ]
+                                                                                  𝛩𝑔𝑎𝑚𝑚𝑎 = 𝑖=1 ∑𝑘                                                      (19)
+    A RPFFM is developed to fuse and enhance the spatial features 𝑆                                    𝑖=1 𝛼𝑖 𝛽𝑖 𝛾𝑖
+
+and temporal features 𝑀. The fusing model produces a fixed-dimension              𝑌 = 𝑆𝑜𝑓 𝑡𝑀𝑎𝑥(𝐹 𝐶(𝛩𝑔𝑎𝑚𝑚𝑎 ))                                                  (20)
+feature representation as the output for final action recognition pre-
+diction. The model is designed based on the previous studies [73–76],
+which consists of three sub-models: Channel-Attention Model (CAM),                4. Dataset
+Relation-Attention Model (RAM), and Directional Timing Model (DTM).
+                                                                                  4.1. An overview of the CMA dataset
+3.2.1. Channel-attention model
+    It is believed that for action recognition, using representative and              The CMA dataset focuses on seven classes of basic worker actions
+distinct features for final prediction usually performs better than using         on construction sites, which are divided into three groups: Single-Person
+a larger number of unimportant features [73,74]. Therefore, a fully               Actions, e.g. ‘‘Stand’’, ‘‘Smoke’’, ‘‘Walk’’ and ‘‘Fall Down’’, means that
+connected layer 𝐹 𝐶 and a sigmoid function 𝜎 are adopted to filter                these actions can be independently finished by a single person; Person–
+and select representative features. The mathematical representation is            Person Actions, e.g. ‘‘Talk’’, refers to actions requiring the cooperation
+represented in Eq. (12), where 𝛼𝑖 is the self-attention weight of the 𝑖th         of multiple people; and Person–Object Actions, e.g. ‘‘Climb Ladder’’ and
+channel.                                                                          ‘‘Wear Helmet’’, indicates that these actions usually require human
+                                                                                  interaction with an object. Definitions of these action classes are shown
+𝛼𝑖 = 𝜎(𝐹 𝐶(𝑆𝑖 ))                                                      (12)        in Table 1and all defined actions are potentially dangerous on construc-
+   Then, following the method in Meng et al. [74], the self-attention             tion sites. For example, the actions of ‘‘Talk’’ and ‘‘Smoke’’ are related to
+weight is combined with spatial features to generate the channel en-              distraction of workers which is the cause of unsafe behaviors and safety
+hancement feature, i.e., 𝛩𝑎𝑙𝑝ℎ𝑎 . In other words, the CAM is expected to          performance degradation [77]. Detecting improper use of PPE is crucial
+identify important channels of input features so that subsequent models           for promoting safety management in construction workplaces [15] and
+can pay more attention to salient and representative features.                    ‘‘Wear Helmet’’ is closely related to this issue. During construction
+          ∑𝑘                                                                      work, the gestures of workers such as ‘‘Stand’’, ‘‘Walk’’ and ‘‘Fall Down’’
+               𝛼𝑖 𝑆𝑖                                                              are related to slips, trips and falls which have been recognized as
+𝛩𝑎𝑙𝑝ℎ𝑎 = ∑𝑖=1𝑘
+                                                                    (13)
+                                                                                  significant sources of injuries on construction sites [78]. Moreover,
+             𝑖=1 𝛼𝑖
+
+                                                                              5
+M. Yang et al.                                                                                                             Automation in Construction 146 (2023) 104703
+
+
+
+
+                                                                                Fig. 5. Number of clips per action class. The distribution of clip durations is illustrated
+                                                                                by colors.
+
+
+
+
+                                                                                according to Fang et al. [18], the class ‘‘Climb Ladder’’ is related to
+                                                                                Falls From Height which constitutes the highest portion of construction
+                                                                                accidents. Thus, these actions should be added into CMA. Fig. 2 shows
+                                                                                sample frames for the seven action classes in the CMA dataset. It can
+                                                                                be seen from the figure that some actions such as ‘‘Stand’’ and ‘‘Walk’’
+                                                                                require temporal information to distinguish. Some other actions need
+                                                                                to be identified by distinguishing objects in the video, such as ‘‘Climb
+                                                                                Ladder‘‘ and ’’Wear Helmet’’.
+                                                                                    Existing datasets consisting of signal data [12,77] and image
+                                                                                data [14,15] usually do not have complete visual features or spatial–
+                                                                                temporal features. Other datasets, although contain video data, focused
+                                                                                on one specific risky behavior (e.g., FFH or not wearing PPE) in each
+           Fig. 2. Sample frames for seven action classes of CMA dataset.
+                                                                                study [8,25,27,32], but may not be suitable for other construction
+                                                                                scenarios. Based on video data, the CMA dataset preserves original
+                                                                                visual features and selects seven worker behaviors that are commonly
+                                                                                ignored by existing datasets. It is also expected to be widely used in
+                                                                                various construction scenarios and provide data support for subsequent
+                                                                                research.
+
+                                                                                4.2. Building the CMA dataset
+
+                                                                                    According to the definition of unsafe actions, videos about construc-
+                                                                                tion sites are collected from YouTube through keywords of ‘‘Construc-
+                                                                                tion’’ and ‘‘Behavior’’. However, only a small portion of videos are
+                                                                                related to the defined actions so the following two methods are used to
+                                                                                enrich the dataset.
+                                                                                    First, additional daily actions which have similar characteristics
+                                                                                to the defined behaviors are added to the CMA dataset. This idea is
+                                                                                inspired by contrastive learning [79,80], which aims to make similar
+                                                                                objects close in the space of feature embeddings. For example, video
+                 Fig. 3. Examples of video clips after data augmentation.       clips of ‘‘wear motorcycle helmet’’ are added for the ‘‘Wear Helmet’’
+                                                                                action because "wearing a motorcycle helmet’’ has the most similarity
+                                                                                to ‘‘Wear Helmet" compared with other daily actions. When video data
+                                                                                of such actions on construction sites are sufficient, videos containing
+                                                                                similar daily actions (e.g., wearing) and elements (e.g., hard hat) can
+                                                                                help the deep learning model to learn similar feature patterns, . In
+                                                                                addition, including video data in non-construction scenes introduces
+                                                                                variances into data distribution, which can increase the robustness of
+                                                                                the model when the data change.
+                                                                                    Second, several data augmentation methods, such as horizontal
+                                                                                flipping, rotation, and random pixel masking are implemented to fur-
+                                                                                ther enrich the data. The methods are widely recognized tools to
+                                                                                increase the number of training samples while improving the gen-
+                                                                                eralization ability of models [38,81]. Some examples of video clips
+                                                                                after data augmentation are shown in Fig. 3. For a raw clip 𝑐𝑙𝑖𝑝𝑖 , 𝑖 ∈
+                                                                                1...𝑁, clips generate using the augmentation methods are grouped
+                                                                                as 𝐺𝑖 = (𝑐𝑙𝑖𝑝𝑖 , 𝑐𝑙𝑖𝑝𝑖𝑓 𝑙𝑖𝑝 , 𝑐𝑙𝑖𝑝𝑖𝑟𝑜𝑡𝑎𝑡𝑒 , 𝑐𝑙𝑖𝑝𝑖𝑚𝑎𝑠𝑘 , …). Finally, the dataset 𝐺 =
+                 Fig. 4. Data proportion for seven class of CMA dataset.
+                                                                                (𝐺1 , … , 𝐺𝑖 , … , 𝐺𝑁 ) can be established, where 𝑁 is the number of
+
+                                                                            6
+M. Yang et al.                                                                                                                   Automation in Construction 146 (2023) 104703
+
+                                  Table 1
+                                  Definition of worker behavior and the number of clips for each behavior in our CMA dataset.
+                                     Behavior         Description                                                       Number of clips
+                                     Climb Ladder     Climb from the bottom of the ladder to the top of the ladder      140
+                                     Fall Down        Change from a standing position to a lying down position          315
+                                     Smoke            Smoke cigarettes in working area                                  365
+                                     Stand            Stay in the working area and do nothing for a period of time      315
+                                     Talk             Two or more workers communicate in dangerous place                160
+                                     Walk             Move slowly in the working area                                   195
+                                     Wear Helmet      The process of the worker putting the helmet on the head          105
+
+
+Table 2
+CMA dataset statistics.
+ Video clips      Class   Duration       Resolution                   Frame rate
+ 1595             7       1s-9s          400 × 300 - 1920 × 1080      30
+
+
+
+
+groups of raw clips. By referring to the method proposed in UCF101
+dataset [82], the 𝑁 groups are divided into two splits, one for training
+with two-thirds of the full data, and the other for validation and testing
+with one-third of the full data. This can ensure data in each group not
+being confused with data in other groups.
+
+4.3. Statistic
+
+    The statistics of the CMA dataset are summarized in Table 2. The
+dataset defines seven classes of behaviors of workers on construction
+sites, For each class, there are 105–365 clips, and the total number
+of data samples is 1595. The duration of each clip is 1–9 s with a
+resolution between 400 × 300 - 1920 × 1080. Each video clip contains                                       Fig. 6. Losses of SOTA methods during training.
+only one action and has a fixed frame rate of 30 frames per second.
+The specific data proportion of each category is shown in Fig. 4. In the
+dataset, action ‘‘Smoke’’ accounts for the largest proportion (22.9%),                   of LSTM layer was set to be 1. The dropout ratio was set to be 0.5 to
+whereas the action ‘‘Wear Helmet’’ accounts for the smallest proportion                  avoid overfitting. The AdamW optimizer was applied [89] with a base
+(6.6%). The bar chart in Fig. 5 demonstrates the number of clips in                      learning rate of 1 × 𝑒−5 for pre-trained parameters. The online learning
+each action. The colors of each bar illustrate durations of different clips              strategy was used, where the batch size was 1. The number of training
+belonging to that class. Most of the clips last 2–4 s.                                   epochs was 25 for all models. The learning rate declined with a factor of
+                                                                                         10 at 10 and 20 epochs. The BCEWithLogitsLoss was used to compute
+5. Experiments                                                                           the distance between the current and expected output of the model,
+                                                                                         which is defined as.
+   In this section, the STR-Transformer was compared with other SOTA
+methods on the standard CMA dataset. Then, ablation experiments were                     𝐿𝑜𝑠𝑠(𝑥𝑖 , 𝑦𝑖 ) = −𝑤𝑖 [𝑦𝑖 × 𝑙𝑜𝑔𝜎(𝑥𝑖 ) + (1 − 𝑦𝑖 ) × 𝑙𝑜𝑔(1 − 𝜎(𝑥))]             (21)
+conducted to further verify the effectiveness of the model in detail.
+                                                                                         where 𝑥𝑖 is the predicted value; 𝑦𝑖 is the label value; 𝜎 represents the
+Experiments were performed on a single NVIDIA GeForce RTX 3090
+                                                                                         sigmoid function; 𝑤𝑖 is the weight vector of 𝑖th input, which was set to
+GPU. Code is based on [83–86] and will be published at https://github.
+                                                                                         be 1.
+com/S1mpleyang/ConstructionActionRecognition.
+                                                                                         Testing. The spatial dimension of clips was resized to 256 × 256
+5.1. Implementation details                                                              pixels and cropped to 224 × 224. For the temporal domain, the full-
+                                                                                         length video was sampled 10 times to compute the softmax scores
+Training. Different video clips had varying durations (30–270 frames),                   individually, which are standard procedures in the field of computer
+sending all frames into the model would result in a large number of                      vision [20,43,45]. The averaged softmax scores of all clips were taken
+computation operations and long computing time. To address the issue,                    for the final prediction.
+according to the TSN method [20], a fixed number of frames were
+filtered from video clips to represent the whole video, thereby reducing                 5.2. Results
+computation costs without losing too much information. Specifically,
+the input video was divided into 𝑘 segments of equal durations and then                     In this section, using the standard benchmarking dataset CMA, the
+one frame was randomly sampled from each segment to get a sequence                       performance of the STR-Transformer was evaluated and compared with
+with 𝑘 frames. In the experiments, 𝑘 was set to be 8 and 16 following                    three types of mainstream methods, namely, (1) CNN-based methods:
+STM [46]. The frames were resized to 256 × 256 and randomly cropped                      TSN, Temporal Shift Module (TSM), SlowFast, 3D Residual ConvNet
+to 224 × 224 for model training. In other words, the input size of the                   (R3D), R(2+1)D and Temporal Excitation and Aggregation (TEA); (2)
+model was 𝐵 × 𝑘 × 3 × 224 × 224, where 𝐵 is the batch size and 𝑘 is                      Transformer-based methods: Vision Transformer Base/Large (ViT-B/L),
+the number of frames, (3, 224, 224) indicate the number of channels,                     Swin Transformer Base/Large (Swin-B/L), Video Vision Transformer
+height, width of the input frame, respectively.                                          Large (ViViT-L), Multiview Transformers Base (MTV-B), Multiscale Vi-
+    The SwimTransformer pretrained on Imagenet-21k [87] and                              sion Transformers Base (MViT-B) and TimeSformer; (3) LSTM-based
+R(2+1)D pretrained on Kinetics [88] were adopted as the SFE and TFE                      models: CNN+LSTM reproduced according to Ding et al. [25], where
+in the STR-Transformer, respectively. As for the RPFFM, the number                       the number of LSTM was set to be 2 and 5. In addition, for SlowFast,
+
+                                                                                     7
+M. Yang et al.                                                                                                                      Automation in Construction 146 (2023) 104703
+
+                 Table 3
+                 Comparison results of per-class precision and average precision of STR-Transformer with other SOTA methods on the CMA dataset.
+                   Method               NOF       Climb Ladder         Fall Down       Smoke      Stand       Talk       Walk        Wear Helmet       AP
+                   TSN [20]             8         86.6%                70.0%           96.0%      88.0%       46.7%      76.3%       68.8%             76.1%
+                   TSM [48]             8         75.5%                88.0%           99.6%      83.2%       60.0%      92.7%       82.2%             83.0%
+                   SlowFast [43]        4+16      82.2%                81.0%           99.7%      88.1%       42.2%      99.8%       53.3%             78.1%
+                                        8         75.1%                76.3%           92.1%      87.3%       34.2%      73.2%       55.3%             70.5%
+                   R3D [40]
+                                        16        85.5%                81.4%           96.4%      95.6%       55.6%      87.9%       66.7%             81.3%
+                                        8         88.2%                72.2%           98.4%      90.8%       63.1%      87.2%       73.7%             81.9%
+                   R(2+1)D [42]
+                                        16        73.3%                82.0%           93.3%      96.0%       62.2%      92.7%       75.6%             82.1%
+                                        8         84.4%                75.0%           94.0%      81.0%       66.7%      85.4%       77.8%             80.6%
+                   TEA [45]
+                                        16        81.8%                52.8%           84.5%      90.6%       62.2%      67.5%       76.0%             73.6%
+                                        8         70.2%                81.2%           90.6%      91.0%       60.0%      87.6%       67.5%             78.3%
+                   ViT-B [55]
+                                        16        68.9%                67.6%           95.4%      87.0%       52.4%      90.1%       75.5%             76.7%
+                                        8         60.1%                97.0%           96.8%      91.2%       66.7%      83.6%       77.8%             81.9%
+                   ViT-L [55]
+                                        16        73.8%                91.2%           97.0%      93.7%       66.7%      81.8%       82.2%             83.7%
+                                        8         77.1%                91.1%           96.8%      92.2%       66.3%      87.0%       82.2%             84.7%
+                   Swin-B [71]
+                                        16        77.4%                87.0%           99.1%      89.2%       67.4%      83.6%       78.5%             83.1%
+                                        8         88.9%                93.5%           97.3%      94.2%       66.7%      93.6%       77.8%             87.4%
+                   Swin-L [71]
+                                        16        88.3%                89.0%           94.3%      88.0%       66.7%      99.7%       77.8%             86.3%
+                                        8         76.7%                83.0%           94.6%      89.0%       60.0%      94.5%       73.3%             81.6%
+                   MViT-B [63]
+                                        16        73.3%                90.0%           99.3%      99.0%       60.0%      98.1%       75.5%             85.0%
+                                        8         86.6%                77.0%           94.0%      96.0%       62.2%      87.3%       77.8%             82.9%
+                   TimeSformer [61]
+                                        16        77.8%                70.0%           89.8%      94.0%       64.4%      80.0%       72.8%             78.4%
+                                        8         91.1%                91.2%           99.5%      95.0%       66.7%      96.8%       82.2%             88.7%
+                   STR-Transformer
+                                        16        88.9%                93.8%           98.5%      94.0%       66.7%      86.5%       77.8%             86.6%
+
+
+Table 4
+Comparison results of STR-Transformer and other SOTA methods in FLOPs, Params and
+inference time.
+ Method                     Pretrain    AP         FLOPs       Params          Time
+ 𝐶𝑁𝑁 + 𝐿𝑆𝑇 𝑀2 [25]          IN-1K       36.4%      22.8        22.6            0.055
+ 𝐶𝑁𝑁 + 𝐿𝑆𝑇 𝑀5               IN-1K       N/A        22.8        22.6            0.104
+ TSN                        K400        76.1%      33.0        24.3            N/A
+ TSM                        K400        83.0%      32.9        24.3            N/A
+ SlowFast                   K400        78.1%      36.6        34.4            N/A
+ R3D                        K400        70.5%      109.8       47.0            0.008
+ R(2+1)D                    K400        81.9%      117.2       47.0            0.015
+ TEA                        K400        80.6%      35.0        24.9            0.028
+ ViT-B                      IN-21K      78.3%      134.8       85.9            0.008
+ ViT-L                      IN-21K      81.9%      477.2       303.4           0.039
+ Swin-B                     IN-21K      84.7%      121.0       87.0            0.020
+ Swin-L                     IN-21K      87.4%      272.1       195.4           0.032
+ ViViT-L [60]               –           N/A        995.0       N/A             N/A
+ MTV-B [64]                 –           N/A        199.5       310.0           N/A
+ MViT-B                     K400        81.6%      70.5        36.6            0.021
+ TimeSformer                IN-21K      82.9%      178.6       113.9           0.036
+                                                                                            Fig. 7. Receiver Operating Characteristic (ROC) curves of individual models and their
+ STR-Transformer            IN-21K      88.7%      202.3       121.4           0.061
+                                                                                            area under the curve (AUC). A larger AUC means a better performance of the model.
+
+
+
+
+TSN, and TSM, the training strategy in 202 [85] was applied due to                          were based on the pytorch-Opcounter [91], and the shape of input clip
+their pre-defined training requirements, whereas other SOTA methods                         was set to be 1 × 8 × 3 × 224 × 224. Magnitudes are Giga(109 ) for FLOPs
+adopted the same training strategy introduced in this study.                                and Mega(106 ) for Params. The inference Time is defined as the time
+    The loss curves of SOTA methods during training are shown in                            (seconds) the model takes to produce the prediction of each video clip.
+Fig. 6. The losses of Transformer-based models drop rapidly and con-                        N/A meant no data was acquired.
+verge at around 10 epochs except MViT-B. The training loss of the                               As shown in Table 3, it can be argued that the STR-Transformer
+STR-Transformer at 25 epoch is 3e-6, which is the smallest among                            can achieve 88.7% and 86.6% average precision with 8- and 16-
+all models. Other SOTA methods (e.g., R3D, R(2+1)D, TEA) converge                           frame inputs, outperforming other SOTA methods. When using fewer
+slowly, and the final losses remain around 2e-2. These methods can still                    input frames (8 frames), the effect is improved by 2.1% compared
+                                                                                            to using more input frames (16 frames). In general, increasing the
+reach good prediction performance after a longer training period, at
+                                                                                            length of the input frame can provide more information to the model.
+the cost of excessive computation resources and time. Thus, the STR-
+                                                                                            For some models, e.g., R3D, and MViT-B, such strategy improves the
+Transformer outperforms the others in terms of the convergence rate
+                                                                                            average precision, which, however, is not the case for other models,
+and demands of resources.
+                                                                                            e.g., TEA, and TimeSformer, where using 8-frame inputs results in
+    The performance comparison between the STR-Transformer with                             better performance. The STR-Transformer also performs better with 8-
+other SOTA methods is listed in Table 3. NOF represented the number                         frame inputs, to-some-extent indicating the superior ability in terms
+of frames in the input clip and the average precision (AP) was used as                      of extracting temporal and spatial features even the number of input
+the metric of prediction performance. Other important metrics, namely,                      frames is limited.
+floating point operations (FLOPs), number of parameters (Params), and                           As shown in Table 4, it can be argued that the Transformer-based
+inference time (Time) are summarized in Table 4. These methods were                         models have the largest FLOPs and Params compared with the CNN-
+pretrained on Kinetics-400 (K400) [88] or ImageNet-1K/ImageNet-21K                          based and LSTM-based models. Among these Transformer-based mod-
+(IN-1K/IN-21K) [87,90] datasets. Calculations of Params and FLOPs                           els, ViViT-L has the largest FLOPs (995.0 GFLOPs), almost 5 times
+
+                                                                                        8
+M. Yang et al.                                                                                                                      Automation in Construction 146 (2023) 104703
+
+
+
+
+           Fig. 8. Demo videos produced by STR-Transformer. Top left in the final frame shows the classification results and probability scores for the top-2 actions.
+
+
+that of the STR-Transformer. MTV-B has the largest Params (310.0                                 All models perform well when classifying some actions, such as
+MB), about 2.5 times that of the STR-Transformer. Compared with                             ‘‘Smoke’’ and ‘‘Stand’’. However, they also all fail to recognize some
+Swin-B, the baseline method, the precision of the STR-Transformer is                        actions, such as ‘‘Talk’’, where the precision is less than 67.4%. The
+4.0% higher using 8-frame inputs, and the FLOPs and Params increase                         SlowFast performs best in terms of recognizing ‘‘Smoke’’ and ‘‘Walk’’,
+from 121.0 to 202.3 GFLOPs and from 87.0 to 121.4 MB, respectively.                         the MViT-B performs best in terms of recognizing ‘‘Stand’’, and the
+Compared with Swin-L, which reaches the best performance among the                          Swin-B performs best when identifying ‘‘Talk’’. To better investigate
+SOTA models, the STR-Transformer still gains a precision improvement                        the performance of different models classifying different actions, two
+of 1.3%, and the FLOPs and Params also decrease from 272.1 to 202.3                         confusion matrices were generated for the baseline method and STR-
+GFLOPs and from 195.4 to 121.4 MB, respectively. In other words,                            Transformer, as shown in Figs. 9 and 10, respectively. As mentioned,
+compared with these transformer-based models, the STR-Transformer                           for both models, the ‘‘Talk’’ action is the most challenging one to
+can improve the performance of action recognition while increasing                          classify, and the ‘‘Smoke’’ is the easiest one. Furthermore, both models
+model complexity by an acceptable extent.                                                   can occasionally confuse ‘‘Talk’’ and ‘‘Wear Helmet’’ with ‘‘Stand’’, but
+    As shown in Table 4, it can be argued that the transformer-based                        hardly recognize ‘‘Stand’’ as ‘‘Talk’’ and ‘‘Wear Helmet’’. As ‘‘Stand’’ is
+method requires slightly more training time than the CNN-based                              usually the premise of ‘‘Talk’’ or ‘‘Wear Helmet’’, this phenomena can
+method, but the LSTM-based methods are the most time-consuming                              shed light on how deep learning models learn features in similar classes.
+ones. The inference Time of the STR-Transformer is 0.061 s per clip.                        It is supposed that the problem can be solved by dividing the action into
+Although it is larger than that of MViT-B (0.021 s) and TimeSformer                         more detailed classes or by improving the feature extraction capacity
+(0.036 s), it is still acceptable for most practical applications. As for the               of the models.
+LSTM-based model (CNN+LSTM in Ding et al. 25), the inference Time is
+                                                                                            5.3. Ablation study
+0.055 when the number of LSTM was set to be 2, which is already close
+to the STR-Transformer. As the depth of LSTM-based methods increases,
+                                                                                                Ablation experiments were conducted to demonstrate the effective-
+the time needed will further increase. Thus, the STR-Transformer is
+                                                                                            ness different parts of the model. The models were trained and tested
+more suitable for actual implementation in construction projects than                       with 8-frame inputs using samples in the CMA dataset, and the training
+LSTM-based methods.                                                                         strategy was same as the STR-Transformer. The results are shown in
+    Additionally, it is worth noting that in the inputs, the                                Table 5. Feature Fusion represented the method to fuse spatial and
+STR-Transformer converts 8 RGB frames into 8 RGB difference frames                          temporal features. ADD and RPFFM represented two operations to fuse
+before feeding them to SFE and TFE for feature extraction. As such,                         two kinds of features. Pretrain represented the pre-trained weights used
+when evaluating FLOPs and inference time, the STR-Transformer model                         by SFE+ TFE. Data Type represented the type of input video clip of
+used 16 frames, while other models used 8 RGB frames. Thus, the FLOPs                       SFE+ TFE.
+and inference time of the other models should be doubled, and the                                   Effective of spatial feature encoder One CNN-based model
+complexity of the STR-Transformer can be regarded as low.                                   (i.e., Resnet-50 [92]) and two Transformer-based models (i.e., ViT-
+    Moreover, the Receiver Operating Characteristics (ROC) curves of                        B and Swin-B) were selected as the SFE. As summarized in the first
+models in the experiments were drawn in Fig. 7, while the area under                        part of Table 5, Transformer-based models perform better than CNN-
+the curve (AUC) were evaluated for comprehensive comparison. It                             based models due to the unique attention mechanism (74.7%, 86.2%
+is obvious that the STR-Transformer has the highest AUC among all                           vs. 49.7%). The Swin-B applied a sliding window strategy, which
+models.                                                                                     can restrict the self-attention computations to non-overlapping local
+    The demo video produced by the STR-Transformer was demon-                               windows, while allowing cross-window connections. This results in
+strated in Fig. 8. The two classification results with the highest pre-                     higher precision (86.2% vs. 74.7%) and efficiency (202.2 vs. 216.1
+diction scores were presented at the top left in the last frame.                            GFLOPs) compared to ViT-B.
+
+                                                                                        9
+M. Yang et al.                                                                                                                    Automation in Construction 146 (2023) 104703
+
+         Table 5
+         Ablation experiments results of STR-Transformer on CMA dataset.
+           SFE               TFE                   Feature fusion    Pretrain             Data type            AP        FLOPs          Params         Time
+           Resnet-50 [92]    R(2+1)D-18            ADD               IN-1K+K400           RGB+RGB DIFF         49.7%     114.2          56.0           0.014
+           ViT-B             R(2+1)D-18            ADD               IN-21K+K400          RGB+RGB DIFF         74.7%     216.1          117.6          0.023
+           Swin-B            R(2+1)D-18            ADD               IN-21K+K400          RGB+RGB DIFF         86.2%     202.2          118.7          0.038
+           Swin-B            None                  None              IN-21K               RGB+RGB DIFF         84.7%     121.0          87.0           0.020
+           Swin-B            Resnet-18             ADD               IN-21K+IN-1K         RGB+RGB DIFF         85.4%     135.6          99.1           0.026
+           Swin-B            Densenet-121 [93]     ADD               IN-21K+IN-1K         RGB+RGB DIFF         85.7%     143.9          95.4           0.042
+           Swin-B            R3D-18                ADD               IN-21K+K400          RGB+RGB DIFF         85.5%     206.3          120.6          0.031
+           Swin-B            R(2+1)D-18            ADD               IN-21K+K400          RGB+RGB DIFF         86.2%     202.2          118.7          0.038
+           Resnet-50         R(2+1)D-18            RPFFM             IN-1K+K400           RGB+RGB DIFF         61.9%     114.2          61.6           0.063
+           ViT-B             R(2+1)D-18            RPFFM             IN-21K+K400          RGB+RGB DIFF         83.1%     216.1          119.6          0.051
+           Swin-B            R(2+1)D-18            RPFFM             IN-21K+K400          RGB+RGB DIFF         88.7%     202.3          121.4          0.061
+           Resnet-50         R(2+1)D-18            RPFFM             IN-1K+K400           RGB+RGB              56.3%     114.2          61.6           0.063
+           ViT-B             R(2+1)D-18            RPFFM             IN-21K+K400          RGB+RGB              80.6%     216.1          119.6          0.051
+           Swin-B            R(2+1)D-18            RPFFM             IN-21K+K400          RGB+RGB              85.9%     202.3          121.4          0.061
+           Swin-B            R(2+1)D-18            RPFFM             IN-21K+K400          RGB+Optical Flow     N/A       202.3+N/A      121.4+5.3      0.061+0.084
+
+
+Table 6
+Ablation experiments results of FLOPs, Params and inference Time of RPFFM.
+ Method          CAM    RAM        DTM     AP        FLOPs      Params       Time
+ SFE+TFE         –      –          –       86.2%     202.2      118.7        0.038
+ SFE+TFE         ✓      –          –       87.1%     202.2      119.4        0.038
+ SFE+TFE         ✓      ✓          –       87.5%     202.3      119.7        0.039
+ SFE+TFE         ✓      ✓          ✓       88.7%     202.3      121.4        0.061
+
+
+
+
+        Effective of temporal feature encoder This experiment aims to
+verify whether the TFE can improve model performance, while find-
+ing out the model suitable as the TFE. Two 2D-CNN-based models
+(i.e., Resnet-18 and Densenet-121 [93]), two 3D-CNN-based models
+(i.e., R(2+1)D-18 and R3D-18) were selected as the TFE. Features of
+SFE and TFE were fused by an additional ADD operation. The Results
+are shown in the second part of Table 5. Models equipped with TFE can
+achieve improvements of different degrees compared to the baseline
+model (i.e., 85.4%, 85.7%, 85.5%, 86.2% vs. 84.7%). Moreover, the
+performance of using a 3D-CNN-based model as TFE is not significantly
+different from the case using a 2D-CNN-based model (85.5%, 86.2% vs.
+                                                                                                      Fig. 9. Confusion matrix generated by our STR-Transformer.
+85.4%, 85.7%). As such, the R(2+1)D-18 was selected as TFE in the
+STR-Transformer because it can reach the highest AP of 86.2%.
+        Effective of multimodal data The effect of using multi-modal data
+on performance was investigated. Three combinations of modals were
+tested, i.e., RGB+RGB, RGB+RGB DIFF, and RGB+Optical Flow. The
+method in Teed and Deng [94] was applied to extract Optical Flow from
+videos. As shown in the third and fourth parts of Table 5, models using
+multimodal data (RGB frames and RGB difference frames) perform
+better than the models using only RGB frames (83.1%, 88.7% vs.
+80.6%, 85.9%). This is because the spatial and temporal features car-
+ried by RGB difference frames are different from those in RGB frames,
+which facilitate feature extraction and learning. However, collecting
+and processing multi-modal data requires more resources. For example,
+the time to extract RGB difference frames is negligible, while extracting
+optical flow requires additional 0.084s per clip, which is even larger
+than that of the model making a prediction. Thus, multi-modal data
+should be used with caution, taking hardware conditions in specific
+projects into account.
+        Effective of relative position feature fusion model The RPFFM con-
+sists of three submodules, i.e., CAM, RAM, and DTM. They were em-
+ployed to fuse spatial and temporal features from SFE and TFE. The                                       Fig. 10. Confusion matrix generated by baseline model.
+
+results of the ablation experiment are listed in Table 6. One can
+conclude that the CAM can add channel attention weights to features
+so that representative features are more prominent, thereby improving                      of features, gaining an improvement of a 1.2% AP. Meanwhile, as
+AP of the baseline model from 86.2% to 87.1%. Additionally, after                          presented in Table 6, it can be argued that the FLOPs and Params of
+implementing the RAM, the correlation of each part of a feature is                         RPFFM are 0.1 GFLOPs and 2.7 MB respectively, which is very small
+enhanced, and the AP is again increased from 87.1% to 87.5%. Fi-                           compared to the whole model. However, the RPFFM increases inference
+nally, the DTM can also enhance the spatial–temporal representation                        Time by 0.023 s, because the DTM is relatively time-consuming. The
+
+                                                                                     10
+M. Yang et al.                                                                                                         Automation in Construction 146 (2023) 104703
+
+
+experiments prove that the RPFFM can effectively fuse temporal and                  In a word, this dataset has great potential to serve other video-based
+spatial features and improve the performance of the STR-Transformer                 studies on construction sites.
+                                                                                        This work also has several limitations and could be improved in
+6. Discussion                                                                       the future. First, with the improvement of its average accuracy, the
+                                                                                    complexity of the STR-Transformer increases because Transformer has
+    The contribution of this study is three folds. First, recent advances in        higher complexity than CNN. Subsequently work will be done to make
+CV techniques in the field of action recognition and their applications             this model lighter and more efficient. Second, the definition of worker
+in monitoring unsafe behaviors on construction sites are discussed. Sev-            actions in this paper is not specific enough. More detailed worker
+eral limitations of existing studies are identified: (1) Signal-based meth-         behaviors will be included by expanding the dataset and divided into
+ods usually ignore important visual information. (2) Image-based meth-              detailed behavioral categories for more precise detection and classifi-
+ods often focus on detecting and locating PPE and construction equip-               cation. At last, due to the lack of video data, some similar actions in
+ment in images while ignoring consecutive actions that require tem-                 daily life are added to the CMA dataset. It should be admitted that even
+poral feature extraction for accurate identification. (3) Conventional              similar actions have slight differences so more related video data of
+two-stage models and LSTM-based models are time-consuming. (4)                      construction scenes will be collected into the CMA dataset in future
+Common CNN-based models cannot model long-range spatial–temporal                    work.
+features. (5) Transformer is difficult to train from scratch on small
+datasets. (6) Some two-stream models focus on extracting spatial and                7. Conclusions
+temporal features separately while ignoring fusing the two types of
+features.                                                                               Construction remains one of the most dangerous industries in the
+    Second, to address these limitations, a Transformer-based model                 world. Due to the complex environment of construction sites and the
+named STR-Transformer is proposed in this study. This model can                     inefficiency of manual supervision, unsafe behaviors of workers are
+extract adequate spatial and temporal features from videos and consists             the main cause of construction accidents. To improve work safety, it
+of three parts: (1) a SFE based on the Transformer model to extract                 is critical to implement computer vision based methods to automati-
+features from frames, where the unique self-attention mechanism ag-                 cally and effectively detect workers’ unsafe behaviors. Currently, such
+gregates information from the whole frame. The original architecture of             methods are restricted by their poor performance in terms of simultane-
+Transformer remains unchanged to facilitate transferring weights pre-               ously capturing and fusing spatial and long-range temporal features in
+trained in other large datasets to the STR-Transformer and fine-tunning             consecutive video clips, which to a large extent hinders their practical
+on small datasets. Experiments demonstrate that the STR-Transformer                 application. Moreover, although AI-based methods for risky behavior
+achieves an improvement of 8.6% average precision compared with                     detection are continuously proposed recently, the construction industry
+TSN, and has the highest convergence rate. (2) a TFE based on a                     lacks an especially designed benchmarking dataset. As a result, the
+3D CNN to effectively model and enhance temporal features from                      effectiveness of these methods cannot be objectively verified, which
+consecutive video frames. This strategy improves the average precision              also hinders their development and implementation.
+from 84.7% to 86.2%. (3) a RPFFM to fuse and enhance the spatial and                    In this paper, a new model named STR-Transformer is developed
+temporal features. With the RPFFM, the average precision of the whole               for unsafe action recognition of construction workers. First, two SOTA
+model gains a further improvement of 2.5%. Experiments demonstrate                  computer vision methods, Transformer and 3D CNN, are used to extract
+that the STR-Transformer outperforms the SOTA methods.                              the spatial and temporal features of workers’ behaviors in consecutive
+    When applied in the construction industry, the STR-Transformer has              video clips. Second, a RPFFM is designed to fuse and enhance the
+the following practical contributions: (1) Compared with traditional                two features to further improve the prediction power. Third, a dataset
+manual monitoring, this model identifies unsafe behaviors of con-                   named CMA, which contains 1595 video clips of worker behaviors
+struction workers automatically from surveillance videos. As such, the              divided into seven classes, is established to verify the STR-Transformer.
+challenges of subjectivity and limited coverage faced by manual surveil-            The experimental results demonstrate that the proposed model could
+lance can be addressed with reduced management costs. (2) Compared                  successfully identify unsafe actions with an average precision of 88.7%,
+to recent methods that identify unsafe worker behaviors automatically               which is 4% better than that of the baseline model. The high pre-
+using visual data, the STR-Transformer incorporates both spatial and                cision indicates that the proposed model can be effectively used to
+temporal features, therefore achieving higher performance and relia-                identify unsafe actions in videos of construction sites. The results also
+bility. The model can create value for project teams by detecting risky             demonstrate that using multimodal data (RGB and RGB difference
+behaviors that could be omitted by previous image- or video-based                   frames) to identify unsafe behavior can achieve better results than
+methods in the industry. (3) In addition, the STR-Transformer keeps                 unimodal data (RGB frames) with an improvement of 2.8%. This is
+the initial structure of Transformer. Thus, the model pre-trained on a              because multimodal data allows the model to extract more types of
+large dataset can be transferred to the task of unsafe behavior detection.          features therefore improving the prediction. Finally, fusing features
+Experiments show that the STR-Transformer converges quickly on small                using the RPFFM also increases the performance to 88.7%, 2.5% higher
+datasets, indicating that it could also be fine-tuned and generalized for           than the baseline ADD operation. In addition, the CMA dataset can
+other types of unsafe behaviors and possibly other safety management                not only provide valuable benchmarking data for subsequent studies
+tasks. For example, hazardous objects and risk areas could be identified            related to action recognition of construction workers, but also can be
+with a small number of labeled samples and a short training period.                 widely used in other research fields such as worker tracking and motion
+This enables flexible and fast deployment of the model to meet practical            understanding.
+demands of a project.                                                                   There are several further research directions. First, the current STR-
+    In addition, a construction worker behavior recognition dataset                 Transformer can reach high precision of behavior recognition, but its
+named CMA is proposed. Creating a dataset for general objectives is                 complex structure can restrict its application due to limited computa-
+expensive and this has been a chronic problem in the construction                   tion resources in practical projects. Thus, future work will focus on
+community [27]. Currently, different studies use different datasets to              balancing model capacity and computation costs, while developing
+train models for unsafe action identification, which leads to limited               lightweight models to meet the practical demands of real-time response
+cross-comparisons and thus low confidence in existing models. To                    and safety warning on sites. Second, given the value of using mul-
+address this issue, the CMA includes seven classes of actions and 1595              timodal data, it is interesting and meaningful to investigate whether
+video clips. Each clip in this dataset depicts only one action, making it           other multimodal data, such as optical flow frames, depth frames,
+convenient for other models to train and test on it without modification.           and multi-camera videos, will also improve the model performance.
+
+                                                                               11
+M. Yang et al.                                                                                                                            Automation in Construction 146 (2023) 104703
+
+
+Third, as the feature fusion module produces direct inputs to the final                         [14] N.D. Nath, A.H. Behzadan, S.G. Paal, Deep learning for site safety: Real-time
+predictor, it is necessary to investigate and design more effective fusing                           detection of personal protective equipment, Autom. Constr. 112 (2020) 103085,
+                                                                                                     http://dx.doi.org/10.1016/j.autcon.2020.103085.
+methods to take full use of features in multimodal data. Finally, in
+                                                                                                [15] R. Xiong, P. Tang, Pose guided anchoring for detecting proper use of personal
+this study, daily actions are added to the CMA dataset due to the                                    protective equipment, Autom. Constr. 130 (2021) 103828, http://dx.doi.org/10.
+lack of videos on construction sites. Therefore, more videos of unsafe                               1016/j.autcon.2021.103828.
+behavior on construction sites will be collected, pre-processed, and                            [16] M. Yang, Z. Yang, Y. Guo, S. Su, Z. Fan, A novel YOLO based safety helmet
+added to the dataset in the future. To this end, it can be concluded                                 detection in intelligent construction platform, in: Intelligent Equipment, Robots,
+                                                                                                     and Vehicles, Springer, 2021, pp. 268–275, http://dx.doi.org/10.1007/978-981-
+the proposed STR-Transformer is an effective tool for on-site safety
+                                                                                                     16-7213-2_26.
+monitoring, which can release supervisors from tedious manual super-                            [17] E. Chian, W. Fang, Y.M. Goh, J. Tian, Computer vision approaches for detecting
+vision tasks, reduce accident rates, and save safety management costs                                missing barricades, Autom. Constr. 131 (2021) 103862, http://dx.doi.org/10.
+in construction projects.                                                                            1016/j.autcon.2021.103862.
+                                                                                                [18] W. Fang, B. Zhong, N. Zhao, P.E. Love, H. Luo, J. Xue, S. Xu, A deep
+                                                                                                     learning-based approach for mitigating falls from height with computer vision:
+Declaration of competing interest                                                                    Convolutional neural network, Adv. Eng. Inform. 39 (2019) 170–177, http:
+                                                                                                     //dx.doi.org/10.1016/j.aei.2018.12.005.
+    The authors declare that they have no known competing finan-                                [19] D. Tran, L. Bourdev, R. Fergus, L. Torresani, M. Paluri, Learning spatiotemporal
+cial interests or personal relationships that could have appeared to                                 features with 3D convolutional networks, in: Proceedings of the IEEE Interna-
+                                                                                                     tional Conference on Computer Vision, 2015, pp. 4489–4497, http://dx.doi.org/
+influence the work reported in this paper.
+                                                                                                     10.1109/ICCV.2015.510.
+                                                                                                [20] L. Wang, Y. Xiong, Z. Wang, Y. Qiao, D. Lin, X. Tang, L.V. Gool, Temporal
+Data availability                                                                                    segment networks: Towards good practices for deep action recognition, in:
+                                                                                                     Proceedings of the European Conference on Computer Vision, Springer, 2016,
+                                                                                                     pp. 20–36, http://dx.doi.org/10.1007/978-3-319-46484-8_2.
+    This article provides a GitHub link to the code and data.
+                                                                                                [21] D. Roberts, W. Torres Calderon, S. Tang, M. Golparvar-Fard, Vision-based
+                                                                                                     construction worker activity analysis informed by body posture, J. Comput.
+Acknowledgments                                                                                      Civ. Eng. 34 (4) (2020) 04020017, http://dx.doi.org/10.1061/(ASCE)CP.1943-
+                                                                                                     5487.0000898.
+                                                                                                [22] C. Ding, S. Wen, W. Ding, K. Liu, E. Belyaev, Temporal segment graph
+   The authors would like to acknowledge Wenjing Zhang and Zheng-
+                                                                                                     convolutional networks for skeleton-based action recognition, Eng. Appl. Artif.
+han Liao for their help. This paper is financially supported by the                                  Intell. 110 (2022) 104675, http://dx.doi.org/10.1016/j.engappai.2022.104675.
+Nature and Science Foundation of China under grants 52077213,                                   [23] S. Subedi, N. Pradhananga, Sensor-based computational approach to preventing
+62003332, and 52208324, the Shenzhen Science and Technology In-                                      back injuries in construction workers, Autom. Constr. 131 (2021) 103920, http:
+novation Commission under grants GJHZ20210705141401005 and                                           //dx.doi.org/10.1016/j.autcon.2021.103920.
+                                                                                                [24] X. Luo, H. Li, Y. Yu, C. Zhou, D. Cao, Combining deep features and activity
+Shaoguan ‘‘Nanling Talent Group’’ Grant.
+                                                                                                     context to improve recognition of activities of workers in groups, Comput.-Aided
+                                                                                                     Civ. Infrastruct. Eng. 35 (9) (2020) 965–978, http://dx.doi.org/10.1111/mice.
+References                                                                                           12538.
+                                                                                                [25] L. Ding, W. Fang, H. Luo, P.E. Love, B. Zhong, X. Ouyang, A deep hybrid learning
+ [1] Briefing on the national production safety situation in the construction in-                    model to detect unsafe behavior: Integrating convolution neural networks and
+     dustry, 2022, https://www.mem.gov.cn/gk/tzgg/tb/201807/t20180725_230568.                        long short-term memory, Autom. Constr. 86 (2018) 118–124, http://dx.doi.org/
+     shtml (Accessed 2, June, 2022).                                                                 10.1016/j.autcon.2017.11.002.
+ [2] National Census of Fatal Occupational Injuries in 2020, U.S. Bureau of Labor,              [26] S. Jung, J. Jeoung, H. Kang, T. Hong, 3D convolutional neural network-
+     Statistics, Washington, DC, USA, 2022, https://www.bls.gov/news.release/pdf/                    based one-stage model for real-time action detection in video of construction
+     cfoi.pdf (Accessed 2, June, 2022).                                                              equipment, Comput.-Aided Civ. Infrastruct. Eng. 37 (1) (2022) 126–142, http:
+ [3] J. Liu, H. Luo, H. Liu, Deep learning-based data analytics for safety in construc-              //dx.doi.org/10.1111/mice.12695.
+     tion, Autom. Constr. 140 (2022) 104302, http://dx.doi.org/10.1016/j.autcon.                [27] X. Luo, H. Li, D. Cao, Y. Yu, X. Yang, T. Huang, Towards efficient and objective
+     2022.104302.                                                                                    work sampling: Recognizing workers’ activities in site surveillance videos with
+ [4] S. Wu, L. Hou, G.K. Zhang, H. Chen, Real-time mixed reality-based visual                        two-stream convolutional networks, Autom. Constr. 94 (2018) 360–370, http:
+     warning for construction workforce safety, Autom. Constr. 139 (2022) 104252,                    //dx.doi.org/10.1016/j.autcon.2018.07.011.
+     http://dx.doi.org/10.1016/j.autcon.2022.104252.                                            [28] W. Fang, L. Ding, H. Luo, P.E. Love, Falls from heights: A computer vision-
+ [5] Z. Jiang, D. Fang, M. Zhang, Understanding the causation of construction                        based approach for safety harness detection, Autom. Constr. 91 (2018) 53–61,
+     workers’ unsafe behaviors based on system dynamics modeling, J. Manage.                         http://dx.doi.org/10.1016/j.autcon.2018.02.018.
+     Eng. 31 (6) (2015) 04014099, http://dx.doi.org/10.1061/(ASCE)ME.1943-5479.                 [29] S. Hochreiter, J. Schmidhuber, Long short-term memory, Neural Comput. 9 (8)
+     0000350.                                                                                        (1997) 1735–1780, http://dx.doi.org/10.1162/neco.1997.9.8.1735.
+ [6] H.W. Heinrich, et al., Industrial Accident Prevention. A Scientific Approach, New          [30] M.F. Antwi-Afari, Y. Qarout, R. Herzallah, S. Anwer, W. Umer, Y. Zhang, P.
+     York & London: McGraw-Hill Book Company, Inc., ISBN: 978-0070280588, 1941.                      Manu, Deep learning-based networks for automated recognition and classification
+ [7] S. Taneja, B. Akinci, J.H. Garrett, L. Soibelman, E. Ergen, A. Pradhan, P.                      of awkward working postures in construction using wearable insole sensor data,
+     Tang, M. Berges, G. Atasoy, X. Liu, et al., Sensing and field data capture for                  Autom. Constr. 136 (2022) 104181, http://dx.doi.org/10.1016/j.autcon.2022.
+     construction and facility operations, J. Constr. Eng. Manag. 137 (10) (2011)                    104181.
+     870–881, http://dx.doi.org/10.1061/(ASCE)CO.1943-7862.0000332.                             [31] Y.-C. Lee, M. Shariatfar, A. Rashidi, H.W. Lee, Evidence-driven sound detection
+ [8] Z. Li, D. Li, Action recognition of construction workers under occlusion, J. Build.             for prenotification and identification of construction safety hazards and accidents,
+     Eng. 45 (2022) 103352, http://dx.doi.org/10.1016/j.jobe.2021.103352.                            Autom. Constr. 113 (2020) 103127, http://dx.doi.org/10.1016/j.autcon.2020.
+ [9] I. Awolusi, E. Marks, M. Hallowell, Wearable technology for personalized con-                   103127.
+     struction safety monitoring and trending: Review of applicable devices, Autom.             [32] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, C. Li, Computer vision aided inspection
+     Constr. 85 (2018) 96–106, http://dx.doi.org/10.1016/j.autcon.2017.10.010.                       on falling prevention measures for steeplejacks in an aerial environment, Autom.
+[10] M. Jung, S. Chi, Human activity classification based on sound recognition and                   Constr. 93 (2018) 148–164, http://dx.doi.org/10.1016/j.autcon.2018.05.022.
+     residual convolutional neural network, Autom. Constr. 114 (2020) 103177,                   [33] A. Arac, P. Zhao, B.H. Dobkin, S.T. Carmichael, P. Golshani, DeepBehavior: A
+     http://dx.doi.org/10.1016/j.autcon.2020.103177.                                                 deep learning toolbox for automated analysis of animal and human behavior
+[11] S.S. Bangaru, C. Wang, S.A. Busam, F. Aghazadeh, ANN-based automated scaffold                   imaging data, Front. Syst. Neurosci. 13 (2019) 20, http://dx.doi.org/10.3389/
+     builder activity recognition through wearable EMG and IMU sensors, Autom.                       fnsys.2019.00020.
+     Constr. 126 (2021) 103653, http://dx.doi.org/10.1016/j.autcon.2021.103653.                 [34] F. Zhou, Z. Jiang, Z. Liu, F. Chen, L. Chen, L. Tong, Z. Yang, H. Wang, M.
+[12] K. Lee, S. Han, Convolutional neural network modeling strategy for fall-related                 Fei, L. Li, H. Zhou, Structured context enhancement network for mouse pose
+     motion recognition using acceleration features of a scaffolding structure, Autom.               estimation, IEEE Trans. Circuits Syst. Video Technol. 32 (5) (2022) 2787–2801,
+     Constr. 130 (2021) 103857, http://dx.doi.org/10.1016/j.autcon.2021.103857.                      http://dx.doi.org/10.1109/TCSVT.2021.3098497.
+[13] S. Paneru, I. Jeelani, Computer vision applications in construction: Current               [35] Z. Jiang, F. Zhou, A. Zhao, X. Li, L. Li, D. Tao, X. Li, H. Zhou, Multi-view
+     state, opportunities & challenges, Autom. Constr. 132 (2021) 103940, http:                      mouse social behaviour recognition with deep graphic model, IEEE Trans. Image
+     //dx.doi.org/10.1016/j.autcon.2021.103940.                                                      Process. 30 (2021) 5490–5504, http://dx.doi.org/10.1109/TIP.2021.3083079.
+
+
+                                                                                           12
+M. Yang et al.                                                                                                                            Automation in Construction 146 (2023) 104703
+
+
+[36] C. Wu, X. Li, Y. Guo, J. Wang, Z. Ren, M. Wang, Z. Yang, Natural language                  [60] A. Arnab, M. Dehghani, G. Heigold, C. Sun, M. Lučić, C. Schmid, Vivit: A
+     processing for smart construction: Current status and future directions, Autom.                 video vision transformer, in: Proceedings of the IEEE International Conference on
+     Constr. 134 (2022) 104059, http://dx.doi.org/10.1016/j.autcon.2021.104059.                      Computer Vision, 2021, pp. 6836–6846, http://dx.doi.org/10.48550/arXiv.2103.
+[37] X. Li, C. Wu, F. Xue, Z. Yang, J. Lou, W. Lu, Ontology-based mapping approach                   15691.
+     for automatic work packaging in modular construction, Autom. Constr. 134                   [61] G. Bertasius, H. Wang, L. Torresani, Is space-time attention all you need for
+     (2022) 104083, http://dx.doi.org/10.1016/j.autcon.2021.104083.                                  video understanding? 2021, http://dx.doi.org/10.48550/arXiv.2102.05095, arXiv
+[38] K. Simonyan, A. Zisserman, Two-stream convolutional networks for action                         preprint arXiv:2102.05095.
+     recognition in videos, Adv. Neural Inf. Process. Syst. 27 (2014) http://dx.doi.            [62] Z. Liu, J. Ning, Y. Cao, Y. Wei, Z. Zhang, S. Lin, H. Hu, Video swin
+     org/10.48550/arXiv.1406.2199.                                                                   transformer, in: Proceedings of the IEEE Conference on Computer Vision and
+[39] C. Feichtenhofer, A. Pinz, A. Zisserman, Convolutional two-stream network fusion                Pattern Recognition, 2022, pp. 3202–3211, http://dx.doi.org/10.48550/arXiv.
+     for video action recognition, in: Proceedings of the IEEE Conference on Computer                2106.13230.
+     Vision and Pattern Recognition, 2016, pp. 1933–1941, http://dx.doi.org/10.                 [63] H. Fan, B. Xiong, K. Mangalam, Y. Li, Z. Yan, J. Malik, C. Feichtenhofer, Mul-
+     48550/arXiv.1604.06573.                                                                         tiscale vision transformers, in: Proceedings of the IEEE International Conference
+[40] D. Tran, J. Ray, Z. Shou, S.-F. Chang, M. Paluri, Convnet architecture search for               on Computer Vision, 2021, pp. 6824–6835, http://dx.doi.org/10.48550/arXiv.
+     spatiotemporal feature learning, 2017, http://dx.doi.org/10.48550/arXiv.1708.                   2104.11227.
+     05038, arXiv preprint arXiv:1708.05038.                                                    [64] S. Yan, X. Xiong, A. Arnab, Z. Lu, M. Zhang, C. Sun, C. Schmid, Multiview
+[41] J. Carreira, A. Zisserman, Quo vadis, action recognition? A new model and the                   transformers for video recognition, in: Proceedings of the IEEE Conference on
+     kinetics dataset, in: Proceedings of the IEEE Conference on Computer Vision and                 Computer Vision and Pattern Recognition, 2022, pp. 3333–3343, http://dx.doi.
+     Pattern Recognition, 2017, pp. 4724–4733, http://dx.doi.org/10.1109/CVPR.                       org/10.48550/arXiv.2201.04288.
+     2017.502.                                                                                  [65] I.O. Tolstikhin, N. Houlsby, A. Kolesnikov, L. Beyer, X. Zhai, T. Unterthiner,
+[42] D. Tran, H. Wang, L. Torresani, J. Ray, Y. LeCun, M. Paluri, A closer look at                   J. Yung, A. Steiner, D. Keysers, J. Uszkoreit, et al., Mlp-mixer: An all-mlp
+     spatiotemporal convolutions for action recognition, in: Proceedings of the IEEE                 architecture for vision, Adv. Neural Inf. Process. Syst. 34 (2021) 24261–24272,
+     Conference on Computer Vision and Pattern Recognition, 2018, pp. 6450–6459,                     http://dx.doi.org/10.48550/arXiv.2105.01601.
+     http://dx.doi.org/10.1109/CVPR.2018.00675.                                                 [66] E.A. Shamsabadi, C. Xu, A.S. Rao, T. Nguyen, T. Ngo, D. Dias-da Costa, Vision
+[43] C. Feichtenhofer, H. Fan, J. Malik, K. He, Slowfast networks for video recogni-                 transformer-based autonomous crack detection on asphalt and concrete surfaces,
+     tion, in: Proceedings of the IEEE International Conference on Computer Vision,                  Autom. Constr. 140 (2022) 104316, http://dx.doi.org/10.1016/j.autcon.2022.
+     2019, pp. 6202–6211, http://dx.doi.org/10.48550/arXiv.1812.03982.                               104316.
+[44] C. Feichtenhofer, X3d: Expanding architectures for efficient video recognition, in:        [67] W. Wang, C. Su, Automatic concrete crack segmentation model based on
+     Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,                  transformer, Autom. Constr. 139 (2022) 104275, http://dx.doi.org/10.1016/j.
+     2020, pp. 203–213, http://dx.doi.org/10.48550/arXiv.2004.04730.                                 autcon.2022.104275.
+[45] Y. Li, B. Ji, X. Shi, J. Zhang, B. Kang, L. Wang, Tea: Temporal excitation and
+                                                                                                [68] Y. Zhou, A. Ji, L. Zhang, Sewer defect detection from 3D point clouds using
+     aggregation for action recognition, in: Proceedings of the IEEE Conference on
+                                                                                                     a transformer-based deep learning model, Autom. Constr. 136 (2022) 104163,
+     Computer Vision and Pattern Recognition, 2020, pp. 909–918, http://dx.doi.org/
+                                                                                                     http://dx.doi.org/10.1016/j.autcon.2022.104163.
+     10.48550/arXiv.2004.01398.
+                                                                                                [69] S. Moon, S. Chi, S.-B. Im, Automated detection of contractual risk clauses
+[46] B. Jiang, M. Wang, W. Gan, W. Wu, J. Yan, Stm: Spatiotemporal and motion
+                                                                                                     from construction specifications using bidirectional encoder representations from
+     encoding for action recognition, in: Proceedings of the IEEE International
+                                                                                                     transformers (BERT), Autom. Constr. 142 (2022) 104465, http://dx.doi.org/10.
+     Conference on Computer Vision, 2019, pp. 2000–2009.
+                                                                                                     1016/j.autcon.2022.104465.
+[47] X. Wang, R. Girshick, A. Gupta, K. He, Non-local neural networks, in: Proceedings
+                                                                                                [70] J. Devlin, M.-W. Chang, K. Lee, K. Toutanova, BERT: Pre-training of deep
+     of the IEEE Conference on Computer Vision and Pattern Recognition, 2018, pp.
+                                                                                                     bidirectional transformers for language understanding, 2018, http://dx.doi.org/
+     7794–7803, http://dx.doi.org/10.48550/arXiv.1711.07971.
+                                                                                                     10.48550/arXiv.1810.04805, arXiv preprint arXiv:1810.04805.
+[48] J. Lin, C. Gan, S. Han, TSM: Temporal shift module for efficient video un-
+                                                                                                [71] Z. Liu, Y. Lin, Y. Cao, H. Hu, Y. Wei, Z. Zhang, S. Lin, B. Guo, Swin transformer:
+     derstanding, in: Proceedings of the IEEE International Conference on Computer
+                                                                                                     Hierarchical vision transformer using shifted windows, in: Proceedings of the
+     Vision, 2019, pp. 7082–7092, http://dx.doi.org/10.1109/ICCV.2019.00718.
+                                                                                                     IEEE International Conference on Computer Vision, 2021, pp. 9992–10002,
+[49] S. Han, S. Lee, A vision-based motion capture and recognition framework for
+                                                                                                     http://dx.doi.org/10.1109/ICCV48922.2021.00986.
+     behavior-based safety management, Autom. Constr. 35 (2013) 131–141, http:
+                                                                                                [72] J.L. Ba, J.R. Kiros, G.E. Hinton, Layer normalization, 2016, http://dx.doi.org/
+     //dx.doi.org/10.1016/j.autcon.2013.05.001.
+                                                                                                     10.48550/arXiv.1607.06450, arXiv preprint arXiv:1607.06450.
+[50] J. Yang, Z. Shi, Z. Wu, Vision-based action recognition of construction workers
+                                                                                                [73] J. Hu, L. Shen, G. Sun, Squeeze-and-excitation networks, in: Proceedings of
+     using dense trajectories, Adv. Eng. Inform. 30 (3) (2016) 327–336, http://dx.
+                                                                                                     the IEEE Conference on Computer Vision and Pattern Recognition, 2018, pp.
+     doi.org/10.1016/j.aei.2016.04.009.
+                                                                                                     7132–7141, http://dx.doi.org/10.1109/CVPR.2018.00745.
+[51] H. Wang, A. Kläser, C. Schmid, C.-L. Liu, Action recognition by dense tra-
+     jectories, in: Proceedings of the IEEE Conference on Computer Vision and                   [74] D. Meng, X. Peng, K. Wang, Y. Qiao, Frame attention networks for facial
+     Pattern Recognition, 2011, pp. 3169–3176, http://dx.doi.org/10.1109/CVPR.                       expression recognition in videos, in: Proceedings of the IEEE International
+     2011.5995407.                                                                                   Conference on Image Processing, 2019, pp. 3866–3870, http://dx.doi.org/10.
+[52] J. Kim, S. Chi, Action recognition of earthmoving excavators based on sequential                1109/ICIP.2019.8803603.
+     pattern analysis of visual features and operation cycles, Autom. Constr. 104               [75] S.N. Gowda, M. Rohrbach, L. Sevilla-Lara, Smart frame selection for action
+     (2019) 255–264, http://dx.doi.org/10.1016/j.autcon.2019.03.025.                                 recognition, 2020, http://dx.doi.org/10.48550/arXiv.2012.10671, arXiv preprint
+[53] M. Bügler, A. Borrmann, G. Ogunmakin, P.A. Vela, J. Teizer, Fusion of                           arXiv:2012.10671.
+     photogrammetry and video analysis for productivity assessment of earthwork                 [76] F. Sung, Y. Yang, L. Zhang, T. Xiang, P.H. Torr, T.M. Hospedales, Learning to
+     processes, Comput.-Aided Civ. Infrastruct. Eng. 32 (2) (2017) 107–123, http:                    compare: Relation network for few-shot learning, in: Proceedings of the IEEE
+     //dx.doi.org/10.1111/mice.12235.                                                                Conference on Computer Vision and Pattern Recognition, 2018, pp. 1199–1208,
+[54] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A.N. Gomez, Ł. Kaiser,               http://dx.doi.org/10.1109/CVPR.2018.00131.
+     I. Polosukhin, Attention is all you need, Adv. Neural Inf. Process. Syst. 30 (2017)        [77] J. Ke, M. Zhang, X. Luo, J. Chen, Monitoring distraction of construction workers
+     http://dx.doi.org/10.48550/arXiv.1706.03762.                                                    caused by noise using a wearable electroencephalography (EEG) device, Autom.
+[55] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner,               Constr. 125 (2021) 103598, http://dx.doi.org/10.1016/j.autcon.2021.103598.
+     M. Dehghani, M. Minderer, G. Heigold, S. Gelly, et al., An image is worth 16x16            [78] H. Lee, G. Lee, S. Lee, C.R. Ahn, Assessing exposure to slip, trip, and fall hazards
+     words: Transformers for image recognition at scale, 2020, http://dx.doi.org/10.                 based on abnormal gait patterns predicted from confidence interval estimation,
+     48550/arXiv.2010.11929, arXiv preprint arXiv:2010.11929.                                        Autom. Constr. 139 (2022) 104253, http://dx.doi.org/10.1016/j.autcon.2022.
+[56] H. Touvron, M. Cord, M. Douze, F. Massa, A. Sablayrolles, H. Jégou, Training                    104253.
+     data-efficient image transformers & distillation through attention, in: Interna-           [79] M. Koshkina, H. Pidaparthy, J.H. Elder, Contrastive learning for sports video:
+     tional Conference on Machine Learning, PMLR, 2021, pp. 10347–10357, http:                       Unsupervised player classification, in: Proceedings of the IEEE Conference on
+     //dx.doi.org/10.48550/arXiv.2012.12877.                                                         Computer Vision and Pattern Recognition Workshops, 2021, pp. 4523–4531,
+[57] M. Wang, J. Xing, Y. Liu, Actionclip: A new paradigm for video action                           http://dx.doi.org/10.1109/CVPRW53098.2021.00510.
+     recognition, 2021, http://dx.doi.org/10.48550/arXiv.2109.08472, arXiv preprint             [80] R. Hadsell, S. Chopra, Y. LeCun, Dimensionality reduction by learning an
+     arXiv:2109.08472.                                                                               invariant mapping, in: IEEE Computer Society Conference on Computer Vision
+[58] D. Neimark, O. Bar, M. Zohar, D. Asselmann, Video transformer network, in:                      and Pattern Recognition, 2, 2006, pp. 1735–1742, http://dx.doi.org/10.1109/
+     Proceedings of the IEEE International Conference on Computer Vision, 2021, pp.                  CVPR.2006.100.
+     3163–3172, http://dx.doi.org/10.1109/ICCVW54120.2021.00355.                                [81] K. He, X. Chen, S. Xie, Y. Li, P. Dollár, R. Girshick, Masked autoencoders are
+[59] M. Raghu, T. Unterthiner, S. Kornblith, C. Zhang, A. Dosovitskiy, Do vision                     scalable vision learners, in: Proceedings of the IEEE Conference on Computer
+     transformers see like convolutional neural networks? Adv. Neural Inf. Process.                  Vision and Pattern Recognition, 2022, pp. 16000–16009, http://dx.doi.org/10.
+     Syst. 34 (2021) http://dx.doi.org/10.48550/arXiv.2108.08810.                                    48550/arXiv.2111.06377.
+
+
+                                                                                           13
+M. Yang et al.                                                                                                                           Automation in Construction 146 (2023) 104703
+
+
+[82] K. Soomro, A.R. Zamir, M. Shah, UCF101: A dataset of 101 human actions classes            [88] W. Kay, J. Carreira, K. Simonyan, B. Zhang, C. Hillier, S. Vijayanarasimhan, F. Vi-
+     from videos in the wild, 2012, http://dx.doi.org/10.48550/arXiv.1212.0402,                     ola, T. Green, T. Back, P. Natsev, et al., The kinetics human action video dataset,
+     arXiv preprint arXiv:1212.0402.                                                                2017, http://dx.doi.org/10.48550/arXiv.1705.06950, arXiv preprint arXiv:1705.
+[83] R. Wightman, Pytorch image models, 2019, http://dx.doi.org/10.5281/zenodo.                     06950.
+     4414861, https://github.com/rwightman/pytorch-image-models,                               [89] I. Loshchilov, F. Hutter, Decoupled weight decay regularization, 2017, http:
+[84] K. Hara, H. Kataoka, Y. Satoh, Can spatiotemporal 3D CNNs retrace the history                  //dx.doi.org/10.48550/arXiv.1711.05101, arXiv preprint arXiv:1711.05101.
+     of 2D CNNs and ImageNet? in: Proceedings of the IEEE Conference on Computer               [90] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, L. Fei-Fei, ImageNet: A large-scale
+     Vision and Pattern Recognition, 2018, pp. 6546–6555, http://dx.doi.org/10.                     hierarchical image database, in: Proceedings of the IEEE Conference on Computer
+     1109/CVPR.2018.00685.                                                                          Vision and Pattern Recognition, 2009, pp. 248–255, http://dx.doi.org/10.1109/
+[85] MMAction2 Contributors, OpenMMLab’s next generation video understanding                        CVPR.2009.5206848.
+     toolbox and benchmark, 2020, https://github.com/open-mmlab/mmaction2.                     [91] pytorch OpCounter Contributors, pytorch OpCounter, 2018, https://github.com/
+[86] H. Fan, T. Murrell, H. Wang, K.V. Alwala, Y. Li, Y. Li, B. Xiong, N. Ravi, M. Li,              Lyken17/pytorch-OpCounter,
+     H. Yang, J. Malik, R. Girshick, M. Feiszli, A. Adcock, W.-Y. Lo, C. Feichtenhofer,        [92] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, in:
+     PyTorchVideo: A deep learning library for video understanding, in: Proceedings                 Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+     of the 29th ACM International Conference on Multimedia, 2021, pp. 3783–3786,                   2016, pp. 770–778, http://dx.doi.org/10.1109/CVPR.2016.90.
+     https://pytorchvideo.org/.                                                                [93] G. Huang, Z. Liu, L. Van Der Maaten, K.Q. Weinberger, Densely connected
+[87] T. Ridnik, E. Ben-Baruch, A. Noy, L. Zelnik-Manor, Imagenet-21k pretraining for                convolutional networks, in: Proceedings of the IEEE Conference on Computer
+     the masses, 2021, http://dx.doi.org/10.48550/arXiv.2104.10972, arXiv preprint                  Vision and Pattern Recognition, 2017, pp. 2261–2269, http://dx.doi.org/10.
+     arXiv:2104.10972.                                                                              1109/CVPR.2017.243.
+                                                                                               [94] Z. Teed, J. Deng, Raft: Recurrent all-pairs field transforms for optical flow, in:
+                                                                                                    Proceedings of the European Conference on Computer Vision, Springer, 2020,
+                                                                                                    pp. 402–419, http://dx.doi.org/10.48550/arXiv.2003.12039.
+
+
+
+
+                                                                                          14
+

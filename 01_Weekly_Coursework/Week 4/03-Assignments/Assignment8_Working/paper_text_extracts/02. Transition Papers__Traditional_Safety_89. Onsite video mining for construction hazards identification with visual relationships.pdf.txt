@@ -1,0 +1,714 @@
+                                                             Advanced Engineering Informatics 42 (2019) 100966
+
+
+                                                                  Contents lists available at ScienceDirect
+
+
+                                                       Advanced Engineering Informatics
+                                                        journal homepage: www.elsevier.com/locate/aei
+
+
+Full length article
+
+Onsite video mining for construction hazards identification with visual                                                                                   T
+relationships
+Ruoxin Xionga, Yuanbin Songa, , Heng Lib, Yuxuan Wangc
+                                                   ⁎
+
+a
+  School of Naval Architecture, Ocean & Civil Engineering, Shanghai Jiao Tong Univ., 800 Dongchuan RD, Minhang District, Shanghai 200240, China
+b
+  Dept. of Building and Real Estate, Hong Kong Polytechnic Univ., Rm ZS734, Hung Hom, Kowloon 999077, Hong Kong Special Administrative Region
+c
+  Jiangsu Key Laboratory of Urban ITS, School of Transportation, Southeast Univ., Si Pai Lou #2, Nanjing 210096, China
+
+
+
+
+ARTICLE INFO                                              ABSTRACT
+
+Keywords:                                                 Widely-used video monitoring systems provide a large corpus of unstructured image data on construction sites.
+Scene graph                                               Although previous developed vision-based approaches can be used for hazards recognition in terms of detecting
+Hazards identification                                    dangerous objects or unsafe operations, such detection capacity is often limited due to lack of semantic re-
+Safety regulations                                        presentation of visual relationships between/among the components or crews in the workplace. Accordingly, the
+Ontology
+                                                          formal representation of textural criteria for checking improper relationships should also be improved. In this
+Video mining
+                                                          regard, an Automated Hazards Identification System (AHIS) is developed to evaluate the operation de-
+                                                          scriptions generated from site videos against the safety guidelines extracted from the textual documents with the
+                                                          assistance of the ontology of construction safety. In particular, visual relationships are modeled as a connector
+                                                          between site components/operators. Moreover, both visual descriptions of site operations and semantic re-
+                                                          presentations of safety guidelines are coded in the three-tuple format and then automatically converted into
+                                                          Horn clauses for reasoning out the potential risks. A preliminary implementation of the system was tested on two
+                                                          separate onsite video clips. The results showed that two types of crucial hazards, i.e., failure to wear a helmet
+                                                          and walking beneath the cane, were successfully identified with three rules from Safety Handbook for
+                                                          Construction Site Workers. In addition, the high-performance results of Recall@50 and Recall@100 demon-
+                                                          strated that the proposed visual relationship detection method is promising in enriching the semantic re-
+                                                          presentation of operation facts extracted from site videos, which may lead to better automation in the detection
+                                                          of construction hazards.
+
+
+
+
+1. Introduction                                                                               elimination by providing decision-support information. In practical
+                                                                                              applications, field observations and inspections are commonly con-
+    Construction work is a hazardous field-based job. This involves                           ducted approaches to assessing the potential hazards occurred in op-
+occupational risk exposures (e.g., electricity), tools (e.g., nail guns),                     erational tasks or site conditions [4–6]. During the investigation, qua-
+equipment (e.g., crane), and environment (e.g., dust and noise) in the                        lified supervisors serve to visually examine the workplace and observe
+daily workplace. Worldwide, the hazards have caused incredible phy-                           operators perform a specific work with the safety checklist, while it can
+sical injuries and pecuniary losses, as well as schedule delays in con-                       be costly, time-consuming, and error-prone for manual observations
+struction projects. In detail, the United States had 5,147 fatal workplace                    and documentation. On the other hand, as they operate without re-
+injuries and illnesses in 2017, while the construction occupational                           quirements to attach any sensors and enable more comprehensive on-
+group accounted for 47 percent of worker deaths [1]. The National                             site information (e.g., locations and activities of construction entities),
+Academy of Social Insurance (NASI) estimated that compensation                                computer vision techniques bring operational and technical advantages
+programs paid $2.23 billion for employees with work-related injuries                          over various wearable sensors, such as radio frequency identification
+and illnesses in the construction industry [2]. As suggested by Jehring                       (RFID) [7–10], global positioning system (GPS) [11–13], inertial mea-
+and Heinrich [3], hazardous operations and conditions are the two                             surement unit (IMU) [14–16], and ultra-wideband (UWB) [17,18].
+direct causes of accidents on construction sites. Systematic monitoring                            Computer vision-based methods for hazards identification can be
+of onsite activities thus plays a crucial role in hazards prevention and                      typically divided into three main groups: (1) entity-based; (2) location-
+
+
+
+    ⁎
+        Corresponding author.
+        E-mail addresses: xiongrxchn@sjtu.edu.cn (R. Xiong), ybsong@sjtu.edu.cn (Y. Song), heng.li@polyu.edu.hk (H. Li), wangyuxuan@seu.edu.cn (Y. Wang).
+
+https://doi.org/10.1016/j.aei.2019.100966
+Received 12 March 2019; Received in revised form 6 June 2019; Accepted 13 July 2019
+Available online 02 August 2019
+1474-0346/ © 2019 Elsevier Ltd. All rights reserved.
+R. Xiong, et al.                                                                                                    Advanced Engineering Informatics 42 (2019) 100966
+
+
+based; and (3) operation-based. First, entity-based risk assessments              computer manipulation and reasoning; and (3) we propose an Auto-
+require identifying specific entities in the static scene, such as improper       mated Hazards Identification System (AHIS), which provides a unified
+storage of flammable and explosive materials or failure to wear the               model for multiple hazards recognition tasks, and this system could
+helmet and protective clothing. For these kinds of hazards, object de-            enhance the generality and automation in the process of construction
+tection algorithms have been useful for the identification of targeted            safety management.
+entities in construction projects [19,20]. Secondly, location-based risks
+such as improper working position necessitate the dynamic trajectories
+                                                                                  2. Related works
+of the entity in a sequence of images, which are usually implemented by
+object tracking methods in construction [21,22]. Lastly, operation-
+                                                                                      Over the past decade, computer vision technologies have been fre-
+based hazards identification mainly emphases on the action recognition
+                                                                                  quently applied to the automatic monitoring and analysis process in
+of equipment or workers in the workplace [23–25]. However, the ha-
+                                                                                  construction [26–28]. When it comes to image understanding, the Ar-
+zards detection capacity is usually confined in the large-scale scene
+                                                                                  chitecture, Engineering & Construction (AEC) industry is still struggling
+without extensive descriptions of visual descriptions between/among
+                                                                                  to figure out basic questions such as: how should we represent it?
+the site components or crews. Workers interact with tools, equipment,
+                                                                                  Usually, workers or equipment are detected and tracked (e.g., objects
+materials, or other workers frequently at construction sites, which of-
+                                                                                  detection, objects tracking), or their activities are analyzed (e.g., action
+fers supplementary evidence for operation inspections. In this view, the
+                                                                                  recognition). However, those detection approaches generally cannot
+need for detailed relations detection, as well as semantic representation
+                                                                                  provide sufficient information to represent site scenes involving mul-
+in a computer-accessible format is of particular importance.
+                                                                                  tiple objects that interact with each other in the workplace [29]. An
+     In this paper, we aim at proposing a unified model for automated
+                                                                                  apparent alternative idea to represent the content of visual scenes is
+risk identification with onsite videos. This requires both perceptual and
+                                                                                  natural language descriptions. For instance, Socher et al. [30] induced
+reasoning capabilities. For instance, computers have to semantically
+                                                                                  detailed text sentences to represent the recorded images. The results
+understand image scenes using their perceptual capabilities such as
+                                                                                  showed that the explicit recognition of semantic elements benefits
+object detection/tracking, action recognition, or visual relations de-
+                                                                                  image understanding and improves image retrieval. However, those
+tection. Then, visual information should be assessed by comparing it
+                                                                                  text-based representation methods are typically limited because of
+with regulations, standards, or guidelines to recognize hazardous op-
+                                                                                  ambiguity and expressiveness [31].
+erations and conditions. To this end, we introduce the scene graph to
+                                                                                      Recently, graph-structured methods have developed to address
+“imitate” images understanding of humans and express detailed scenes
+                                                                                  structured representations of visual scenes [32,33]. Scene graph, as
+in the structured language (data). The notion of scene graph visualizes
+                                                                                  defined by Johnson et al. [36], is a detailed and formal representation
+and represents the richness of objects, and relationships between ob-
+                                                                                  for image compositions, where entities are coded with nodes that
+jects that can exist in an intuitive graph-structure, as illustrated in
+                                                                                  connect with edges denoting pairwise relationships between entities.
+Fig. 1. Provided an onsite image, the visual relationship detection is to
+                                                                                  These efficient scene representations have shown wide-spread use to
+explicitly encode object instances and relationships between objects in
+                                                                                  improve various computer vision tasks, such as image retrieval [37],
+the form of visual triplets (e.g., (object1, relation, object2)). Then,
+                                                                                  image captioning [38], object detection [39,40], image generation
+regulatory documents are semantically mapped into a set of three-tu-
+                                                                                  [41], and visual question answering [42]. In this paper, we apply the
+ples for information representations, which incorporates knowledge
+                                                                                  graph-structured method to represent the onsite construction scene
+external to visual facts. The construction safety ontology model is es-
+                                                                                  because: (1) as compared to other vision-based methods (e.g., object
+tablished to fill the semantic gap between visual and textual informa-
+                                                                                  detection, object tracking, and action recognition), the scene graph can
+tion. Finally, we design a logic reasoner for automated hazards iden-
+                                                                                  generate comprehensive descriptions for multiple interactions of enti-
+tification. The extracted information instances (in three-tuple formats)
+                                                                                  ties in the workplace; and (2) The efficient and structured representa-
+are further transformed into Horn clauses represented as facts and rules,
+                                                                                  tion format (in three-tuple) enables automated manipulation and eva-
+and an automated reasoner is initiated by executing a query over these
+                                                                                  luation of computers. In addition, existing datasets for visual
+relations for rule checking. Our contributions are: (1) before this re-
+                                                                                  relationship detection at a large scale are Visual Relationships dataset
+search, the valuable relations information between site objects in the
+                                                                                  [43] and Visual Genome dataset [44], which are typically collected
+image is not fully used. We use the scene graph to model rich voca-
+                                                                                  from daily life scenarios. The cluttered construction scenarios, char-
+bularies of operation elements, including objects and relationships that
+                                                                                  acterized by diverse categories of specialized equipment and materials,
+specify relations between objects. It provides deeper insights towards
+                                                                                  and continuously changing working conditions, may result in several
+capturing the structural representations of the onsite scene; (2) we
+                                                                                  technical issues for those vision-based methods, such as illumination
+define three-tuple structures to represent concepts and relations in-
+                                                                                  and occlusion. In this regard, whether the graph-structured re-
+volved in safety documents. This helps to enrich scene graphs derived
+                                                                                  presentations model would perform well on the real construction da-
+purely from images with external knowledge sources and enable
+                                                                                  taset remains to be evaluated in this paper.
+
+                    Onsite Image                                   Visual Triplet                               Scene Graph
+                                                             (worker1, hold, pipe1)
+                                                            (worker1, has, helmet1)
+                                                          (worker1, left to, worker2)
+                                                           (worker1, behind, pipe3)
+                                                         (worker1,in front of, pipe2)
+                                                             (worker2, hold, pipe1)
+                                                            (worker2, has, helmet2)
+                                                        (worker2, in front of, pipe2)
+                                                           (pipe3, left to, bucket)
+                                                          (bucket, left to, bicycle)
+
+                                            Fig. 1. An example of on-site construction image and its scene graph.
+
+
+                                                                              2
+R. Xiong, et al.                                                                                                            Advanced Engineering Informatics 42 (2019) 100966
+
+
+    While the richness of scene graph descriptions has helped the                    3.1. Scene graph generation
+complete extraction of onsite images, a missing link between visual
+facts and external knowledge (e.g., regulatory information) become                        Relationship facts, standing for relationships between two entities,
+apparent. Onsite operations must comply with various regulatory                      play a major role in representation and reasoning in scene under-
+documents from current safety regulations and industry standards for                 standing. In this paper, we focus on such relations as geometry (e.g.,
+hazards prevention. For example, Chi and Caldas [21] identified spatial              beneath), possession (e.g., has), and actions (e.g., hold) to describe
+safety risks on earthmoving operations based on safety assessment                    where, what, and how entities are related to each other in the work-
+regulations: (1) speed limitations, (2) in hazardous areas; and (3)                  place. Our visual relationship detection method is developed based on
+proximity between entities. Zhang et al. [45] performed ergonomic                    the work of Dai et al. [48] because it has shown impressive results on
+posture recognitions from site cameras based on the Ovako Working                    Visual Genome dataset [44]. However, our model adapts the previous
+Posture Analyzing System (OWAS). As such, a considerable number of                   one in three aspects: (1) we obtain object detections using SSD of Liu
+safety rules exist, with each rule having its own semantic contents and              et al. [49] instead of Faster R-CNN [50] for its faster detection and
+formatting structures. Therefore, computer vision methods should aim                 comparable accuracy; (2) statistical relationships in the construction
+to extract scene compositions, but also transform heterogeneous rules                domain are integrated to enhance the entity pair detections; and (3) we
+into computer-accessible formats to evaluate potential hazards. How-                 visualize and represent the captured visual triplets in a scene graph for
+ever, safety regulations are documented in arbitrary text fields rather              its intuitive format.
+than constrained values. The difficulty of formally extracting and                        The adapted visual relationship detection method involves four se-
+transforming such text information has led to less consideration in                  quential modules: entity detection, pair filtering, joint recognition,
+previous studies. Inspired by semantic representations of knowledge                  and graph representation, as illustrated in Fig. 3. Given an image,
+base (KB) [46,47], a three-tuple format is selected to regulations re-               individual construction entities are first located by an object detector.
+presentation because: (1) those formally-defined tuples have sufficient              The pair filter module is designed to filter out meaningless pairs, thus
+expressiveness to represent concepts and relations involved in docu-                 substantially reducing the computational cost of relationship recogni-
+ments; and (2) once the regulatory information is correctly transformed              tion. For each pair of entities, both entity categories and spatial con-
+in a logic format, the hazards reasoning process can be conducted with               figurations are extracted and further compressed through fully-con-
+derived visual triplets of onsite images in a fully-automated way. In this           nected (FC) layers. Then, compressed features of pairs, as well as
+way, the new transformation of regulatory rules and standards (in                    appearance features, will be jointly inputted to the joint recognition
+three-tuple) allow with the generality of hazards for diverse tasks and              module, thus producing multiple triplets that can exist as the output.
+facilitates the automated reasoning process of rule checking.                        Finally, we visualize semantic representations of an image in the form
+                                                                                     of a scene graph.
+                                                                                          Entity Detection SSD network is applied to locate construction
+3. Methodology                                                                       entities with a bounding box and extract appearance features. It first
+                                                                                     provides a set of fixed-size bounding boxes in the image. Let xij = {1,0}
+    To make full use of semantic information in images, we propose a                 be an indicator for assigning the i-th bounding box to the j-th ground-
+general framework for hazards identification on construction sites, as               truth box. Both center offsets and confidences f are also predicted for
+shown in Fig. 2. The visual relationship detection module uses a deep                each default box. Then, we generate scores for predicted instances in
+learning method to capture the rich of entities and relationships be-                those boxes. The overall objective loss function is given as follows:
+tween entities by a visual triplet in the form of (a, b, c), where a, b, and c
+represent the object1 category, the relation predicate, and the object2              L(x , f , p , t ) = (L (x , f ) + k L (x , p , t ))/N                               (1)
+category respectively. Construction regulatory statements are coded
+with semantic phrases (in three-tuple) and logical connectives to form               where Lα is a Smooth L1 loss between the ground-truth box t and the
+commonly accessible representations available for the computer. Con-                 predicted box p, Lβ is a softmax loss on label confidences, N is the
+struction ontology model is also involved in sharing basic concepts and              number of matched boxes, and k is the weight coefficient.
+relationships for deep reasoning. Finally, the joint knowledge inference                Pair Filtering The next step is to match meaningful pairs with
+engine automatically identifies hazards by simultaneously examining                  considerable entities detected in the image. However, it is almost im-
+visual facts against semantic rules.                                                 possible to explore all those potential pairs. To filter out useless pairs,
+                                                                                     we mainly consider two aspects:
+
+
+
+
+                                                      Fig. 2. The overall pipeline of the proposed method.
+
+
+                                                                                 3
+R. Xiong, et al.                                                                                                                            Advanced Engineering Informatics 42 (2019) 100966
+
+
+                                                                                                                                Object1 Features
+
+
+
+
+                                                                                                                                                …
+                                                                                 Spatial Configuration
+
+
+
+
+                                                                                                                    Fclayer
+                                                                                                                    Fclayer
+                                                      SSD
+                                                                Feature
+
+
+
+
+                                                                                                                                                …
+                                                                                   Statistical Relation
+
+
+
+
+                                                                                                                                                …
+                                                                                                                                 Object2 Features
+
+              Images and video frames               Entity Detection                           Pair Filtering                    Joint Recognition            Graph Generation
+
+                                                            Fig. 3. The proposed framework for scene graph generation.
+
+
+ • Spatial configurations: the spatial features (e.g., locations and sizes)                         where σ is the softmax function; and va, vb are probabilistic vectors of a
+     can reflect the correlation between part members. Entities too far                             and b.
+     away are almost impossible to be related as pairs. Such cues are                                   Similar derivation can infer a and c. As a consequence, we can get a
+     invariable to dynamic conditions, e.g., the changes in illumination.                           series of updating formulas, which take the current probability vectors
+ •   Entity categories: strong statistical dependencies exist between en-                           va, vb, and vc as inputs, and output the updated vectors v'a, v'b and v'c,
+     tity categories. For example, some certain entities are unlikely to
+                                                                                                    v 'a =      (Ue x a + Uabvb + Uac vc)                                                (6)
+     construct a meaningful pair, such as (crane, helmet) or (gloves,
+     truck).                                                                                        v 'b =      (Ub xb + Ubava + Ubc vc)                                                 (7)
+
+    Thus, we introduce a pair filtering network (see Fig. 4) to solve this                          v 'c =      (Ue x c + Ueava + Ucbvb)                                                 (8)
+problem. Dual spatial masks derived from bounding boxes are used as
+entity representations to leverage spatial configurations. For each pos-                                Scene Graph Generation Since the entity categories and corre-
+sible pair, there exists two binary masks, one for the object1 and the                              sponding pairwise relationships have been predicted, we generate a
+other for the object2. To train this network, we randomly sample pairs                              directed graph for each image so as to visualize the captured relation-
+of bounding boxes and labels from the targeted image and divide the                                 ships in an intuitive structure. Formally, provided a set of entities O and
+dataset into two samples: the positive sample and negative sample,                                  relationship types S, we represent the scene graph with a matrix G
+based on Intersection over Union (IoU) with ground-truth pairs and                                  suggested by Li et al. [32]. In the matrix G, the element Gii is the i-th
+labels.                                                                                             object Oi at diagonal position (i, i) and the element Gij (i ≠ j) is the
+    Joint Recognition Visual relationships are then detected by jointly                             phrase representing the relationship Sij between object Oi and Oj. If the
+learning from multiple factors above. Typically, the joint inference of                             object Oi and Oj are relevant, then two objects are connected through
+visual relationship can be formulated based on Conditional Random                                   the predicate Gij. In this way, we will obtain a scene graph based on the
+Field (CRF) [51],                                                                                   matrix G.
+
+p (b, a, c|x b, x a, x c) = exp(J(b, a, c|x b, x a, x c ; U))/ M                         (2)        3.2. Regulatory information representation and ontology development
+where xb is the compressed feature of pairs; xa and xc are appearance
+                                                                                                        Existing regulatory rules in construction domains are mostly docu-
+features for a and c, respectively; and M is the normalizing matrix,
+                                                                                                    mented with natural language sentences. Accordingly, this research
+depending on the parameters U. The overall potential J can be obtained
+                                                                                                    provides a textual information representation and transformation
+from a sum of single potentials,
+                                                                                                    method for computer manipulation and evaluation. The representation
+J=     e (a|x a; Ue) +    e (c|x c ; Ue) +    b (b|x b; Ub) +   ba (b, a|Uba)
+                                                                                                    format consists of two basic parts: semantic phrases and logical con-
+                                                                                                    nectives. For each safety rule, semantic phrase elements are defined as a
+     +    bc (b, c|Ubc) +    ac (a , c|Uac)                                              (3)
+                                                                                                    three-tuple (e.g., (object1, relation, object2)). “object1” or “object2” is
+where ψe is the potential of individual entities with appearance features;                          subjected to a particular ontology in regulations, which can be a “thing”
+ψb is the potential of the relationship predicate with compressed pair                              (e.g., equipment, building structure) or “personnel” (e.g., worker).
+features; and φba, φbc, and φac respectively represents statistical rela-                           “Relation” semantically connects objects with limitations, such as ac-
+tions among b, a, and c.                                                                            tions (e.g., hold, carry), geometry (e.g., beneath, in front of, on), and
+    Then the posterior distribution of r is given as follows                                        possession (e.g., has). For those complex rules with multiple restric-
+                                                                                                    tions, regulatory statements are decomposed and transformed to serval
+p (b|a, c, x b; U)       exp( b (b|x b; Ub) +      ba (b, a|Uba) +     bc (b , c|Ubc))              semantic phrases with logical connectives. Three forms of logical con-
+                                                                                         (4)        nectives are used:
+   Let vb be the posterior probability vector for b, the Eq. (4) thus can
+be represented as                                                                                     • Logical conjunction (∧): S ∧ S is true only if S is true and S is
+                                                                                                                                            1           2              1                2
+                                                                                                        true;
+vb =     (Ubx b + Uba va + Ubc vc)                                                       (5)
+                                                                                                      • Logical disjunction (∨): S ∨ S is true if S is true, or S is true;
+                                                                                                                                        1           2         1                  2
+
+
+
+
+                                                                  Fig. 4. The network structure of pair filter module.
+
+
+                                                                                                4
+R. Xiong, et al.                                                                                                              Advanced Engineering Informatics 42 (2019) 100966
+
+
+                                                                                             (e.g., contact, hold) to describe the hazardous operations of workers or
+                                                                                             equipment. Besides, a semantic mapping step is required to match the
+                                                                                             extracted information elements to their logic representations: (1) the
+                                                                                             subject of rules should be completed in constructing a three-tuple; and
+                                                                                             (2) the element instances in logic representation should be used as their
+                                                                                             simplest forms.
+
+
+                                                                                             3.3. Automated reasoning for rule checking
+
+                                                                                                 The hazards in the workplace can be identified by comparing ex-
+                                                                                             tracted visual triplets from images with the transformed rules from
+                                                                                             documents. In addition, the resultant visual triplets, regulatory phrases,
+                                                                                             and ontology model are automatically converted into the Horn clauses
+                                                                                             with a developed batch file. In this section, Prolog, a widely-used logic
+                                                                                             programming language, is utilized to automated reasoning for hazards
+                                                                                             identification. In Prolog, the program logic is represented in terms of
+                                                                                             relations and expressed as facts and rules [61], which is well-suited for
+                                                                                             this logical hazards-identification task that benefits from rule-based
+                                                                                             queries.
+                                                                                                 Therefore, visual information obtained from the job sites can be
+                                                                                             treated as logic facts, and a reasoner is initiated by executing a query
+                                                                                             over these relationships to automatically recognize rule violations. As
+                                                                                             indicated in Table 2, relations and queries are using Prolog’s Horn
+                                                                                             clauses. For example, the three-tuple representation of visual facts and
+                   Fig. 5. Partial view of construction safety ontology.                     regulations are transformed as relation (object1, object2). Logical con-
+                                                                                             nectives also have their corresponding syntax in the Prolog. As for
+                                                                                             ontology concepts in rule representations, their element instances are
+ • Negation (¬): an operation that takes a statement S to another                            assigned to relevant concepts and relations using unary predicates. For
+    statement “not S”.
+                                                                                             example, the “helmet” is represented by the “protective_equipment
+                                                                                             (helmet)” with “helmet” being the instance name and the element
+    On the other hand, there may exist a semantic gap between visual
+                                                                                             “protective_equipment” being the argument for the instance. Then, we
+representations and textual definitions. For example, we usually use a
+                                                                                             use queries to initiate execution with SWI-Prolog, which offers a com-
+specific label to represent the entities in images (e.g., helmets, gloves),
+                                                                                             prehensive Prolog environment [62]. Given a query, the inference en-
+while those entities may be documented as “Personal Protective
+                                                                                             gine attempts to search a refutation of the negated query. If the negated
+Equipment” in regulations. Ontology is a knowledge representation
+                                                                                             query is refuted, it will output an appropriate variable in place, which is
+structure that can provide an unambiguous terminology that can be
+                                                                                             a logic result of the program, and continue to search the query. The
+shared by all involved in the reasoning process [52]. In this regard, this
+                                                                                             query is set to have succeeded until all generated variables are reported
+paper develops an ontology model that extracts knowledge from the
+                                                                                             to users.
+safety domain. The ontology model is developed as follows: (1) Identify
+terms that most commonly used in construction safety domains, and (2)
+Develop a taxonomy of those terms with their functions and relations.                        4. Experiments
+The knowledge sources used to identify relevant concepts and construct
+the safety ontology model include Safety Handbook for Construction                           4.1. Onsite visual relation dataset
+Site Workers [53], The Construction (Design and Management) Reg-
+ulations 2015 [54], and Recommended Practices for Safety & Health                                To train and test the proposed method in this paper, we constructed
+Programs in Construction [55]. To facilitate the development of an                           a visual relationship dataset collected from real construction sites
+ontology model, we use Protégé, a free and open-source ontology editor                       considering points of views, illumination, weather, and occlusion con-
+and framework, to define the taxonomy and relations [56]. Fig. 5 shows                       dition to avoid potential bias. The dataset covers several common
+a partial view of the developed ontology model.                                              construction activities, such as “Transporting”, “TieRebar”, “Drilling”,
+    Generally, as described in previous, the rules in construction safety                    “Bolting”, and “Plastering”. Construction site entities were categorized
+domain can be classified into three groups: (1) entity-based; (2) loca-                      into six groups: (1) personnel (e.g., worker), (2) material (e.g., pipe,
+tion-based; and (3) operation-based, as shown in Table 1. Entity-based                       rebar, brick), (3) tool (e.g., hammer, shovel, barrow), (4) equipment
+rules mainly concern possession relationships (e.g., has, part of). Lo-                      (e.g., bulldozer, crawler crane, tower crane), (5) facility or structure
+cation-based requirements describe improper locations of project enti-                       (e.g., wall, window, stair), and (6) general (e.g., car, bicycle, motor-
+ties in the workplace, which are engaged with geometric relationships                        cycle). For each image, we manually annotated all existed entities with
+(e.g., beneath, inside). Action-based rules require action relationships                     bounding boxes and described relationships with (object1, relation,
+                                                                                             object2) tuples using fixed labels. In total, we have annotated 18
+
+Table 1
+Examples of regulatory requirements and logic representations.
+  Type                    Regulatory requirements                                                                           Logic representations
+
+  Object-based            “Wear a safety helmet on a construction site.” (Personal Protective Equipment Regulation)         has (worker, helmet)
+  Space-based             “Do not work beneath any suspended load.” (Lifting Appliance and Gear Regulation)                 ¬beneath (worker, suspended load)
+  Operation-based         “Remember to wear gloves when contacting chemicals.” (Personal Protective Equipment Regulation)   has (worker, gloves) ∧ contact (worker, chemicals)
+
+*Regulatory information source: Safety Handbook for Construction Site Workers, 2004 [53].
+
+                                                                                         5
+R. Xiong, et al.                                                                                                           Advanced Engineering Informatics 42 (2019) 100966
+
+
+Table 2                                                                                     rule checking. Note that more rules can be emerged to the automated
+Basic syntax in Prolog.                                                                     reasoner and images with the same scene graph are skipped in hazards
+  Element                 Logic representation           Syntax in SWI-Prolog               checking. Finally, we could execute the system and output an appro-
+                                                                                            priate variable in place for the violated image and rule, as well as export
+  Fact                    (object1, relation, object2)   Relation (object1, object2)        the results in text format.
+  Query                   (object1, relation, object2)   -Relation (object1, object2)
+  Ontology                (Cluster, objects)             Cluster (objects)
+  Logical conjunction     ∧                              ,
+                                                                                            4.2. Performance evaluation
+  Logical disjunction     ∨                              ;
+  Negation                ¬                              not                                   To demonstrate and assess the validity of the proposed AHIS, we
+                                                                                            randomly chose three rules from Safety Handbook for Construction Site
+                                                                                            Workers [53].
+relationships and 40 entities in the dataset.
+    Then, we randomly split our dataset into two parts: 70% images for                         Rule 1: Wear a safety helmet on a construction site.
+training and 30% images for testing. The data augmentation strategy                            Rule 2: Do not work beneath any suspended load.
+was used to ensure the model more robust to diverse input scenes, so as                        Rule 3: Wear suitable eye protectors while operating an electric
+to improve the detection performance [63]. Each image from training                            drill.
+dataset was randomly processed as follows:
+                                                                                                Those rules were semantically extracted and represented in three-
+ – color jittering;                                                                         tuple formats: (worker, ¬has, helmet), (worker, beneath, suspended
+ – randomly add Gaussian noise;                                                             load), and (worker, ¬has, eye protectors) ∧ (worker, use, electric drill),
+ – use the original input image.                                                            respectively. Meanwhile, the visual facts of two separate onsite video
+                                                                                            clips were extracted with the visual relation detection network. After
+    In this paper, the code was written in python, and all networks were                    conducting the semantic mapping process of visual facts and rules,
+implemented using Caffe. We performed our algorithms on a PC                                these semantic phrases were further converted into Horn-Clause-type
+equipped with a 4.00 GHz Intel(R) i7-6700 K CPU, two NVIDIA GeForce                         logic representations. Finally, we implemented the rule checking pro-
+GTX 1080 GPUs and 64G RAM. The time for computing visual re-                                cess with the developed AHIS. It turned out that two types of hazards
+lationships was around 2 frames/s.                                                          were identified, including failing to wear a helmet and walking beneath
+    To integrate all relevant functions in an automated way, we de-                         the cane, as illustrated in Fig. 7. After that, those two video clips were
+veloped a prototype system called “AHIS” (automated hazards identi-                         manually reviewed and inspected by two researchers to verify its cor-
+fication system), as shown in Fig. 6. The scene graph was generated on                      rectness. The result showed that all involving hazards were successfully
+the screen for its intuitive expressiveness to represent entities and re-                   identified.
+lations involved in images. Construction regulatory statements were                             We then evaluated the accuracy of visual relationship detection on
+coded with semantic phrases (in three-tuple) and logical connectives for                    our dataset and compared with the random results in the experiments.
+
+
+
+
+                                                                   Fig. 6. The prototype system of AHIS.
+
+
+                                                                                        6
+R. Xiong, et al.                                                                                                   Advanced Engineering Informatics 42 (2019) 100966
+
+
+
+
+                                           Fig. 7. The hazards identification process of the automated reasoner.
+
+
+The reference results used random permutation in ranking the answers.            Table 3
+Detecting visual relationships involves the localization of both entities,       Performances of entity detection and relationship detection.
+recognition of entity categories, and prediction of the relation between          Task          Entity Det.                         Relationship Det.
+entities. To evaluate how the proposed model performs on the dataset,
+we focused on the prediction results under two conditions:                        Metric        Recall@50       Recall@100          Recall@50           Recall@100
+
+
+ • Entity Detection: the detection involves a set of entity pairs and             Results
+                                                                                  Rand
+                                                                                                36.3
+                                                                                                0.005
+                                                                                                                50.2
+                                                                                                                0.01
+                                                                                                                                    13.6
+                                                                                                                                    0.0017
+                                                                                                                                                        14.3
+                                                                                                                                                        0.0035
+   bounding boxes for each entity;
+ • Relation Detection: the detection requires a set of relationship tri-
+    plets and bounding boxes of for each entity.                                 which uses description sentences to represent the content of visual
+                                                                                 scenes. Since the same onsite scene can be described in myriad levels,
+    Following Xu et al. [33], the evaluation metric used in this paper           the text-based representation method is typically limited because of
+was Ranked Recall, which assesses the performance of the classifier to           ambiguity and expressiveness. Our scene graph model is able to resolve
+detect the highest number of relevant samples. Recall@x denotes the              some of the ambiguity with semantic triplets, which embody rich vo-
+proportion of ground-truth (GT) relationships that appear on the top-x           cabularies of visual elements. For example, it predicts semantic triplets,
+confident results. Here, we measure Recall@100 and Recall@50 for                 e.g., (worker, has, helmet), (worker, use, barrow), (pipe, on, barrow)
+evaluation. Since we have 18 predicates and 40 entities in the dataset,          and visualizes an intuitive scene graph in Fig. 8(c). So those formally-
+the possible relationship predictions are 40 × 18 × 40, which suggests           defined tuples enable automated manipulation and evaluation of
+that the random combination will result in a Recall@100 of 0.0035. As            computers.
+shown in Table 3, our model is able to perform good results of effective
+learning between objects and relations, e.g., on relationship detection
+and entity detection measured by Recall@50, we were 13.6 and 36.3                5. Limitations and discussion
+respectively.
+    Fig. 8 shows the qualitative results of the scene graph model trained            The developed AHIS is successful in automatically performing rule
+with our dataset and the reference model. As compared to other vision-           checking for hazards identification. However, there are some current
+based methods like object detection in Fig. 8(a), the scene graph can            limitations and challenges. First, the necessary, but expensive dataset to
+generate structural relationship descriptions and has sufficient expres-         recognize rich visual relationships could limit the application of the
+siveness for multiple interactions of entities in the workplace. More-           proposed method in the construction industry. There are various pub-
+over, we compared the scene graph with the text description method,              licly datasets for multiple tasks. For example, PASCAL VOC [64] and
+
+                                                                             7
+R. Xiong, et al.                                                                                              Advanced Engineering Informatics 42 (2019) 100966
+
+
+
+
+                                   Fig. 8. Sample representations from the reference model and our scene-graph model.
+
+
+MS COCO [65] are built for object detection and classification, and
+UCF-101 [66], and SPORTS-1M [67] are developed for activity re-
+cognition. However, there is a lack of such a publicly available dataset
+for visual relations detection in construction domains. Such a dataset
+with sufficient samples is critical in training and testing, while it is
+expensive and time-consuming to develop a domain-specific dataset for
+the heavy labeling tasks. This study only investigated a small experi-
+mental dataset for visual relationship detection collected from con-
+struction sites. A larger dataset offers the potential to improve the ac-
+curacy of detection tasks.
+    Secondly, in this paper, we consider limited types of visual re-
+lationships, which are the most commonly used interactions in rule
+checking tasks. Note that the detail of relationships can be altered ac-
+cording to the monitoring applications. For example, if an ergonomic
+                                                                                            Fig. 9. Posture detection based on OpenPose [68].
+analysis is required for comprehensive construction management ap-
+plications, posture detections can be added to visual triplet re-
+presentations (e.g., (worker, body_part, location)) to describe their           hazards in the workplace and facilitate the generation of insights into
+motion (see Fig. 9).                                                            the process of construction safety management. In this framework, the
+    Lastly, it requires manual effort to extract regulatory documents and       source video frames are encoded into graph-structured representations
+encode them in a computer-processable format, which can be time-                by a visual relation detection network, while construction regulatory
+consuming, costly, and error-prone. Recently, many attempts have al-            documents are extracted and transformed into semantic phrases and
+ready been explored for automated information extraction in many                logical connectives with the assistance of construction safety ontology.
+domains [69–71]. For example, Zhang et al. [72] presented a rule-based          Subsequently, the resultant graph-structured and semantic representa-
+natural language processing (NLP) method to extract semantic in-                tions are further converted into Horn clauses for automated rule
+formation from construction regulatory documents automatically. In              checking. In particular, we employ a deep learning approach to gen-
+the future, we will utilize advanced semantic NLP methods to facilitate         erate scene graphs, which can organize video contents according to
+the automated process for extracting safety rules from textual docu-            semantic relationships. Visual relationship detection network embodies
+ments and formalizing these regulations in three-tuples.                        rich vocabularies of visual elements, including object categories and
+                                                                                relationships between objects. We then transform the rule codes with
+                                                                                semantic phrases and logical connectives to evaluate the onsite facts
+6. Conclusion                                                                   with safety guidelines. This helps to enrich scene graphs with external
+                                                                                safety guidelines and enable computer manipulation and reasoning.
+    This paper offers a novel AHIS framework to automatically identify          Besides, both visual contents and textual documents are extracted and
+
+                                                                            8
+R. Xiong, et al.                                                                                                                       Advanced Engineering Informatics 42 (2019) 100966
+
+
+transformed into the three-tuple representation for its straightforward                                1016/j.autcon.2016.05.006.
+and sufficient expressiveness to represent concepts and relations.                                [16] K. Yang, C.R. Ahn, M.C. Vuran, S.S. Aria, Semi-supervised near-miss fall detection
+                                                                                                       for ironworkers with a wearable inertial measurement unit, Autom. Constr. 68
+    The proposed AHIS was tested on two separate video clips against                                   (2016) 194–202, https://doi.org/10.1016/j.autcon.2016.04.007.
+three rules from Safety Handbook for Construction Site Workers. Two                               [17] A. Shahi, A. Aryan, J.S. West, C.T. Haas, R.C.G. Haas, Deterioration of UWB posi-
+types of crucial hazards, i.e., failing to wear a helmet and walking be-                               tioning during construction, Autom. Constr. 24 (2012) 72–80, https://doi.org/10.
+                                                                                                       1016/j.autcon.2012.02.009.
+neath the cane, were successfully identified. Using Recall@x evaluation                           [18] T. Cheng, M. Venugopal, J. Teizer, P.A. Vela, Performance evaluation of ultra
+matrices, our model achieved 13.6 and 36.3, respectively on relation-                                  wideband technology for construction resource location tracking in harsh en-
+ship detection and entity detection measured by Recall@50. These                                       vironments, Autom. Constr. 20 (2011) 1173–1184, https://doi.org/10.1016/j.
+                                                                                                       autcon.2011.05.001.
+high-performance results indicated that our model is promising in ef-                             [19] Q. Fang, H. Li, X. Luo, L. Ding, T.M. Rose, W. An, Y. Yu, A deep learning-based
+fective learning between objects and relations. As compared to the text                                method for detecting non-certified work on construction sites, Adv. Eng. Inf. 35
+description method, our scene graph model was able to resolve some of                                  (2018) 56–68, https://doi.org/10.1016/j.aei.2018.01.001.
+                                                                                                  [20] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-use
+the ambiguity. As part of future/ongoing research, we will continue to
+                                                                                                       by a deep learning method from far-field surveillance videos, Autom. Constr. 85
+construct a larger dataset to improve the accuracy of detection tasks                                  (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.
+and utilize NLP method to extract semantic phrases from construction                              [21] S. Chi, C.H. Caldas, Image-based safety assessment: automated spatial safety risk
+regulatory documents automatically.                                                                    identification of earthmoving and surface mining activities, J. Constr. Eng. Manage.
+                                                                                                       138 (2012) 341–351, https://doi.org/10.1061/(ASCE)CO.1943-7862.0000438.
+                                                                                                  [22] W. Fang, L. Ding, H. Luo, P.E.D. Love, Falls from heights: a computer vision-based
+Declaration of Competing Interest                                                                      approach for safety harness detection, Autom. Constr. 91 (2018) 53–61, https://doi.
+                                                                                                       org/10.1016/j.autcon.2018.02.018.
+                                                                                                  [23] J. Yang, Z. Shi, Z. Wu, Vision-based action recognition of construction workers
+    The authors declare that they have no known competing financial                                    using dense trajectories, Adv. Eng. Inf. 30 (2016) 327–336, https://doi.org/10.
+interests or personal relationships that could have appeared to influ-                                 1016/j.aei.2016.04.009.
+ence the work reported in this paper.                                                             [24] S. Han, S. Lee, A vision-based motion capture and recognition framework for be-
+                                                                                                       havior-based safety management, Autom. Constr. 35 (2013) 131–141, https://doi.
+                                                                                                       org/10.1016/j.autcon.2013.05.001.
+Acknowledgment                                                                                    [25] L. Ding, W. Fang, H. Luo, P.E.D. Love, B. Zhong, X. Ouyang, A deep hybrid learning
+                                                                                                       model to detect unsafe behavior: integrating convolution neural networks and long
+                                                                                                       short-term memory, Autom. Constr. 86 (2018) 118–124, https://doi.org/10.1016/j.
+   The authors would like to acknowledge the financial support of the                                  autcon.2017.11.002.
+National Natural Science Foundation of China (Grant No.71271137).                                 [26] M. Memarzadeh, M. Golparvar-Fard, J.C. Niebles, Automated 2D detection of
+Any opinions, conclusions, and recommendations expressed in this                                       construction equipment and workers from site video streams using histograms of
+                                                                                                       oriented gradients and colors, Autom. Constr. 32 (2013) 24–37, https://doi.org/10.
+paper are those of the authors and do not necessarily represent those of
+                                                                                                       1016/j.autcon.2012.12.002.
+the National Natural Science Foundation of China.                                                 [27] M. Memarzadeh, A. Heydarian, M. Golparvar-Fard, J.C. Niebles, Real-time and
+                                                                                                       automated recognition and 2D tracking of construction workers and equipment
+References                                                                                             from site video streams, Computing in Civil Engineering (2012), American Society
+                                                                                                       of Civil Engineers, Clearwater Beach, Florida, United States, 2012, pp. 429–436, ,
+                                                                                                       https://doi.org/10.1061/9780784412343.0054.
+ [1] U.S. Bureau of Labor Statistics (BLS), Employer-Reported Workplace Injury and                [28] Y.M. Ibrahim, T.C. Lukins, X. Zhang, E. Trucco, A.P. Kaka, Towards automated
+     Illnesses, November 2018. < https://www.bls.gov/news.release/pdf/cfoi.                            progress assessment of workpackage components in construction projects using
+     pdf > (last access March 5, 2019).                                                                computer vision, Adv. Eng. Inf. 23 (2009) 93–103, https://doi.org/10.1016/j.aei.
+ [2] CPWR – The Center for Construction Research and Training, The Construction Chart                  2008.07.002.
+     Book, sixth ed., February 2018. < https://www.cpwr.com/publications/research-                [29] J. Seo, S. Han, S. Lee, H. Kim, Computer vision techniques for construction safety
+     findings-articles/construction-chart-book > (last access March 7, 2019).                          and health monitoring, Adv. Eng. Inf. 29 (2015) 239–251, https://doi.org/10.
+ [3] J. Jehring, H.W. Heinrich, Industrial accident prevention: a scientific approach, Ind.            1016/j.aei.2015.02.001.
+     Labor Relat. Rev. 4 (1951) 609, https://doi.org/10.2307/2518508.                             [30] R. Socher, A. Karpathy, Q.V. Le, C.D. Manning, A.Y. Ng, Grounded compositional
+ [4] B. Buchholz, V. Paquet, L. Punnett, D. Lee, S. Moir, PATH: a work sampling-based                  semantics for finding and describing images with sentences, Trans. Assoc. Comput.
+     approach to ergonomic job analysis for construction and other non-repetitive work,                Ling. 2 (2014) 207–218, https://doi.org/10.1162/tacl_a_00177.
+     Appl. Ergon. 27 (1996) 177–187, https://doi.org/10.1016/0003-6870(95)00078-X.                [31] R. Socher, L. Fei-Fei, Connecting modalities: Semi-supervised segmentation and
+ [5] O. Rozenfeld, R. Sacks, Y. Rosenfeld, H. Baum, Construction job safety analysis, Saf.             annotation of images using unaligned text corpora, 2010 IEEE Computer Society
+     Sci. 48 (2010) 491–498, https://doi.org/10.1016/j.ssci.2009.12.017.                               Conference on Computer Vision and Pattern Recognition, 2010, pp. 966–973, ,
+ [6] Michael C. Gouett, Carl T. Haas, Paul M. Goodrum, Carlos H. Caldas, Activity                      https://doi.org/10.1109/CVPR.2010.5540112.
+     analysis for direct-work rate improvement in construction, J. Constr. Eng. Manage.           [32] Y. Li, W. Ouyang, B. Zhou, K. Wang, X. Wang, Scene graph generation from objects,
+     137 (2011) 1117–1124, https://doi.org/10.1061/(ASCE)CO.1943-7862.0000375.                         Phrases and Region Captions, 2017 IEEE International Conference on Computer
+ [7] W. Qin, R.Y. Zhong, H.Y. Dai, Z.L. Zhuang, An assessment model for RFID impacts                   Vision (ICCV), IEEE, Venice, 2017, pp. 1270–1279, , https://doi.org/10.1109/
+     on prevention and visibility of inventory inaccuracy presence, Adv. Eng. Inf. 34                  ICCV.2017.142.
+     (2017) 70–79, https://doi.org/10.1016/j.aei.2017.09.006.                                     [33] D. Xu, Y. Zhu, C.B. Choy, L. Fei-Fei, Scene graph generation by iterative message
+ [8] A. Costin, N. Pradhananga, J. Teizer, Leveraging passive RFID technology for                      passing, 2017 IEEE Conference on Computer Vision and Pattern Recognition
+     construction resource field mobility and status monitoring in a high-rise renovation              (CVPR), IEEE, Honolulu, HI, 2017, pp. 3097–3106, , https://doi.org/10.1109/
+     project, Autom. Constr. 24 (2012) 1–15, https://doi.org/10.1016/j.autcon.2012.                    CVPR.2017.330.
+     02.015.                                                                                      [36] J. Johnson, R. Krishna, M. Stark, L.-J. Li, D.A. Shamma, M.S. Bernstein, L. Fei-Fei,
+ [9] Z. Ren, C.J. Anumba, J. Tah, RFID-facilitated construction materials management                   Image retrieval using scene graphs, 2015 IEEE Conference on Computer Vision and
+     (RFID-CMM) – a case study of water-supply project, Adv. Eng. Inf. 25 (2011)                       Pattern Recognition (CVPR), IEEE, Boston, MA, USA, 2015, pp. 3668–3678, ,
+     198–207, https://doi.org/10.1016/j.aei.2010.02.002.                                               https://doi.org/10.1109/CVPR.2015.7298990.
+[10] L.-C. Wang, Y.-C. Lin, P.H. Lin, Dynamic mobile RFID-based supply chain control              [37] S. Schuster, R. Krishna, A. Chang, L. Fei-Fei, C.D. Manning, Generating semantically
+     and management system in construction, Adv. Eng. Inf. 21 (2007) 377–390,                          precise scene graphs from textual descriptions for improved image retrieval,
+     https://doi.org/10.1016/j.aei.2006.09.003.                                                        Proceedings of the Fourth Workshop on Vision and Language, Association for
+[11] N. Pradhananga, J. Teizer, Automatic spatio-temporal analysis of construction site                Computational Linguistics, Lisbon, Portugal, 2015, pp. 70–80, , https://doi.org/10.
+     equipment operations using GPS data, Autom. Constr. 29 (2013) 107–122, https://                   18653/v1/W15-2812.
+     doi.org/10.1016/j.autcon.2012.09.004.                                                        [38] P. Anderson, B. Fernando, M. Johnson, S. Gould, SPICE: Semantic propositional
+[12] H. Li, Z. Chen, L. Yong, S.C.W. Kong, Application of integrated GPS and GIS tech-                 image caption evaluation, 2016 European Conference on Computer Vision (ECCV),
+     nology for reducing construction waste and improving construction efficiency,                     Springer International Publishing, Cham, 2016, pp. 382–398, , https://doi.org/10.
+     Autom. Constr. 14 (2005) 323–331, https://doi.org/10.1016/j.autcon.2004.08.                       1007/978-3-319-46454-1_24.
+     007.                                                                                         [39] Y. Liu, R. Wang, S. Shan, X. Chen, Structure inference net: Object detection using
+[13] A.A. Oloufa, M. Ikeda, H. Oda, Situational awareness of construction equipment                    scene-level context and instance-level relationships, ArXiv:1807.00119 [Cs], 2018.
+     using GPS, wireless and web technologies, Autom. Constr. 12 (2003) 737–748,                       http://arxiv.org/abs/1807.00119 (accessed March 2, 2019).
+     https://doi.org/10.1016/S0926-5805(03)00057-8.                                               [40] M.A. Sadeghi, A. Farhadi, Recognition using visual phrases, 2011 IEEE Conference
+[14] X. Yan, H. Li, A.R. Li, H. Zhang, Wearable IMU-based real-time motion warning                     on Computer Vision and Pattern Recognition (CVPR), IEEE, Colorado Springs, CO,
+     system for construction workers’ musculoskeletal disorders prevention, Autom.                     USA, 2011, pp. 1745–1752, , https://doi.org/10.1109/CVPR.2011.5995711.
+     Constr. 74 (2017) 2–11, https://doi.org/10.1016/j.autcon.2016.11.007.                        [41] J. Johnson, A. Gupta, L. Fei-Fei, Image generation from scene graphs, ArXiv:1804.
+[15] M. Ibrahim, O. Moselhi, Inertial measurement unit based indoor localization for                   01622 [Cs], 2018. http://arxiv.org/abs/1804.01622 (accessed March 2, 2019).
+     construction applications, Autom. Constr. 71 (2016) 13–20, https://doi.org/10.               [42] P. Lu, L. Ji, W. Zhang, N. Duan, M. Zhou, J. Wang, R-VQA: Learning visual relation
+
+
+                                                                                              9
+R. Xiong, et al.                                                                                                                         Advanced Engineering Informatics 42 (2019) 100966
+
+
+     facts with semantic attention for visual question answering, Proceedings of the 24th          [55] Occupational Safety and Health Administration (OSHA), Recommended Practices
+     ACM SIGKDD International Conference on Knowledge Discovery & Data Mining,                          for Safety & Health Programs in Construction, October 2016. < https://www.osha.
+     2018, pp. 1880–1889, , https://doi.org/10.1145/3219819.3220036.                                    gov/shpguidelines/docs/8524_OSHA_Construction_Guidelines_R4.pdf > (last ac-
+[43] C. Lu, R. Krishna, M. Bernstein, L. Fei-Fei, Visual relationship detection with lan-               cess March 6, 2019).
+     guage priors, ArXiv:1608.00187 [Cs], 2016. http://arxiv.org/abs/1608.00187                    [56] Protégé, Protégé wiki. < https://protegewiki.stanford.edu/wiki/Main_Page > (last
+     (accessed March 5, 2019).                                                                          access March 4, 2019).
+[44] R. Krishna, Y. Zhu, O. Groth, J. Johnson, K. Hata, J. Kravitz, S. Chen, Y. Kalantidis,        [61] W.F. Clocksin, C.S. Mellish, Programming in Prolog, Springer Berlin Heidelberg,
+     L.-J. Li, D.A. Shamma, M.S. Bernstein, F.-F. Li, Visual genome: connecting language                Berlin, Heidelberg, 1984 https://doi.org/10.1007/978-3-642-96661-3.
+     and vision using crowdsourced dense image annotations, ArXiv:1602.07332 [Cs],                 [62] J. Wielemaker, T. Schrijvers, M. Triska, T. Lager, SWI-Prolog, Theory Pract. Logic
+     2016. http://arxiv.org/abs/1602.07332 (accessed March 3, 2019).                                    Program. 12 (2012) 67–96, https://doi.org/10.1017/S1471068411000494.
+[45] H. Zhang, X. Yan, H. Li, Ergonomic posture recognition using 3D view-invariant                [63] S. Hauberg, O. Freifeld, A.B.L. Larsen, J.W. Fisher III, L.K. Hansen, Dreaming more
+     features from single ordinary camera, Autom. Constr. 94 (2018) 1–10, https://doi.                  data: Class-dependent distributions over diffeomorphisms for learned data aug-
+     org/10.1016/j.autcon.2018.05.033.                                                                  mentation, ArXiv:1510.02795 [Cs], 2015. http://arxiv.org/abs/1510.02795 (ac-
+[46] J. Hoffart, F.M. Suchanek, K. Berberich, G. Weikum, YAGO2: a spatially and tem-                    cessed March 10, 2019).
+     porally enhanced knowledge base from Wikipedia, Artif. Intell. 194 (2013) 28–61,              [64] M. Everingham, S.M.A. Eslami, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
+     https://doi.org/10.1016/j.artint.2012.06.001.                                                      The pascal visual object classes challenge: a retrospective, Int. J. Comput. Vision
+[47] S.B. Hedges, J. Dudley, S. Kumar, TimeTree: a public knowledge-base of divergence                  111 (2015) 98–136, https://doi.org/10.1007/s11263-014-0733-5.
+     times among organisms, Bioinformatics 22 (2006) 2971–2972, https://doi.org/10.                [65] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollár,
+     1093/bioinformatics/btl505.                                                                        C.L. Zitnick, Microsoft COCO: common objects in context, 2004 European
+[48] B. Dai, Y. Zhang, D. Lin, Detecting visual relationships with deep relational net-                 Conference on Computer Vision (ECCV), Springer International Publishing, Cham,
+     works, 2017 IEEE Conference on Computer Vision and Pattern Recognition (CVPR),                     2014, pp. 740–755, , https://doi.org/10.1007/978-3-319-10602-1_48.
+     IEEE, Honolulu, HI, 2017, pp. 3298–3308, , https://doi.org/10.1109/CVPR.2017.                 [66] K. Soomro, A.R. Zamir, M. Shah, UCF101: A dataset of 101 human actions classes
+     352.                                                                                               from videos in the wild, ArXiv:1212.0402 [Cs], 2012. http://arxiv.org/abs/1212.
+[49] W. Liu, D. Anguelov, D. Erhan, C. Szegedy, S. Reed, C.-Y. Fu, A.C. Berg, SSD: Single               0402 (accessed March 5, 2019).
+     shot multiBox detector, ArXiv:1512.02325 [Cs] 9905 (2016) 21–37. https://doi.                 [67] A. Karpathy, G. Toderici, S. Shetty, T. Leung, R. Sukthankar, L. Fei-Fei, Large-scale
+     org/10.1007/978-3-319-46448-0_2.                                                                   video classification with convolutional neural networks, 2014 IEEE Conference on
+[50] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: Towards Real-Time Object                         Computer Vision and Pattern Recognition (CVPR), IEEE, Columbus, OH, USA, 2014,
+     Detection with Region Proposal Networks, 2015. https://arxiv.org/abs/1506.                         pp. 1725–1732, , https://doi.org/10.1109/CVPR.2014.223.
+     01497v3 (accessed February 28, 2019).                                                         [68] Z. Cao, G. Hidalgo, T. Simon, S.-E. Wei, Y. Sheikh, OpenPose: realtime multi-person
+[51] J.D. Lafferty, A. McCallum, F.C.N. Pereira, Conditional random fields: Probabilistic               2D pose estimation using part affinity fields, ArXiv:1812.08008 [Cs], 2018. http://
+     models for segmenting and labeling sequence data, Proceedings of the Eighteenth                    arxiv.org/abs/1812.08008 (accessed February 27, 2019).
+     International Conference on Machine Learning, Learning, Morgan Kaufmann                       [69] J. Zhang, N.M. El-Gohary, Automated information transformation for automated
+     Publishers Inc., San Francisco, CA, USA, 2001, pp. 282–289 http://dl.acm.org/                      regulatory compliance checking in construction, J. Comput. Civil Eng. 29 (2015)
+     citation.cfm?id=645530.655813.                                                                     B4015001, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000427.
+[52] S. Zhang, F. Boukamp, J. Teizer, Ontology-based semantic modeling of construction             [70] A. Hogenboom, F. Hogenboom, F. Frasincar, K. Schouten, O. van der Meer,
+     safety knowledge: towards automated safety planning for job hazard analysis                        Semantics-based information extraction for detecting economic events, Multim.
+     (JHA), Autom. Constr. 52 (2015) 29–41, https://doi.org/10.1016/j.autcon.2015.                      Tools Applic. 64 (2013) 27–52, https://doi.org/10.1007/s11042-012-1122-0.
+     02.005.                                                                                       [71] E. Soysal, I. Cicekli, N. Baykal, Design and evaluation of an ontology based in-
+[53] Occupational Safety and Health Branch Labour Department, Safety Handbook for                       formation extraction system for radiological reports, Comput. Biol. Med. 40 (2010)
+     Construction Site Workers, March 2004. < https://www.labour.gov.hk/eng/                            900–911, https://doi.org/10.1016/j.compbiomed.2010.10.002.
+     public/os/D/ConstrutionSite.pdf > (last access March 6, 2019).                                [72] J. Zhang, N.M. El-Gohary, Semantic NLP-based information extraction from con-
+[54] Health and Safety Executive, The Construction (Design and Management)                              struction regulatory documents for automated compliance checking, J. Comput.
+     Regulations 2015, January 2015. < http://www.legislation.gov.uk/uksi/2015/51/                      Civ. Eng. 30 (2016) 04015014, https://doi.org/10.1061/(ASCE)CP.1943-5487.
+     pdfs/uksi_20150051_en.pdf > (last access March 6, 2019).                                           0000346.
+
+
+
+
+                                                                                              10
+

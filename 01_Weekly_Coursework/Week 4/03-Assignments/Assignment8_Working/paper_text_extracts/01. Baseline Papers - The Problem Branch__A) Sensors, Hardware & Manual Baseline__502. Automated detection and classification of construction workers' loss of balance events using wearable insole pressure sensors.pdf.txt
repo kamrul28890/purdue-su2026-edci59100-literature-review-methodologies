@@ -1,0 +1,780 @@
+                                                                   Automation in Construction 96 (2018) 189–199
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                                Automation in Construction
+                                                        journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Automated detection and classiﬁcation of construction workers' loss of                                                                                         T
+balance events using wearable insole pressure sensors
+                                                                                              ⁎
+Maxwell Fordjour Antwi-Afaria, Heng Lia, JoonOh Seoa, , Arnold Yu Lok Wongb
+a
+    Dept. of Building and Real Estate, Hong Kong Polytechnic University, Hung Hom, Kowloon, Hong Kong Special Administrative Region
+d
+    Dept. of Rehabilitation Sciences, Hong Kong Polytechnic University, Hung Hom, Kowloon, Hong Kong Special Administrative Region
+
+
+
+
+A R T I C LE I N FO                                         A B S T R A C T
+
+Keywords:                                                   Fall on the same level is the leading cause of non-fatal injuries in construction workers; however, identifying loss
+Construction workers                                        of balance events associated with speciﬁc unsafe surface conditions in a timely manner remain challenging. The
+Falls on the same level                                     objective of the current study was to develop a novel method to detect and classify loss of balance events that
+Insole pressure sensors                                     could lead to falls on the same level by using foot plantar pressure distributions data captured from wearable
+Loss of balance
+                                                            insole pressure sensors. Ten healthy volunteers participated in experimental trials, simulating four major loss of
+Supervised machine learning
+                                                            balance events (e.g., slip, trip, unexpected step-down, and twisted ankle) to collect foot plantar pressure dis-
+                                                            tributions data. Supervised machine learning algorithms were used to learn the unique foot plantar pressure
+                                                            patterns, and then to automatically detect loss of balance events. We compared classiﬁcation performance by
+                                                            varying window sizes, feature groups and types of classiﬁers, and the best classiﬁcation accuracy (97.1%) was
+                                                            achieved when using the Random Forest classiﬁer with all feature groups and a window size of 0.32 s. This study
+                                                            is important to researchers and site managers because it uses foot plantar pressure distribution data to objec-
+                                                            tively distinguish various potential loss of balance events associated with speciﬁc unsafe surface conditions. The
+                                                            proposed approach can allow practitioners to proactively conduct automated fall risk monitoring to minimize
+                                                            the risk of falls on the same level on sites.
+
+
+
+
+1. Introduction                                                                                   Numerous intrinsic and extrinsic risk factors can lead to loss of balance
+                                                                                                  events on construction sites [12]. While some intrinsic risk factors are
+    Falls are the primary cause of construction workers' injuries [1]. In                         non-modiﬁable (e.g., cerebellar problems) and modiﬁable (e.g., phy-
+Hong Kong, statistics show that workers' injuries associated with falls                           sical ﬁtness, agility, fatigue, and attention etc.) [12], most of the ex-
+accounted for almost half of the construction injuries [2], and about HK                          trinsic risk factors for falls on the same level on construction sites are
+$ 40 million of total compensation in 2008 [3]. Especially, falls on the                          related to unsafe environmental surface conditions such as uneven work
+same level are one of the most signiﬁcant causes of construction                                  surfaces, the presence of an obstacle or contaminant, and slippery
+workers' injuries in Hong Kong, accounting for about 20% of con-                                  surfaces [12,13]. For safety oﬃcers and managers at construction sites,
+struction accidents [4]. Compared with falls from height, the severity of                         identifying and detecting loss of balance events associated with unsafe
+injuries from falls on the same level is relatively low (generally leading                        environmental surface conditions are crucial to prevent same-level fall
+to non-fatal injuries), but they are the most frequent types of injuries in                       accidents. However, previous studies usually relied on experts' judg-
+construction, accounting for 40% of non-fatal fall injuries [5,6]. Given                          ments and retrospective data (e.g., accident reports) for injury analysis
+that these fall injuries can cause a delay in construction schedule, de-                          and identifying loss of balance events associated with fall risk factors
+crease productivity, and increase economic burden [7], the prevention                             [14,15]. Despite the value these prior studies, their approaches not only
+of falls on the same level is an important priority in the construction                           might involve a subjective bias or missing data [16], but also might
+industry [8].                                                                                     unable to prevent continuous monitoring of fall risk factors due retro-
+    Previous studies have shown that falls on the same level occur when                           spective nature of these studies [11].
+workers suddenly lose their balance because of loss of balance events                                 To address these issues, we propose real-time detection and classi-
+such as slips, trips, unexpected step-downs and twisted ankles [9–11].                            ﬁcation of loss of balance events by using wearable pressure insole
+
+
+    ⁎
+   Corresponding author.
+   E-mail addresses: maxwell.antwiafari@connect.polyu.hk (M.F. Antwi-Afari), heng.li@polyu.edu.hk (H. Li), joonoh.seo@polyu.edu.hk (J. Seo),
+arnold.wong@polyu.edu.hk (A.Y.L. Wong).
+
+https://doi.org/10.1016/j.autcon.2018.09.010
+Received 21 March 2018; Received in revised form 24 July 2018; Accepted 19 September 2018
+Available online 28 September 2018
+0926-5805/ © 2018 Elsevier B.V. All rights reserved.
+M.F. Antwi-Afari et al.                                                                                                      Automation in Construction 96 (2018) 189–199
+
+
+sensors that measure foot plantar pressure distributions. Each loss of               [18,19]. By analyzing more than 20,000 recorded falls in the United
+balance event (e.g., slips, trips, unexpected step-downs and twisted                 Kingdom, Manning [20] found that there are four major types of loss of
+ankles) is associated with speciﬁc unsafe environmental surface con-                 balance events that could lead to falls on the same level: 1) slips; 2)
+ditions (e.g., slippery ﬂoors, uneven surfaces or obstacles on the path              trips; 3) unexpected step-downs; and 4) twisted ankles. These four
+etc.), creating unique foot plantar pressure distribution patterns mea-              events account for more than 90% of unsafe environmental surface
+sured by using wearable insole pressure sensors. Supervised machine                  conditions that resulted in falls on the same level [20]. They are directly
+learning algorithms were developed to classify types of loss of balance              associated with speciﬁc unsafe environmental surface conditions (i.e.,
+events by using spatial and temporal features that reﬂect the unique                 extrinsic risk factors), such as a slippery surface (a slip), an obstacle on
+plantar pressure data patterns. Detecting workers' loss of balance events            a walkway (a trip when striking it and a twisted ankle when stepping on
+provide useful information for (1) diagnosing potential causes (i.e.,                it) and an uneven surface (unexpected step-down) [21]. As a result,
+types of unsafe environmental surface conditions) of falls on the same               identifying loss of balance events associated with speciﬁc unsafe en-
+level and (2) implementing appropriate interventions for construction                vironmental surface conditions are of importance to safety managers to
+workers who are more vulnerable to a loss of balance under given                     propose appropriate interventions to prevent falls on the same level
+conditions. To test the detection performance, we conducted laboratory               injuries.
+experiments to collect foot plantar pressure distribution data from si-                  Kaskutas et al. [22] reported that the two most eﬀective preventive
+mulated loss of balance events, and applied developed supervised ma-                 measures used to minimize the risk of falls on the same level are: (1)
+chine learning algorithms. Based on the testing results, the feasibility of          safety training programs [23,24], and (2) behavior-based management
+the proposed approach and its potential application areas were dis-                  techniques such as goal-setting, motivational technique etc. [25,26].
+cussed.                                                                              However, current methods such as observations, surveys and retro-
+                                                                                     spective reports that are used to assess the aforementioned preventive
+2. Research background                                                               measures may encounter some inherent challenges on construction sites
+                                                                                     for identifying loss of balance events [16]. These challenges include but
+2.1. Fall risk factors and preventive measures of falls on the same level            not limited to the: (1) dynamic and continuous changing of construc-
+                                                                                     tion working environment; (2) diﬀerences in individuals' intuition,
+    Understanding the underlying mechanisms of fall risk factors that                background, experiences and knowledge in reviewing these methods;
+may lead to falls on the same level is essential to identify and detect loss         (3) increase in resources and supply components at various stages of
+of balance events, and this could eventually help safety managers to                 construction; and (4) inability of safety managers to assess the severity
+implement eﬀective preventive measures [17]. Fig. 1 presents the role                and frequency of occurrences of multiple risk factors in real time
+of intrinsic and extrinsic risk factors that may lead to falls on the same           [27,28]. Taken together, there is a crucial need to introduce an eﬃcient
+level. As shown in Fig. 1, intrinsic risk factors are related to either an           approach and a novel method for automated detection and classiﬁca-
+individual's perceptual ability to identify any existing unsafe conditions           tion of loss of balance events associated with speciﬁc unsafe environ-
+or motor control ability to recover from imbalance. Besides, extrinsic               mental conditions that could help address such limitations and enhance
+risk factors are associated with occupational environments and work                  the implementation of eﬀective fall preventive measures.
+organization [12]. Among the extrinsic risk factors (see Fig. 1) that may
+lead to falls on the same level, unsafe environmental surface conditions
+such as the presence of obstacles, uneven work surfaces, and slippery
+surfaces have been reported to be the most prevalent risk factors
+
+                                Extrinsic Factors
+                           Occupational organization
+                                  Activity
+                                  Temporal
+                                  constraint/urgency
+                           Environment
+                                  Nature of the relief
+                                  State of congestion
+                                  Slippery surface
+                                  Obstacles
+                                  Uneven surface
+                           Shoes
+                                  Shape
+                                  Relief of the sole
+                           Adaptation sole/ground                Initiating Events
+                           Lighting                                                              Falls on the same level (i.e., unrecovered)
+                           Temperature                        1) Slip
+                                                              2) Trip                            No fall (i.e., recovered)
+                                Intrinsic Factors             3) Unexpected step-down
+                           Physiological ageing               4) Twisted ankle
+                           Pathological ageing
+                           Chronic or acute pathologies
+                           Alcohol
+                           Drugs
+                           Experience
+                           Attention/vigilance
+                           Physical status
+                           Weakness
+                           Fatigue
+
+Fig. 1. Mechanisms of falls on the same level.
+(Adopted from Gauchard et al. [12])
+
+
+                                                                               190
+M.F. Antwi-Afari et al.                                                                                                   Automation in Construction 96 (2018) 189–199
+
+
+2.2. Wearable sensor-based approaches for fall risk detection and                     plantar pressure distributions in both laboratory and ﬁeld conditions. It
+classiﬁcation                                                                         consists of two sensor insoles (containing 13 capacitive sensors each)
+                                                                                      that measure the foot plantar pressure distribution (Fig. 2a). Fig. 2b
+    Identifying potential fall risk factors at sites is challenging, espe-            depicts an example of foot plantar pressure distribution patterns. Each
+cially in construction where work environments and workforce are                      insole sensor incorporates a wireless module for data transmission and
+continuously changing. Generally, fall risk detection relies on subjective            sensor conﬁguration control.
+and qualitative measures such as questionnaires or surveys on injured
+people [29]. For a more detailed investigation, quantitative measures                 3.3. Experimental design and procedure
+such as motion sensors, force plates or electromyography sensors are
+required [30–32]. However, even though these measures provide useful                      The current study adopted a randomized crossover study design in a
+information on fall risks, they are reactive and time-consuming, such                 single testing session. In particular, four diﬀerent types of loss of bal-
+that they may not be suitable for construction where working en-                      ance events (i.e., slip, trip, unexpected step-down, and twisted ankle)
+vironments are continuously changing.                                                 were conducted in a laboratory setting to collect foot plantar pressure
+    For a continuous and objective fall risk monitoring, body-worn ac-                distribution data (Fig. 3). Before data collection, the experimental
+celerometers have gained attention in rehabilitation and clinical re-                 procedure was explained to the participants. Afterward, they provided
+search areas [29,33–36]. Accelerometers attached to the body con-                     their demographic data and informed consent. To simulate loss of
+tinuously measure body movements that can be used to detect any                       balance events similar to real conditions, all participants were asked to
+disturbance of body balance [29]. In construction, the use of accel-                  wear safety boots and a hard hat during the testing sessions. Also, a
+erometers for detecting near-miss falls has been successfully validated               safety harness and a 30-cm thick layer of high-density gymnasium
+through laboratory tests [37–39]. These studies developed fall risk as-               mattress were provided to prevent any possible injuries (Fig. 3b). Be-
+sessment models to classify fallers and non-fallers, or assessment scores             fore the testing sessions, they observed representative videos of real-life
+to predict the likelihood of future falls based on variables (e.g., position,         loss of balance events and were instructed to perform in a similar
+angle, angular velocity, linear acceleration, gait speed etc.) from ac-               fashion. For more realistic simulations, speciﬁc unsafe environmental
+celeration signals. However, despite the advantages of being light-                   surface conditions such as a low-density polyethylene (#1. slips), con-
+weight, low-cost and easy to collect real-time data, acceleration-based               crete bricks on the path (#2. trips and #4. twisted ankles) and a plat-
+approaches are limited to binary classiﬁcation of fall risks (e.g., no-risk           form with 20 cm height (#3. unexpected step-downs) were used in the
+or fall-risk).                                                                        present study (Fig. 3a).
+    Even though foot plantar pressure measurement devices such as                         During the testing session, the participant was instructed to walk at
+wearable insole pressure sensors have not been applied in construction,               a comfortable pace and along a particular path even though there might
+they have been widely used in diverse areas such as rehabilitation, sport             be an unsafe environmental surface condition. In the slip event
+science, daily activity monitoring and gait analysis [40–44]. Wearable                (Fig. 3a), the participant walked over a low-density polyethylene which
+insole pressure sensors measure the force acting on each sensor during                caused a rapidly translating between the foot and the ﬂoor surface. In
+foot contact [45]. Generally, multiple sensors are located at diﬀerent                the trip event (Fig. 3b), the participant's foot naturally hit a concrete
+areas of shoe insoles, providing pressure distribution data. As the                   brick. In the unexpected step-down event (Fig. 3c), the participant
+pressure distribution pattern is an indicator of gait instability or body             suddenly lost their balance upon landing on a surface lower than ex-
+balance, these sensors can be used for detecting gait abnormality as-                 pected. In the twisted ankle event (Fig. 3d), the participant naturally
+sociated with falls [46]. Spatial and temporal pressure distributions                 stepped on an unstable concrete brick. In all events, the participant did
+could vary depending on types of loss of balance events, and thus these               not have a prior knowledge of the unsafe environmental surface con-
+data have great potential for classifying diﬀerent types of fall-initiating           ditions and was instructed to look straight ahead during data collection.
+events (e.g., slips, trips, unexpected step-downs, and twisted ankles)                The sequence of the experimental trials was randomized. To measure
+that cannot be distinguishable by using accelerometers.                               the replicability of foot plantar pressure distribution data, each parti-
+                                                                                      cipant conducted ten repeated trials of each loss of balance event. Each
+3. Methods                                                                            trial was estimated for a duration of 6 s (4 s for normal gait plus 2 s for
+                                                                                      each loss of balance event). To reduce fatigue, the participants were
+3.1. Participants                                                                     allowed for 3 min rest between two successive trials.
+
+    A convenience sample (n = 10) of healthy male volunteers ranging                  3.4. Data processing and analysis
+in age between 20 and 35 years (mean 26 ± 3.2 years), weight be-
+tween 60 and 80 kg (mean 70 ± 10.5 kg), and height between 1.4 and                        During data collection, each event was ﬁlmed using a video camera,
+1.8 m (mean 1.6 ± 0.1 m) were recruited from the student population                   and foot plantar pressure distribution data was synchronized. Based on
+of the Hong Kong Polytechnic University. Exclusion criteria were: 1) a                the recorded video data and the walking steps (i.e., normal gait) of each
+history of injuries on upper extremities, a low back, and lower ex-                   event, time-series pressure data were labeled by types of events as the
+tremities; and 2) a history of neurological disabilities or other condi-              ground truth. The insole sensors collected foot plantar pressure dis-
+tions that could aﬀect body balance functionality. All participants                   tribution data at a rate of 50 Hz by a 16-bit analog to digital (A/D)
+provided their informed consent forms in accordance with the proce-                   converter and transferred the data via a wireless connection or a uni-
+dure approved by the Human Subject Ethics Subcommittee of the Hong                    versal serial bus (USB) stick to the base computer. The sampling fre-
+Kong        Polytechnic       University      (reference        number:               quency was shown to be suﬃcient in previous experiments to measure
+HSEARS20170605001).                                                                   foot plantar pressure distribution data [47].
+                                                                                          Fig. 4 shows examples of labeled pressure data from the sensors
+3.2. Experimental apparatus                                                           (i.e., pressure-time curves). The numbers of sensors indicate the posi-
+                                                                                      tions on insoles as shown in Fig. 2a. For example, Sensor 1, 7, 8 and 12
+   Foot plantar pressure distribution data for each loss of balance event             represent diﬀerent regions of interest such as toes, a mid-left foot, a
+was collected at laboratory settings by using Moticon SCIENCE                         mid-right foot and a heel foot, respectively. These data qualitatively
+(Moticon GmbH, Munich, Germany, http://www.moticon.de), a wear-                       support the hypothesis that each loss of balance event creates unique
+able insole pressure sensor system. Fig. 2 shows an overview of Moticon               pressure patterns from insole sensors, and thus by analyzing the pat-
+SCIENCE. It provides a novelty in conducting research based on foot                   terns, each event can be classiﬁed. Depending on types of loss of
+
+                                                                                191
+M.F. Antwi-Afari et al.                                                                                                      Automation in Construction 96 (2018) 189–199
+
+
+                                                                                  Wireless
+                                                                                 connection
+
+
+
+
+                   Safety boots
+                                                3-axis accelerometer (X, Y, and Z)
+                                                13 force capacitor per insole sensor
+
+                                                                                                                              (b) Example of pressure data
+                                                   (a) Sensor configuration
+
+                                                                Fig. 2. An overview of Moticon SCIENCE.
+
+
+
+        Video         Normal walk                                                      #1. Slip                                #2. Trip
+                                                     Hazard
+      recording       (gait)                         location
+
+                                                          #1       Slip
+
+
+                                                         #2        Trip
+
+
+
+                                                         #3      Unexpected
+                                                                 step-down
+
+
+                                                         #4 Twisted ankle              #3. Unexpected                          #4. Twisted ankle
+         Start event                                    Finish event                   step-down
+                            Event Duration ~ 6 s
+
+
+                   #1               #2 and #4                     #3
+
+
+
+
+          Low-density             Concrete brick         Wooden platform
+          polyethylene
+
+
+
+                        (a) Experimental setups                                                          (b) Types of loss of balance events
+                                                          Fig. 3. Experimental overview and data collection.
+
+
+balance events, unique patterns on pressure-time curves are observed at                  foot are observed as the subject tries to be recovered from a trip by
+each region, allowing us to understand mechanisms of these events. For                   supporting the body on the other foot. Unexpected step-down creates
+example, during walking (graphs denoted as ‘A’), cyclic alternating                      sudden body mass transfer, resulting in higher peak pressures on the
+patterns on pressure-time curves are observed (Fig. 4). However, when                    foot contacting the ground. Twisted ankles could occur when a worker
+loss of balance events (denoted as ‘B’, ‘C’, ‘D’ and ‘E’) occur, unique                  steps on a small or an unstable object. After landing, the pressure moves
+abnormal curve patterns are shown according to types of events. Gen-                     to the left to right as an ankle is rotated. As shown in Fig. 4, foot plantar
+erally, during a typical slip event, the foot slides forward against the                 pressure data implicitly reﬂect one's representative bodily reactions
+ﬂoor, and thus a relatively long pattern of pressure data is found at the                during the contact of the lower extremities with the ground. As a result,
+middle of the foot (e.g., Sensor 7 and 8). During a trip, the left foot hits             wearable insole pressure sensors can provide richer information than
+an object (i.e., concrete brick), creating a very short peak pressure on                 accelerometers to classify each loss of balance event.
+Sensor 1, and shortly after this, higher peak pressure values on the right
+
+
+                                                                                  192
+                                                                                                                                                                  M.F. Antwi-Afari et al.
+
+
+
+
+                                                                                                                             #3.Unexpected    #4.Twisted
+                              #1. Slip                                          #2. Trip
+                                                                                                                             step-down           ankle
+
+
+
+           Sensor 1
+
+
+
+
+           Sensor 7
+
+
+
+
+193
+          Sensor 8
+
+
+
+
+         Sensor 12
+
+
+
+
+      Fig. 4. Examples of labeled foot plantar pressure distribution data
+      Note: Dotted lines indicate regions of detecting loss of balance events in each pressure sensor. A = Normal walk; B = Slip; C = Trip;
+      D = Unexpected step-down; E = Twisted ankle.
+                                                                                                                                                           Automation in Construction 96 (2018) 189–199
+M.F. Antwi-Afari et al.                                                                                                  Automation in Construction 96 (2018) 189–199
+
+
+3.5. Developing supervised machine learning algorithms                               into frequency domain by using the FFT function, and then spectral
+                                                                                     energy and entropy were computed to be used as two frequency domain
+    Given unique foot plantar pressure patterns based on features that               features [57].
+reﬂect both spatial (according to locations of pressure sensors in the                   In addition to time and frequency domain features, we applied a
+wearable insoles) and temporal (dynamic loading patterns over time)                  new feature extraction method based on pressure time integral (PTI).
+changes of pressure data, classifying diﬀerent types of loss of balance              PTI is a variable that describes the cumulative foot loading over time,
+events from time-series foot plantar pressure data are sequential su-                providing useful information on chronic foot problems [58]. In Fig. 4,
+pervised machine learning problems. Even though sequential su-                       each stride during the normal walks shows similar areas under the lines.
+pervised machine learning algorithms have been widely applied in                     However, during each loss of balance event, the cumulative foot
+many ﬁelds, achieving adequate performance (i.e., accuracy) with                     loading that can be characterized by the area under the lines looks
+computational eﬃciency is still an important research issue [48].                    diﬀerent because of the combined eﬀect of body weight, movement of
+Generally, procedures for developing sequential supervised machine                   body mass and external forces acting of feet (e.g., hit by objects). As a
+learning consist of 1) data segmentation, 2) feature extraction, 3)                  result, the PTI can serve as a feature that reﬂects temporal changes of
+classiﬁer learning, and 4) classiﬁer model assessment and performance                patterns over time, giving a distinguishable power for classifying dif-
+evaluation [49]. The goal of these steps is to determine an optimal                  ferent loss of balance events. The PTI was calculated by using the fol-
+combination of methods for data segmentation, feature extraction, and                lowing equation:
+classiﬁer learning.                                                                           N
+                                                                                     PTI(i) = ∑ Pi (t ) × ∆t
+3.5.1. Data segmentation                                                                      t=1                                                                (1)
+     Data segmentation is a data preprocessing strategy to convert se-
+                                                                                     where N is the total number of data samples in a window, i is an index
+quential supervised learning problems into traditional supervised
+                                                                                     of sensors (i.e., 1 to 26 sensor streams), Pi is a pressure value at time t,
+learning problems [49]. A sliding window technique is one of the
+                                                                                     and Δt is the duration of that data sample.
+widely used methods for time-series data segmentation [48]. Speciﬁ-
+cally, for an observed time-series data xi = (xi,1, x i,2, …, x i,l), this
+method divides xi into smaller time segments < xi,t-d, xi,t-d+1, …, xi,t, …,         3.5.3. Classiﬁer learning
+xi,t+d-1, xi,t+d > in a window of a ﬁxed size w as the window slides                     To classify diﬀerent types of loss of balance events, supervised
+through x (let d = (w-1)/2) [49]. Then, the classiﬁcation can be per-                machine learning classiﬁers were used to learn unique signal patterns
+formed for segmented data from each window independently through                     from foot plantar pressure data based on extracted features. Howcroft
+traditional supervise learning. Selecting an appropriate window size has             et al. [29] investigated the best classiﬁcation methods used in the
+a great impact on classiﬁcation performance, especially in activity re-              studies for acceleration-based fall risk detection and found that neural
+cognition problems [50]. As shown in Fig. 4, foot plantar pressure                   networks, naïve Bayesian classiﬁer, Mahalanobis cluster analysis and a
+distribution data have unique patterns according to types of loss of                 decision tree have performed better than other classiﬁers. However, as
+balance events. Therefore, the window size should be large enough to                 the classiﬁer performance could vary depending on types of data,
+include these patterns, and at the same time, should be smaller not to               window sizes and types of features, it is necessary to test diverse clas-
+include noisy signals.                                                               siﬁers that ﬁt best for detecting loss of balance events from foot plantar
+     Previous research eﬀorts on activity recognition have tested dif-               pressure data. In this research, classiﬁers to be tested include but not
+ferent window sizes, ranging from 0.1 s to over 10 s in steps of 0.25 s,             limited to 1) Artiﬁcial Neural Network (ANN), 2) Decision Tree (DT), 3)
+0.5 s or 1 s, and it has been concluded that short window sizes (e.g., less          Random Forest (RF), 4) K-Nearest Neighbor (KNN), and 5) Support
+than 3 s) lead to better classiﬁcation performance [50]. Also, the                   Vector Machine (SVM). Notably, a majority of studies have demon-
+window sizes can be aﬀected by types of features used in the algo-                   strated that there is no single best classiﬁer [59,60]. As such, a com-
+rithms. For example, one of the features widely used for sequential                  parison of the diﬀerent types of individual supervised machine learning
+supervised learning is frequency-domain features using the fast Fourier              classiﬁers may still be necessary to select the best model parameters
+transform (FFT) function, which will be described below. One of the                  that should be used in training a particular dataset. In this research, we
+limitations of using the FFT function is that the number of sample data              selected the best model parameter from each type of individualized
+points in the segment must be a power of two [51]. Considering the                   supervised machine learning classiﬁer by training our experimental foot
+ﬁnding by Banos et al. [50] and the use of the frequency-domain fea-                 plantar pressure distribution data using Toolbox in MATLAB 9.2 soft-
+tures, we selected four diﬀerent window sizes of 0.32 s, 0.64 s, 1.28 s              ware (Matlab, The MathWorks Inc., MA, USA). The following section
+and 2.56 s that corresponds to 16 (24), 32 (25), 64 (26) and 128 (27)                describes the best-selected model parameters used in each supervised
+data samples, respectively. In this study, a 50% overlap of the adjacent             machine learning classiﬁer.
+windows was used [52]. Su et al. [53] reported that data segmentation
+by overlapping adjacent windows reduces the error caused by transition               3.5.3.1. Artiﬁcial neural network (ANN). An ANN is a robust method
+state noise.                                                                         that can use training samples to learn dependencies in a dataset and
+                                                                                     then apply the trained model to recognize previously unseen dataset
+3.5.2. Feature extraction                                                            [61]. In this research, a multilayer feed-forward neural network or
+    Because of the high dimensionality of foot plantar pressure dis-                 multilayer perceptron (MLP) was used [61]. The input layer consists of
+tribution data (26 data points from both feet per instance), it is im-               the diﬀerent combinations of extracted features at a particular window
+portant to extract relevant information subsets (i.e., features) from raw            size. By default, the number of hidden layers was set at 10. The number
+signals for better performance. As shown in Fig. 4, the pattern of foot              of output layer was equal to the ﬁve simulated events (i.e., four loss of
+plantar pressure data from each sensor diﬀerently changes over time                  balance events plus normal gait). In order to prevent over-ﬁtting of
+depending on types of loss of balance events. The temporal changes and               dataset, a regularization parameter was used to decrease the magnitude
+ﬂuctuations can be reﬂected by time- and frequency-domain features.                  of the trained model to recognize unseen dataset [61]. In this research,
+For time-domain features, we used seven time domain features (i.e.,                  a scaled conjugate gradient backpropagation neural network was used
+mean pressure, variance, maximum pressure, minimum pressure, range,                  for training the dataset. Also, a mean squared error was used for error
+standard deviation, and kurtosis) that have been commonly used for                   evaluation during training [62]. In order to minimize the cost function
+activity recognition and classiﬁcation [51,54–56]. Also, to extract fre-             during the training process, the Levenberg-Marquardt algorithm with a
+quency-domain features, the raw data in time domain will be converted                sigmoid transfer function was used in this study [63].
+
+                                                                               194
+M.F. Antwi-Afari et al.                                                                                                 Automation in Construction 96 (2018) 189–199
+
+
+3.5.3.2. Decision tree (DT). DT is one of the most powerful classiﬁers               estimate the performance of classiﬁers because it makes predictions
+for human activity classiﬁcation and recognition [64]. This classiﬁer                with 90% of dataset, which can be generalizable to the full dataset.
+works by examining the discriminatory ability of the extracted features
+one at a time to create a set of rules that ultimately leads to a complete           4. Results
+classiﬁcation system [36]. This research used the decision tree method
+of the classiﬁcation and regression tree (CART) [51]. CART tree                          We tested the proposed algorithms by using the data collected
+classiﬁes patterns based upon sequence of questions in which the next                through laboratory experiments described above. The primary purpose
+question asked depends on the answer to the current question. Notably,               of the test was to determine the best combination of window sizes, types
+CART was the best-selected model parameter because it is useful for                  of features and classiﬁers through cross-validation. Additionally, we
+analyzing nonparametric data that does not require any notion of                     also tested classiﬁcation accuracy by varying the window positions to
+metric [65]. In this research, the best optimization criterion (i.e., Gini           explore where the most distinguishing plantar pressure patterns exist
+diversity index) was used [51]. A node is considered as pure if it has a             during conducting each loss-of-balance event.
+Gini index of zero. To prevent over-ﬁtting of training dataset, the
+process of splitting leaf nodes is repeated continuously until a minimum             4.1. Best combination of window sizes, groups of features and classiﬁers
+number of observation of a class was reached.
+                                                                                         The proposed algorithms have three key parameters that would
+3.5.3.3. Random forest (RF). The RF classiﬁer is an ensemble learning                determine the classiﬁcation performance: 1) window sizes; 2) types of
+technique for classiﬁcation that consists of a combination of decision-              features; and 3) types of classiﬁers. For window sizes, we selected four
+trees [66]. The classiﬁcation performance of each decision tree in a RF              diﬀerent window sizes of 0.32 s, 0.64 s, 1.28 s, and 2.56 s, considering
+classiﬁer is built by using a bootstrap aggregating (i.e., bagging)                  both the optimal range of window sizes and the number of data samples
+method and a random feature selection [67]. This approach helps in                   required for extracting frequency-domain features. The proposed al-
+reducing the model variance and minimizing over-ﬁtting of training                   gorithms use three groups of features: 1) seven time-domain features; 2)
+dataset [66]. Since each node in a RF classiﬁer is split into a limited              two frequency-domain features; and 3) PTIs. Generally, supervised
+number of randomly predicted variable, it is considered to be more                   machine learning-based classiﬁcation algorithms include feature se-
+powerful classiﬁer when compared to other classiﬁers such as SVM and                 lection that aims to identify optimal subsets of features not only for
+ANN [68]. There are only two model parameters that need to set when                  better classiﬁcation accuracy but also for data understanding [74]. This
+training a dataset with a RF classiﬁer [69]. These are (1) mTry, which               paper applied the wrapper approach suggested by Kohavi and John
+represents the number of input variables in the random subset at each                [75] that assesses the subsets of features in terms of the prediction
+node; and (2) nTree, which represents the number of trees to grow for                performance. Instead of an exhaustive search for all possible subsets, we
+each forest. By default values, mTry and nTree were set at 6 and 500                 tested subsets of combinations of three feature groups (e.g., time-do-
+respectively. However, it is well-established that the classiﬁcation                 main, frequency-domain and PTI features) to understand the role of
+outcome is not highly sensitive to the choice of these parameters [70].              each feature group. As a result, seven subsets of three feature groups
+                                                                                     such as 1) time-domain features only (TF), 2) frequency-domain fea-
+3.5.3.4. K-Nearest Neighbor (KNN). The KNN classiﬁer is a simple and                 tures only (FF), 3) PTI only (PTI), 4) time- and frequency-domain fea-
+straightforward classiﬁer but requires no training time [68]. Training               tures (TF + FF), 5) time-domain and PTI features (TF + PTI), 6) fre-
+dataset is identiﬁed by an unknown window of class labels which are                  quency-domain and PTI features (FF + PTI), and 7) all three feature
+spread over the feature space [51]. A new dataset is assigned to a class             groups (TF + FF + PTI) were tested. For classiﬁers, we chose 1) ANN,
+label based on the single closest neighbor or K-nearest examples (i.e., K-           2) DT, 3) RF, 4) KNN, and 5) SVM.
+neighbor of 1) considering the Euclidean distance [51]. Based on a                       Table 1 shows overall classiﬁcation accuracies (i.e., the proportion
+heuristic method to achieve the best classiﬁcation, this metric was                  of correct classiﬁcations in percentage) by cross-validation for ﬁve
+selected in this research [63].                                                      events (i.e., normal walking and four loss of balance events) based on
+                                                                                     combinations of diﬀerent window sizes, feature group subsets, and
+3.5.3.5. Support Vector Machine (SVM). The SVM constitutes a popular                 classiﬁers. The testing results indicate that the classiﬁcation perfor-
+classiﬁer which is based on ﬁnding optimal separating decision                       mance could vary depending on the combination of algorithm para-
+hyperplanes between classes with the maximum margin between                          meters, emphasizing the need for ﬁnding the optimal parameters. The
+patterns of each class [36]. It can beneﬁt from a maximum margin                     overall classiﬁcation accuracies ranged from 20.3% to 97.1%, and each
+hyperplane in a transformed feature space using a kernel function to                 classiﬁer shows the best performance on diﬀerent combinations of
+map the dataset into an inner product space in order to create a non-                feature groups and window sizes. For example, the best classiﬁcation
+linear structure [63]. For non-linear classiﬁcation in this research, the            accuracy of each classiﬁer was 74.7% (TF + FF and 0.32 s) in ANN,
+Gaussian radial basis function (RBF) was used as the kernel function                 82.7% (TF + PTI, 2.56 s) in DT, 97.1% (TF + FF + PTI, 0.32 s) in RF,
+[51]. In order to enable a multi-class pattern recognition problem (i.e.,            95.2% (PTI only, 0.32 s) in KNN, and 95.0% (FF + PTI, 2.56 s) in SVM,
+identifying and detecting diﬀerent types of loss of balance events) to be            respectively (Table 1). Among ﬁve classiﬁers, the best performance was
+solved in a single optimization, this research used a multi-class one-               achieved by the RF classiﬁer when using all feature groups with the
+against-one approach to train the SVM [71].                                          smallest window size (0.32 s) (Table 1). One of the interesting results
+                                                                                     was that the RF classiﬁer is less sensitive to selection of features and
+3.5.4. Classiﬁer model assessment and performance evaluation                         window sizes, showing over 90% overall accuracies regardless of types
+    The ﬁnal step is to determine the model parameters (e.g., window                 of features and window sizes. Regarding the eﬀect of window sizes,
+sizes, types of features and classiﬁers) to achieve the best performance             contrasting results were observed according to types of classiﬁers.
+for classifying the diﬀerent types of loss of balance events. The per-               Speciﬁcally, the longer window sizes led to better performance in ANN,
+formance of the classiﬁers was evaluated by a 10-fold cross-validation,              DT, and SVM while RF and KNN showed the best performance when
+which is a model validation technique to assess the accuracy and va-                 using the smallest window size. In addition, using all feature groups
+lidity of statistical models. In the 10-folds cross-validation, the dataset          would not always result in better performance. Except the RF classiﬁer,
+is randomly split into 10 approximately equal size exclusive subsets.                the best performance was observed when using only subsets of feature
+Then, each part is reserved as test datasets, and the remaining parts are            groups in other four classiﬁers.
+performed as training datasets with a particular classiﬁer [72]. Ac-                     Fig. 5 shows how each loss of balance event was detected using RF
+cording to Refaeilzadeh et al. [73], 10-fold cross validation is reliable to         classiﬁer (best classiﬁer) with all feature groups at 0.32 s window size
+
+                                                                               195
+M.F. Antwi-Afari et al.                                                                                                                                     Automation in Construction 96 (2018) 189–199
+
+
+Table 1
+Overall classiﬁcation accuracies (%).
+                    ANNa                                DTa                                  RFa                                       KNNa                                 SVMa
+
+                    0.32 s   0.64 s   1.28 s   2.56 s   0.32 s   0.64 s    1.28 s   2.56 s   0.32 s   0.64 s    1.28 s       2.56 s    0.32 s   0.64 s    1.28 s   2.56 s   0.32 s   0.64 s   1.28 s   2.56 s
+
+      b
+  TF only           30.6     25.4     20.4     56.5     67.4     61.7      58.7     82.2     96.0     95.1      94.9         94.9      87.8     86.8      85.9     92.1     56.8     85.6     84.1     93.3
+  FFb only          53.2     47.9     47.0     66.5     67.9     59.3      56.5     79.9     94.6     93.8      93.4         93.0      92.0     91.6      90.8     92.4     89.1     87.2     83.9     91.9
+  PTIb only         48.2     43.7     27.4     24.3     66.8     63.8      58.0     74.1     96.3     94.5      93.3         93.5      95.2     92.9      92.8     94.0     87.9     85.3     85.0     89.0
+  TF + FF           74.7     25.6     20.3     49.6     78.1     68.0      67.8     81.7     95.6     95.0      94.3         95.2      93.7     93.4      93.0     93.5     92.1     91.1     90.6     94.0
+  FF + PTI          58.4     30.7     28.2     53.9     69.5     62.3      85.3     80.5     96.8     95.4      95.0         94.4      93.9     93.2      92.2     94.3     90.9     89.8     87.7     95.0
+  TF + PTI          50.7     46.6     41.0     61.4     69.0     65.4      61.4     82.7     96.3     96.2      95.4         95.0      90.4     89.8      88.6     93.8     89.6     88.6     87.1     92.8
+  TF + FF + PTI     51.5     41.5     61.4     72.0     70.5     64.8      59.9     81.8     97.1     96.2      95.5         95.5      94.8     94.4      94.3     94.5     93.9     93.6     93.3     94.7
+
+  a
+      ANN: Artiﬁcial Neural Network, DT: Decision Tree, RF: Random Forest, KNN: k-Nearest Neighbor, SVM: Support Vector Machine.
+  b
+      TF: Time-domain features, FF: Frequency-domain features, PTI: Pressure Time Integral features.
+
+data segment. As presented in Fig. 5, the rows show the percentage of
+true (i.e., actual) instances, and the columns reveal the percentage of                                                                    Overall Accuracy (%)
+predicted instances of loss of balance events. For example, while 97.7%                                      100
+of the actual instances was positively detected and classiﬁed as slip
+event, 0.1%, 0.2%, 1.4%, and 0.6% were predicted as normal walk, trip,                                         95
+unexpected step-down, and twisted ankle events, respectively (Fig. 5).
+Based on the confusion matrix, each event had more than 94.0% in                                               90
+correct detection of the instances (i.e., sensitivity) using all feature
+groups (Fig. 5). Fig. 5 also reveals that while normal walk was the most                                       85
+accurately classiﬁed and detected event (99.2%), the most confused
+events were the unexpected step-down and normal walk events (i.e.,                                             80
+2.40%). This might be attributed that unexpected step-down and
+normal walk events had similar foot plantar pressure patterns and                                              75
+
+magnitudes during the initial stride, which might have led to more
+                                                                                                               70
+misclassiﬁed and undetected instances.
+                                                                                                                             First Window                Second Window               Third Window
+                                                                                                                               (0~0.32s)                  (0.32s ~ 0.64s)            (0.64s ~ 0.96s)
+
+4.2. Classiﬁcation accuracy according to window position
+                                                                                                                    Fig. 6. Classiﬁcation accuracies depending on window positions.
+
+    Unlike walking that involves cyclic or repeated movements, loss of
+balance events such as slips, trips, unexpected step-downs and twisted                                     0.64 s, and from 0.64 s to 0.96 s, respectively. The RF classiﬁer learned
+ankles are one-oﬀ events, showing non-cyclic patterns of foot plantar                                      the data from each window only. The result showed that foot plantar
+pressure data (Fig. 4). Also, initial foot plantar pressure patterns could                                 pressure data from the ﬁrst window has better distinguishing power,
+be similar for each loss of balance events, but corresponding foot                                         indicating foot plantar pressure data at the beginning of each event
+plantar pressure patterns could vary depending on one's strategies to                                      contain more unique and consistent plantar patterns to classiﬁer loss of
+recover body balance. To understand where distinguishing foot plantar                                      balance events.
+pressure patterns exist during loss of balance events, plantar pressure
+data during each event was divided into the ﬁrst, second and third                                         5. Discussion
+window from the start of the event without overlap, and the overall
+accuracy was tested by learning a classiﬁer using data from each                                               This study examines foot plantar pressure distribution data for au-
+window, respectively. For this test, the algorithm parameters (RF, all                                     tomated detection and classiﬁcation of loss of balance events which are
+feature groups, and 0.32 s window) that resulted in the best perfor-                                       preceded by falls on the same level using wearable insole pressure
+mance were used in this study.                                                                             sensors. An experimental study was conducted to design supervised
+    Fig. 6 shows the overall accuracies according to the position of the                                   machine learning algorithms to classify loss of balance events by ana-
+windows. The ﬁrst, second and third windows contain foot plantar                                           lyzing foot plantar pressure data. From the comparative evaluation
+pressure data from the start of each event to 0.32 s, from 0.32 s to                                       based on cross-validation, it was found that the RF classiﬁer achieved
+
+
+                                                         Normal walk              99.2%            0.1%              0.2%               0.1%               0.4%
+
+                                                                    Slip          0.1%             97.7%             0.2%               1.4%               0.6%
+
+                                       True class                   Trip          0.5%             0.2%              96.9%              1.5%               0.9%
+
+                                               Unexpected step-down               2.4%             0.3%              0.5%               95.6%              1.2%
+
+                                                         Twisted ankle            1.1%             0.8%              2.3%               0.9%              94.9%
+                                                                               Normal               Slip              Trip            Unexpected         Twisted
+                                                                                walk                                                  step-down           ankle
+                                                                                                              Predicted class
+
+                                          Fig. 5. Confusion matrix when using RF with all feature groups at a window size of 0.32 s.
+
+
+                                                                                                    196
+M.F. Antwi-Afari et al.                                                                                                Automation in Construction 96 (2018) 189–199
+
+
+the best performance for detecting and classifying loss of balance events           data collection issues and 2) need for location data. First, identifying
+with an accuracy of 97.1%, and the sensitivity of more than 94% for                 and removing unsafe environmental surface conditions (e.g., slippery
+each event using all feature groups and a window size of 0.32 s.                    ﬂoors) in a timely manner is essential to minimize the risk of falls on the
+Additionally, we performed hold-out validation by randomly splitting                same level. Toward this goal, continuous data transfer and real-time
+the data into two parts (70% for training, 30% for testing). The result             analysis are required. Most wearable sensors including pressure insole
+also showed 95.9% overall accuracy when using same algorithm                        sensors use direct wireless network or a smartphone for data transfer.
+parameters, supporting the robustness of the proposed approach for                  However, internet disconnection may occur in using wearable sensors
+independent test datasets. This result implies that foot plantar pressure           and leads to failed data transfer in real time [81]. To minimize such
+distribution data obtained from wearable insole pressure sensors can                risk, the reliability of wearable sensors data transfer should be tested,
+eﬀectively detect and classify loss of balance events, which may help to            especially at construction sites where a signal blockage may commonly
+understand the causes of falls on the same level.                                   exist. Besides, the process of collecting foot plantar pressure distribu-
+    Despite the promising performance, the eﬀects of diﬀerent algo-                 tion data measured by wearable insole pressure sensors during normal
+rithm parameters such as types of classiﬁers, features, and window sizes            gait may be aﬀected by the diﬀerences in individual risk factors (e.g.,
+are still not clear due to contrasting results according to diﬀerent                age, work experience, gender). To minimize such issues, repetitions of
+combinations of algorithm parameters. Determining best combination                  speciﬁc risk factor should be conducted to test data variability. Second,
+of classiﬁers, window sizes and features is a diﬃcult task for many                 even though the proposed system can detect instances of loss of balance
+reasons such as the diﬀerences in experimental protocol, the objectives             events, the location information where the event occurs is also required
+behind real-time falls on the same level applications, the types of                 to be reported so that necessary interventions can be implemented. As
+wearable sensors used and their attachment to the human body, the                   such, additional location tracking systems should be used to proactively
+performance evaluation and validation, and the nature of the fall ac-               minimize the fall risks at construction sites.
+tivities conducted. Generally, the decision would be made based on
+classiﬁcation performances [76–78]. For the problem that needs real-
+time analysis, the need for data pre-processing and computational time              6. Conclusions
+are also important factors to be considered.
+    The best accuracy achieved from the RF classiﬁer conﬁrmed the                       This paper proposed a novel methodology for automated detection
+hypothesis that each loss of balance event creates unique patterns of               and classiﬁcation of diﬀerent types of loss of balance events that may
+foot plantar pressure distributions, even though other classiﬁers such as           lead to falls on the same level. Toward this goal, wearable insole
+KNN and SVM showed comparable performance with slightly less ac-                    pressure sensors were employed to collect participant's foot plantar
+curacies. Recently, the RF classiﬁer has been widely used in accelera-              pressure distribution data. Based on our experimental trials, the RF
+tion-based action recognition problems, showing better performance                  classiﬁer obtained the best results with the accuracy of 97.1% and
+than other classiﬁers. Compared with other classiﬁers, several ad-                  sensitivity of each loss of balance event above 94.0% using the window
+vantages of the RF classiﬁers have been revealed: 1) the RF can reduce              size of 0.32 s. The ﬁndings of this study suggest that foot plantar
+computational time because it needs very little pre-processing of the               pressure distribution data measured by using wearable insole pressure
+data; 2) feature selection procedures are not necessary as the algorithm            sensors contain valuable information for identifying loss of balance
+itself evaluates features on its own; and 3) it can minimize over-ﬁtting            events associated with speciﬁc unsafe environmental surface condi-
+issues [79]. In our results, the RF achieves the best performance when              tions. Overall, the proposed approach and novel method may help
+using all feature groups as it internally optimizes features used for               safety oﬃcers and construction managers to proactively conduct au-
+training. Generally, the best classiﬁer could vary depending on the se-             tomated fall risk monitoring so as to implement eﬀective fall preventive
+lection of features. However, using the RF classiﬁer can eliminate                  measures to minimize the risk of falls on the same level on construction
+complicating feature selection problems, providing a comparative ad-                sites.
+vantage over other classiﬁers.                                                          Although the ﬁndings of this study showed potentials for detection
+    The current study has established that the length of window size                and classiﬁcation of loss of balance events in construction workers,
+data segment and the type of features extracted from foot plantar                   there are some limitations that should be addressed in future studies.
+pressure distribution while performing loss of balance events can in-               First, data collection of loss of balance events was conducted in a la-
+ﬂuence the classiﬁer performance. As a result, the window size is an                boratory setting by a small sample of novice participants. Future re-
+important parameter to be considered in fall risk detection and classi-             search should compare our results to similar studies by conducting loss
+ﬁcation studies. The window size of 0.32 s can be generally considered              of balance events using a large sample of experienced construction
+as optimum data segment for signals produced by wearable insole                     workers. Second, despite its great potential as a tool for automated fall
+pressure sensor while loss of balance events are performed. In parti-               risk monitoring, this experimental study was conducted to involve
+cular, the ﬁrst window from the start of each event tends to contain                workers' exposure to unsafe environmental surface conditions (i.e.,
+distinguishable plantar pressure patterns for loss of balance event                 extrinsic risk factors) that could exist on construction sites. Future re-
+classiﬁcation. With regards to extracted features, it was concluded that            search needs to detect and classify diverse intrinsic risk factors in
+using all feature groups do not necessarily lead to better performance              construction workers (e.g., work experience, age, and fatigue). Also, it
+for all classiﬁers except the RF classiﬁer. For instance, higher accuracies         would be beneﬁcial to integrate other sensing and localization tech-
+were achieved by the ANN, DT, and SVM classiﬁers during combining                   nologies such as beacons, light sensors, and cameras into the proposed
+TF + FF, TF + PTI, and FF + PTI, respectively. For classiﬁers (e.g., RF,            system in order to (1) provide more robust application solutions for
+KNN, SVM) of which best performance is higher than 90%, PTI features                construction workers' safety, and (2) analyze the type of activity being
+have an important role as adding PTI as features increased the classi-              conducted by a worker, which may help in a worker's activity re-
+ﬁcation accuracy. It should be emphasized that PTI describes the cu-                cognition and classiﬁcation. Third, foot plantar pressure distribution
+mulative eﬀect of pressure over time in the certain area of the foot, and           data measured by using wearable insole pressure sensors were wire-
+thus provides a value for the total load exposure of a foot sole area               lessly transferred onto a desktop computer during data collection.
+during one step [80]. This indicates that PTI is of added value to un-              Future research should conduct similar experiments using the proposed
+derstanding temporal changes of foot plantar pressure distributions                 approach with an application running on a smartphone. This could
+while performing loss of balance events.                                            better aid in both indoor and outdoor environmental settings during
+    Despite the promising result of the proposed approach, there are                data collection.
+several potential issues when applying it in practice, which includes 1)
+
+                                                                              197
+M.F. Antwi-Afari et al.                                                                                                                         Automation in Construction 96 (2018) 189–199
+
+
+Acknowledgements                                                                                         Falls, Institute of Food and Agriculture Science: University of Florida, 1990.
+                                                                                                    [22] V. Kaskutas, A.M. Dale, H. Lipscomb, B. Evanoﬀ, Fall prevention and safety com-
+                                                                                                         munication training for foremen: report of a pilot project designed to improve re-
+    This research study was supported by the Department of Building                                      sidential construction safety, J. Saf. Res. 44 (2013) 111–118, https://doi.org/10.
+and Real Estate of The Hong Kong Polytechnic University, the General                                     1016/j.jsr.2012.08.020.
+Research Fund (GRF) Grant (BRE/PolyU 152099/18E) entitled                                           [23] H.J. Im, Y.J. Kwon, S.G. Kim, Y.K. Kim, Y.S. Ju, H.P. Lee, The characteristics of fatal
+                                                                                                         occupational injuries in Korea's construction industry, 1997–2004, Saf. Sci. 47 (8)
+“Proactive Monitoring of Work-Related MSD Risk Factors and Fall Risks                                    (2009) 1159–1162, https://doi.org/10.1016/j.ssci.2008.11.008.
+of Construction Workers Using Wearable Insoles”, and the GRF Grant                                  [24] R. Sacks, A. Perlman, R. Barak, Construction safety training using immersive virtual
+(BRE/PolyU 152230/18E) entitled “Automated Fall Risk Detection                                           reality, Constr. Manag. Econ. 31 (9) (2013) 1005–1017, https://doi.org/10.1080/
+                                                                                                         01446193.2013.828844.
+Associated with Falls on the Same Level by Using Wearable Insole                                    [25] A.R. Duﬀ, I.T. Robertson, R.A. Phillips, M.D. Cooper, Improving safety by the
+Pressure Sensors”. Special thanks are given to Mr. Wai Shing Tin for                                     modiﬁcation of behaviour, Constr. Manag. Econ. 12 (1) (1994) 67–78, https://doi.
+assisting the experimental set-up and all our participants involved in                                   org/10.1080/01446199400000008.
+                                                                                                    [26] H. Lingard, S. Rowlinson, Behavior-based safety management in Hong Kong's
+this study.
+                                                                                                         construction industry, J. Saf. Res. 28 (4) (1997) 243–256, https://doi.org/10.1016/
+                                                                                                         S0022-4375(97)00010-8.
+References                                                                                          [27] W. Umer, H. Li, G.P.Y. Szeto, A.Y. Wong, Proactive safety measures: quantifying the
+                                                                                                         upright standing stability after sustained rebar tying postures, J. Constr. Eng.
+                                                                                                         Manag. 144 (4) (2018) 04018010, , https://doi.org/10.1061/(ASCE)CO.1943-
+ [1] K. Hu, H. Rahmandad, T.S. Jackson, W. Winchester, Factors inﬂuencing the risk of                    7862.0001458.
+     falls in the construction industry: a review of the evidence, Constr. Manag. Econ. 29          [28] K. Yang, C.R. Ahn, M.C. Vuran, H. Kim, Collective sensing of Workers' gait patterns
+     (4) (2011) 397–416, https://doi.org/10.1080/01446193.2011.558104.                                   to identify fall hazards in construction, Autom. Constr. 82 (2017) 166–178, https://
+ [2] A.P.C. Chan, F.K.W. Wong, D.W.M. Chan, M.C.H. Yam, A.W.K. Kwok, E.W.M. Lam,                         doi.org/10.1016/j.autcon.2017.04.010.
+     E. Cheung, Work at height fatalities in the repair, maintenance, alteration, and               [29] J. Howcroft, J. Kofman, E.D. Lemaire, Review of fall risk assessment in geriatric
+     addition works, ASCE J. Constr. Eng. Manag. 134 (7) (2008) 527–535, https://doi.                    populations using inertial sensors, J. Neuroeng. Rehabil. 10 (1) (2013) 91, https://
+     org/10.1061/(ASCE)0733-9364(2008)134:7(527).                                                        doi.org/10.1186/1743-0003-10-91.
+ [3] R.Y.M. Li, S.W. Poon, Workers' compensation for non-fatal construction accidents:              [30] M.F. Antwi-Afari, H. Li, D.J. Edwards, E.A. Pärn, D. Owusu-Manu, J. Seo,
+     review of Hong Kong court cases, Asian Soc. Sci. 5 (11) (2009) 15–24. Available via                 A.Y.L. Wong, Identiﬁcation of potential biomechanical risk factors for low back
+     http://hdl.handle.net/10722/125347 , Accessed date: June 2018.                                      disorders during repetitive rebar lifting, Constr. Innov. Inf. Process Manage. (2018),
+ [4] Development Bureau, The Government of the Hong Kong SAR, Accident statistics                        https://doi.org/10.1108/CI-05-2017-0048.
+     and analyses for public works contracts 2016, Available via https://www.devb.gov.              [31] M.F. Antwi-Afari, H. Li, D.J. Edwards, E.A. Pärn, J. Seo, A.Y.L. Wong, Eﬀects of
+     hk/ﬁlemanager/en/content_32/2016_Annual_Report.pdf, (2017) , Accessed date:                         diﬀerent weight and lifting postures on postural control during repetitive lifting
+     September 2017.                                                                                     tasks, Int. J. Build. Pathol. Adapt. 35 (3) (2017) 247–263, https://doi.org/10.1108/
+ [5] Bureau of Labor Statistics (BLS), Civilian occupations with high fatal injury counts                IJBPA-05-2017-0025.
+     by leading event (online), Available via https://www.bls.gov/iif/oshwc/cfoi/                   [32] M.F. Antwi-Afari, H. Li, D.J. Edwards, E.A. Pärn, J. Seo, A.Y.L. Wong,
+     cfch0014.pdf, (2016) , Accessed date: October 2017.                                                 Biomechanical analysis of risk factors for work-related musculoskeletal disorders
+ [6] Center for Construction Research and Training (CPWR), The Construction Chart                        during repetitive lifting task in construction workers, Autom. Constr. 83 (2017)
+     Book: The United States Construction Industry and its Workers, 5th Ed., Silver                      41–47, https://doi.org/10.1016/j.autcon.2017.07.007.
+     Spring, MD, 2013 Available via https://www.cpwr.com/sites/default/ﬁles/                        [33] K.M. Culhane, M. O'connor, D. Lyons, G.M. Lyons, Accelerometers in rehabilitation
+     research/CB4_Final%20for%20web.pdf , Accessed date: June 2018.                                      medicine for older adults, Age Ageing 34 (6) (2005) 556–560, https://doi.org/10.
+ [7] G.S. Earnest, C.M. Branche, Knowledge gaps and emerging issues for fall control in                  1093/ageing/aﬁ192.
+     construction, Fall Prevention and Protection, Taylor & Francis, Boca Raton, FL, 1-             [34] D. Giansanti, Investigation of fall-risk using a wearable device with accelerometers
+     4822-1714-7, 2016.                                                                                  and rate gyroscopes, Physiol. Meas. 27 (11) (2006) 1081, https://doi.org/10.1088/
+ [8] M.M. Lehtola, H.F. Van Der Molen, J. Lappalainen, P.L.T. Hoonakker, H. Hsiao,                       0967-3334/27/11/003.
+     R.A. Haslam, A.R. Hale, J.H. Verbeek, The eﬀectiveness of interventions for pre-               [35] M.J. Mathie, A.C. Coster, N.H. Lovell, B.G. Celler, Accelerometry: providing an
+     venting injuries in the construction industry: a systematic review, Am. J. Prev. Med.               integrated, practical method for long-term, ambulatory monitoring of human
+     35 (1) (2008) 77–85, https://doi.org/10.1016/j.amepre.2008.03.030.                                  movement, Physiol. Meas. 25 (2) (2004) R1, https://doi.org/10.1088/0967-3334/
+ [9] T.A. Bentley, R.A. Haslam, Identiﬁcation of risk factors and countermeasures for                    25/2/R01.
+     slip, trip and fall accidents during the delivery of mail, Appl. Ergon. 32 (2) (2001)          [36] S.J. Preece, J.Y. Goulermas, L.P. Kenney, D. Howard, K. Meijer, R. Crompton,
+     127–134, https://doi.org/10.1016/S0003-6870(00)00048-X.                                             Activity identiﬁcation using body-mounted sensors—a review of classiﬁcation
+[10] L.D. Kincl, A. Bhattacharya, P.A. Succop, C.S. Clark, Postural sway measurements: a                 techniques, Physiol. Meas. 30 (4) (2009) R1–R33, https://doi.org/10.1088/0967-
+     potential safety monitoring technique for workers wearing personal protective                       3334/30/4/R01.
+     equipment, Appl. Occup. Environ. Hyg. 17 (4) (2002) 256–266, https://doi.org/10.               [37] H. Jebelli, C.R. Ahn, T.L. Stentz, Comprehensive fall-risk assessment of construction
+     1080/10473220252826565.                                                                             workers using inertial measurement units: validation of the gait-stability metric to
+[11] H.J. Lipscomb, J.E. Glazner, J. Bondy, K. Guarini, D. Lezotte, Injuries from slips and              assess the fall risk of Iron workers, J. Comput. Civ. Eng. 30 (3) (2016) 04015034, ,
+     trips in construction, Appl. Ergon. 37 (3) (2006) 267–274, https://doi.org/10.                      https://doi.org/10.1061/(ASCE) CP.1943-5487.0000511.
+     1016/j.apergo.2005.07.008.                                                                     [38] C.F. Lai, S.Y. Chang, H.C. Chao, Y.M. Huang, Detection of cognitive injured body
+[12] G. Gauchard, N. Chau, J.M. Mur, P. Perrin, Falls and working individuals: role of                   region using multiple triaxial accelerometers for elderly falling, IEEE Sensors J. 11
+     extrinsic and intrinsic factors, Ergonomics 44 (14) (2001) 1330–1339, https://doi.                  (3) (2011) 763–770, https://doi.org/10.1109/JSEN.2010.2062501.
+     org/10.1080/00140130110084791.                                                                 [39] K. Yang, C.R. Ahn, M.C. Vuran, S.S. Aria, Semi-supervised near-miss fall detection
+[13] H. Hsiao, P. Simeonov, Preventing falls from roofs: a critical review, Ergonomics 44                for ironworkers with a wearable inertial measurement unit, Autom. Constr. 68
+     (5) (2001) 537–561, https://doi.org/10.1080/00140130110034480.                                      (2016) 194–202, https://doi.org/10.1016/j.autcon.2016.04.007.
+[14] C.F. Chi, T.C. Chang, H.I. Ting, Accident patterns and prevention measures for fatal           [40] J.C. Ayena, H. Zaibi, M.J.D. Otis, B.A.J. Ménélas, Home-based risk of falling as-
+     occupational falls in the construction industry, Appl. Ergon. 36 (4) (2005) 391–400,                sessment test using a closed-loop balance model, IEEE Trans. Neural Syst. Rehabil.
+     https://doi.org/10.1016/j.apergo.2004.09.011.                                                       Eng. 24 (12) (2016) 1351–1362, https://doi.org/10.1109/TNSRE.2015.2508960.
+[15] X. Huang, J. Hinze, Analysis of construction worker fall accidents, J. Constr. Eng.            [41] S. Brassard, M.J.D. Otis, A. Poirier, B.A.J. Ménélas, Towards an automatic version of
+     Manag. 129 (3) (2003) 262–271, https://doi.org/10.1061/(ASCE)0733-                                  the berg balance scale test through a serious game, Proceedings of the Second ACM
+     9364(2003)129:3(262).                                                                               Workshop on Mobile Systems, Applications, and Services for Healthcare, 2012, p. 5,
+[16] M.R. Hallowell, J.A. Gambatese, Activity-based safety risk quantiﬁcation for con-                   , https://doi.org/10.1145/2396276.2396282.
+     crete formwork construction, J. Constr. Eng. Manag. 135 (10) (2009) 990–998,                   [42] S.R. Edgar, T. Swyka, G. Fulk, E.S. Sazonov, Wearable shoe-based device for re-
+     https://doi.org/10.1061/(ASCE)CO.1943-7862.0000071.                                                 habilitation of stroke patients, Proceeding of Engineering in Medicine and Biology
+[17] W.R. Chang, S. Leclercq, T.E. Lockhart, R. Haslam, State of science: occupational                   Society (EMBC), 2010 Annual International Conference of the Institute of Electrical
+     slips, trips and falls on the same level, Ergonomics 59 (7) (2016) 861–883, https://                and Electronics Engineers (IEEE), Buenos Aires, Argentina, 31 August–4 September
+     doi.org/10.1080/00140139.2016.1157214.                                                              2010, 2010, pp. 3772–3775, , https://doi.org/10.1109/IEMBS.2010.5627577.
+[18] T.A. Bentley, Slip, trip and fall accidents occurring during the delivery of mail,             [43] D. Gagnon, B.A.J. Ménélas, M.J.D. Otis, Qualitative risk of falling assessment based
+     Ergonomics 41 (12) (1998) 1859–1872, https://doi.org/10.1080/                                       on gait abnormalities, 2013 Institute of Electrical and Electronics Engineers (IEEE)
+     001401398186027.                                                                                    International Conference on In Systems, Man, and Cybernetics (SMC), 2013, pp.
+[19] D.P. Manning, I. Ayers, C. Jones, M. Bruce, K. Cohen, The incidence of underfoot                    3966–3971, , https://doi.org/10.1109/SMC.2013.677.
+     accidents during 1985 in a working population of 10,000 Merseyside people, J.                  [44] T. Salpavaara, J. Verho, J. Lekkala, J. Halttunen, Wireless insole sensor system for
+     Occup. Accid. 10 (2) (1988) 121–130, https://doi.org/10.1016/0376-6349(88)                          plantar force measurements during sport events, Proceedings of IMEKO XIX World
+     90026-0.                                                                                            Congress on Fundamental and Applied Metrology, September 6–11, Lisbon,
+[20] D.P. Manning, Slipping and the penalties inﬂicted generally by the law of grav-                     Portugal, 2009 978-963-88410-0-1, pp. 2118–2123.
+     itation, Occup. Med. 38 (4) (1988) 123–127, https://doi.org/10.1093/occmed/38.                 [45] M.N. Orlin, T.G. McPoil, Plantar Pressure Assessment, Phys. Ther. 80 (4) (2000)
+     4.123.                                                                                              399–409, https://doi.org/10.1093/ptj/80.4.399.
+[21] C.J. Lehtola, W.J. Becker, C.M. Brown, Preventing Injuries from Slips, Trips and               [46] W. Tao, T. Liu, R. Zheng, H. Feng, Gait analysis using wearable sensors, Sensors 12
+
+
+                                                                                              198
+M.F. Antwi-Afari et al.                                                                                                                       Automation in Construction 96 (2018) 189–199
+
+
+     (2) (2012) 2255–2283, https://doi.org/10.3390/s120202255.                                     [63] C. Pradhan, M. Wuehr, F. Akrami, M. Neuhaeusser, S. Huth, T. Brandt, K. Jahn,
+[47] G.M. Jeong, H.T. Phuc, C. Sang-Il, Classiﬁcation of three types of walking activities              R. Schniepp, Automated classiﬁcation of neurological disorders of gait using spatio-
+     regarding stairs using plantar pressure sensors, IEEE Sensors J. 17 (9) (2017)                     temporal gait parameters, J. Electromyogr. Kinesiol. 25 (2) (2015) 413–422,
+     2638–2639, https://doi.org/10.1109/JSEN.2017.2682322.                                              https://doi.org/10.1016/j.jelekin.2015.01.004.
+[48] T.G. Dietterich, Machine learning for sequential data: a review, Joint IAPR                   [64] C.M. Bishop, Pattern Recognition and Machine Learning, Springer, New York,
+     International Workshops on Statistical Techniques in Pattern Recognition (SPR) and                 9780387310732, 2006.
+     Structural and Syntactic Pattern Recognition (SSPR), Springer, Berlin, Heidelberg,            [65] R.O. Duda, P.E. Hart, D.G. Stork, Pattern Classiﬁcation, 2nd Ed., John Wiley & Sons,
+     2002, pp. 15–30, , https://doi.org/10.1007/3-540-70659-3_2.                                        New York, 9781118586006, 2001.
+[49] L. Wei, E. Keogh, Semi-supervised time series classiﬁcation, Proceedings of the 12th          [66] L. Breiman, Classiﬁcation and Regression Trees, Wadsworth International Group,
+     ACM SIGKDD International Conference on Knowledge Discovery and Data Mining,                        Belmont, CA, 9780534980535, 1984.
+     ACM, 2006, pp. 748–753, , https://doi.org/10.1145/1150402.1150498.                            [67] F. Attal, S. Mohammed, M. Dedabrishvili, F. Chamroukhi, L. Oukhellou, Y. Amirat,
+[50] O. Banos, J.M. Galvez, M. Damas, H. Pomares, I. Rojas, Window size impact in                       Physical human activity recognition using wearable sensors, Sensors 15 (12) (2015)
+     human activity recognition, Sensors 14 (4) (2014) 6474–6499, https://doi.org/10.                   31314–31338, https://doi.org/10.3390/s151229858.
+     3390/s140406474.                                                                              [68] Z. Wang, Z. Yang, T. Dong, A review of wearable technologies for elderly care that
+[51] R. Akhavian, A.H. Behzadan, Smartphone-based construction workers' activity re-                    can accurately track indoor position, recognize physical activities and monitor vital
+     cognition and classiﬁcation, Autom. Constr. 71 (2) (2016) 198–209, https://doi.                    signs in real time, Sensors 17 (2) (2017) 341, https://doi.org/10.3390/s17020341.
+     org/10.1016/j.autcon.2016.08.015.                                                             [69] C. Lehmann, T. Koenig, V. Jelic, L. Prichep, R.E. John, L.O. Wahlund, Y. Dodge,
+[52] N. Ravi, N. Dandekar, P. Mysore, M.L. Littman, Activity recognition from accel-                    T. Dierks, Application and comparison of classiﬁcation algorithms for recognition of
+     erometer data, Proceeding of the 7th Innovative Applications of Association for the                Alzheimer's disease in electrical brain activity (EEG), J. Neurosci. Methods 161 (2)
+     Advancement of Artiﬁcial Intelligence, CA, 5 2005, pp. 1541–1546.                                  (2007) 342–350, https://doi.org/10.1016/j.jneumeth.2006.10.023.
+[53] X. Su, H. Tong, P. Ji, Activity Recognition with Smartphone Sensors, Tsinghua Sci.            [70] A. Liaw, M. Wiener, Classiﬁcation and regression by random forest, R News 2 (3)
+     Technol. 19 (3) (2014) 235–249, https://doi.org/10.1109/ccnc.2013.6488584.                         (2002) 18–22 (ISSN 1609-3631).
+[54] M.F. Antwi-Afari, H. Li, J. Seo, S. Lee, D.J. Edwards, A.Y.L. Wong, Wearable insole           [71] R. Debnath, N. Takahide, H. Takahashi, A decision based one-against-one method
+     pressure sensors for automated detection and classiﬁcation of slip-trip-loss-of-bal-               for multi-class support vector machine, Pattern. Anal. Applic. 7 (2) (2004) 164–175,
+     ance events in construction worker, Proceedings of Construction Research Congress,                 https://doi.org/10.1007/s10044-004-0213-6.
+     New Orleans, Louisiana, USA, April 2–4, 2018, 2018, https://doi.org/10.1061/                  [72] A.T. Özdemir, B. Barshan, Detecting falls with wearable sensors using machine
+     9780784481288.008.                                                                                 learning techniques, Sensors 14 (6) (2014) 10691–10708, https://doi.org/10.3390/
+[55] M.F. Antwi-Afari, Y. Yu, H. Li, A. Darko, J. Seo, A.Y.L. Wong, Automated detection                 s140610691.
+     and classiﬁcation of construction workers' awkward working postures using wear-               [73] P. Refaeilzadeh, L. Tang, H. Liu, Cross-validation, in: L. Liu, M.T. Özsu (Eds.),
+     able insole pressure sensors, Proceedings of 1st Postgraduate in Applied Research                  Encyclopedia of Database Systems, Springer, Boston, MA, 2009, pp. 532–538, ,
+     Conference in Africa (ARCA), Accra, Ghana, February 20–24, 2018, 2018.                             https://doi.org/10.1007/978-0-387-39940-9.
+[56] T.K. Lim, S.M. Park, H.C. Lee, D.E. Lee, Artiﬁcial neural network–based slip-trip             [74] I. Guyon, A. Elisseeﬀ, An introduction to variable and feature selection, J. Mach.
+     classiﬁer using smart sensor for construction workplace, J. Constr. Eng. Manag. 142                Learn. Res. 3 (7/8) (2003) 1157–1182 (ISSN: 1532-4435).
+     (2) (2016) 04015065, , https://doi.org/10.1061/(ASCE) CO.1943-7862.0001049.                   [75] R. Kohavi, G.H. John, Wrappers for Feature Subset Selection, Artif. Intell. 97 (1–2)
+[57] L. Bao, S.S. Intille, Activity recognition from user-annotated acceleration data,                  (1997) 273–324, https://doi.org/10.1016/S0004-3702(97)00043-X.
+     Pervasive Computing Second International Conference, Linz/Vienna, Austria, April              [76] K. Altun, B. Barshan, O. Tunçel, Comparative study on classifying human activities
+     18–23, Vol. 3001 2004, pp. 1–17, , https://doi.org/10.1007/978-3-540-24646-6_1.                    with miniature inertial and magnetic sensors, Pattern Recogn. 43 (10) (2010)
+[58] S.A. Bus, R. Waaijman, The value of reporting pressure –time integral data in ad-                  3605–3620, https://doi.org/10.1016/j.patcog.2010.04.019.
+     dition to peak pressure data in studies on the diabetic foot: a systematic review,            [77] F. Foerster, J. Fahrenberg, Motion pattern and posture: correctly assessed by cali-
+     Clin. Biomech. 28 (2) (2013) 117–121, https://doi.org/10.1016/j.clinbiomech.                       brated accelerometers, Behav. Res. Methods Instrum. Comput. 32 (3) (2000)
+     2012.12.002.                                                                                       450–457, https://doi.org/10.3758/BF03200815.
+[59] S. Liang, Y. Ning, H. Li, L. Wang, Z. Mei, Y. Ma, G. Zhao, Feature selection and              [78] F. Foerster, M. Smeja, J. Fahrenberg, Detection of posture and motion by accel-
+     predictors of falls with foot force sensors using KNN-based algorithms, Sensors 15                 erometry: a validation study in ambulatory monitoring, Comput. Hum. Behav. 15
+     (11) (2015) 29393–29407, https://doi.org/10.3390/s151129393.                                       (5) (1999) 571–583, https://doi.org/10.1016/S0747-5632(99)00037-0.
+[60] S.K. Murthy, Automatic construction of decision trees from data: a multi-dis-                 [79] T.G. Pavey, N.D. Gilson, S.R. Gomersall, B. Clark, S.G. Trost, Field evaluation of a
+     ciplinary survey, Data Min. Knowl. Disc. 2 (4) (1998) 345–389, https://doi.org/10.                 random forest activity classiﬁer for wrist-worn accelerometer data, J. Sci. Med.
+     1023/A:1009744630224.                                                                              Sport 20 (1) (2017) 75–80, https://doi.org/10.1016/j.jsams.2016.06.003.
+[61] S. Haykin, Neural Networks and Learning Machines, 3rd Edition, Pearson                        [80] S. Sauseng, T. Kästenbauer, G. Sokol, K. Irsigler, Estimation of risk for plantar foot
+     Education, Upper Saddle River, New Jersey, 978-0-13-147139-9, 2009.                                ulceration in diabetic patients with neuropathy, diabetes, Nutr. Metab. 12 (3)
+[62] G.D. Fulk, S.R. Edgar, R. Bierwirth, P. Hart, P. Lopez-Meyer, E. Sazonov, Identifying              (1999) 189–193 (ISSN: 0394-3402).
+     activity levels and steps in people with stroke using a novel shoe-based sensor, J.           [81] F. de Arriba-Pérez, M. Caeiro-Rodríguez, J.M. Santos-Gago, Collection and pro-
+     Neurol. Phys. Ther. 36 (2) (2012) 100–107, https://doi.org/10.1097/NPT.                            cessing of data from wrist wearable devices in heterogeneous and multiple-user
+     0b013e318256370c.                                                                                  scenarios, Sensors 16 (9) (2016) 1538, https://doi.org/10.3390/s16091538.
+
+
+
+
+                                                                                             199
+

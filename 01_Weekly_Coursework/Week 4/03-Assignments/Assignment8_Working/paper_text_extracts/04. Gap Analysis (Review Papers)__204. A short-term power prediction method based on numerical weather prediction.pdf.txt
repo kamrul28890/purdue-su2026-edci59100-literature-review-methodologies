@@ -1,0 +1,1218 @@
+                                                              Expert Systems With Applications 274 (2025) 126979
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                       Expert Systems With Applications
+                                                           journal homepage: www.elsevier.com/locate/eswa
+
+
+
+
+A short-term power prediction method based on numerical weather
+prediction correction and the fusion of adaptive spatiotemporal graph
+feature information for wind farm cluster
+Mao Yang a, Chao Han a , Wei Zhang a , Guozhong Fang b , Yunpeng Jia c
+a
+  Key Laboratory of Modern Power System Simulation and Control & Renewable Energy Technology, Ministry of Education (Northeast Electric Power University), Jilin
+132012, China
+b
+  Northeast Branch of State Grid Corporation of China, Shenyang 110180, China
+c
+  Grid Jilin Electric Power Co., Ltd., Jilin Power Supply Company of State Grid, Jilin 132011, China
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 In recent years, with the construction of new electricity system, the scale of wind power grid connection has been
+Wind power prediction                                     continuously expanding. Accurate wind power prediction is crucial for ensuring the stable operation of the power
+NWP wind speed correction                                 system. However, the existing short-term power prediction methods for wind farm cluster (WFC) have short-
+Adaptive spatiotemporal graph
+                                                          comings in extracting spatiotemporal features, making it difficult to achieve high-precision prediction. Therefore,
+Deep learning
+                                                          this paper proposes a WFC short-term power prediction method based on numerical weather prediction (NWP)
+                                                          correction and the information fusion of adaptive spatiotemporal graph feature for WFC. Firstly, similar infor-
+                                                          mation between future and past periods of NWP is sought to achieve NWP wind speed correction by the defined
+                                                          error correlation ratio. Then, the corrected NWP wind speed is combined with the information of geographical
+                                                          location of the wind farms, and the adaptive spatiotemporal graph network is used to achieve short-term wind
+                                                          power prediction of the WFC. The proposed method is applied to two large-scale WFCs in China. The experi-
+                                                          mental results show that compared with other comparative algorithms, the RMSE is reduced by 0.0100 averagely
+                                                          and the MAE is reduced by 0.0096 averagely. The coefficient of determination is improved 0.0440 averagely and
+                                                          the accuracy rate is improved 1.01% averagely. The above results indicate that the predicted power obtained by
+                                                          the proposed method is closest to the actual power. It is beneficial for improving the utilization efficiency of wind
+                                                          power and reducing the pressure on power system scheduling.
+
+
+
+
+1. Introduction                                                                                 scale wind power is directly integrated into the power grid, it will affect
+                                                                                                the stability of the power system and increase scheduling difficulties
+1.1. Background                                                                                 (Yang et al., 2025; Lu et al., 2024). Accurate wind power prediction can
+                                                                                                predict the trend and fluctuation of wind power in advance, which is of
+    In recent years, with the increasing depletion of fossil fuels, more and                    great significance for the formulation of dispatch plans of power grid
+more countries have regarded renewable energy as the mainstay of                                and the stable operation of the power system (Yang et al., 2024; Lu et al.,
+power generation (Wang et al., 2023; Zhang et al., 2022 ; Zhuo et al.,                          2023).
+2022). Wind energy is widely used due to its green and renewable
+characteristics, and the installed capacity of wind power continues to
+increase (Huang et al., 2024; Huang et al., 2023). Fig. 1 shows the                             1.2. Previous work
+changes in installed capacity of wind power from 2014 to 2023. In
+addition, wind power generation is mainly affected by weather and                                  Wind power prediction (WPP) establishes a prediction model based
+environmental factors, and it has the characteristics of randomness,                            on meteorological and environmental information of wind farms (WFs)
+intermittency, and volatility (Yang et al., 2025; Lu et al., 2024). If large-                   (Yang et al., 2024; Li et al., 2024). The existing WPP methods can be
+                                                                                                roughly divided into three categories: physical models, statistical
+
+
+    E-mail addresses: 20102339@neepu.edu.cn (M. Yang), 1202200029@neepu.edu.cn (C. Han), zhangwei@neepu.edu.cn (W. Zhang), fangguozhong@ne.sgcc.com.
+cn (G. Fang), jljiayp@jl.sgcc.com.cn (Y. Jia).
+
+https://doi.org/10.1016/j.eswa.2025.126979
+Received 22 November 2024; Received in revised form 8 January 2025; Accepted 18 February 2025
+Available online 21 February 2025
+0957-4174/© 2025 Elsevier Ltd. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+M. Yang et al.                                                                                                     Expert Systems With Applications 274 (2025) 126979
+
+
+                                                                                   previously predicted wind speed, improving the accuracy of wind speed
+                                                                                   prediction. However, prediction errors have significant randomness,
+                                                                                   which may lead to unstable correction performance. Jiang et al. (2021)
+                                                                                   proposes a combined prediction model of deterministic prediction based
+                                                                                   on improved multi-objective optimization algorithm and interval pre-
+                                                                                   diction based on distribution fitting, which can provide effective wind
+                                                                                   speed point prediction and interval prediction. Takara et al. (2024)
+                                                                                   proposes a combined prediction model that combines advanced deep
+                                                                                   neural networks with superposition-based probability learning. This
+                                                                                   method can improve the multi-step prediction accuracy of wind speed,
+                                                                                   laying the foundation for effective energy management and policy
+                                                                                   planning in the renewable energy industry. Aly (2020) applied an
+                                                                                   intelligent hybrid model of neural wavelets, time series, and recursive
+                                                                                   Kalman filter to wind speed prediction to improve the accuracy of wind
+                                                                                   speed prediction. However, the recursive Kalman filter has disadvan-
+                                                                                   tages such as sensitivity to initial values and strong dependence on noise
+                                                                                   statistical characteristics. In addition, artificial neural networks have the
+                                                                                   disadvantages of long training time and poor interpretability.
+                                                                                       In terms of wind power prediction for wind farm clusters, Wu et al
+                                                                                   (2021) proposed a CNN-LSTM hybrid model and the spatiotemporal
+   Fig. 1. Wind power installed capacity change chart from 2014 to 2023.           correlation vectors of meteorological features are extracted using Con-
+                                                                                   volutional neural network (CNN) and the time series are reconstructed.
+models, and artificial intelligence models. Physical method mainly uses            For multi-step prediction, Long Short Term Memory (LSTM) uses
+physical laws that control atmospheric behavior to simulate the airflow            reconstructed time series as input to extract temporal feature relation-
+field of wind farms, and then calculate the corresponding power gen-               ships between historical time points. The test results show that the
+eration of wind turbines. Numerical weather prediction (NWP) plays a               hybrid model outperforms a single CNN and a single LSTM model in
+crucial role in physical methods. It is widely used for wind power pre-            prediction. Yildiz et al. (2021) proposed an improved deep convolu-
+diction on medium and long-term time scales. However, the modeling                 tional neural network based on residuals for efficient WPP. This network
+process of Physical method is complex and its calculation speed is slow            has lower complexity and computational cost, but the remaining
+(Yang et al., 2025; Li et al., 2024). So, it is rarely used for short-term         connection methods also lose some features of the data. Heinemann
+wind power prediction. Statistical methods establish predictive map-               et al. proposed a combined prediction model of equal weight decision
+ping relationships based on historical data (Yang et al., 2024; Yang et al.,       tree and Support vector machine (SVM), which improved the prediction
+2024). However, statistical methods are not suitable for solving power             accuracy of WP by 37 % (Heinermann and Kramer, 2016). Hossain et al.
+prediction problems with nonlinear data. In the past decade, artificial            constructed three models of LSTM, Gate recurrent unit (GRU), and fully
+intelligence models have flourished in various fields such as time series          connected networks as well as the Harris Hawks algorithm is used to
+prediction, fault diagnosis, quality inspection, and structural safety             determine the combined weights of the three models, improving
+assessment (Wang et al., 2023). Artificial intelligence models can cap-            modeling efficiency (Hossain, et al, 2021). Alkesaiberi et al. (2022) used
+ture the nonlinear relationship between the original data samples and              Bayesian algorithms to optimize the parameters of the Deep learning
+WP, fully explore the data features in the original data samples, and              (DL) model to improve modeling accuracy, and the lag components are
+improve the prediction accuracy of WP (Moreno, et al., 2024). However,             introduced into the input of the data to improve the model’s learning
+a single statistical machine learning model has drawbacks such as local            ability for dynamic data. Samadianfard et al. (2020) provides a pre-
+optima, overfitting, and poor generalization ability. When predicting the          diction method based on enhanced residual CNN, which reduces
+regions with the most drastic sample fluctuations, the prediction error is         computational costs by converting wind speed sequences and converting
+relatively large (Ribeiro, et al., 2024). Based on the above issues, com-          meteorological data into images. Altan et al. (2021) discussed the ac-
+bination prediction models are gradually being applied in the field of             curate prediction of wind speed for non-stationary effects using the Grey
+WPP. The combination prediction model is based on maximizing in-                   Wolf Optimizer based on Long Short Term Memory (LSTM-GWO). The
+formation utilization (Takara et al., 2024). While considering the ad-             smoothed data is filtered to determine any missing data during the
+vantages of different models comprehensively, it optimizes the                     measurement process. The results indicate that the model improves the
+shortcomings of each model, significantly improving the accuracy of                original model and it better reflects the nonlinear characteristics of wind
+WPP (Li et al., 2024).                                                             speed. However, it does not provide equal support for traditional
+    For short-term wind power prediction, NWP wind speed is a very                 resources.
+important data feature, and the accuracy of NWP wind speed will                        Several deep learning based spatial methods have been proposed to
+directly affect the short-term wind power prediction results (Ahmadi               extract spatial correlations (Zhao et al., 2024; Wen et al., 2022; Wang
+and Khashei, 2021). Therefore, experts and scholars have done a lot of             et al., 2023; Xu et al., 2024). Wang et al. (2022) proposed an ultra short-
+work in NWP wind speed correction and wind speed prediction. Sama-                 term power prediction method for WFCs based on a constructed hier-
+dianfard et al (2020) used Whale Optimization Algorithm to optimize                archical directed graph structure. This method can describe the spatio-
+multi-layer perceptron (MLP-WOA) for wind speed prediction. Although               temporal correlation of adjacent WFs and exhibits excellent prediction
+this method achieves wind speed prediction, it requires careful param-             accuracy. Pei et al. (2022) proposed a prediction model for regional WFs
+eter design to avoid overfitting of the model. Sinvaldo Rodrigues Mor-             that can dynamically analyze the spatial correlation of time delay be-
+eno et al. (2020) & Silva et al. (2021) used decomposition methods for             tween regional WFs and other WFs based on the physical characteristics
+time series such as Variational Mode Decomposition (VMD) and Singular              of wind speed time delay within the region. Yu et al. (2020) proposed a
+Spectrum Analysis (SSA) to decompose the wind speed series, further                Stacked Graph Neural Network (SGNN) for extracting spatial features
+mining the data features of wind speed. Then, the accuracy of wind                 between different wind turbines within a certain range of wind farms
+speed prediction is improved by integrating multiple deep learning al-             based on geographic location and other relevant graphic information to
+gorithms into an artificial intelligence model for wind speed prediction.          improve prediction accuracy. Fu et al. (2019) proposed a multi-lead self-
+Duan et al. (2021) decomposes the prediction error to correct the                  attention method to capture spatial correlations between WFs and it can
+
+                                                                               2
+M. Yang et al.                                                                                                           Expert Systems With Applications 274 (2025) 126979
+
+
+                                                                                  are as follows:
+
+                                                                                     (1) A new correction method of NWP wind speed is proposed. A new
+                                                                                         evaluation index that is named the error correlation ratio (ECR) is
+                                                                                         defined. The method is to find the minimum of the ECR is used to
+                                                                                         find similar segments between the original NWP wind speed and
+                                                                                         the historical actual wind speed (WS). And historical actual WS is
+                                                                                         insteaded of future predicted wind speed in similar segments to
+                                                                                         improve the accuracy of NWP and further enhance the accuracy
+                                                                                         of WPP.
+                                                                                     (2) A short-term wind power prediction model is proposed based on
+                                                                                         adaptive spatiotemporal graph network for wind farm cluster,
+                                                                                         which can integrate the information of NWP feature information
+                                                                                         and the information of wind power feature in multiple time
+                                                                                         scales, fully explore the spatiotemporal correlation between data
+                                                                                         features and wind power to achieve short-term wind power pre-
+                                                                                         diction for wind farm cluster.
+                                                                                     (3) The simulation experiment verifies the progressiveness and su-
+                                                                                         periority of the proposed method by two WFCs from different
+    Fig. 2. Comparison between NWP wind speed and actual wind speed.                     regions of China.
+
+extract temporal dependencies by sequence to sequence. However, these                 The rest of this paper is organized as follows: in Section 2, the NWP
+methods were aimed at exploring the spatial correlation between                   wind speed correction and a short-term power prediction method based
+different wind farms or wind turbines, without considering the spatial            on the fusion of adaptive spatiotemporal graph feature information for
+characteristics between WP variables for each wind turbine, which also            wind farm cluster are proposed. In Section 3, several comparative ex-
+have a significant impact on the output of WP. In recent years, graph             periments are conducted to analyze the experimental results and verify
+neural networks have gradually begun to be applied in spatiotemporal              the effectiveness of the model proposed in the article by applying
+prediction due to their ability to better handle unstructured data and            different evaluation metrics. Finally, conclusions are provided in Section
+effectively extract spatial features (Bentsen et al. 2023). Khodayar and          4.
+Wang (2019) extracted spatial and temporal features by graph con-
+volutional networks and LSTM respectively. Every WF is represented by             2. Method
+nodes in an undirected graph. In addition, Bidirectional Gate Recurrent
+Unit (BiGRU) has stronger learning ability than LSTM because it can               2.1. The description of the structure topology diagram and dataset
+learn time series from both positive and negative directions simulta-
+neously. Thereby, more important information time for related time                   The graph network composed of the entire WFC is defined by G,
+series can be obtained (Wang et al., 2022). Wang et al. (2022) described          where V represents the set of WFs, and N represents the number of
+the spatiotemporal correlation between wind farms by a hierarchical               vertices in the topology map, which can also be referred to as nodes in
+directed graph structure. Then the Graph Convolutional Network (GCN)              the topology map. E represents the set of edges with spatial proximity
+is applied to predict the power of WFC. Zhao et al. (2024) propose a              between nodes. A is the adjacency matrix of G, where A ∈ RN×N . Avi ,vj
+Double Attention-based Spatial–Temporal Neural Network (DA-STNet)
+                                                                                  indicates the connection between nodes vi and vj . The sequence of wind
+for medium-term wind power forecasting. The attention mechanism is                                                     (              )T
+combined with graph neural network to improve the prediction accu-                power can be represented as Xt = x1t , x2t , ⋯, xNt    ∈ RN×F , where F
+racy of wind power. Peng et al. (2024) & Liu et al. (2023) applied graph          represents the feature dimension, t represents the time step, and xit
+neural networks to wind power ramping prediction and urban wind                   represents the observed value of the i th wind farm at time step t.
+speed prediction, improving prediction accuracy and providing a new                   A topology matrix X = (Xt− τ+1 , ⋯, Xt− 1 , Xt ) ∈ Rτ×N×F with a given
+way to ensure power supply.                                                       historical time step is given. And the future WP Y       ̂ = (X
+                                                                                                                                                ̂ t+1 , X
+                                                                                                                                                        ̂ t+2 , …,
+    In summary, the decomposition methods of time series can further              ̂ t+M ) ∈ RM×N×F for M time steps is predicted. Therefore, the problem of
+                                                                                  X
+explore the hidden features of wind speed data. At the same time, the             WPP is further quantified as learning the mapping function F to map the
+data of wind speed can identify the trend changes of wind speed series            topology information matrix that is for historical time step to the to-
+after decomposition. Some artificial intelligence algorithms also have            pology information matrix that is for future time step:
+long training times and cannot accurately predict the detailed fluctua-
+tions of wind speed. In terms of wind power prediction, graph neural              (X       ̂ t+2 , …, X
+                                                                                   ̂ t+1 , X          ̂ t+M ) = Fθ (Xt , Xt− 1 , …, Xt− τ+1 ; G)                       (1)
+networks can mine spatial correlation information between wind farms
+and it can be integrated with attention mechanisms and other feature              where, θ represents all learnable parameters in the model.
+engineering algorithms, demonstrating good portability. However, wind
+power may have different spatiotemporal correlation characteristics in            2.2. NWP wind speed correction
+different time scales, and NWP information and wind power information
+in multiple time scales can provide more data features for prediction             2.2.1. NWP wind speed characteristics
+models. Static graph neural networks are unable to capture dynamic                   The information of the NWP is necessary for predicting WP. How-
+information of wind power in multiple time scales, and dynamic graph              ever, it often has significant deviations from actual weather information.
+neural network modeling suffers from problems such as long running                The most important feature of NWP is the predicted wind speed. As
+time and low operating efficiency.                                                shown in Fig. 2, there is a significant deviation between NWP wind
+                                                                                  speed and actual wind speed in known historical data. Firstly, NWP wind
+1.3. Our contributions in this article                                            speed cannot track the trend of actual wind speed in a timely manner.
+                                                                                  Secondly, the forecast curve of NWP wind speed is relatively smooth and
+    In response to the above issues, the contributions made in this article       lacks detailed fluctuation information. To achieve the correction of NWP
+
+                                                                              3
+M. Yang et al.                                                                                                          Expert Systems With Applications 274 (2025) 126979
+
+
+
+
+                                                         Fig. 3. NWP wind speed correction principle.
+
+
+wind speed in the future period, a method of searching for similar seg-
+                                                                                           1∑ (         (     ))
+ments was adopted for wind speed correction. Fig. 3 shows the principle             r1 =     M x + β1 E1 w(i)                                                         (3)
+                                                                                           I
+for NWP wind speed correction.
+    The data of NWP wind speed has strong randomness and volatility,                d1 = x − r1                                                                       (4)
+and its sequence contains not only trend information but also a large
+amount of random noise. If similar segments are directly searched for               where, the operator that is the local mean of the signal is generated by
+through the original sequence of NWP wind speed, it may cause                       M( • ). The number of groups of white noise is I.
+misjudgment because the the trend information of NWP wind speed is
+inability to be accurately determined. It results in the inability to correct           Step 3: The signals of the white noise are continued to add. And the
+NWP wind speed or poor effectiveness of NWP wind speed. Therefore, it                   second residual r2 is calculated. The second-order modal component
+is crucial to obtain the trend sequence of the wind speed from the                      d2 of the original time series of WP. They are as shown in equation
+original NWP wind speed. Firstly, the original sequence of wind speed is                (4) and equation (5):
+decomposed. Then the decomposed permutation entropies are calcu-
+                                                                                              I
+lated. Finally, the decomposed data is reconstructed based on PE to                        1∑     (          (     ))
+                                                                                    r2 =         M r1 + β2 E2 w(i)                                                    (4)
+obtain the reconstructed trend component.                                                  I i=1
+
+2.2.2. The decomposition of NWP wind speed                                          d2 = r 1 − r 2                                                                    (5)
+    To improve the accuracy of signal decomposition and prevent the
+influence of noise on signal components, improved ensemble empirical                in the formula, β1 represents the expected signal-to-noise ratio of the
+empirical mode decomposition with adaptive noise (ICEEMDAN) signal                  second decomposition. The second-order modal components E2(⋅) is
+decomposition method is used to decompose the original sequence of                  generated using the EMD method.
+NWP wind speed. The ICEEMDAN method is a further improvement on
+the complete ensemble empirical mode decomposition with adaptive                        Step 4: It is Similar to Step 3. The k-th residual and k-th modal
+noise (CEEMDAN) method. ICEEMDAN solves the possible problems of                        component are calculated. They are as shown in equation (6) and
+pseudo modes in the CEEMDAN method by selecting white noise. This                       equation (7):
+method not only solves the problem of mode aliasing but also greatly                          I
+                                                                                           1∑     (             (     ))
+reduces residual noise in the intrinsic mode function (IMF). Accurate               rk =         M rk− 1 + βk E2 w(i)                                                 (6)
+                                                                                           I i=1
+modal decomposition results can be obtained with fewer iterations, and
+they have been applied in various fields. It also has good decomposition
+                                                                                    dk = rk− 1 − rk                                                                   (7)
+and feature extraction capabilities for the information of different scale
+components contained in the time series of WP. The basic steps for
+                                                                                    where, rk represents k-th residual. dk represents k-th modal component.
+decomposition using ICEEMDAN are as follows:
+                                                                                    rk− 1 represents (k-1)-th residual. βk represents the expected signal-to-
+                                                                                    noise ratio of the k-th decomposition.
+     Step 1: Set x as the time series of WP that needs to be decomposed.
+     And the special noise is added to it. It is as shown in equation (2):
+                                                                                        Step 5: the step 4 is repeated until the maximum number of iterations
+                (     )
+x(i) = x + β1 E1 w(i)                                                   (2)             is reached or the residual cannot be further decomposed.
+
+in the formula (2), β1 represents the expected signal-to-noise ratio of the         2.2.3. Permutation entropy
+first decomposition iteration. The first-order modal components E1 ( • )               Entropy can be used to evaluate the complexity of time series, and
+is decomposed by the empirical mode decomposition (EMD) method.                     entropy theory can be used to study the correlation between different
+w(i) represents the i th group white noise used for auxiliary decompo-              time series. In order to avoid the complexity of WP prediction caused by
+sition. The x(i) is the time series of WP after adding the special noise of         the various sub-components obtained from ICEEMDAN decomposition,
+the first group.                                                                    the permutation entropy (PE) is used to reconstruct the decomposed sub-
+                                                                                    components. PE, information entropy, fuzzy entropy, and other in-
+    Step 2: The residual r1 of the initial decomposition is calculated. And         dicators are commonly used to evaluate the complexity of time series.
+    the modal component d1 is obtained by the sequence of WP x mi-                  When calculating the complexity between reconstructed subsequences,
+    nuses the residual r1 . They are as shown in equation (3) and equation          the concept of permutation is considered. The steps to calculate the PE of
+    (4):                                                                            components for time series are as follows.
+
+
+
+
+                                                                                4
+M. Yang et al.                                                                                                     Expert Systems With Applications 274 (2025) 126979
+
+
+
+
+                                                    Fig. 4. Overall flowchart of NWP wind speed correction.
+
+
+    Step1: There is a time series u(1), u(2), u(3), …, u(N) with a length of         where, G(m) indicates the normalized PE.
+    N. By reconstructing the original sequence, each subsequence X(i) is                The larger the PE, the stronger the randomness of the time series.
+    represented. The process of reconstructed signal are as follows:                 Conversely, the weaker the randomness of the time series.
+X(i) = u(i), u(i + L), …, u(i + (m − 1)L )                                (8)
+                                                                                     2.2.4. Reconstruction of wind speed sequence
+where, m represents the number of bits embedded in the time series. L                    To determine the variation trend of NWP wind speed, the PE corre-
+represents the delay of the time series.                                             sponding to the sub-components of the wind speed sequence is used to
+                                                                                     be reconstructed random components, oscillatory components, and
+    Step2: The perform incremental sorting on each X(i) internally, that             trend components for each sub-sequence of NWP wind speed. It is a key
+    is:                                                                              issue to determining the threshold for dividing random components,
+                                                                                     oscillatory components, and trend components. So, the Kmeans clus-
+u(i + (j1 − 1)L ) ≤ u(i + (j2 − 1)L ) ≤ … ≤ u(i + (jm − 1)L )             (9)
+                                                                                     tering algorithm is used to divide the PE of wind speed subsequences
+                                 (            )                                      into three categories. The wind speed subsequences of each category are
+in this way, X(i) is mapped to j1 , j2 , …, jm . This is exactly one of the m!
+                                                                                     added together to obtain the random component, oscillation component,
+arrangements. That is to say, every m-dimensional subsequence X(i) is
+                                                                                     and trend component of the wind speed subsequence. The reconstructed
+mapped to m! One of the arrangements. The probability distribution of
+                                                                                     trend component is carried to search for similar segments of wind speed
+all time series is represented as P1 , P2 , …, PK . Wherein, K ≤ m!.
+                                                                                     sequences.
+
+    Step3: The Shannon Entropy is caculated. So, the PE of time series
+                                                                                     2.2.5. Error correlation ratio
+    u(1), u(2), u(3), …, u(N) is:
+                                                                                         The NWP wind speed in the future period is compared with the NWP
+                 K
+                 ∑                                                                   wind speed in the past period. If the similarity between the two in-
+H(m) = −               Pj lnPj                                           (10)        tervals, the NWP wind speed in the past period is inplaced with the NWP
+                 j=1
+                                                                                     wind speed in the future period. So, the NWP wind speed is corrected. To
+                                                                                     avoid the influence of random components and oscillatory components
+where, H(m) represents PE. When Pj = 1/m!, each symbol has and their
+                                                                                     of wind speed sequences on the similarity of wind speed segments, the
+probabilities are equal. At this time, the complexity of the time series is
+                                                                                     trend components in NWP wind speed are used as the main data for
+the highest. So, the PE that is ln(m!) is the highest.
+                                                                                     searching for similar segments.
+                                                                                         To quantify the similarity of NWP wind speeds between two time
+    Step4: In addition, for ease of representation, H(m) is usually
+                                                                                     periods, the concept of ECR was proposed. The formula for calculating
+    normalized:
+                                                                                     the ECR is shown in equation (12):
+G(m) = H(m)/ln(m!)                                                       (11)
+
+
+
+                                                                                 5
+M. Yang et al.                                                                                                                      Expert Systems With Applications 274 (2025) 126979
+
+
+
+
+                                                            Fig. 5. Flow chart of short-term wind power cluster power prediction method.
+
+
+           RMSE                                                                                      torical time periods, and Y represents the average NWP wind speed in
+ECR =           (ECR > 0)                                                                 (12)
+            PCC                                                                                      future time periods.
+                                                                                                         RMSE reflects the data deviation between two time periods. And a
+in the formula (21), root mean square error (RMSE) represents the root                               smaller RMSE value indicates a smaller deviation of data between the
+mean square error of two time periods, and pearson correlation coeffi-                               two time periods. The PCC reflects the linear dependence of data be-
+cient (PCC) represents the pearson correlation coefficient of two time                               tween two time periods, and a larger PCC indicates a higher degree of
+periods. The calculation methods for RMSE and PCC are shown in                                       linear dependence between the two data periods. In addition, when the
+equations (13) and (14):                                                                             PCC is greater than zero, the data from the two time periods are posi-
+          √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅                                                                tively correlated. When the PCC is less than zero, the data from two time
+          √∑
+          √n
+          √ (xi − x̂i )2                                                                             periods are negatively correlated. In summary, the smaller the value of
+          √
+RMSE = i=1                                                        (13)                               the ECR, the higher the similarity of the data between the two time
+                      n
+                                                                                                     periods when the value of ECR.
+          ∑n
+               i=1 (xi − X)(yi − Y)
+PCC = √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                              ̅√̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅                                 (14)       2.2.6. The overall process of NWP wind speed correction
+         n                        n
+       ∑
+             (xi − X)2
+                                ∑
+                                      (xi − Y)2                                                          The overall process of the correction of NWP wind speed is as
+               i=1                    i=1                                                            follows:
+
+in equations (13) and (14), xi represents the value of NWP wind speed at                                Step 1: The original NWP wind speed is decomposed by the ICE-
+historical time points, yi represents the value of NWP wind speed at                                    EMDAN algorithm and the PE of each sub-component is calculated.
+future time points. X represents the average NWP wind speed in his-
+
+
+                                                                                                 6
+M. Yang et al.                                                                                                                   Expert Systems With Applications 274 (2025) 126979
+
+
+    Step 2: The wind speed sub-components corresponding to the three                          l-th TCM is HTl ∈ RT×N×D .
+    categories are reconstructed into random components, oscillatory
+    components, and trend components. And the trend components as                             2.4.2. Adaptive hybrid graph learning module
+    the basis are used to selecting similar NWP wind speed segments in                              AHGLM includes Static Adaptive Graph Learning (SAGL), Dynamic
+    the future.                                                                               Graph Learning (DGL), and Space Gate Fusion (SGF). As shown in Fig. 2,
+    Step 3: the similar segments of wind speed can be obtained by                             the outputs of SAGL and DGL is represented as HlSG and HDG       l
+                                                                                                                                                                 . After
+    calculating the ECR. If the ECR of two wind speed data segments is                        passing through the spatial fusion gate, the output of the l-th AHGLM is
+    positive and the smaller the value, the higher the similarity between                     HlS .
+    the two segments.
+                                                                                                    In SAGL, GCN is used to construct a topological graph network to
+    Step 4: the two sequence fragments that meet the requirements of
+                                                                                              represent the spatial relationships between wind farms and achieve
+    wind speed are find. The actual wind speed corresponding to the
+                                                                                              spatial feature information fusion. According to reference (Kipf and
+    NWP wind speed in the past period is replaced with the NWP wind
+                                                                                              Welling, 2017), graph convolution operations in the spectral domain can
+    speed in the future period to achieve the correction of NWP wind
+                                                                                              be approximated well by the first Chebyshev polynomial expansion and
+    speed.
+                                                                                              it can be extended to high-dimensional GCNs.
+                                                                                                     ⎛           ⎞
+   The overall flowchart of the correction NWP wind speed is shown in                                        1        1
+the Fig. 4.                                                                                   H = ⎝IN + D2 AD− 2 ⎠XΘ                                                         (16)
+
+2.3. Data input
+                                                                                              in the formula (16), A is the adjacency matrix and D is the degree matrix.
+     To further explore the information of wind power, three periodic                         IN = RN×N is the identity matrix, and Θ is the graph convolution kernel.
+components were introduced to capture the dependence of multi-period                              Different wind farms in different geographical locations can be
+time (Wang et al., 2023). Among them, TR ,TD , and TW respectively                            abstracted into high-dimensional space by representation learning
+represent the historical time lengths corresponding to the historical time                    nodes. Therefore, SAGL implements a learnable graph node embedding
+steps input into Temporal Convolution Module (TCM), with corre-                               EG , where d represents the dimension of node embedding. In addition,
+sponding time lengths of 4 h, 1 day, and 1 week. And LD , LW represent                        the adaptive adjacency matrix Aadp of the static graph will be obtained
+the selected past days and past weeks respectively. Overall, a short-term                     by multiplying EG with ETG . The formula is as follows:
+wind power prediction is influenced by recent trends of wind power. Let                                      (      (       ))
+                                                                                              Aadp = softmax RELU EG , ETG                                         (17)
+the current time length be t and q be the sampling frequency per day.
+The characteristics of NWP for recent component extraction and pre-                                             (         )
+                                                                                              among them, HlSG = IN + Aadp HlT Θ is the output of SAGL, which Θ ∈
+diction period is XR = [Xt− TR +1 , Xt− TR +2 , …, Xt ] ∈ RTR ×N×F as the feature
+                                                                                              RD×D is a learnable graph convolution kernel.
+input of daily time series. The length of time is 4 h. The characteristics of
+wind power corresponding to the daily numerical weather forecast
+                                                              [                               2.4.3. Dynamic graph learning
+features is modeled. As for the Lth              d day, Xd = Xt− Ld +1 , Xt− Ld +2 , …,
+          ]                                                                                       Dynamic graph learning (DGL) achieves the fusion of feature infor-
+Xt− Ld +TD ∈ RTD ×N×F is the feature input as the daily time series, where                    mation in dynamic space through graph attention network (GAT).
+Ld ∈ {1, 2, ⋯, LD }. The XD is obtained by adding all Xd . The features of                    Because GAT can capture the dynamic impact of nearby wind farms. In
+NWP are extracted in recent weeks. As for the Lth                w week, XW =                 addition, the decay matrix of exponential distance is used as the prior
+ [Xt− 7×Lw +1 , Xt− 7×Lw +2 , …, Xt− 7×Lw +Tw ] ∈ RTW ×N×F , where Lw ∈ {1, 2, ⋯,             graph structure of GAT it is called as the distance adjacency matrix
+LW }. In order to obtain the important features of the previous LW week,                      Adis ∈ RN×N . As shown in Fig. 2, GAT achieves the fusion of weighted
+the same input method as XD is used to obtain XW as the input for the                         feature by calculating the attention scores of the central node and
+week component. As shown in Fig. 5, Hl− 1 represents the inputs of the                        neighboring nodes. In addition, multi-head attention is used to capture
+AHSTL block, which are the outputs of the (l − 1)th TCM in block. The                         the relationship features between nodes from different learning sub-
+outputs of TCM and Adaptive Hybrid Graph Learning Module (AHGLM)                              spaces. The complexity of time can also be reduced through a multi-head
+in the first block are represented as HlT and HlS . To maintain consistency,                  attention mechanism with parallel computing. The graph attention
+the historical time step of the time series is represented as T.                              mechanism of DGL regarding graph nodes can be formalized as follows:
+                                                                                                            ( ( [      ⃦      ]))
+                                                                                                       exp LR aT Wht,i ⃦Wht,j
+                                                                                              aij = ∑         ( ( [       ⃦     ]))                              (18)
+2.4. Adaptive spatiotemporal graph framework                                                          k∈Ni exp LR a Wht,i Wht,k
+                                                                                                                   T      ⃦
+
+                                                                                                       (                     )
+2.4.1. Time convolution module                                                                           1∑K ∑
+   To explore the complex temporal correlation and periodicity of wind                        ht,i = σ
+                                                                                              ̃                        k
+                                                                                                                  aij W ht,j                                                 (19)
+                                                                                                        K k=1 j∈N
+power sequences, three time convolutional networks are combined to                                                i
+
+
+form a time convolutional module. The original inputs of the time
+                                                                                              among them, aij ∈ R represents the calculated attention score between vi
+convolution module are XR , XD and XW . The time convolutional network
+                                                                                              and vj , where j ∈ Ni . Ni represents the set of neighbors of vi . LR( • )
+has an exponential receptive field of extended causal convolution, and
+the gating mechanism can enhance the processing capabilities and                              represents LeakyReLU function. a ∈ R2D×1 is a learnable parameter
+modeling capabilities of time series. The following equation describes                        vector. W ∈ RD×D is a weight matrix for shared linear transformations.
+the operational relationship of a time convolutional network:                                 ht,i ∈ RD represents the features of time in vi to test t th step in HlT . ht,j ∈
+         (                 )   (                  )                                           RD represents the features of time in vj to test t th step in HlT . ht,k ∈ RD
+Hl = tanh Wt1 ∗ Hl− 1 + bt1 ⊙ σ Wt2 ∗ Hl− 1 + bt2                 (15)
+                                                                                              represents the features of time in vk to test t th step in HlT . wherein, vi , vj
+among them, * represents the convolution operator. Wt1 , Wt2 , bt1 , and                      and vk is the different point of topology map generated respectively. The
+bt2 are learnable parameters. ⊙ are element products. σ represent the                         features generated by multi-head attention are aggregated through
+sigmoid activation function. and tanh represents the activation function                      addition. K represents the number of heads and Wk ∈ RD×D is the
+that is hyperbolic tangent. After processing, the time series is finally                      transformation parameter matrix corresponding to head k. ̃         ht,i ∈ RD is
+transmitted to a multilayer perceptron (MLP), and the final output of the
+
+                                                                                          7
+M. Yang et al.                                                                                                     Expert Systems With Applications 274 (2025) 126979
+
+
+
+
+                                       Fig. 6. Schematic diagram of the decomposition results of historical NWP wind speed.
+
+
+the output of DGL at time step t. In the l-th block, the final output of DGL        final results of WPP. The final output layer can be calculated by the
+is HlDG ∈ RT×N×D . σ(⋅) indicates sigma function.                                   following formula:
+                                           l          l
+    The two input features that are HSG        and HDG   are fused through                     (            )
+                                                                                    ̂ = RELU Hout Wf1 + bf1 ⋅Wf 2 + bf2
+                                                                                    Y                                                                (22)
+spaces. The inputs come from he SAGL and DGL that mentioned above in
+the l-th block. As shown in Fig. 2, the gate fusion mechanism can be
+                                                                                    wherein, Wf1 ∈ R(TD)×C , Wf2 ∈ RC×(MF) , bf1 ∈ RC and bf2 ∈ RMF are
+represented as:
+                                                                                                         ̂ is the final output result of the framework.
+                                                                                    learnable parameter. Y
+HSl = gate ⊙ HlSG + (1 − gate) ⊙ HDG
+                                  l
+                                                                         (20)
+        (                         )                                                 2.4.5. Loss function
+gate = σ HlSG Wg1 + HlDG Wg2 + bg                                        (21)          The average absolute error between predicted and true values can be
+                                                                                    regraded as the loss function. And it can be minimized by back-
+among them, Wg1 ∈ RD×D , Wg2 ∈ RD×D and bg ∈ RD are both learnable                  propagation. The formula for the loss function is:
+parameters. The final output of AHGLM is HlS ∈ RT×N×D . Space door                              t+M
+                                                                                             1 ∑
+fusion can adaptively control the static and dynamic data features of               L(θ) =           |Yi − Y
+                                                                                                           ̂ i|                                                (23)
+                                                                                             M i=t+1
+spatial correlation of each wind farm.
+
+2.4.4. Output layer                                                                 among them, θ represents all learnable parameters of our model. Y    ̂ i is
+   For each output result HlS , a skip connection layer approach was used           the predicted power of the model for t a large-scale WFC at time step i. Yi
+to directly connect them to the output layer. By stacking multiple                  is the actual power.
+adaptive hybrid spatial–temporal learning (AHSTL), the temporal
+receptive field of the structure of adaptive hybrid spatial–temporal                2.5. Prediction error
+graph neural network (AHSTGNN) was increased. Bottom layer can pay
+more attention to the temporal characteristics between adjacent WFs.                   This article uses root mean square error (RMSE), mean absolute error
+The high-level is used to focus on long-term temporal information. And              (MAE), coefficient of determination (R2), and accuracy rate (AR) to
+the modeling problems of spatial dependency from different time levels              verify the effectiveness of the proposed method. The calculation for-
+can be solved by skip connections. The outputs of all AHSTL module can              mulas for RMSE, MAE, R2, and AR are shown in the formula (24) ~ (27):
+be fused by summation. The result is Hout ∈ RT×N×D . Finally, two fully
+connected layers are used to implement the output layer to generate the
+
+
+                                                                                8
+M. Yang et al.                                                                                                    Expert Systems With Applications 274 (2025) 126979
+
+
+                                                                                         constructing an adaptive topology graph. The second category of
+                                                                                         data is used to construct distance adjacency matrices for con-
+                                                                                         structing dynamic topological graphs.
+                                                                                     (4) The adaptive matrix and dynamic adjacency matrix are input into
+                                                                                         the graph convolutional neural network and graph attention
+                                                                                         neural network respectively. then the output of data features is
+                                                                                         fused. Finally, the predicted power can be obtained for WFC.
+
+                                                                                   3. Example analysis
+
+                                                                                      To verify the effectiveness of the proposed method, simulation ex-
+                                                                                   periments were conducted using data from two large-scale WFCs in
+Fig. 7. Schematic diagram of permutation entropy of historical NWP wind
+speed sub components.                                                              China. Two WFCs consist of 50 wind farms with installed capacities of
+                                                                                   6855.70 MW and 4413.85 MW, respectively. Two WFCs are represented
+                                                                                   by WFC A and WFC B.
+
+                                                                                   3.1. NWP wind speed correction
+
+                                                                                      To prevent the random components in the original NWP wind speed
+                                                                                   from affecting the correction process, it is necessary to capture the trend
+                                                                                   components in the original NWP wind speed. Firstly, we take the first
+                                                                                   wind farm of WFC A as an example to describe process of the NWP wind
+                                                                                   speed correction for wind farm.
+
+                                                                                   3.1.1. Decomposition of wind speed
+                                                                                       The original historical NWP wind speed of the first wind farm in WFC
+                                                                                   A was decomposed using the ICEEMDAN algorithm. The decomposition
+                                                                                   results are shown in Fig. 6. The historical predicted wind speed was
+Fig. 8. Schematic diagram of the distribution of random components, oscilla-
+                                                                                   decomposed into 13 sub-components and 1 residual component, which
+tory components, and trend components.
+                                                                                   includes high-frequency, mid frequency, and low-frequency compo-
+       √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅                                                    nents. To avoid computational redundancy, the PE of the above 14
+       √∑
+       √n                                                                          components was calculated separately. And the above components were
+       √ (yi − ŷi )
+       √                                                                           reconstructed into random components, oscillatory components, and
+Rrmse = i=1                                                            (24)
+             nCap2                                                                 trend components according to the principle of similar PE. The PE
+                                                                                   calculated based on the decomposed components is shown in Fig. 7.
+              n (             )
+                                                                                       As shown in Fig. 7, the values of PE decrease sequentially with the
+           1∑     |yi − ŷi |
+RMAE =                                                                 (25)        increase of component names. And the values of PE between adjacent
+           n k=1    Cap
+                                                                                   names also decrease sequentially. Although the residual component of
+         ∑n                                                                        historical NWP wind speed can reflect the trend changes of historical
+              (yi − ŷi )2
+R2 = 1 − ∑i=1
+           n             2
+                                                                       (26)        wind speed, the smoothness of this curve is high and cannot represent
+           i=1 (yi − y)
+                                                                                   the fluctuation information of historical wind speed. Therefore, recon-
+          √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+          √∑                                                                       structing the trend component can quantify the trend information and
+          √n                                                                       fluctuation information of historical wind speed.
+          √ (yi − ŷi )
+RAR = 1 −
+          √i=1
+                                                                       (27)            The important indicator for dividing PE is to determine the threshold
+                nCap2                                                              between random components, oscillatory components, and trend com-
+                                                                                   ponents. This article firstly calculates the errors between the entropies of
+in Equation (24), Equation (25), Equation (26) and Equation (27), where            adjacent permutations, and then uses the k-means clustering algorithm
+yi represents the actual power at time i, ŷi represents the predicted             to cluster the errors. At the same time, the wind speeds corresponding to
+power at time i, y represents the average of the actual power at time i, n         the errors are clustered to obtain reconstructed random components,
+represents the length of the test set, and Cap represents the actual start-        oscillatory components, and trend components. Fig. 8 shows the sche-
+up capacity of WF. The installed capacity in this paper is used because            matic diagram of the sub-component names corresponding to the
+the actual start-up capacity of WF is difficult to obtain.                         random component, oscillation component, and trend component. It can
+                                                                                   be seen from the figure that IMF1 ~ IMF4 are determined as the random
+2.6. The process of the short-term power prediction for wind farm cluster          component interval, IMF5 ~ IMF9 are determined as the oscillation
+                                                                                   component interval, and the other components are determined as the
+    (1) Firstly, the method of NWP wind speed correction in Section 2.2            trend component. Next, the components of the corresponding compo-
+        is used to correct the NWP wind speed of each wind farm. Then,             nent are summed to obtain the reconstructed historical sequences of
+        the corrected NWP wind speed, wind direction, temperature, and             NWP wind speed. The reconstructed sequences of historical NWP wind
+        humidity characteristics are input into the time convolution               speed are shown in Fig. 9.
+        module. Next, the data features are output through MLP;                        From Fig. 9 (a), it can be seen that the characteristics of the random
+    (2) The Establishment of adjacency matrix. The adjacency matrix is             component are high oscillation frequency in terms of historical NWP
+        constructed based on the information of historical actual wind             wind speed and small average amplitude. According to Fig. 9 (b), the
+        speed and geographic location, which serves as the foundation              frequency of the oscillating component is lower than that of the random
+        matrix for adaptive spatiotemporal graph network for prediction.           component. And the average amplitude of the oscillating component is
+    (3) The output of data features is divided into two categories by the          higher than that of the random component. From Fig. 9 (c), it can be
+        MLP. The first category used to construct an adaptive matrix for           seen that the frequency of the trend component is the smallest compared
+
+                                                                               9
+M. Yang et al.                                                                                                 Expert Systems With Applications 274 (2025) 126979
+
+
+
+
+                                               Fig. 9. Reconstructed Historical NWP Wind Speed Sequence.
+
+
+
+
+                                          Fig. 10. Schematic diagram of future NWP wind speed decomposition.
+
+
+to the random components and oscillatory components. The trend of                decomposition results are shown in Fig. 10, which decomposes the
+historical NWP wind speed can be clearly observed. The amplitude of              historical predicted wind speed into 12 sub-components and 1 residual
+the trend component is between [2.8 ~ 11.2]. Comparing with the trend            component. The decomposed components include high-frequency
+components and oscillatory components, the amplitude range of the                components, mid-frequency components, and low-frequency compo-
+trend component is the largest. In addition, the trend component of              nents. To avoid computational redundancy, the PE of the above 13
+reconstructed historical NWP can not only reflect trend changes, but also        components was calculated separately. And the above components were
+describe the fluctuation characteristics of wind speed.                          reconstructed into random components, oscillatory components, and
+    At the same time, the original future NWP wind speed of the first            trend components according to the principle of similar PE. The PE
+wind farm in WFC A was decomposed by the ICEEMDAN algorithm. The                 calculated based on the decomposed components is shown in Fig. 11.
+
+
+                                                                            10
+M. Yang et al.                                                                                                   Expert Systems With Applications 274 (2025) 126979
+
+
+                                                                                  components. This article first calculates the error between the entropies
+                                                                                  of adjacent permutations. And then uses the k-means clustering algo-
+                                                                                  rithm to cluster the errors. At the same time, the wind speeds corre-
+                                                                                  sponding to the errors are clustered to obtain reconstructed random
+                                                                                  components, oscillatory components, and trend components. Fig. 12
+                                                                                  shows the schematic diagram of the sub-component names corre-
+                                                                                  sponding to the random component, oscillation component, and trend
+                                                                                  component. It can be seen from the figure that IMF1 ~ IMF4 are
+                                                                                  determined as the random component interval, IMF5 ~ IMF9 are
+                                                                                  determined as the oscillation component interval, and the other
+                                                                                  component intervals are determined as the trend component interval.
+                                                                                  Next, the components of the corresponding component intervals are
+                                                                                  summed to obtain the reconstructed sequence of future NWP wind
+                                                                                  speed. The reconstructed sequences of historical NWP wind speed are
+                                                                                  shown in Fig. 13.
+                                                                                      From Fig. 13 (a), it can be seen that in terms of future NWP wind
+                                                                                  speed, the characteristics of the random component are high oscillation
+Fig. 11. Schematic diagram of permutation entropy of wind speed sub com-
+                                                                                  frequency and small average amplitude. According to Fig. 13 (b), the
+ponents in future NWP.
+                                                                                  frequency of the oscillating component is lower than that of the random
+                                                                                  component. And the average amplitude of the oscillating component is
+                                                                                  higher than that of the random component. From Fig. 13 (c), it can be
+                                                                                  seen that the frequency of the trend component is the smallest compared
+                                                                                  to the random components and oscillatory components. And the trend of
+                                                                                  historical NWP wind speed can be clearly observed. The amplitude of
+                                                                                  the trend component is between [3.8 ~ 10.8]. And comparing with the
+                                                                                  trend components and oscillatory components, the amplitude range of
+                                                                                  the trend component is the largest. In addition, the trend component of
+                                                                                  reconstructed historical NWP can not only reflect trend changes, but also
+                                                                                  describe the fluctuation characteristics of wind speed.
+                                                                                      Fig. 14 depicts the Pearson correlation coefficient and the heatmap of
+                                                                                  root mean square error heatmap of historical NWP wind speeds and
+                                                                                  future NWP wind speeds at different time periods. According to 14 (a),
+                                                                                  the Pearson correlation coefficients of NWP wind speed in historical
+                                                                                  periods and future periods are not the same and have significant dif-
+                                                                                  ferences. There are both strong and positive correlations, as well as
+                                                                                  negative and uncorrelated relationships between each period. The
+                                                                                  Pearson correlation coefficient (purple part) of some time periods is
+Fig. 12. Schematic diagram of the distribution of random, oscillatory, and
+                                                                                  close to − 1, indicating a negative correlation between the NWP wind
+trend components of future NWP wind speed.
+                                                                                  speeds of two time periods. The Pearson correlation coefficient (green
+                                                                                  part) for some time periods is close to 0, showing weak or no correlation.
+    As shown in Fig. 11, the value of PE decreases sequentially with the          The Pearson correlation coefficient (red part) for some time periods is
+increase of component names. And the PE interpolation between adja-               close to 1, showing a strong correlation.
+cent names also decreases sequentially. Although the residual compo-                  The Pearson correlation coefficient only describes the linear corre-
+nent of future NWP wind speed can reflect the trend changes of future             lation between NWP wind speeds in two time periods. However, the
+wind speed, the smoothness of this curve is high and cannot represent             quantitative relationship between NWP wind speeds cannot be
+the fluctuation information of future wind speed. Therefore, the recon-           measured in two time periods. Therefore, an indicator is still needed to
+structed trend component quantifies the trend nformation and fluctua-             measure the quantity of two time series. From Fig. 14 (b), it can be seen
+tion information of future wind speed.                                            that the RMSE of NWP wind speed in different historical periods and
+    The important indicator for dividing PE is to determine the threshold         future periods are not the same, but they have certain similarities.
+between random components, oscillatory components, and trend
+
+
+
+
+                                                Fig. 13. Reconstructed Future NWP Wind Speed Sequence.
+
+                                                                             11
+M. Yang et al.                                                                                                      Expert Systems With Applications 274 (2025) 126979
+
+
+
+
+                          Fig. 14. The heatmap of historical and future NWP wind speeds for PCC and RMSE at different time periods.
+
+
+                                                                                    minimum value is − 52669.1, and the average value is only 4.7036. It
+                                                                                    indicates that there are some segments that are not similar. Between the
+                                                                                    historical NWP wind speed and future NWP wind speed of the wind farm
+                                                                                    that are very dissimilar. However, these time segments are minority and
+                                                                                    the vast majority of ECRs are distributed around 4.7. It shows that there
+                                                                                    is a certain error relationship between the historical NWP wind speed
+                                                                                    and future NWP wind speed of the wind farm.
+                                                                                        In order to measure the reliability of ECR, the time periods corre-
+                                                                                    sponding to different numbers of ECR are presented, and the comparison
+                                                                                    figures of historical periods and future periods under different numbers
+                                                                                    of ECR are drawn as shown in Fig. 15. RMSE displays the root mean
+                                                                                    square error of two time series, and the smaller the RMSE is, the smaller
+                                                                                    the error between the two time series is. The linear dependence between
+                                                                                    two time series is represented by PCC. When the PCC of two time series is
+                                                                                    positive, it indicates that the overall trends of the two time series are the
+                                                                                    same. When the PCC is negative, the overall trends of the two time series
+                                                                                    are opposite. The emergence of PCC effectively avoids the situation
+                                                                                    where the RMSE values of two time series are relatively small but the
+                                                                                    overall trend is opposite. ECR is the ratio of RMSE to PCC. When the
+                                                                                    RMSE is smaller and the PCC is closer to 1, the value of ECR is smaller.
+Fig. 15. Error correlation heatmap of past and future NWP wind speeds at            So, the two time series are more similar.
+different time periods.
+                                                                                        From Fig. 16, it can be seen that the fluctuation patterns of actual
+                                                                                    wind speed and predicted wind speed in Fig. 16 (a), (b), (c) and (f) are
+                                                                                    most similar. Forthermore, if ECR is positive, the overall trend of actual
+Table 1
+Numerical statistics of ECR.                                                        wind speed and predicted wind speed is consistent. If ECR is negative, it
+                                                                                    indicates that the overall trend of actual wind speed and predicted wind
+  Evaluating indicator         Maximum          Minimum            Average
+                                                                                    speed is opposite. Next, the NWP wind speed of all wind farms in WFC A
+  ECR                          192928.4         − 52669.1          4.7036           and WFC B will be corrected using the method proposed in section 2.2.
+                                                                                    And WP prediction will be carried out using the method proposed in the
+                                                                                    article.
+Among them, the RMSE of the vast majority of time periods is less than
+1.436 m/s, and the RMSE of a small number of time periods is greater
+than 5.744 m/s.                                                                     3.2. Wind power prediction
+    The ECR of each time period can be obtained by the RMSE of each
+time period divides the PCC of the corresponding time period. Fig. 15               3.2.1. Wind power prediction for wind farm cluster A
+shows the heatmap of the ECR of each time period. As shown in Fig. 15,                  The time range of data for the large-scale WFC A is from March 1,
+it can be seen that there is a large difference in the ECR between future           2020 to December 30, 2020. The information of NWP includes wind
+NWP wind speed and historical NWP wind speed. To ensure the con-                    speed, wind direction, temperature, and humidity. The time resolution
+venience of plotting, we have processed some time periods with high                 of WP and NWP is both 15 min. The information of NWP is input into the
+ECRs. The number that the ECR is greater than 10 is set as 11. And the              AHSTGNN model for training. And the proportions of the training set,
+number that the ECR is less than − 10 is set as − 11. The specific values of        validation set, and test set are 70 %, 10 %, and 20 %, respectively. The
+the ECR are shown in Table 1.                                                       scale of input time of the AHSTGNN model is 24 h, and the scale of
+    According to Table 1, the maximum value of ECR is 192928.4, the                 output time is also 24 h. According to reference (Yang et al., 2025), we
+                                                                                    use grid optimization combined with ten-fold cross validation to
+
+                                                                               12
+M. Yang et al.                                                                                                      Expert Systems With Applications 274 (2025) 126979
+
+
+
+
+                                Fig. 16. Comparison of hiostory NWP wind speeds − > Comparison of history NWP wind speeds.
+
+
+                                                                                      optimize the hyperparameters of each model in the training set, making
+Table 2
+                                                                                      the model have robust predictive performance and generalization abil-
+Important hyperparameters of different prediction models for wind farm cluster
+                                                                                      ity. The important hyperparameters for the differnet prediction models
+A.
+                                                                                      are shown in Table 2. for wind farm cluster A.
+  Model          Batch_size   Learn rate   Dropout     Epoch     Hideen_size              To verify the effectiveness of the method proposed in this paper, it
+  CNNLSTM        64           0.001        0.18        60        80                   was compared with CNNLSTM, TCN, GRU, GNN, GCN, SGNN, MLP-
+  TCN            128          0.06         0.21        50        80                   WOA, LSTM-GOW, STGNN, AHSTGNN, GNN-CN, GCN-CN, and
+  GRU            128          0.02         0.16        60        70
+                                                                                      STGNN-CN. The predicted results and actual power values of 14 models
+  GNN            128          0.05         0.15        60        110
+  GCN            128          0.06         0.22        60        80                   are shown in the Fig. 17. After calculation, the RMSE, MAE, R2, and
+  SGNN           64           0.005        0.15        50        90                   accuracy rate of the 14 models are shown in Table 3 and Fig. 18. The
+  MLP-WOA        128          0.001        0.20        60        90                   Table 3 presents three types of comparisons such as ablation experi-
+  LSTM-GOW       128          0.006        0.15        60        100
+                                                                                      ments, comparisons between various models, and comparisons of pre-
+  STGNN          64           0.001        0.15        50        128
+  AHSTGNN        64           0.001        0.15        50        128
+                                                                                      diction accuracy before wind speed correction and after NWP wind
+                                                                                      speed correction.
+
+
+
+
+                                                  Fig. 17. Comparison of results of various prediction models.
+
+                                                                                 13
+M. Yang et al.                                                                                                      Expert Systems With Applications 274 (2025) 126979
+
+
+Table 3
+Evaluating indicator of comparing with other methods for wind farm cluster A.
+  Algorithm         RMSE           MAE                 R2           AR                 Algorithm         RMSE           MAE               R2               AR
+
+  CNNLSTM           0.09124        0.08017             0.8754       90.88 %            LSTM-GOW          0.07657        0.06524           0.9014           92.34 %
+  TCN               0.09376        0.08264             0.8718       90.62 %            STGNN             0.07285        0.06147           0.9127           92.72 %
+  GRU               0.08413        0.07292             0.8722       91.59 %            AHSTGNN           0.06923        0.05846           0.9345           93.08 %
+  GNN               0.08269        0.07141             0.8769       91.73 %            GNN-CN            0.08043        0.06927           0.8911           91.96 %
+  GCN               0.08137        0.07064             0.8834       91.86 %            GCN-CN            0.07987        0.06839           0.8945           92.01 %
+  SGNN              0.07416        0.06342             0.9083       92.58 %            STGNN-CN          0.07126        0.06056           0.9281           92.87 %
+  MLP-WOA           0.07569        0.06438             0.9052       92.43 %            AHSTGNN-CN        0.06828        0.05734           0.9412           93.17 %
+
+
+
+
+                                             Fig. 18. Comparison between different models for wind farm cluster A.
+
+
+                                                                                       features between wind farms. Compared to GCN, RMSE and MAE are
+Table 4
+                                                                                       reduced by 0.00721 and 0.00722, respectively, and R2 and AR are
+Important hyperparameters of AHSTGNN model wind farm cluster B.
+                                                                                       improved by 0.0038 and 0.72 %, respectively. Compared with SGNN,
+  Model          Batch_size   Learn rate     Dropout        Epoch   Hideen_size        STGNN adds a time attention mechanism that can capture the temporal
+  CNNLSTM        64           0.005          0.21           80      90                 correlation of internal feature information of wind farms, further
+  TCN            64           0.008          0.16           60      80                 improving the prediction accuracy of WP. Compared with SGNN,
+  GRU            128          0.04           0.18           60      80
+                                                                                       STGNN algorithm reduces RMSE and MAE by 0.00131 and 0.00195, and
+  GNN            128          0.06           0.20           60      100
+  GCN            128          0.08           0.17           80      85
+                                                                                       improves R2 and AR by 0.0044 and 0.14 %, respectively. AHSTGNN has
+  SGNN           64           0.005          0.15           50      90                 added adaptive dynamic adjustment function comparing with STGNN,
+  MLP-WOA        128          0.002          0.16           70      90                 which can adaptively match the changes in the topology of WFCs. After
+  LSTM-GOW       128          0.007          0.19           60      100                comparing the prediction accuracy of AHSTGNN with STGNN, the RMSE
+  STGNN          64           0.001          0.15           75      120
+                                                                                       and MAE decreased by 0.00362 and 0.00301 respectively, and the R2
+  AHSTGNN        64           0.0001         0.15           50      128
+                                                                                       and AR increased by 0.0218 and 0.36 % respectively. The above eval-
+                                                                                       uation indicators further demonstrate the effectiveness of the proposed
+   (1) Ablation experiment                                                             model in this paper.
+
+   The algorithms involved in this section include AHSTGNN, STGNN,                         (2) Comparison between various algorithms
+SGNN, and GCN. After comparison, GCN has the lowest prediction ac-
+curacy among the methods in this section. SGNN adds spatial attention                    The algorithms involved in this section include CNNLSTM, TCN,
+mechanism compared to GCN, which can capture spatial correlation                       GRU, GNN, MLP-WOA, LSTM-WOA, and AHSTGNN. After comparison,
+
+
+
+
+                                                    Fig. 19. Comparison of results of various prediction models.
+
+                                                                                  14
+M. Yang et al.                                                                                                          Expert Systems With Applications 274 (2025) 126979
+
+
+Table 5
+Evaluating indicator of comparing with other methods for wind farm cluster B.
+  Algorithm         RMSE            MAE              R2            AR                  Algorithm           RMSE             MAE               R2               AR
+
+  CNNLSTM           0.08976         0.07821          0.8628        91.02 %             LSTM-GOW            0.07583          0.06438           0.8914           92.42 %
+  TCN               0.09145         0.08014          0.8642        90.86 %             STGNN               0.07395          0.06456           0.9034           92.61 %
+  GRU               0.08348         0.07268          0.8641        91.65 %             AHSTGNN             0.07314          0.06286           0.9234           92.69 %
+  GNN               0.08353         0.07231          0.8672        91.65 %             GNN-CN              0.07637          0.06520           0.8796           92.36 %
+  GCN               0.08219         0.07137          0.8735        91.78 %             GCN-CN              0.07621          0.06534           0.8823           92.38 %
+  SGNN              0.07435         0.06358          0.9014        92.57 %             STGNN-CN            0.07317          0.06186           0.9183           92.68 %
+  MLP-WOA           0.07504         0.06451          0.8945        92.50 %             AHSTGNN-CN          0.07247          0.06122           0.9276           92.75 %
+
+
+
+
+                                               Fig. 20. Comparison between different models for wind farm cluster B.
+
+
+the RMSE of the method proposed in this paper decreased by 0.02201,                    demonstrating the superiority of the method proposed in this article.
+0.02453, 0.01490, 0.01346, 0.00646, and 0.00734 compared to the
+other six methods, and the MAE decreased by 0.02171, 0.02418,                              (3) Comparison of prediction accuracy after NWP correction
+0.01446, 0.01295, 0.00592, and 0.00678 compared to the other six
+methods. The R2 improved by 0.0591, 0.0627, 0.0623, 0.0576, 0.0293,                        The algorithms involved in this section include AHSTGNN and
+and 0.0331 compared to the other six methods, and the accuracy
+improved by 2.20 %, 2.46 %, 1.49 %, and 1.39 % compared to the other                   Table 7
+six methods. 5 %, 0.65 %, and 0.74 %. Based on the above analysis, the                 The average changes in evaluation indicators during ablation experiments.
+model proposed in this article is superior to the compared algorithms,                   Algorithm          RMSE↓            MAE↓              R2↑              AR↑
+
+                                                                                         CNNLSTM            0.01931          0.01853           0.0599           1.94 %
+Table 6                                                                                  TCN                0.02142          0.02073           0.0609           2.15 %
+                                                                                         GRU                0.01262          0.01214           0.0608           1.27 %
+The average changes in evaluation indicators during ablation experiments.
+                                                                                         GNN                0.01193          0.01120           0.0569           1.20 %
+  Algorithm         RMSE↓            MAE↓                 R2 ↑          AR↑              MLP-WOA            0.00418          0.00379           0.0291           0.42 %
+                                                                                         LSTM-GOW           0.00502          0.00415           0.0326           0.51 %
+  GCN               0.0106           0.01036              0.0505        1.07 %
+  SGNN              0.00307          0.00286              0.0241        0.31 %
+  STGNN             0.00226          0.00236              0.0209        0.22 %
+
+
+
+
+Fig. 21. Statistical chart of average changes in evaluation indicators for pre-        Fig. 22. Statistical chart of average changes in evaluation indicators for pre-
+dicted results in ablation experiments.                                                dicted results for different deep learning algorithms.
+
+                                                                                  15
+M. Yang et al.                                                                                                             Expert Systems With Applications 274 (2025) 126979
+
+
+Table 8                                                                                      AHSTGNN-CN, STGNN and STGNN-CN, GNN and GNN-CN, and GCN-
+The average changes in evaluation indicators during ablation experiments.                    CN. After comparison, the RMSE of GNN, GCN, STGNN, and
+  Algorithm               RMSE↓                MAE↓            R2↑             AR↑           AHSTGNN after NWP correction decreased by 0.00226, 0.0015,
+                                                                                             0.00159, and 0.00095 respectively compared to before correction, MAE
+  GNN                     0.0047               0.0046          0.0133          0.47 %
+  GCN                     0.0037               0.0041          0.0100          0.38 %        decreased by 0.00214, 0.00225, 0.00091, and 0.00112 respectively, R2
+  STGNN                   0.0019               0.0018          0.0102          0.11 %        increased by 0.0142, 0.0111, 0.0154, and 0.0067 respectively, and ac-
+  AHSTGNN                 0.0008               0.0014          0.0055          0.08 %        curacy increased by 0.23 %, 0.15 %, 0.15 %, and 0.09 % respectively,
+                                                                                             verifying the effectiveness of the method of NWP wind speed correction
+                                                                                             proposed in this paper.
+
+                                                                                             3.2.2. Wind power prediction for wind farm cluster B
+                                                                                                 The time range of data for the large-scale WFC B is from March 1,
+                                                                                             2020 to December 30, 2020. The information of NWP includes wind
+                                                                                             speed, wind direction, temperature, and humidity. The time resolution
+                                                                                             of WP and NWP is both 15 min. The information of NWP is input into the
+                                                                                             AHSTGNN model for training. And the proportions of the training set,
+                                                                                             validation set, and test set are 70 %, 10 %, and 20 %, respectively. The
+                                                                                             scale of input time of the AHSTGNN model is 24 h, and the scale of
+                                                                                             output time is also 24 h. At the same time, we use grid optimization
+                                                                                             combined with ten-fold cross validation to optimize the hyper-
+                                                                                             parameters of each model in the training set, making the model have
+                                                                                             robust predictive performance and generalization ability. The important
+                                                                                             hyperparameters for the differnet prediction models are shown in
+                                                                                             Table 4 for wind farm cluster B.
+                                                                                                 To verify the effectiveness of the method proposed in this paper, it
+                                                                                             was compared with CNNLSTM, TCN, GRU, GNN, GCN, SGNN, MLP-
+                                                                                             WOA, LSTM-GOW, STGNN, AHSTGNN, GNN-CN, GCN-CN, and
+Fig. 23. Statistical chart of average changes in evaluation indicators for pre-              STGNN-CN. The predicted results and actual power values of 14 models
+dicted results after NWP correction.                                                         are shown in the Fig. 19. After calculation, the RMSE, MAE, R2, and
+                                                                                             accuracy rate of the 14 models are shown in Table 5 and Fig. 20. The
+                                                                                             Table 5 presents three types of comparisons such as ablation experi-
+Table 9
+                                                                                             ments, comparisons between various models, and comparisons of pre-
+Average training and running time of each model.
+                                                                                             diction accuracy before wind speed correction and after NWP wind
+  Algorithm      Training          Running        Algorithm    Training     Running
+                                                                                             speed correction.
+                 time              time                        time         time
+                 (minutes)         (seconds)                   (minutes)    (seconds)
+                                                                                               (1) Ablation experiment
+  CNNLSTM        17.147            1.274          LSTM-GOW     32.475        2.954
+  TCN             7.247            0.851          STGNN        38.646        3.641
+  GRU            11.673            1.375          AHSTGNN      45.347        5.237               The algorithms involved in this section include AHSTGNN, STGNN,
+  GNN            11.279            1.037          GNN-CN       11.324       63.214           SGNN, and GCN. After comparison, GCN has the lowest prediction ac-
+  GCN            12.435            1.645          GCN-CN       12.523       64.352           curacy among the methods in this section. SGNN adds spatial attention
+  SGNN           21.674            2.523          STGNN-CN     38.624       65.142
+                                                                                             mechanism compared to GCN, which can capture spatial correlation
+  MLP-           35.175            3.348          AHSTGNN-     45.427       69.341
+    WOA                                           CN                                         features between wind farms. Compared to GCN, RMSE and MAE are
+                                                                                             reduced by 0.00784 and 0.00779, respectively, and R2 and AR are
+                                                                                             improved by 0.0279 and 0.79 %, respectively. Compared with SGNN,
+                                                                                             STGNN adds a time attention mechanism that can capture the temporal
+                                                                                             correlation of internal feature information of wind farms, further
+
+
+
+
+                                               Fig. 24. The average training time and average running time of each prediction model.
+
+                                                                                        16
+M. Yang et al.                                                                                                   Expert Systems With Applications 274 (2025) 126979
+
+
+improving the prediction accuracy of WP. Compared with SGNN,                       introduces adaptive graph neural networks, which enables the model to
+STGNN algorithm reduces RMSE and MAE by 0.0004 and 0.00098, and                    dynamically adjust attention weights and aggregation strategies based
+improves R2 and AR by 0.0002 and 0.04 %, respectively. AHSTGNN has                 on the characteristics of input data, thereby more accurately capturing
+added adaptive dynamic adjustment function comparing with STGNN,                   complex relationships between spatiotemporal features. Adaptability
+which can adaptively match the changes in the topology of WFC. After               enables the model to flexibly adjust its parameters and structure based
+comparing the prediction accuracy of AHSTGNN with STGNN, the RMSE                  on the distribution characteristics of data in order to achieve optimal
+and MAE decreased by 0.00081 and 0.0017 respectively, and the R2 and               performance, which enables it to automatically adapt to graph data of
+AR increased by 0.0200 and 0.08 %, respectively. The above evaluation              different scales and densities as well as the length and variation char-
+indicators further demonstrate the effectiveness of the model proposed             acteristics of different time series.
+in this paper.                                                                         Table 7 and Fig. 22 show the average trend of the evaluation in-
+                                                                                   dicators obtained by comparing AHSTGNN with CNNLSTM, TCN, GRU,
+   (2) Comparison between various algorithms                                       GNN, MLP-WOA, and LSTM-GOW of the results of WPP for two WFCs. It
+                                                                                   can be seen that the predictive performance of the method proposed in
+    The algorithms involved in this section include CNNLSTM, TCN,                  this article has been improved to varying degrees compared to the
+GRU, GNN, MLP-WOA, LSTM-WOA, and AHSTGNN. After comparison,                        comparative algorithms. The method proposed in this article introduces
+the RMSE of the method proposed in this paper decreased by 0.01662,                temporal attention mechanism, spatial attention mechanism, and
+0.01831, 0.01034, 0.01039, 0.0019, and 0.00269 compared to the other               adaptive graph neural network. These mechanisms can effectively cap-
+six methods, and the MAE decreased by 0.01535, 0.01728, 0.00982,                   ture the local structural features of the graph, making the model more
+0.00945, 0.00165, and 0.00152 compared to the other six methods. The               focused on neighbor information that is more closely related to the
+R2 improved by 0.0606, 0.0592, 0.0593, 0.0562, 0.0289, and 0.0320                  current node. In addition, the temporal attention mechanism can iden-
+compared to the other six methods, and the accuracy improved by 1.67               tify the dependency relationships between key time points and their
+%, 1.83 %, respectively. 1.04 %, 1.04 %, 0.19 %, and 0.27 %. Based on              time steps in time series data, thereby making the model more focused
+the above analysis, the model proposed in this article is superior to the          on important temporal information. Adaptability enables the model to
+compared algorithms, demonstrating the superiority of the method                   dynamically adjust attention weights and aggregation strategies based
+proposed in this article.                                                          on the characteristics of input data, thereby more accurately capturing
+                                                                                   the complex relationships between spatiotemporal features.
+   (3) Comparison of prediction accuracy after NWP correction                          After applying the NWP correction method proposed in this article to
+                                                                                   GCN, GNN, STGNN, and AHSTGNN models, the performance of all four
+   The algorithms involved in this section include AHSTGNN and                     methods is improved to varying degrees compared to before NWP
+AHSTGNN-CN, STGNN and STGNN-CN, GNN and GNN-CN, and GCN-                           correction. Table 8 and Fig. 23 show the average variation trend of each
+CN. After comparison, the RMSE of GNN, GCN, STGNN, and                             prediction model for two wind farm clusters compared to their own
+AHSTGNN after NWP correction decreased by 0.00716, 0.00598,                        evaluation indicators of predicted power after NWP correction. How-
+0.00078, and 0.00067, MAE decreased by 0.00711, 0.00603, 0.00270,                  ever, after comprehensive analysis, the AHSTGNN and STGNN models
+and 0.00164, R2 increased by 0.0124, 0.0088, 0.0149, and 0.0042, and               improved the accuracy of wind power prediction by less than 0.12 %
+accuracy increased by 0.71 %, 0.60 %, 0.07 %, and 0.06 %, respectively,            after NWP wind speed correction, while the GNN and GCN models
+verifying the effectiveness of the method of NWP wind speed correction             showed more significant improvements in prediction accuracy,
+proposed in this paper.                                                            increasing by 0.47 % and 0.38 %, respectively. The STGNN and
+                                                                                   AHSTGNN introduce spatial attention mechanisms, which can effec-
+3.3. Analysis and discussion                                                       tively capture the local structural features of the graph and improve the
+                                                                                   prediction accuracy of wind power by utilizing information from other
+    To further analyze the effectiveness of the method proposed in this            relevant wind farms. Overall, the NWP correction method proposed in
+article, the prediction results of two wind farm clusters are compre-              this article has limited accuracy improvement for prediction methods
+hensively analyzed. Table 6 shows the average changes in evaluation                that can utilize relevant wind farm information, while it can signifi-
+indicators for the prediction results of two wind farm clusters comparing          cantly improve the accuracy of prediction methods that do not utilize
+AHSTGNN with GCN, SGNN, and STGNN during the ablation                              other relevant feature information for wind farms.
+experiment.
+    According to Table 6 and Fig. 21, the prediction results of AHSTGNN            3.4. Comparison of running time
+have improved to varying degrees compared to those of GCN, SGNN, and
+STGNN. Meanwhile, the ranking of prediction accuracy from high to low                  To verify the practicality of the models proposed in this article,
+for the four prediction methods is as follows: AHSTGNN, STGNN, SGNN,               simulations and calculations were performed on the 14 models using a
+and GCN. GCN has limited ability to handle large-scale graphs and it is            computer whose central processing unit is Inter Core i9-10900 K. After
+sensitive to changes in graph structure. GCN usually assumes that the              50 calculations, the average training time and average running time of
+topology of the graph is fixed. However, in practical applications, the            the 14 prediction models mentioned above were obtained. The average
+topology of the graph is often dynamically changing. In contrast, SGNN             training time and average running time of the 14 prediction models are
+introduces a spatial attention mechanism that can assign different                 shown in the Table 9 and Fig. 24.
+weights to neighboring nodes of each node, allowing the model to focus
+more on neighbor information that is more closely related to the current           4. Conclusion
+node. Spatial attention mechanism can help to better capture the local
+structural features of the graph and enhance the ability of model to                   This paper proposes a short-term power prediction method based on
+perceive local details. STGNN incorporates a time attention mechanism              NWP correction and the fusion of adaptive spatiotemporal graph feature
+based on SGNN, which can identify key time points and dependencies                 information for WFC. The contributions of this paper are as follows:
+between time steps in time series data, allowing the model to focus more
+on important time information to further improve prediction accuracy.                (1) This article proposes a new definition indicator − error correla-
+The time attention mechanism assigns different weights to features at                    tion ratio, which is used to determine the similarity between two
+different time steps, enabling the model to more effectively extract and it              time series. The smaller the ECR, the higher the similarity be-
+fuses feature information in the time dimension. AHSTGNN further                         tween two time series segments.
+
+                                                                              17
+M. Yang et al.                                                                                                                                Expert Systems With Applications 274 (2025) 126979
+
+
+   (2) This article proposes a wind speed correction method for NWP                                          relations. Applied Energy, 377(PC), Article 124631. https://doi.org/10.1016/j.
+                                                                                                             apenergy.2024.124631
+       based on ECR to find two similar time periods. After comparison,
+                                                                                                        Lu, M., Qin, M., Mu, W., Fang, J., & Goetz, S. (2024). A hybrid gallium-nitride-silicon
+       the NWP correction method proposed in this paper reduced the                                          direct-injection universal powerflow and quality control circuit with reduced
+       average RMSE and MAE by 0.0029 and 0.0031, respectively, and                                          magnetics. IEEE Transactions on Industrial Electronics, 71(11), 14161–14174. https://
+       increased the average R2 and AR by 0.0148 and 0.28 %,                                                 doi.org/10.1109/TIE.2024.3370999
+                                                                                                        Yang, M., Ju, C., Huang, Y., Guo, Y., & Jia, M. (2024). Short-term power forecasting of
+       respectively, verifying the effectiveness of the NWP wind speed                                       wind farm cluster based on globalinformation adaptive perceptual graph
+       correction method proposed in this paper.                                                             convolution network. IEEE Transactions on Sustainable Energy, 15(3), 2063–2076.
+   (3) This article proposes a short-term prediction model for WFC                                           https://doi.org/10.1109/TSTE.2024.3397877
+                                                                                                        Lu, M., Qin, M., Kacetl, J., Suresh, E., Long, T., & Goetz, S. (2023). A novel direct-
+       based on adaptive spatiotemporal graph feature information                                            injection universal power flow and ouality control circuit. The IEEE Journal of
+       fusion. The adaptive spatiotemporal graph and dynamic graph                                           Emerging and Selected Topics in Power Electronics, 11(6), 6028–6041. https://doi.org/
+       are introduced into the WPP model to further explore the tem-                                         10.1109/JESTPE.2023.3321882
+                                                                                                        Yang, M., Han, C., Zhang, W., & Wang, B. (2024). A short-term power prediction method
+       poral and spatial features of WFC. After verification, compared                                       for wind farm cluster basedon the fusion of multi-source spatiotemporal feature
+       with other models, the method proposed in this article reduced                                        information. Energy, 294, Article 130770. https://doi.org/10.1016/j.
+       RMSE and MAE by an average of 0.0100 and 0.00956 respec-                                              energy.2024.130770
+                                                                                                        Li, M., Yang, M., Yu, Y., Li, P., & Wu, Q. (2024). Short-term wind power forecast based on
+       tively and improved R2 and AR by 0.0440 and 1.01 % respec-                                            continuous conditional random field. IEEE Transactions on Power Apparatus and
+       tively in average.                                                                                    Systems, 39(1), 2185–2197. https://doi.org/10.1109/TPWRS.2023.3270662
+   (4) In future work, the proposed model will be improved as follows:                                  Yang, M., Guo, Y., Wang, B., Wang, Z., & Chai, R. (2025). A day-ahead wind speed
+                                                                                                             correction method: Enhancing wind speed forecasting accuracy using a strategy
+       (1) The method of NWP wind speed correction mentioned in this
+                                                                                                             combining dynamic feature weighting with multi-source information and dynamic
+       article does not consider the data characteristics from other                                         matching with improved similarity function. Expert Systems with Applications, 263,
+       related wind farms in the wind farm cluster, resulting in limited                                     Article 125724. https://doi.org/10.1016/j.eswa.2024.125724
+       correction performance of the method. (2) The model took a lot of                                Li, M., Yang, M., Yu, Y., Shahidehpour, M., & Wen, F. (2024). Adaptive weighted
+                                                                                                             combination approach for wind power forecast based on deep deterministic policy
+       time to train, so it is necessary to improve the performance of the                                   gradient method. IEEE Transactions on Power Apparatus and Systems, 39(2),
+       prediction model. Meanwhile, it is recommended to use higher                                          3075–3087. https://doi.org/10.1109/TPWRS.2023.3294839
+       performance computers to train the model in order to reduce                                      Yang, M., Wang, D., & Zhang, W. (2024). A novel ultra short-term wind power prediction
+                                                                                                             model based ondouble model coordination switching mechanism. Energy, 289,
+       training time.                                                                                        Article 130075. https://doi.org/10.1016/j.energy.2023.130075
+                                                                                                        Yang, Z., Peng, X., Song, J., Duan, R., Jiang, Y., & Liu, S. (2024). Short-term wind power
+                                                                                                             prediction based on multi-parameters similarity wind process matching and
+Declaration of competing interest                                                                            weighed-voting-based deep learning model selection. IEEE Transactions on Power
+                                                                                                             Apparatus and Systems, 39(1), 2129–2142. https://doi.org/10.1109/
+                                                                                                             TPWRS.2023.3257368
+    The authors declare that they have no known competing financial                                     Wang, B., Wang, T., Yang, M., Han, C., Huang, D., & Gu, D. (2023). Ultra-short-term
+interests or personal relationships that could have appeared to influence                                    prediction method of wind power for massive wind power clusters based on feature
+the work reported in this paper.                                                                             mining of spatiotemporal correlation. Energies, 16(6). https://doi.org/10.3390/
+                                                                                                             en16062727. Article 2727.
+                                                                                                        Moreno, S. R., Seman, L. O., Stefenon, S. F., Coelho, L. D. S., & Mariani, V. C. (2024).
+Acknowledgments                                                                                              Enhancing wind speed forecasting through synergy of machine learning, singular
+                                                                                                             spectral analysis, and variational mode decomposition. Energy, 292, Article 130493.
+                                                                                                             https://doi.org/10.1016/j.energy.2024.130493
+   This research work was supported by National Key R&D Program of                                      Ribeiro, M. H. D. M., Romon, G. D. S., Moreno, S. R., Canton, C., Larcher, J. H. K.,
+China (Multi-timescale Forecast Technology for Large-scale Wind/                                             Stefenon, S. F., Mariani, V. C., & Coelho, L. D. S. (2024). Variational mode
+Photovoltaic Power Supply Capability) (2022YFB2403000).                                                      decomposition and bagging extreme learning machine with multi-objective
+                                                                                                             optimization for wind power forecasting. Applied Intelligence, 54(4), 3119–3134.
+                                                                                                             https://doi.org/10.1007/s10489-024-05331-2
+Data availability                                                                                       Takara, L. D. A., Santos, A. A. P., Mariani, V. C., & Coelho, L. D. S. (2024). Deep
+                                                                                                             reinforcement learning applied to a sparse-reward trading environment with
+                                                                                                             intraday data. Expert Systems with Applications, 238. https://doi.org/10.1016/j.
+    The data that has been used is confidential.
+                                                                                                             eswa.2023.121897. Article 121897.
+                                                                                                        Li, Z., Ye, L., Song, X., Luo, Y., Pei, M., & Wang, K. (2024). Heterogeneous spatiotemporal
+References                                                                                                   graph convolution network for multi-modal wind-PV power collaborative prediction.
+                                                                                                             IEEE Transactions on Power Apparatus and Systems, 39(4), 5591–5608. https://doi.
+                                                                                                             org/10.1109/TPWRS.2023.3342636
+Wang, Y., Wang, R., Tanaka, K., Ciais, P., Penuelas, j., Balkanski, Y., Sardans, J.,
+                                                                                                        Ahmadi, M., & Khashei, M. (2021). Current status of hybrid structures in wind
+    Hauglustaine, D., Liu, W., Xing, X., Li, J., Xu, S., Xiong, Y., Yang, R., Cao, J., Chen, J.,
+                                                                                                             forecasting. Engineering Applications of Artificial Intelligence, 99. https://doi.org/
+    Wang, L., Tang, X. & Zhang, R. (2023). Accelerating the energy transition towards
+                                                                                                             10.1016/j.engappai.2020.104133. Article 104133.
+    photovoltaic and wind in China. Nature, 619, 761–767. Doi: 10.1038/s41586-023-
+                                                                                                        Samadianfard, S., Hashemi, S., Kargar, K., Izadyar, M., Mostafaeipour, A., Mosavi, A.,
+    06180-8.
+                                                                                                             Nabipour, N., & Shamshirband, S. (2020). Wind speed prediction using a hybrid
+Zhang, S., & Chen, W. (2022). Assessing the energy transition in China towards carbon
+                                                                                                             model of the multi-layer perceptron and whaleoptimization algorithm. Energy
+    neutrality with a probabilistic framework. Nature Communications, 13. https://doi.
+                                                                                                             Reports, 6, 1147–1159. https://doi.org/10.1016/j.egyr.2020.05.001
+    org/10.1038/s41467-021-27671-0. Article 87.
+                                                                                                        Sinvaldo Rodrigues Moreno, S.R., Ramon Gomes da Silva, R.G.D., Mariani, V.C. &
+Zhuo, Z., Du, E., Zhang, N., Nielsen, C., Lu, X., Xiao, J., Wu, J., & Kang, C. (2022). Cost
+                                                                                                             Coelho, L.D.S. (2020). Multi-step wind speed forecasting based onhybrid multi-stage
+    increase in the electricity supply to achieve carbon neutrality in China. Nature
+                                                                                                             decomposition modeland long short-term memory neuralnetwork. Energy
+    Communications, 13. https://doi.org/10.1038/s41467-022-30747-0. Article 3172.
+                                                                                                             Conversion and Management, 213, Article 112869. Doi: 10.1016/j.
+Huang, Z., & Wu, W. (2024). An efficient solution for large offshore wind farm power
+                                                                                                             enconman.2020.112869.
+    optimizationwith the Porté-Agel wake model: optimality and efficiency. Energy, 306,
+                                                                                                        Silva, R. G. D., Ribeiro, M. H. D. M., Moreno, S. R., Mariani, V. C., & Coelho, L. D. S.
+    Article 132444. https://doi.org/10.1016/j.energy.2024.132444
+                                                                                                             (2021). A novel decomposition-ensemble learning framework for multi-step ahead
+Huang, Z., Wu, W., & Guo, Z. (2023). Data-driven stochastic model predictive control for
+                                                                                                             wind energy forecasting. Energy, 216, Article 119174. https://doi.org/10.1016/j.
+    regulating windfarm power generation with controlled battery storage. IET
+                                                                                                             energy.2020.119174
+    Renewable Power Generation, 17(4), 3568–3581. https://doi.org/10.1049/
+                                                                                                        Duan, J., Zuo, H., Bai, Y., Duan, J., Chang, M., & Chen, B. (2021). Short-term wind speed
+    rpg2.12865
+                                                                                                             forecasting using recurrent neural networks with error correction. Energy, 217.
+Yang, M., Guo, Y., Huang, T., & Zhang, W. (2025). Power prediction considering NWP
+                                                                                                             https://doi.org/10.1016/j.energy.2024.130770. Article 119397.
+    wind speed error tolerability: a strategy to improve the accuracy of short-term wind
+                                                                                                        Jiang, P., Liu, Z., Niu, X., & Zhang, L. (2021). A combined forecasting system based on
+    power prediction under wind speed offset scenarios. Applied Energy, 377(PD), Article
+                                                                                                             statistical method, artificial neural networks, and deep learning methods for short-
+    124720. https://doi.org/10.1016/j.apenergy.2024.124720
+                                                                                                             term wind speed forecasting. Energy, 217. https://doi.org/10.1016/j.
+Lu, M., Mu, W., Qin, M., Qin, M., Koehler, A., Fang, J., & Goetz, S. (2024). Differential
+                                                                                                             energy.2020.119361. Article 119361.
+    detection of feeder and mesh impedances through aseries-parallel direct-injection
+                                                                                                        Takara, L. D. A., Teixeira, A. C., Yazdanpanah, H., Mariani, V. C., & Coelho, L. D. S.
+    soft open point. IEEE Transactions on Power Electronics, 40(1), 1964–1973. https://
+                                                                                                             (2024). Optimizing multi-step wind power forecasting: Integrating advanced deep
+    doi.org/10.1109/TPEL.2024.3456071
+                                                                                                             neural networks with stacking-based probabilistic learning. Applied Energy, 369.
+Yang, M., Huang, Y., Xu, C., Liu, C., & Dai, B. (2025). Review of several key processes in
+                                                                                                             https://doi.org/10.1016/j.apenergy.2024.123487. Article 123487.
+    wind power forecasting: mathematical formulations, scientific problems, and logical
+
+
+                                                                                                   18
+M. Yang et al.                                                                                                                         Expert Systems With Applications 274 (2025) 126979
+
+Aly, H. H. H. (2020). An intelligent hybrid model of neuro Wavelet, time series and                   short-term wind farm cluster power forecasting method. Apple Energy, 323. https://
+    Recurrent Kalman Filter for wind speed forecasting. Sustainable Energy Technologies               doi.org/10.1016/j.apenergy.2022.119579. Article 119579.
+    and Assessments, 41. https://doi.org/10.1016/j.seta.2020.100802. Article 100802.             Pei, M., Ye, L., Li, Y., Luo, Y., Song, X., Yu, Y., & Zhao, Y. (2022). Short-term regional
+Wu, Q., Guan, F., Lv, C., & Huang, Y. (2021). Ultra-short-term multi-step wind power                  wind power forecasting based on spatial-temporal correlation and dynamic
+    forecastingbased on CNN-LSTM. IET Renewable Power Generation, 15(5), 1019–1029.                   clustering model. Energy Report, 8, 10786–10802. https://doi.org/10.1016/j.
+    https://doi.org/10.1049/rpg2.12085 (21)                                                           egyr.2022.08.204
+Yildiz, C., Acikgoz, H., Korkmaz, D., & Budak, U. (2021). An improved residual-                  Yu, M., Zhang, Z., Li, X., Yu, J., Gao, J., Liu, Z., You, B., Zheng, X., & Yu, R. (2020).
+    basedconvolutional neural network for very short-term wind power forecasting.                     Superposition graph neural network for offshore wind power prediction. Future
+    Energy Conversion and Management, 228, Article 113731. https://doi.org/10.1016/j.                 Generation Computer Systems, 113, 145–157. https://doi.org/10.1016/j.
+    enconman.2020.113731                                                                              future.2020.06.024
+Heinermann, J., & Kramer, O. (2016). Machine learning ensembles for wind power                   Fu, X., Gao, F., Wu, J., Wei, X. & Duan, F. (2019). Spatiotemporal attention networks for
+    prediction. Renewable Energy, 89, 671–679. https://doi.org/10.1016/j.                             windpower forecasting. 2019 International Conference on Data Mining Workshops
+    renene.2015.11.073                                                                                (lCDMW), Beijing, IEEE, 149-154. Doi: 10.1109/ICDMW.2019.00032.
+Hossain, M. A., Chakrabortty, R. K., Elsawah, S., MacA, E. M., & Ryan, M. J. (2021).             Khodayar, M., & Wang, J. (2019). Spatio-temporal graph deep neural network for short-
+    Predicting wind power generation using hybrid deep learning with optimization.                    term wind speed forecasting. IEEE Transactions on Sustainable Energy, 10(2),
+    IEEE Transactions on Applied Superconductivity, 31(8). https://doi.org/10.1109/                   670–681. https://doi.org/10.1109/TSTE.2018.2844102
+    TASC.2021.3091116. Article 0601305.                                                          Bentsen, L., Warakagoda, N., Stenbro, R., & Engelstad, P. (2023). Spatio-temporal wind
+Alkesaiberi, A., Harrou, F., & Sun, Y. (2022). Effcient wind power prediction using                   speed forecasting using graph networks and novel Transformer architectures. Applied
+    machine learning methods, a comparative study. Energies, 15(7). https://doi.org/                  Energy, 333. https://doi.org/10.1016/j.apenergy.2022.120565. Article 120565.
+    10.3390/en15072327. Article 2327.                                                            Wang, L., & He, Y. (2022). M2STAN, multi-modal multi-task spatiotemporal attention
+Samadianfard, S., Hashemi, S., Kargar, K., Izadya, M., Mostafaeipour, A., Mosavi, A.,                 networkfor multi-location ultra-short-term wind power multi-step predictions.
+    Nabipour, N., & Shamshirband, S. (2020). Wind speed prediction using a                            Applied Energy, 324. https://doi.org/10.1016/j.apenergy.2022.119672. Article
+    hybridmodel of the multi-layer perceptron and whale optimization algorithm. Energy                119672.
+    Reports, 6, 1147–1159. https://doi.org/10.1016/j.egyr.2020.05.001                            Wang, F., Chen, P., Zhen, Z., Yin, R., Cao, C., Zhang, Y., & Duić, N. (2022). Dynamic
+Altan, A., Karasu, S., & Zio, E. (2021). A new hybrid model for wind speed forecasting                spatio-temporal correlation andhierarchical directed graph structure based ultra-
+    combining long short-term memory neural network, decomposition methods                            short-term wind farm clusterpower forecasting method. Applied Energy, 323. https://
+    andgrey wolf optimizer. Applied Soft Computing, 100. https://doi.org/10.1016/j.                   doi.org/10.1016/j.apenergy.2022.119579. Article 119579.
+    asoc.2020.106996. Article 106996.                                                            Zhao, B., He, X., Ran, S., Zhang, Y., & Cheng, C. (2024b). Spatial correlation learning
+Zhao, B., He, X., Ran, S., Zhang, Y., & Cheng, C. (2024a). Spatial correlation learning               based on graph neural network for medium-term wind power forecasting. Energy,
+    based on graphneural network for medium-term windpower forecasting. Energy,                       296. https://doi.org/10.1016/j.energy.2024.131164. Article 131164.
+    296. https://doi.org/10.1016/j.energy.2024.131164. Article 131164.                           Peng, X., Li, Y., & Tsung, F. (2024). A graph attention network with spatio-temporal wind
+Wen, S., Li, Y., & Su, Y. (2022). A new hybrid model for power forecasting of a wind farm             propagation graph for wind power ramp events prediction. Renewable Energy, 236.
+    using spatial–temporal correlations. Renewable Energy, 198, 155–168. https://doi.                 https://doi.org/10.1016/j.renene.2024.121280. Article 121280.
+    org/10.1016/j.renene.2022.08.044                                                             Liu, Z., Zhang, S., Shao, X., & Wu, Z. (2023). Accurate and efficient urban wind
+Wang, Z., Zhu, H., Zhang, D., Goh, H., Dong, Y., & Wu, T. (2023). Modelling of wind and               prediction at city-scale with memory-scalable graph neural network. Sustainable
+    photovoltaic power output considering dynamic spatio-temporal correlation. Applied                Cities and Society, 99. https://doi.org/10.1016/j.scs.2023.104935. Article 104935.
+    Energy, 352. https://doi.org/10.1016/j.apenergy.2023.121948. Article 121948.                 Wang, X., Yang, K. Wang, Z., Feng, J., Zhu, L., Zhao, J. & Deng, C. (2023) Adaptive
+Xu, S., Wang, Y., Xu, X., Shi, G., Zheng, Y., Huang, H., & Hong, C. (2024). A multi-step              Hybrid Spatial-Temporal Graph Neural Network for Cellular Traffic Prediction. 2023
+    wind power group forecasting seq2seq architecture with spatial–temporal feature                   IEEE International Conference on Communication, ICC 2023, Rome, ltaly, May 28 -
+    fusion and numerical weather prediction correction. Energy, 291. https://doi.org/                 June 1. Doi: 10.48550/arXiv.2303.00498.
+    10.1016/j.energy.2024.130352. Article 130352.                                                Kipf, T. N. & Welling, M. (2017) Semi-supervised classification with graphconvolutional
+Wang, F., Chen, P., Zhen, Z., Yin, R., Cao, C., Zhang, Y., & Duić, N. (2022). Dynamic                networks. 2017 5th International Conference on Learning Representations, ICLR
+    spatio-temporal correlation and hierarchical directedgraph structure based ultra-                 2017, Toulon, France, April 24-26. Doi: 10.48550/arXiv.1609.02907.
+
+
+
+
+                                                                                            19
+

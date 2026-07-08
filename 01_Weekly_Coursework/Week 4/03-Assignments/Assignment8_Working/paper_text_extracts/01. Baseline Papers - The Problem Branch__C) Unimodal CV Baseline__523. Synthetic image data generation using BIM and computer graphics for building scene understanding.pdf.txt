@@ -1,0 +1,1297 @@
+                                                                      Automation in Construction 154 (2023) 105016
+
+
+                                                                         Contents lists available at ScienceDirect
+
+
+                                                                   Automation in Construction
+                                                              journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Synthetic image data generation using BIM and computer graphics for
+building scene understanding
+Huaquan Ying a, *, Rafael Sacks a, Amir Degani a, b
+a
+    Faculty of Civil and Environmental Engineering, Technion-Israel Institute of Technology, Haifa, Israel
+b
+    Technion Autonomous Systems Program (TASP), Technion-Israel Institute of Technology, Haifa, Israel
+
+
+
+
+A R T I C L E I N F O                                          A B S T R A C T
+
+Keywords:                                                      Vision-based building scene understanding (BSU) is essential to many applications such as indoor navigation and
+Synthetic image generation                                     3D reconstruction. Deep learning excels in various BSU tasks but its training relies heavily on large-scale datasets,
+Automatic annotation                                           which are often burdensome and costly to obtain. This study proposes a universal and automated approach to
+Building information modeling (BIM)
+                                                               generate synthetic building images with comprehensive annotations that support twelve BSU tasks, including
+Building scene understanding
+Deep learning
+                                                               camera pose estimation, scene recognition, depth estimation, 2D/3D object and object part detection, object and
+                                                               material semantic segmentation, object and object part instance segmentation, and panoptic segmentation. This
+                                                               approach captures and renders perspective views of indoor BIM model scenes to generate photorealistic images.
+                                                               Required annotations are computed by a ray tracing-based algorithm accelerated by two-tier axis-aligned
+                                                               bounding box tree indexing. The approach was validated by efficiently producing annotated synthetic images
+                                                               from various BIM models, and preliminary experiments demonstrated the promising efficacy of the synthetic
+                                                               images for deep learning model training.
+
+
+
+
+1. Introduction                                                                                       building indoor and outdoor scenes annotated with over 2500 object
+                                                                                                      categories. It includes many object classes irrelevant to the AECO in­
+     Understanding construction and building scenes from vision data (e.                              dustry and lacks sufficient object instances in many essential classes,
+g., images, videos, and point clouds) is a prerequisite for many computer                             including mechanical, electrical, and plumbing (MEP) objects in
+vision-based automated tasks in both construction and operation and                                   particular.
+maintenance (O&M), including construction progress and activity                                           Creating a large-scale real-world dataset is often costly, laborious,
+monitoring [1,2], site safety inspection [3], localization and navigation                             and error prone. Roughly speaking, it consists of two steps: data
+[4], and 3D reconstruction [5,6], to name a few. In recent years, arti­                               collection and data annotation. Depending on the data source, the first
+ficial intelligence (AI), and especially the deep learning technique,                                 step may be implemented manually by collecting the data in the real
+dominates almost all the computer vision tasks and is increasingly used                               world using relevant reality-capture devices like digital cameras
+for processing construction and building scene-related vision data in the                             [10–12] or automatically through web crawling to collect data from the
+architecture, engineering, construction, and operation (AECO) industry.                               internet [7,13]. The manual method involves tedious labor, while the
+     Deep learning models have powerful feature representation capa­                                  automatic method may fail to obtain sufficient valid data. For the second
+bilities, but their success is significantly dependent on large-scale high-                           step, collected data is traditionally manually annotated by people. Given
+quality datasets for training. Several large-scale publicly available image                           the large-scale size, manual data labeling can be extremely laborious
+datasets have been created by the computer vision community, such as                                  and time-consuming, and often requires domain knowledge and labeling
+ImageNet [7], COCO dataset [8], and ADE20K [9]. These greatly                                         skills to ensure quality. Although many crowdsourcing services (e.g.,
+advance the development of relevant deep learning algorithms and their                                Amazon SageMaker Data Labeling [14] and Google Cloud data labeling
+real-world applications. Unfortunately, these datasets are not specific                               [15]) are available to greatly relieve the manual labor for the dataset
+for construction and building scene understanding in the context of the                               owners, it is costly for creating large-scale datasets. For example,
+AECO industry. For example, ADE20K includes >25,000 images of                                         Amazon SageMaker Ground Truth charges $8 to label 100 object
+
+
+
+    * Corresponding author.
+      E-mail addresses: enochying@campus.technion.ac.il (H. Ying), cvsacks@technion.ac.il (R. Sacks), adegani@technion.ac.il (A. Degani).
+
+https://doi.org/10.1016/j.autcon.2023.105016
+Received 6 December 2022; Received in revised form 16 June 2023; Accepted 5 July 2023
+Available online 17 July 2023
+0926-5805/© 2023 Elsevier B.V. All rights reserved.
+H. Ying et al.                                                                                                           Automation in Construction 154 (2023) 105016
+
+
+instances for semantic segmentation [14]. In addition, the manual pro­              based localization algorithms [21–23]. By using a Revit built-in color-
+cess can be error prone. For instance, Northcutt et al. [16] reported that          coding function, Hong et al. [24] further annotated the captured BIM
+the ImageNet validation set contains at least 6% label errors, including            synthetic images with object instance masks for instance segmentation.
+missing and incorrect labels.                                                           Although BIM has been used to generate synthetic images for several
+    Given the challenges in collecting real-world datasets, researchers             building scene understanding (BSU) tasks [e.g., 21, 22, 24], its potential
+have attempted to generate synthetic data from controllable and                     has not been fully explored. Many other fundamental BSU tasks have not
+computable virtual environments automatically and cost-efficiently                  been investigated, such as scene recognition, depth estimation, 2D/3D
+[17,18]. In the case of synthetic image data generation, a virtual cam­             object and object part detection, semantic and material segmentation,
+era is often used to capture images of virtual objects or scenes in a virtual       and object part segmentation (a systematic explanation of these tasks
+environment such as 3D modeling and computer graphics software (e.g.,               can be found in Section 2.1 below). In theory, all the annotations of BIM
+Revit [19], Blender [86], and Unity [87]) [20–25]. In the virtual envi­             synthetic images required by those tasks can be acquired from BIM
+ronment, all the elements including the virtual camera (intrinsic pa­               models. However, there is no universal approach to generate those an­
+rameters, location, and pose), object or scene models (geometry,                    notations automatically. Furthermore, existing efforts to generate
+material, and texture), and environment (e.g., weather and illumination             labeled synthetic images involve considerable manual effort and are
+conditions) are editable, which enables users to capture an unlimited               dependent on specific BIM authoring tools. For example, Hong et al.
+number of diverse images and annotate these images flexibly and                     [24]’s method to create annotated BIM images is built on Revit, thus
+automatically [26–28]. Synthetic image data has been used to train deep             only applicable to Revit models. Their method requires users to manu­
+learning models for some computer vision and robotic tasks such as                  ally set the pose of the Revit virtual camera to capture a view and click
+semantic segmentation of building and urban scenes [17,20], object                  the image export button to export the corresponding image. As
+detection for robotic manipulation [26,29], and vehicle detection                   mentioned earlier, it also relies on a built-in Revit function, which may
+[27,30]. These studies show that relevant deep learning models trained              not be available in other BIM authoring tools, to colorize different object
+on synthetic images or real image datasets augmented with synthetic                 types to prepare mask annotations for objects in the exported image.
+images can outperform or achieve comparable performance to models                       The performance of deep learning models trained on synthetic im­
+trained on real images only.                                                        ages can be affected by the reality gap (i.e., differences in color and
+    Due to the included accurate geometry and appearance (e.g., mate­               texture) between synthetic and real-world images [24,27,31,32]. In the
+rial and texture) information of building scenes, building information              context of BIM synthetic image generation obtaining realistic images
+modeling (BIM) models have become an appropriate data source to                     using the built-in renderer of BIM software is challenging, even if BIM
+generate synthetic images of indoor building scenes. Several studies                models are well-designed with fine-grained texture and material (see
+leveraged the virtual camera of BIM authoring tools to capture synthetic            Figs. 1(a)~(d)). Furthermore, the rendering process is quite slow. For
+images of BIM scenes and automatically annotated them with the pose of              example, Revit's renderer takes about 40 mins (using an Intel Core i7-
+the virtual camera, such that these images can be used to train image-              8700K CPU) to generate an 886 × 664 image (see Fig. 1(d)) in the
+
+
+
+
+Fig. 1. BIM image generated (a) in Revit Hidden Line mode; (b) in Revit Shaded mode; (c) in Revit Realistic mode; (d) rendering in best quality mode in Revit; and
+(e) by Enscape in Ultra quality mode.
+
+                                                                                2
+H. Ying et al.                                                                                                      Automation in Construction 154 (2023) 105016
+
+
+best quality mode. Therefore, some pioneering studies have employed             the scene category (e.g., “bedroom” and “living room”) that the image
+domain adaptation technologies such as image-to-image translation               describes. One of the applications is robot semantic navigation in an
+methods to bridge the reality gap. For instance, Hong et al. [24] and           indoor environment, which leverages semantic information about the
+Chen et al. [32] used CycleGAN [33] to transform BIM-rendered images            scene for robust navigation [38]. Deep convolutional neural network
+into photorealistic images with similar appearances or styles to real-          (CNN) models show impressive performance on the scene recognition
+world images. However, these methods require expertise and addi­                task [9]. Annotation for scene recognition is relatively simple by
+tional non-trivial efforts, including additional data preparation for           assigning a category label to each training image.
+training the GAN model (see Section 2.2.3 for more details).                         Depth estimation for an image focuses on estimating the depth of
+    In fact, computer graphics has greatly matured in recent decades and        each pixel of the image. The depth of a pixel refers to the distance be­
+can be used to generate photorealistic images at high speed [30]. For           tween the camera that captures the image and the object point in the
+example, Enscape [34] and v- Ray [35] are advanced rendering engines            world that corresponds to the pixel. Image depth is useful for many
+that can work in many BIM software like Revit and ArchiCAD to                   applications like robotic navigation and BSU tasks such as object
+generate photographic images in near real-time (see Fig. 1(e)). With            detection and semantic segmentation [39]. The desired data annotation
+several data transformation steps, many 3D computer graphics software           is to add the depth label for each pixel of the training images.
+like Blender and Unity can also be used to render BIM model scenes.                  Object detection attempts to precisely estimate the class types (e.g.,
+Unfortunately, none of these computer graphics tools have been inves­           wall and window) and locations of objects of interest contained in an
+tigated to generate synthetic images of indoor BIM scenes.                      image [40]. The location of an object is generally defined by a bounding
+    To this end, this study developed a universal and automatic approach        box (BB), which is a 2D rectangular box that tightly encloses the object
+that generates photorealistic synthetic images of BIM scenes of building        while aligning with the edges of the image. Object part detection ex­
+interiors and computes comprehensive annotations for multiple BSU               pands this task to a more fine-grained level by further distinguishing and
+tasks. The approach consists of two stages, i.e., image generation and          localizing meaningful parts of each object (e.g., legs, seat, and backrest
+annotation, involving five main steps, all automated: (1) determine             of a chair) [41]. For RGB-D images, the 3D object detection task can be
+camera poses on the space level to capture 3D perspective views using a         carried out, where 3D oriented BBs (OBBs) of objects need to be esti­
+grid-based parameterized method, (2) generate photorealistic images of          mated [42]. An OBB is a rectilinear box that tightly bounds an object or
+captured BIM views using advanced real-time render, (3) identify valid          object part and aligns with its shape's orientation. Object detection has
+images and add distortion effects, (4) annotate entire generated images         been used widely in different engineering contexts in the AECO industry,
+with scene category and camera pose and each pixel of the images with           such as detecting construction equipment [13,43], construction workers
+the labels of depth, material type, object class, object and object part        [44,45], and onsite building components [46], and identifying second­
+instance using a ray tracing algorithm, and (5) generate other annota­          ary objects (e.g., MEP objects) in existing buildings [47]. To annotate an
+tions, including annotations for 2D/3D object and object part detection,        image for object and object part detection, the BBs of all the objects and
+based on the pixel-level labels obtained in Step (4). Except for BIM data       object parts of interest in the image should be outlined, and for each box,
+extraction operations, the proposed approach is independent of specific         the object or object part class label should be assigned.
+BIM authoring tools.                                                                 Semantic segmentation predicts the category of every pixel in an
+    The remainder of this paper is structured as follows. Section 2             image [48]. Therefore, to annotate an image for semantic segmentation
+summarizes fundamental BSU tasks in detail and reviews existing syn­            model training, the class label of all the pixels should be given.
+thetic image data creation methods. Section 3 presents the technical            Depending on the specific objective, the class label can be object type for
+details of our BIM and computer graphics-based synthetic image gen­             object segmentation [48,49], object surface material for material seg­
+eration and annotation approach. Section 4 demonstrates the validity of         mentation [5,50], and cracks in buildings and infrastructure for crack
+the approach via a series of experiments on generating labeled synthetic        segmentation [51,52].
+images from complex BIM scenes successfully and demonstrating the                    Compared with semantic segmentation, instance segmentation
+effectiveness of the synthetic images for deep learning model training.         makes finer-grained predictions by separating labels for different in­
+Section 5 discusses the prerequisites of the approach and the limitations       stances of the same class [53]. For instance, for an image containing
+of the present study. Section 6 concludes this study.                           multiple walls, semantic segmentation of walls aims to search all wall
+                                                                                pixels, while instance segmentation further distinguishes which wall
+2. Background                                                                   instance a searched pixel belongs to. In the AECO industry, instance
+                                                                                segmentation has been used for precisely detecting moving objects (e.g.,
+2.1. Image-based building scene understanding                                   workers and construction vehicles) on construction sites [11] and seg­
+                                                                                menting building structural components (e.g., walls, floors, doors, and
+    BSU aims to understand a building scene by analyzing the geometric          windows) [24,54]. Like object part detection, object part segmentation
+and semantic features of its contents and their relationships [36]. It          implements instance segmentation on the object-part level [55]. Anno­
+includes a series of fundamental tasks on multiple perceptual levels,           tating images for instance segmentation is complicated by the need to
+such as camera localization, scene recognition, depth estimation, object        delineate the mask of each object or object part instance precisely and to
+detection, semantic segmentation, instance segmentation, and panoptic           assign it a class label.
+segmentation from coarse to fine [36,37]. In what follows, the concepts              Panoptic segmentation combines the tasks of semantic segmentation
+of the above-mentioned BSU tasks and relevant dataset annotation re­            and instance segmentation by segmenting countable object instances (i.
+quirements are discussed.                                                       e., instance segmentation) and making pixelwise semantic predictions
+    Given a single image, image-based camera localization aims to infer         for all other amorphous areas such as glass and sky (i.e., semantic seg­
+the pose (i.e., 3D location and 3D orientation) of the camera that cap­         mentation) [56]. In the context of building indoor scenes, although
+tures the image. Camera localization is an essential component of many          almost all the objects are countable things, panoptic segmentation can
+high-level applications such as robot localization and navigation and           still be used when there are different segmentation requirements on
+virtual/augmented reality (VR/AR). Several end-to-end deep learning-            different objects, e.g., semantic segmentation for building structural
+based building indoor localization approaches [22,23,31] have been              elements and instance segmentation for other objects. Image annotation
+developed. Data annotation to enable these approaches is to label all the       for panoptic segmentation needs to distinguish objects for semantic
+training images with the 6 degrees of freedom (DOF) camera pose                 segmentation and instance segmentation first, and then apply relevant
+information.                                                                    annotation methods accordingly.
+    Scene recognition aims to comprehend an entire image to understand               Currently, there is no building image dataset with comprehensive
+
+                                                                            3
+H. Ying et al.                                                                                                          Automation in Construction 154 (2023) 105016
+
+
+annotations that can support all the above-mentioned fundamental BSU                developed a more universal method to generate synthetic images for
+tasks. This study fills this gap by developing a universal and automatic            onsite construction equipment detection. This method formalized a se­
+approach to generate those annotations for synthetic images captured                ries of controllable parameters for capturing virtual construction
+from BIM models.                                                                    equipment images as well as adjusting real-world construction site im­
+                                                                                    ages. By randomizing these parameters, diverse images of construction
+2.2. Synthetic image data creation                                                  equipment and sites are generated separately, which are further com­
+                                                                                    bined to generate desired synthetic images.
+    Creating large-scale real-world building image requires laborious
+and expensive image data collection and annotation. Thanks to progress              2.2.3. Image-to-image translation
+in computer graphics, generating synthetic images in a virtual envi­                    This method bridges the reality gap by transforming virtual
+ronment can effectively address those challenges. Regardless of the                 rendering images into realistic images and meanwhile maintaining the
+specific objectives, synthetic image creation methods can be broadly                annotations of original images. Nowadays, Generative Adversarial
+classified into three categories: (1) direct generation from a virtual              Network (GAN)-based algorithms dominate various image-to-image
+environment; (2) inserting objects of interest into real-world back­                translation problems [61]. Specifically, CycleGAN [33] is widely used
+ground images; and (3) image-to-image translation.                                  to map images from two different domains. Hong et al. [24] adopted
+                                                                                    CycleGAN to transform BIM rendering images with real-world textures
+2.2.1. Direct generation from a virtual environment                                 for instance segmentation of building indoor scenes. The CycleGAN
+    This method captures synthetic images of 3D models of building                  model that enables the transformation was trained with a set of paired
+scenes by using a virtual camera in 3D modeling and computer graphics               BIM images and real-world photographs that describe the same scenes in
+software. As discussed above in Section 1, due to editability and                   the virtual BIM model and the real world, respectively. Likewise, Chen
+computability of the elements (e.g., virtual camera, scene model, and               et al. [32] trained a CycleGAN model to create a photorealistic BIM
+lighting environment) in the virtual environment, theoretically an un­              image database for image retrieval. These studies demonstrate prom­
+limited number of varied images can be captured and annotated                       ising results in terms of dataset generation for training relevant deep
+automatically.                                                                      learning models. However, compared with Methods (1) and (2), this
+    This method has been widely used to construct training datasets.                method has additional challenges. First, a large-scale dataset comprising
+Several studies used a virtual camera to capture images of 3D building              pairs of BIM rendered images and real-life images needs to be prepared
+models in Blender and to annotate the images with camera pose to train              for CycleGAN model training. Second, the training itself requires
+relevant deep learning models for indoor camera pose estimation                     considerable effort and expertise because of the well-known instability
+[22,23]. These models show promising accuracies when tested on real                 in GAN model training [62,63].
+images. Ha et al. [21] extracted BIM-rendered images of building indoor
+scenes to support an image retrieval-based camera pose estimation.                  2.2.4. Summary
+Calderon et al. [57] developed a method to generate synthetic image                     Method (1) is the simplest and most straightforward of the three
+sequences that capture simulated operations of a kinematically articu­              methods because requires neither real-world image collection nor
+lated excavator modeled in Unity. The deep learning model trained on                additional expensive processing. Until recently, however, the image
+the synthetic image sequences achieved superior performance in pre­                 quality that could be achieved by available rendering algorithms was
+dicting excavator pose sequence compared to the model trained on real-              such that the potential reality gap with real-world images limited its
+world data. Similarly, Mahmood et al. [58] constructed synthetic images             effectiveness. This is the reason why researchers developed the various
+of virtual excavators for 3D excavator pose estimation. To make the                 techniques in Method (2) and Method (3) to augment the virtual images
+synthetic images more realistic, this study considered natural visual               generated by Method (1).
+features such as lighting, occlusions, image distortion, dust, and natural              With the significant progress in BIM adoption in the construction
+background. Assadzadeh et al. [28] proposed a domain randomization                  industry, high-quality BIM models of a wide variety of building types are
+approach to augment the synthetic excavator images. Specifically, the               now available and software developers have released advanced com­
+approach randomizes a wide range of parameters including the view­                  puter graphics software capable of generating photorealistic images of
+point and field of view (FOV) of the virtual camera, lighting, floor and            BIM scenes (e.g., Enscape [34], v-Ray [35], Blender [86] and Unity
+background textures, occluding objects, and dust to increase the effec­             [87]). Given these developments, it may now be possible to generate
+tiveness of the synthetic images for deep learning model training.                  synthetic images from renderings of virtual BIM scenes of sufficient
+                                                                                    quality for relevant deep learning model training for BSU tasks. If so, the
+2.2.2. Inserting objects of interest into real-world background images              barriers posed by tedious and inconvenient real-world image collection
+    Although Method (1) can generate annotated synthetic images                     and/or technically complex and costly postprocessing operations
+conveniently in a virtual environment, one of its main limitations is the           (Methods 2 and 3) could be avoided and practical application of scene
+appearance and style difference with real-world images, which can                   understanding would become feasible. That Method (1) is now feasible
+impede the performance of the resulting deep learning algorithms. As                for certain building types is thus the hypothesis underlying this research.
+discussed earlier, several techniques including high-fidelity scene
+modeling and domain randomization have been introduced to relieve                   3. Generation of synthetic images for building scene
+the reality gap. Nevertheless, these efforts may find it difficult to address       understanding
+the image backgrounds that are often natural (e.g., grass) or complex
+manmade (e.g., construction sites) scenes. Some efforts handle this issue           3.1. Overview
+by inserting synthetic or real-world image patches of objects of interest
+into real-world background images. For example, Dwibedi [59] pro­                       The objective of this study is to develop a universal and automatic
+posed a ‘cut and paste’ method to generate synthetic images for instance            approach to generate photorealistic synthetic RGB images of indoor
+segmentation. This method first cuts objects from original real-world               building scenes with comprehensive annotations using BIM and com­
+images and then pastes the object patches into random real-world                    puter graphics. The resulting annotated images enable various deep
+background images to produce desired synthetic images. Soltani et al.               learning-based fundamental BSU tasks, including camera pose estima­
+[60] adopted Method (1) to capture virtual images of a 3D evacuator                 tion, scene recognition, depth estimation, 2D/3D object and object part
+model and then overlayed the captured evacuator images to diverse real-             detection, object and material semantic segmentation, object and object
+life construction site images. With a similar idea, Lee et al. [25]                 part instance segmentation, and panoptic segmentation.
+
+                                                                                4
+H. Ying et al.                                                                                                           Automation in Construction 154 (2023) 105016
+
+
+    Fig. 2 illustrates the detailed workflow of the approach. It captures          point cloud as a valuable by-product. The point cloud consists of the 3D
+and annotates images of indoor BIM scenes space-by-space. The                      object points that correspond to the object pixels in the image. Along
+approach first extracts all the necessary data related to interior spaces of       with the obtained annotations, the point cloud is used to compute
+interest and physical objects from the input BIM model, which are fed to           remaining annotations including 2D BBs and 3D OBBs of objects and
+two successive stages: photorealistic BIM synthetic image creation and             object parts.
+desired annotation generation. In each target space, the first stage                   Note that for the BSU tasks including object semantic segmentation,
+automatically determines the feasible poses of a configured virtual                2D/3D object and object part segmentation, and object and object part
+camera to capture 3D perspective views of the model scene. These                   instance segmentation, our approach generates fine-grained annotations
+captured views are rendered into photorealistic images by using a 3D               on a basic object/object part concept level. Complex concept-level an­
+renderer, of which valid images are identified by removing duplicates              notations can be derived by combining relevant fine-grained annota­
+and images that are incomprehensible to human. Lastly, to mimic the                tions. For instance, for a wall with multiple windows in an image, our
+distortion effects in real images, which are caused by manufacturing               approach would separately annotate the wall instance and each window
+imperfections in the camera lens, the obtained valid images are further            instance for the object instance segmentation task. The annotation of a
+distorted using predefined coefficients. In this stage, two annotations of         more complex concept – “wall with windows” can be obtained by
+each valid image, including the camera pose and scene category, can be             merging the masks of the wall and all the hosted windows and labeling it
+obtained directly.                                                                 as “wall with windows”.
+    The second stage computes all the remaining annotations of each
+valid image progressively. Specifically, this stage first detects all the          3.2. BIM data extraction
+physical objects that partially or completely fall in the view frustum of
+the virtual camera that captures this image. Then, all the detected ob­                The approach starts with extracting interior space objects and
+jects are indexed as a two-tier axis-aligned bounding box (AABB) tree to           physical objects from the input BIM model to prepare the following
+accelerate the next ray tracing process, which produces pixelwise an­              steps. Specifically, for each space, the solid geometry (represented as a
+notations including depth, labels for object and object part instance              triangle mesh) and the name attribute data are retrieved for automatic
+segmentation, labels for object and material semantic segmentation, and            camera pose determination (see Section 3.3.2) and scene category
+labels for panoptic segmentation. The ray-tracing process also yields a            annotation (see Section 3.3.4), respectively. An entire BIM model may
+
+
+
+
+                                       Fig. 2. Pipeline for generating labeled photorealistic images from a BIM model.
+
+                                                                               5
+H. Ying et al.                                                                                                             Automation in Construction 154 (2023) 105016
+
+
+contain exterior spaces or interior spaces with similar or duplicate                  (w) and height (h) of the viewport, on which the image coordinate
+scenes. Distinct interior spaces are thus selected as the targeted ones.              system (ICS) is located and all the objects in the VF are projected for
+Physical objects are extracted for annotation computing since they                    image generation, can be derived from f, hFOV, and vFOV. Furthermore,
+constitute the contents of the images to be captured (see Section 3.4). A             the parameters related to the size of output images, including width (W)
+BIM object is identified as physical if it carries material and solid ge­             and height (H) in pixel, need to be specified.
+ometry data. For each physical object, the following data are retrieved:                   Note that, images captured by a real digital camera may have radial
+object class, instance ID (i.e., global ID), and triangle mesh. Each tri­             and tangential distortions caused by the manufacturing imperfections of
+angle in the triangle mesh is further marked with the surface material                the camera lens. However, a virtual camera is often an ideal pinhole
+and the outward normal vector, which can be obtained by the method                    camera model without lenses, thus lacking the ability of simulating
+presented in [64]. If the object consists of multiple geometric parts, each           distortion effects directly. Mathematically, both radial and tangential
+triangle also carries the information of the part class it belongs to and the         distortions can be described by two independent parameters (denoted
+part instance ID.                                                                     (k1 , k2 ) and (p1 , p2 )). Hence, to enhance the realism of the virtual cam­
+    All those data can be directly retrieved using the application pro­               era, the four distortion parameters are introduced. Synthetic images
+gramming interface (API) of relevant BIM authoring tools or IFC tool­                 with distortion effects can then be obtained by distorting the ideal im­
+boxes (e.g., IFC Engine [65] and xBIM toolkit [66]), depending on the                 ages captured by the virtual camera based on the distortion parameters
+data format of the input BIM model. In addition, AABBs of the extracted               (see Section 3.3.5).
+spaces and physical objects are inferred from their triangle meshes and                    In summary, by customizing the group of parameters including f,
+used to accelerate relevant geometric operations in downstream                        (hFOV, vFOV), (dn , df ), (k1 , k2 , p1 , p2 ), and (W, H), virtual cameras in
+processes.                                                                            various specifications can be set up to capture images in diverse forms on
+                                                                                      the aspects of FOV, resolution, size, and quality. We note that the axes
+3.3. Photorealistic synthetic image generation                                        directions of the three coordinate systems (i.e., CCS, ICS, and pixel co­
+                                                                                      ordinate system (PCS)) involved in the virtual camera model may vary in
+    The approach leverages the virtual camera embedded in BIM                         different software; hereafter, this study uses the settings of Revit (see
+authoring tools or computer graphics software to capture 3D perspective               Fig. 3) to demonstrate the proposed approach.
+views of indoor scenes, which are then rendered and processed to create
+desired RGB images. First, the parameters that characterize the virtual               3.3.2. Perspective model view capture
+camera are configured to set up the virtual camera (Section 3.3.1). To                    After the virtual camera is configured, the next step is to determine
+capture as many effective views as possible efficiently, the method to                its potential poses in each target space such that corresponding 3D
+determine the location and orientation of the virtual camera for view                 perspective views can be captured using the configured virtual camera.
+capturing is carefully designed (Section 3.3.2). The captured views are               A camera pose consists of two components: location (i.e., the origin of
+then rendered into photorealistic images (Section 3.3.3) and their val­               the CCS) and orientation (i.e., the axis directions of the CCS), which can
+idity is further checked (Section 3.3.4). Lastly, all the valid images are            be represented by a 4 × 4 transformation matrix (TMCCS→MCS ) from the
+distorted to provide the desired images (Section 3.3.5).                              CCS to the MCS, as shown in Fig. 3. Herein, a two-step parameterized
+                                                                                      method is developed to efficiently sample feasible camera poses in the
+3.3.1. Virtual camera configuration                                                   space, as illustrated in Fig. 4.
+     The virtual camera models and associated parameters implemented                      First, the feasible locations of the virtual camera in a space are
+in different modeling and computer graphics software are almost the                   sampled using a grid. To simplify the computation, an AABB of the space
+same. Fig. 3 illustrates the virtual camera model in Revit 2023. The key              is used as the initial feasible region. Then, the AABB is subdivided as a
+parameters of the camera model include focal length (f), horizontal                   3D grid along the three axes of the MCS. The grid corner points refer to
+(HFOV) and vertical (VFOV) FOV, and the distances (dn and df ) between                the initial set of camera locations in the space. Given the minimum
+                                                                                              (                 )
+the camera and the near and far planes of the so-called view frustum                  vertex xmin , ymin , zmin , length (ls ), width (ws ), and height (hs ) of the
+(VF). The VF represents the visible space to the virtual camera, i.e., only           space AABB, and horizontal (δx and δy ) and vertical (δz ) grid interval, the
+                                                                                                    (         )
+objects partially or completely in the VF can be captured by the camera.              coordinates xl , yl , zl of a grid corner can be represented by:
+It is a truncated pyramid, whose apex refers to the origin of the camera.             ⎧
+                                                                                      ⎨ xl = xmin + iδx
+It can be completely determined by the eight vertices of the near and far
+                                                                                         y = ymin + jδy                                                          (1)
+planes, whose coordinates in the camera coordinate system (CCS) can be                ⎩ l
+                                                                                         zl = zmin + kδz
+easily calculated based on dn , df , hFOV, and vFOV. Likewise, the width
+
+
+
+
+Fig. 3. Virtual camera model in Revit improved by considering distortion effects. Note: In Revit, the viewport is an independent plane slightly behind the near plane
+while in many other software, the viewport refers to the near plane.
+
+                                                                                  6
+H. Ying et al.                                                                                                                  Automation in Construction 154 (2023) 105016
+
+
+
+
+                                          Fig. 4. Method to determine feasible locations (a) and orientations (b) in a space.
+
+                                                     [         ]                          ages), as illustrated in Fig. 5. Those images thus do not need to be
+where i, j, and k refer to an integer in [0,ls /δx ], 0, ws /δy , and [0, hs /δz ],
+                                                                                          captured and annotated by the downstream processes but can be
+respectively. Since i, j, and k are independent parameters, around ls ws hs /
+(         )                                                                               attained by rotating relevant base images and their annotations appro­
+  δx δy δz initial camera locations are obtained for the space.                           priately, which is much cheaper computationally. The above situations
+     Some grid corners may fall outside the space (see the red points in                  happen when fixing α and β and changing γ (i.e., rotating the camera
+Fig. 4(a)), and these should be excluded. Point-in-Polyhedron tests [67]                  along the z-axis of the CCS) (see Fig. 5). Hence, the feasible region of γ in
+are implemented to find all the grid corners (see the brown and blue                      Eq. (2) can be reduced to [0, π/2) (for square images) or [0, π) (for
+points in Fig. 4(a)) located in the exact space geometry – a triangle mesh-               rectangular images). Similarly, when fixing γ, changing β by 180 degrees
+based polyhedron.                                                                         would generate two sets of images that are vertically flipped to one
+     The set of grid corners obtained so far is further narrowed down by                  another, which means the feasible region β can be reduced to [0, π).
+removing corners (see blue points in Fig. 4(a)) inside any physical ob­                   Therefore, w is restricted to an integer in [0, π /(2φα ) ) or [0, π/φα ) and v
+jects in the space. First, for efficiency, those physical objects are iden­                  [       )
+                                                                                          in 0, π/φγ . The number of images for a specific location to be captured
+tified from the set of all extracted physical objects whose AABB is                                                                          (        )
+                                                                                          and labeled is reduced by up to 8 times to π3 / φα φβ φγ .
+contained by or intersects the space's AABB based on the AABB-AABB
+                                                                                              For specific hFOV and vFOV, the values of φα and φβ determine the
+intersection test [67]. Objects that enclose spaces (e.g., walls, floors,
+ceilings, windows, and doors) are directly excluded. Then, grid corner                    overlap between two adjacent images captured along y-axis (i.e.,
+points inside the AABBs of the identified objects can be easily filtered.                 rotating α) and x-axis (i.e., rotating β) of the CCS, respectively. The
+The remaining grid corners (see brown points in Fig. 4(a)) refer to the                   overlap ratio to hFOV (Oh ) and vFOV (Ov ) can be computed by
+desired locations of the virtual camera. Since the virtual camera is                      ⎧
+                                                                                                    {
+                                                                                                      (hFOV − φα )/hFOV if φα < hFOV
+volumetric, in the practical implementation of the above-described                        ⎪
+                                                                                          ⎪   Oh =
+                                                                                          ⎨                        0 others
+process, we shrink the space's AABB by 200 mm and expanded the                                                                                                        (4)
+                                                                                                  {(              )/
+involved physical objects' AABBs by 100 mm in all three axis directions.                  ⎪
+                                                                                          ⎪
+                                                                                          ⎩            vFOV − φβ vFOV if φβ < vFOV
+This eliminates unreasonable camera locations where the virtual camera                       Ov =
+                                                                                                                   0 others
+intersects the space's boundaries or physical objects.
+     Once the virtual camera's locations are determined, its orientations                     In this study, to eliminate capture of duplicate scenes, Oh and Ov are
+on each location need to be set up. The camera orientation in the MCS                     set to zero, which means that φα and φβ are set to be not less than hFOV
+has 3DOF, which can be defined by three rotation angles (yaw – α, pitch                   and vFOV respectively. φγ is suggested to be 45 degrees, which provides
+– β, and roll – γ) along the three axes of the MCS, respectively (see Fig. 4              sufficient difference between two images captured by rotating γ.
+(b)). The rotation matrix (R) from the MCS to the CCS can be constructed                                                              (         )
+                                                                                              Based on the set camera location (L = xl , yl , zl ) and orientation (R),
+by                                                                                        the camera pose represented in form of TMCCS→MCS is
+       ⎡                                                                ⎤                                [ −1       ]
+         cosrcosα cosrsinαsinβ − sinrcosβ cosrsinαcosβ + sinrsinβ
+                                                                                                           R     LT
+R = sinrcosα sinrsinαsinβ + cosrcosβ sinrsinαcosβ − cosrsinβ ⎦ (2)
+       ⎣                                                                                  TM CCS→MCS =                                                              (5)
+                                                                                                            0     1
+           − sinα          cosαsinβ                   cosαcosβ
+
+where, α, β, and γ belong to [0, 2π) theoretically. Angular resolution                    3.3.3. View rendering
+parameters φα , φβ , and φr are introduced to discretize the three angles in                 The captured indoor perspective views are rendered to generate
+                                                                                          synthetic images. The render effects of a BIM view are mainly decided by
+their feasible regions by
+                                                                                          three aspects:
+⎡ ⎤ ⎡          ⎤
+  α        uφα
+⎣ β ⎦ = ⎣ vφβ ⎦                                                         (3)                  (1) Physical model of the view, which contains the geometry, ma­
+  γ        wφγ                                                                                   terial, and texture data of the included objects. The optical
+                                                             [        )                          properties of objects used for rendering such as reflectivity, color,
+where, u, v, and w belong to an integer in [0, 2π/φα ), 0, 2π/φβ ,                               and transparency/absorption are incorporated in the textures and
+[         )              (        )
+  0, 2π/φγ . Around 8π3 / φα φβ φγ camera orientations can be obtained                           material type properties of the objects.
+for each location.                                                                           (2) Indoor illumination, which results from artificial lighting and
+     Each of these camera orientations corresponds to an image to be                             natural illumination. Artificial lighting is determined by lighting
+captured, which will be annotated by the downstream expensive image                              fixtures defined in the BIM model, which specify all light-related
+labeling processes. Some images can be obtained by rotating other im­                            properties such as location, shape and brightness of light source,
+ages (denoted as base images) by multiples of 90 degrees (for square                             light distribution (e.g., spherical, hemispherical, or spot), and
+images with an aspect ratio of 1:1) or 180 degrees (for rectangular im­                          photometric characteristics (e.g., light loss, intensity, and color).
+
+
+                                                                                      7
+H. Ying et al.                                                                                                               Automation in Construction 154 (2023) 105016
+
+
+
+
+Fig. 5. Square (a) and rectangular (b) images captured at the same location with different orientations (α and β are fixed, γ varies by 90 degrees). For square images,
+the last three images can be obtained by rotating the first image by angles of 90, 180, and 270 degrees respectively. For rectangular images, the third and the fourth
+images can be obtained by rotating each of the first and the third images by 180 degrees.
+
+
+       Natural illumination is related to sunshine, which is determined                intervals are often minimal. For the same view, the images rendered at a
+       by the geolocation of the building, the weather, and the date and               different date and/or time could have a significantly different visual
+       time. Except for the date and time that can be selected flexibly, all           appearance, as shown in Fig. 6. This effectively adds visual diversity to
+       the parameters that define the lighting conditions could be fixed               the resulting synthetic images. In addition, on top of the synthetic im­
+       in the BIM model.                                                               ages, many other image visual effects such as noise (e.g., blurring),
+   (3) The rendering engine used for rendering the view. For the same                  brightness adjustment, scaling, and flipping can be introduced to create
+       BIM scene and the same indoor illumination setting, different                   new images by using relevant image argumentation techniques. These
+       rendering engines may generate aesthetically different images                   are outside the scope of this study.
+       because they use different algorithms and techniques to simulate
+       the behavior of light and its interaction with the objects in the               3.3.4. Valid image identification
+       scene. The aesthetic differences caused by different rendering                     The grid-based BIM view capture method provides a universal means
+       tools are beyond the scope of this study. We adopted a rendering                to generate geometrically feasible camera poses in an indoor space.
+       software called Enscape, which can run directly in various BIM                  However, it may result in “invalid” images for dataset creation in two
+       environments, to generate photorealistic images of captured BIM                 cases: (1) images quite similar or same to other images (see Fig. 7 (b));
+       views in near real-time. By synchronizing captured BIM views,                   and (2) images lacking sufficient geometric features that make incom­
+       Enscape would extract all the above-mentioned data associated                   prehensible even to a human observer (see Fig. 7(c)). These images need
+       with these views automatically for rendering.                                   to be identified and discarded since they are useless for deep learning
+                                                                                       model training but increase the computing burden.
+    To generate synthetic images with diverse visual effects while                        Regarding the first case, a similar checking is implemented to all the
+maintaining realism, we keep all the data except the date and time as                  rendered images of a space to identify and remove similar or duplicate
+defined in the BIM model and randomize the date and time for captured                  images. Specifically, the cosine similarity (cos) between two images is
+views. More specifically, for a view, a random date in the year 2021 is                used to measure their similarity, which can be calculated by
+assigned, and a time (10:00 am, 15:00 pm, or 22:00 pm) is randomly
+                                                                                                 ima1 • ima2
+picked. We do not randomize the year because for a specific location,                  cos =                                                                         (6)
+                                                                                               ‖ima1 ‖ × ‖ima2 ‖
+different years shall have a similar sun path on the same day. We avoid
+randomizing the time on the hour or minute level because the visual                    where, ima1 and ima2 refer to a flattened (i.e., flattening 3D image array
+differences caused by sun location differences between minor time
+
+
+
+
+                          Fig. 6. Rendering images of a BIM view set with different times: (a) 10:00 am; (b) 3:00 pm; and (c) 10:00 pm.
+
+                                                                                   8
+H. Ying et al.                                                                                                             Automation in Construction 154 (2023) 105016
+
+
+
+
+                 Fig. 7. Cases of “invalid” images: (a) camera locations; (b) two similar images; and (c) an image with undistinguishable contents.
+
+
+into 1D vector) and normalized (i.e., dividing pixel color values by 255)            distorts the valid images based on the predefined distortion coefficients
+vector of the two target images. If cos is larger than a threshold, the two          (i.e., k1 , k2 , p1 , p2 ) of the virtual camera to make the images more
+images are confirmed as similar and any one of them needs to be                      realistic.
+removed. The criterion of image similarity becomes stricter as the                       For each valid image, the basic idea of distortion is to update the
+threshold value increases. To ensure that only the images with a high                values (including alpha, red, green, and blue) of every pixel (u, v) with
+degree of similarity are identified as invalid and removed, a relatively             that of the corresponding pixel (ud , vd ) in the original image, which can
+high value of 0.99 is set. This avoids unnecessary discarding of images              by calculated by:
+with slight similarities, thereby preserving potentially valuable training           {          ((                    )                (          ))
+                                                                                        ud = fx ( ( 1 + k1 r2 + k2 r4 )x + 2p1 xy + p2 ( 2x2 + r4 ) ) + cx
+data for deep learning model development. For large-sized images, both                                      2       4                      2    4            (7)
+                                                                                        vd = fy 1 + k1 r + k2 r y + 2p2 xy + p1 2y + r                + cy
+can be downscaled by the same ratio before calculating the similarity for
+efficiency.
+                                                                                     where (x, y) refer to the coordinates of the point corresponding to pixel
+    For the second case, captured images with insufficient edges, e.g.,
+                                                                                     (u,v) in the CCS, r is the Euclidean distance between the point (x,y) and
+fewer than two edges, are recognized as invalid. To detect the edges in
+                                                                                     the origin of the CCS, and (fx ,fy ,cx ,cy ) are the intrinsic parameters of the
+an image, the image is converted into a gray image first, which is further
+                                                                                     virtual camera that captures the image. All these parameters can be
+noised by gaussian blurring for better edge detection. Finally, the Canny
+                                                                                     obtained by
+edge detection algorithm [68] is applied to the blurred gray image.
+                                                                                     ⎧
+Fig. 8 shows a valid and an invalid sample image and their detected                  ⎪  fx = − fW/w
+                                                                                     ⎨ f = fH /h
+                                                                                     ⎪
+edges.                                                                                     y
+                                                                                                                                                                  (8)
+    For each valid image, the annotation of the known camera pose is                 ⎪
+                                                                                     ⎪
+                                                                                     ⎩
+                                                                                         cx = W/2
+                                                                                                /
+described by the 3D location (x, y, z) and the three rotation angles (i.e.,               cy = H 2
+yaw, pitch, and roll) in the MCS. Similarly, since the space where the
+                                                                                     ⎧ x = (u − c )/f
+image is taken is known, the image can also be straightforwardly labeled             ⎨     (        x)/ x
+
+with the scene category, i.e., the name of the space, which has been                   y = v − cy fy
+                                                                                            √̅̅̅̅̅̅̅̅̅̅̅̅̅̅                                                        (9)
+                                                                                     ⎩
+extracted in Section 3.2.                                                               r = x2 + y2
+
+3.3.5. Valid image distortion                                                        where, f, W, H, w, and h refer to the virtual camera's focal length, width,
+   As discussed in Section 3.3.1, compared to a real camera, the virtual             and height of the image in pixel, and the actual width and height of the
+camera is ideal without any optical errors in lens. The generated                    camera's viewport. They are either preset or can be calculated from
+rendering images thus do not have corresponding distortions. This step               other fundamental parameters of the virtual camera, as explained in
+
+
+
+
+                                      Fig. 8. (a) Valid image and detected edges, and (b) invalid image and detected edges.
+
+                                                                                 9
+H. Ying et al.                                                                                                                  Automation in Construction 154 (2023) 105016
+
+
+Section 3.3.1.                                                                             improvement for various computational geometry algorithms in the
+    Note that (ud , vd ) calculated by Eq. (7) may be not integers, in which               context of BIM [69–72]. This study follows Ying and Lee [70]’s idea to
+case the associated pixel values cannot be found. To tackle this issue, a                  establish a two-tier AABB tree indexing strategy. An AABB tree is a
+bilinear interpolation is implemented to derive the pixel values by                        special bounding volume hierarchy (BVH) that indexes geometric
+weighting the values of the four nearest pixels of (ud , vd ).                             primitives (e.g., points, triangles, and polyhedrons) into a binary tree
+                                                                                           based on their AABBs. AABB trees are used in this study because: (1)
+                                                                                           they are fast and easy to build compared to other spatial indexing
+3.4. Pixelwise annotation generation
+                                                                                           structures like R-trees; (2) they have low memory overhead and enable
+                                                                                           efficient storage and retrieval of BIM object information; and (3) they
+    So far, valid photorealistic synthetic images have been generated,
+and two types of annotation – camera pose and scene category – have                        are well-suited for ray tracing because they allow for quick rejection of
+                                                                                           objects that do not intersect with a given ray. Fig. 10 illustrates the two-
+been obtained for each image. In this section, we compute pixelwise
+                                                                                           tier indexing strategy in 2D. The first-tier indexing organizes all the
+annotations including depth, object and object part instance labels,
+                                                                                           identified objects into an AABB tree (denoted ‘model tree’) based on
+object and material labels for semantic segmentation, and labels for
+                                                                                           their AABBs. The second-tier indexing creates an individual AABB tree
+panoptic segmentation. The basic idea is to compute the 3D object point
+                                                                                           (denoted ‘object tree’) for each object based on its triangle mesh. Please
+that each image pixel corresponds to using a ray tracing algorithm
+                                                                                           see [70] for more implementation details of the two-tier AABB tree.
+(Section 3.4.3). The rays that originate from the camera through each
+                                                                                               We implemented two common tree node splitting methods for the
+pixel are traced against physical BIM objects to compute relevant object
+                                                                                           tree construction: a middle point-based method and surface area heu­
+points, from which the required annotations can be derived. Given the
+                                                                                           ristic (SAH)-based method [73]. The former is fast for tree construction
+large number of pixels in an image and numerous objects in the BIM
+                                                                                           but may result in an unbalanced and spatially sparse tree, which is a
+model, two tactics are introduced to accelerate the intensive ray tracing
+                                                                                           disadvantage when traversing the tree. SAH takes more time to imple­
+process: reduce the scope of BIM objects to be checked for each ray
+                                                                                           ment but generally produces an optimized tree that can significantly
+(Section 3.4.1) and spatially index these objects for faster queries of each
+                                                                                           benefit tree traversal operations. SAH is recommended only when the
+ray (Section 3.4.2).
+                                                                                           target BIM scenes and the image sizes are extremely large.
+3.4.1. Identify BIM objects in the view frustum
+                                                                                           3.4.3. Ray tracing to label each image pixel
+    Only physical objects fully or partially located in the VF can appear
+in a virtual camera image. Hence, only these objects are considered in                         The goal of the ray tracing is to compute the corresponding 3D object
+                                                                                           point of each image pixel in the BIM model scene. Information associ­
+the ray tracing process. We identify such objects indirectly by excluding
+objects disjoined with the VF from the set of objects we seek. Fig. 9 il­                  ated with the object point, including coordinates, object and/or object
+                                                                                           part class and instance ID, and material, can be obtained in this way to
+lustrates all the potential topological relationships between extracted
+BIM objects and the VF. Using an algorithm based on the Disjoint topo­                     generate image pixelwise annotations. The camera's origin (i.e., the
+                                                                                           CCS's origin), the point (denoted as pixel point) on the viewport that
+logical query operator developed by [69], all the objects apart from the
+VF can be searched. Note that the operator Disjoint works on the triangle                  corresponds to the pixel, and the desired 3D object point are colinear, as
+                                                                                           shown in Fig. 11. The 3D object point is the point of intersection of the
+mesh representation of both operand objects. The triangle meshes of
+BIM objects have been prepared in Section 3.2. The triangle mesh of the                    ray emitted from the camera through the pixel point with a BIM object
+                                                                                           surface in the VF that lies closest to the camera. The process has two
+VF can be easily obtained because all its six faces are simple quadran­
+gles. Considering that a full-scale BIM model often contains numerous                      steps: ray construction and ray tracing.
+                                                                                               For a pixel, the corresponding ray is constructed in the MCS by taking
+objects, before the exact Disjoint query, a simple and fast AABB-AABB
+intersection test is implemented for pre-checking. BIM objects whose                       the camera's origin as the starting point, and the directional vector from
+                                                                                           the camera's origin to the pixel point as the ray's direction. The camera's
+AABB disjoins the VF's AABB are excluded.
+                                                                                           origin (xc ,yc ,zc ) in the MCS is known (see Section 3.3.1). The coordinates
+                                                                                           of the pixel point in the MCS are needed. Given the camera parameters
+3.4.2. Index identified BIM objects
+   The identified BIM objects in the VF are spatially indexed to further                   including focus (f), the width (w) and the height (h) of the viewport, and
+                                                                                           the width (W) and the height (H) of the image, and the known spatial
+expedite the subsequent ray tracing process. Existing studies have
+                                                                                           relationships between CCS, ICS, and PCS (assuming they are consistent
+demonstrated that spatial indexing can induce significant efficiency                                                                   (              )
+                                                                                           with those in Fig. 11), the pixel point xp c , yp c , zp c in the CCS cor­
+                                                                                           responding to the image pixel (u, v) can be calculated by:
+                                                                                           ⎧
+                                                                                           ⎪          w wud
+                                                                                           ⎪
+                                                                                           ⎪ x = −
+                                                                                           ⎪ p c 2
+                                                                                           ⎪               W
+                                                                                           ⎨
+                                                                                                      hvd h                                                           (10)
+                                                                                           ⎪
+                                                                                           ⎪  yp c =     −
+                                                                                           ⎪
+                                                                                           ⎪           H    2
+                                                                                           ⎪
+                                                                                           ⎩ z =− f
+                                                                                                  p c
+
+
+                                                                                               Note that distorted pixel coordinates (ud , vd ) obtained by Eq. (7)
+                                                                                           rather than the original pixel coordinates (u, v) are used in Eq. (10) to
+                                                                                           compute the annotations of distorted images. Then the pixel point is
+                                                                                           transformed into the MCS where BIM scenes are defined by
+                                                                                           ⎡ ⎤                  ⎡      ⎤
+                                                                                             xp                   xp c
+                                                                                           ⎢ yp ⎥               ⎢ yp c ⎥
+                                                                                           ⎢ ⎥ = TM CCS→MCS • ⎢
+                                                                                           ⎣ zp ⎦
+                                                                                                                       ⎥
+                                                                                                                ⎣ zp c ⎦                                        (11)
+                                                                                              1                    1
+
+Fig. 9. Potential topological relationships between BIM objects and the VF: A –            where TMCCS→MCS refers to the transformation matrix from the CCS to
+                                                                                                                                                 (       )
+disjoint; B – touch; C – inside; D – intersect. B, C, and D are objects of interest
+                                                                                           the MCS, which was obtained in Section 3.3.2, and xp , yp , zp the
+for downstream processes.
+
+                                                                                      10
+H. Ying et al.                                                                                                                           Automation in Construction 154 (2023) 105016
+
+
+
+
+Fig. 10. 2D illustration of two-tier AABB tree indexing strategy: (a) indexing of a set of objects; (b) indexing of the triangle mesh of an individual object. The image
+shows the middle point-based tree node splitting and is adapted from [67].
+
+
+
+
+Fig. 11. Ray tracing to detect the corresponding object point of a pixel. The coordinates of the camera's origin, pixel point, and object point are all in the MCS.
+
+
+coordinates of the pixel point in the MCS. Thus, the direction vector (rd )                           AABB tree of all the BIM objects in the VF to detect the closest inter­
+of the ray can be obtained by:                                                                        section point with an object face. Fig. 12 summarizes the main steps of
+         ⎛        ⎞                                                                                   the ray tracing process.
+           x − xc
+     1 ⎝ p                                                                                               First, candidate objects that the ray may intersect are searched by
+rd = • yp − yc ⎠                                                     (12)
+     d     z − z                                                                                      traversing the model AABB tree (Line 4 in Fig. 12). The traversal starts
+                                                                                                      from the root node of the tree by checking whether the ray intersects the
+                 p       c
+
+                 √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                  (                )2 (                       )2 (                       )2           root AABB by using the ray-AABB intersection test [74]. If it does not, an
+where d =           xp − xc + yp − yc + zp − zc .                                                     empty set is returned. Otherwise, the traversal proceeds to the child
+                                                                                                      nodes and repeats that test for each node recursively. The traversal
+    Once the ray is constructed, it is traced by traversing the two-tier
+
+                                                                                                 11
+H. Ying et al.                                                                                                               Automation in Construction 154 (2023) 105016
+
+
+
+
+                                                    Fig. 12. Ray tracing algorithm to annotate an image pixel.
+
+
+progresses along the branches where nodes pass the test until leaf nodes               [75] is applied to compute the intersection. After all the intersections are
+are reached. All the BIM objects attached to the reached leaf nodes are                obtained, the closest intersection with a specific object can be acquired
+gathered as candidate objects of the ray.                                              by computing the Euclidean distance with the endpoint of the ray.
+    Next, the nearest intersection between the ray and each candidate                      Lastly, the nearest intersections of all candidate objects are gathered
+object is computed separately (Lines 5–9 in Fig. 12). Specifically, this               and compared to find the closest intersection, i.e., the first-fit object
+step first traverses each object's AABB tree to obtain candidate triangles             point. Other associated information including object and/or object part
+that the ray may intersect. The traversing of an object tree is identical to           class and instance ID and surface material can be obtained.
+that of the model tree. The range of candidate triangles are further                       After repeating the ray tracing process described above for all the
+narrowed by removing triangles whose back side faces towards the                       pixels of the synthetic image, the acquired pixelwise information is
+origin of the ray. Such a triangle can be identified simply if rd • n > 0,             sufficient to generate the following annotations:
+where n refers to the normal vector of the triangle. Then, for each
+candidate triangle, a fast and robust ray-triangle intersection algorithm
+
+
+
+
+Fig. 13. BIM rendering image (a), depth annotation (b), and annotations for material semantic segmentation (c), object semantic segmentation (d), object instance
+segmentation (e), panoptic segmentation (f), and object part instance segmentation (g). Note: different object types/instances are colored differently; in (e) and (f),
+chairs, cups, plates, and bottles are set as the objects of interest for instance segmentation; in (g), for clarity, parts of chairs are displayed.
+
+                                                                                  12
+H. Ying et al.                                                                                                            Automation in Construction 154 (2023) 105016
+
+
+ • Depth: the depth data of the entire BIM image is efficiently stored in a          ⎧
+   same-sized 16-bit grayscale image (see Fig. 13(b)), in which 3 times              ⎪
+                                                                                     ⎪ umin = Min({i})
+                                                                                     ⎨
+                                                                                       vmin = Min({j})
+   the depth value in millimeters is encoded as the brightness value. The                                                                                       (13)
+                                                                                     ⎪ u = Max({i})
+   largest depth that can be stored is 21.845 m, which is sufficient for             ⎪
+                                                                                     ⎩ max
+                                                                                       vmax = Max({j})
+   building indoor scenes.
+ • Material semantic mask: pixels are annotated with the material type,
+                                                                                     3.5.2. 3D OBBs for 3D object and object part detection
+   and pixels with the same material type are grouped to create material
+                                                                                         As discussed earlier, in 3D data such as point clouds and RGB-D
+   semantic masks (see Fig. 13(c)).
+                                                                                     images, the object and object part detection tasks aim to estimate a 3D
+ • Object semantic mask: pixels are annotated with the object class, and
+                                                                                     OBB for each object and object part of interest, respectively. This study
+   pixels with the same object class are grouped to create object se­
+                                                                                     computes the 3D OBB of an object (or object part) based on its point
+   mantic masks (see Fig. 13(d)).
+                                                                                     cloud cluster generated in Section 3.4.3 by using the Open3D library
+ • Object instance mask: pixels are annotated with the object instance
+                                                                                     [76]. Fig. 16(a) and (c) show the generated OBBs of objects and object
+   tag consisting of object class and instance ID, and pixels that share
+                                                                                     parts in the point clouds, respectively. Note that we do not calculate 3D
+   the same object instance tag are grouped to create object instance
+                                                                                     OBBs from the complete BIM geometries because 3D object detection
+   masks (see Fig. 13(e)).
+                                                                                     aims to detect OBBs based on objects' or object parts' visible sections in
+ • Object part instance mask: pixels are annotated with the object part
+                                                                                     the point clouds or RGB-D images.
+   instance tag, which consists of object part class and instance ID, and
+                                                                                         Estimating OBBs of objects or object parts from a single monocular
+   pixels that share the same object part instance tag are grouped to
+                                                                                     image has received increasing attention. To support this line of devel­
+   create object part instance masks (see Fig. 13(g)).
+                                                                                     opment, this study also generates OBB annotations for objects and object
+ • Annotation for panoptic segmentation: as explained in Section 2.1,
+                                                                                     parts in the generated 2D synthetic images, as shown in Figs. 16(b) and
+   panoptic segmentation segments specific objects on the instance
+                                                                                     (d). The method is to project the 3D OBBs obtained from a point cloud
+   level and all other objects in an image on the semantic level.
+                                                                                     onto the corresponding synthetic image based on the perspective pro­
+   Therefore, annotations for panoptic segmentation are prepared by
+                                                                                     jection geometry. A 3D OBB is defined by six vertices in order in the
+   making (1) instance masks for those specified object types, and (2)
+                                                                                     MCS. Therefore, the corresponding OBB in the image is computed by
+   semantic masks for all other objects in the image (see Fig. 13(f)).                                                                      (         )
+                                                                                     projecting those vertices on the image. For a vertex vx , vy , vz of a 3D
+    The 3D object points of all the pixels constitute a point cloud cor­             OBB, the corresponding pixel vertex (u, v) on the image is calculated by
+responding to the synthetic image. Similarly, the point cloud can carry                       ⎡
+                                                                                                 W           W
+                                                                                                                   ⎤
+                                                                                                                                    ⎡ ⎤
+multiple annotations for scene recognition, semantic segmentation,                   ⎡ ⎤ ⎢f             0         0⎥                  vx
+                                                                                       u      ⎢ w            2     ⎥
+instance segmentation, and part segmentation in 3D, as shown in                      ⎣v⎦ = ⎢  ⎢          H H       ⎥        1
+                                                                                                                   ⎥ • TM −CCS→MCS
+                                                                                                                                    ⎢ vy ⎥
+                                                                                                                                   •⎢    ⎥                (14)
+                                                                                                                                    ⎣ vz ⎦
+Fig. 14. Furthermore, as described below, the annotated point cloud is                 1
+                                                                                              ⎢ 0 − f
+                                                                                              ⎣           h  2
+                                                                                                                  0⎥
+                                                                                                                   ⎦
+used to generate the annotations for 3D object and object part detection.                                                             1
+                                                                                                 0      0    1 0
+
+3.5. Annotation of bounding box information                                          where the first matrix on the right-hand side refers to the intrinsic matrix
+                                                                                     of the virtual camera, constructed by parameters including focus (f),
+   The remaining annotations needed include 2D BBs for 2D object and                 width (W) and height (H) of the image in pixel, and width (w) and height
+object part detection and 3D OBBs for 3D object and object part                      (h) of the camera's viewport; TMCCS→MCS refers to the known trans­
+detection.                                                                           formation matrix from the CCS to the MCS.
+
+3.5.1. 2D BBs for 2D object and object part detection                                4. Implementation and validation
+    2D object and object part detection tasks require that objects and
+object parts of interest in a training image are annotated with a 2D BB.             4.1. Software development
+Fig. 15 shows the 2D BB annotations of a generated synthetic image. A
+2D BB of an object (or object part) refers to the smallest axis-aligned box              A Revit plug-in called BimImageNet has been implemented in C#
+that bounds the object (or object part), which can be completely defined             and Python using the Revit API to demonstrate the proposed approach.
+by two vertices of the box in a diagonal in the image's PCS (see Fig. 15             It consists of two modules: image capture and image labeling. Their
+(a)). Given the known instance mask of an object (or object part) {(i, j)},          interfaces are shown in Fig. 17.
+where (i, j) refers to a pixel's coordinates, the corresponding 2D BB                    The image capture module encompasses functions to compile BIM
+(umin , vmin , umax , vmax ) can be obtained by                                      perspective views using grids and to generate valid and distorted pho­
+                                                                                     torealistic images from the views. The former function is implemented in
+
+
+
+
+Fig. 14. Annotated point cloud for semantic segmentation (a), instance segmentation (b), and object part instance segmentation (c). Different object types/instances
+are colored differently.
+
+                                                                                13
+H. Ying et al.                                                                                                               Automation in Construction 154 (2023) 105016
+
+
+
+
+Fig. 15. 2D BBs for object (a) and object part (b) detection. For clarity, in (a), only BBs of chairs, cups, plates, and bottles are shown; in (b), only parts of chairs
+are shown.
+
+
+
+
+Fig. 16. 3D OBBs of objects in (a) point cloud and (b) image and 3D OBBs of object parts in (c) point cloud and (d) image. For clarity, in (a) and (b), only OBBs of
+desks, chairs, cups, and plates are shown; in (c) and (d), only OBBs of parts of chairs are shown.
+
+
+C# and runs in the Revit run-time environment, from which the virtual                  modeling tools.
+camera of Revit is accessed, and all the needed BIM data is retrieved to
+generate perspective views for each selected space. After rendering the                4.2. Evaluation of the approach
+captured views into photorealistic images using Enscape, which works
+as a Revit plug-in, the latter function identifies valid images and distorts           4.2.1. Test model preparation
+them to produce the desired synthetic images. This function involves                       A series of experiments were performed to evaluate the proposed
+extensive image processing operations and is implemented as an inde­                   approach. All the experiments were run on a desktop equipped with an
+pendent Python application that can be called by the image capturing                   Intel Core i7-8700K CPU and a RAM of 48 GB. Two BIM models (shown
+module automatically. As shown in Fig. 17(b), this module allows users                 in Fig. 18) were used in the experiments: (1) a house building (Model A)
+to customize a series of parameters required by both functions that can                that contains structural objects as well as common furniture and home
+simulate different cameras to produce various images. It also enables                  appliances; and (2) large-scale equipment rooms of a commercial
+users to select target spaces conveniently, based on the established                   building (Model B) that contain various MEP objects such as pipes,
+linkage between space selection in the module interface and automatic                  ducts, lighting fixtures, sprinklers, and mechanical equipment. Eleven
+localization and display of selected spaces in the Revit graphic user                  distinct spaces with eight types (i.e., living room, kitchen, bathroom,
+interface.                                                                             bedroom, laundry room, hall, dining room, and mechanical room) and
+    The image labeling module generates all the annotations required by                various degrees of scene complexity were selected as target spaces (ten
+the twelve BSU tasks for the obtained valid and distorted synthetic im­                from Model A and one from Model B). The parameters required were
+ages. This module includes the pixelwise annotation function that uses                 pre-defined, as summarized in Table 1.
+ray tracing and the function for generating 2D/3D object and object part
+BBs. The former function is implemented in C# and the latter is a Python               4.2.2. Accuracy evaluation
+program that can be called by the image labeling module. As seen in                        For all the selected spaces from the two models, our approach suc­
+Fig. 17(c), this module requires users to specify the object types for se­             cessfully sampled 108 feasible locations for placing the virtual camera
+mantic- and instance-level annotations to prepare annotations for                      and captured a total of 2208 RGB images, of which 706 were invalid. All
+panoptic segmentation.                                                                 1502 valid images were labeled with the desired annotations required.
+    To improve the efficiency of the entire workflow, in both modules, all             Specifically, 245,727 object-part level instances were generated,
+the functions that can be parallelized (capturing model views, identi­                 covering >40 object types and >42 material types. To better demon­
+fying BIM objects in VF, object-level AABB tree creation, and ray                      strate the results, two additional views that depict scenes with varying
+tracing) are implemented in the multithreading mode to make the best                   levels of complexity were captured, rendered, and annotated into two
+use of a CPU's computing power. Although the approach is implemented                   larger-sized (1024 × 768) images, as shown in Figs. 19 and 20.
+as a Revit plug-in, it can be migrated easily to other BIM software or 3D                  The annotations of all the 1502 valid images were checked manually
+
+                                                                                  14
+H. Ying et al.                                                                                                      Automation in Construction 154 (2023) 105016
+
+
+
+
+                 Fig. 17. The developed Revit plug-in (a), image capturing module interface (b), and image labeling module interface (c).
+
+
+
+
+                                                Fig. 18. Two test BIM models: (a) Model A; (b) Model B.
+
+
+
+
+                                                                            15
+H. Ying et al.                                                                                                                    Automation in Construction 154 (2023) 105016
+
+
+Table 1                                                                                      visually checked the generated depth image (see the example of Fig. 19
+Configuration of relevant parameters.                                                        (c)) by comparing it with the corresponding rendered image. The an­
+  Parameters                     Model A                            Model B                  notations of the remaining BSU tasks - object and material semantic
+                                                                                             segmentation, 2D and 3D object and object part detection, object and
+  FOVs in degrees (HFOV,
+    VFOV)
+                                 (70, 70)                           (70, 70)                 object part instance segmentation, and panoptic segmentation - consist
+  Image size in pixels (Width,                                                               of two parts: boxes or masks that localize objects in the image and
+                                 (512, 512)                         (512, 512)
+    Height)                                                                                  corresponding class or instance labels. For convenience, we drew boxes
+  Distortion coefficients (k1,                                      (− 0.012, 0.007,         (see Figs. 19(d)-(h)) and overlaid masks in various colors, each repre­
+                                 (− 0.012, 0.007, 0.004, 0.004)
+    k2, p1, p2)                                                     0.004, 0.004)
+  Grid sizes in mm               (1000/2000/2500/3000/
+                                                                                             senting different object/material classes or instances (see Figs. 19(i)-(l)),
+                                                                    (6000, 6000,             on the rendered images to facilitate visual checking. The class and
+    (xGridSize, yGridSize,       4000/5000, 1500/3000/5000,
+                                                                    1700)
+    zGridSize)                   1700/2000)                                                  instance labels were manually checked at the same time.
+  Rotation angles in degrees
+                                 (45, 70/90, 90)                    (45, 70, 90)                 The checking results show that all the generated annotations are
+    (Yaw, Pitch, Roll)
+                                                                                             accurate, with just two typical exceptions:
+  Similarity threshold           0.99                               0.99
+  Edge threshold                 2                                  2
+  Tree node split strategy       Middle point                       Middle point                (1) A few erroneous mask annotations (for semantic segmentation
+  Semantic labels for
+                                 {Wall, Curtain Wall, Slab, Roof}
+                                                                    {Wall, Curtain                  and instance segmentation) were caused by a geometry clash
+    panoptic segmentation                                           Wall, Slab, Roof}               where a floor had a coplanar surface with a ceiling in Model A.
+Note. (1) The camera-related parameters including FOVs, image size, and                             The approach annotated the pixels of the common surface as a
+distortion coefficients were assigned arbitrarily for demonstration. (2) The view                   mix of “Floor” and “Ceiling” because sometimes the floor was
+capture parameters, including grid sizes and rotation angles, were determined                       detected as the first-hit object by the ray tracing algorithm, and at
+based on the dimensions of the target spaces and the complexity of the model                        other times the ceiling object was detected first.
+scenes: big grid sizes were set for large spaces and small rotation angles for                  (2) A considerable number of object part class labels (for 2D and 3D
+complex model scenes. The parameter value a/b/c means that relevant param­                          object part detection and object part instance segmentation) were
+eters were set with a, b, and c for different spaces. (3) A high similarity threshold
+                                                                                                    missing because the data was absent in the BIM models. For
+and a small edge threshold were set to eliminate the misidentification of valu­
+                                                                                                    example, in Fig. 19(g), although the approach accurately gener­
+able images by the valid image checking function.
+                                                                                                    ated the masks of all the parts of the chairs in the image, the class
+                                                                                                    labels of the part instances could not be determined because they
+and visually. For scene type and camera pose, we checked the existence
+                                                                                                    are missing from the BIM model.
+of the annotations. Scene types are directly extracted from BIM models
+and camera poses are set by the approach in a straightforward manner:
+                                                                                                These annotation errors are all caused by quality issues in the input
+hence, they are deemed accurate if they exist. For the annotation of pixel
+                                                                                             BIM models rather than by limitations in our approach. Thus, in general,
+depth, since calculating the ground truths manually is impracticable, we
+                                                                                             the experiments demonstrate the accuracy and robustness of our
+
+
+
+
+Fig. 19. Rendering image generated from Model A (a) and its annotations: (b) scene and camera pose; (c) depth; (d) material mask; (e) object semantic mask; (f)(g)
+object and object part instance; (h) annotation for panoptic segmentation; (i)(j) 2D BBs for object and object part detection; and (k)(l) 3D BBs for object and object
+part detection. For clarity, in (f), (g), and (i), only the annotations of small objects including chairs, plates, cups, and bottles are shown; in (j), (k), and (l), only the
+annotations of parts of chairs are shown.
+
+                                                                                        16
+H. Ying et al.                                                                                                                 Automation in Construction 154 (2023) 105016
+
+
+
+
+Fig. 20. Rendering image generated from Model B (a) and its annotations: (b) scene and camera pose; (c) depth; (d) material mask; (e) object semantic mask; (f)(g)
+object and object part instance; (h) annotation for panoptic segmentation; (i)(j) 2D BBs for object and object part detection; and (k)(l) 3D BBs for object and object
+part detection. For clarity, in (f), (g), (i), (j), (k), and (l), only the annotations of pipe fittings, pipe accessories and/or their parts are displayed.
+
+
+approach in terms of generating annotated synthetic images of indoor                    ments. These can be quantified by the number of pixels in the image and
+BIM scenes.                                                                             the number of triangles in the scene, respectively. Specifically, two
+                                                                                        scenes on different scales were used, as shown in Fig. 19 (Scene A with
+4.2.3. Efficiency evaluation                                                            55,328 triangles) and Fig. 20 (Scene B with 1,962,784 triangles). For
+    The total running time (including view capture, image rendering,                    each scene, six images with different sizes (256 × 192, 512 × 384, 768 ×
+image distortion, image validity checking, image annotation, and                         576, 1024 × 768, 1280 × 960, and 1536 × 1152) were generated and
+annotation output) for generating and annotating the 1502 valid images                  annotated using the software implementation. Table 2 shows the run
+with 245,727 object-part level instances from the two BIM models was                    times, which cover the steps of image rendering (IR), image distortion
+about 12 h, representing an average of 28 s for one valid image with 164                (ID), ray tracing-based pixelwise annotation (RT), and other annotations
+object part instances. This is far more efficient than annotating a similar             (OA). The view capture and image validity checking steps were not
+real image manually.                                                                    relevant in this experimental scenario.
+    To further evaluate the efficiency of the approach, additional ex­                      As shown in Table 2, rendering an image using Enscape is fast and
+periments on single image generation and annotation were performed.                     takes an almost constant time (i.e., 3 s; see the IR column), regardless of
+The run time needed to create an annotated image depends primarily on                   image size and scene complexity. In fact, Enscape renders a model view
+two factors: the size of the output image and the size of the scene in the              almost in real-time and the IR value mainly refers to the time required to
+VF of the virtual camera. Larger output images mean more pixels to be                   output a rendered image. The durations for distorting images (ID) and
+distorted and annotated. Larger scenes contain more objects in the VF                   for generating object and object part BBs (OA) increase linearly with the
+that need to be examined for annotation computation. Hence, different                   image size, and are negligible compared to the time required for ray
+settings were used for the image size and the scene size in the experi­                 tracing for pixelwise annotation (RT). This is the most time-consuming
+
+
+Table 2
+Run times (in seconds) for processing the selected scenes with different image sizes.
+  Image size                   Scene A (55,328 triangles) (base)                                        Scene B (1,962,784 triangles) ( × 35)
+
+                               IR           ID             RT           OA               Total          IR           ID               RT           OA            Total
+
+  256 × 192 (base)             3            0.2            7.5          0.4              11.1           3            0.3              46           1             50.3
+  512 × 384 ( × 4)             3            0.9            20.2         1.7              25.8           3            1.3              77           5             86.3
+  768 × 576 ( × 9)             3            2.2            41.8         3.9              50.9           3            3                133          12            151
+  1024 × 768 ( × 16)           3            4              71.4         6.5              84.9           3            5.3              217          44            269.3
+  1280 × 960 ( × 25)           3            6              108.6        10.3             127.9          3            8.2              329          39            379.2
+  1536 × 1152 ( × 36)          3            8.7            155          15               181.7          3            11.8             489          59            562.8
+
+Note. The image size is represented as width × height in pixels; the symbol “(× number)” means the scene or the image is “number” times larger than the base scene or
+the base image.
+
+                                                                                 17
+H. Ying et al.                                                                                                          Automation in Construction 154 (2023) 105016
+
+
+step and consumes up to 87% of the total run time (in the case of the              up to 90% of the real images with synthetic images is potentially highly
+image size of 1536 × 1152 for Scene B).                                            effective, as well as being highly efficient.
+    For the same scene, the total run time generally increases with the                Note also that the actual performance gap may be smaller because
+image size, but not linearly. For example, the largest image of Scene A is         the reality gap between the real training dataset and the real test dataset
+36 times larger than the smallest base image, while the running time               is smaller than the gap between the synthetic training dataset and the
+increases only by a factor of about 16. The same phenomenon can be                 real test dataset. This is because the real training images and most of the
+observed in the scene size. For instance, Scene B is 35 times larger than          real test images were captured from office buildings in the same uni­
+Scene A, while among all the image sizes, the running times increase by a          versity, while synthetic images were generated from BIM models of
+factor of 5 at most (in the case of the image size of 256 × 192). This can         other residential and office buildings.
+be explained by the acceleration effect introduced by the two-tier AABB
+tree indexing in the most time-consuming ray tracing step. It appears              5. Discussion
+therefore that the two-tier AABB tree indexing tactic is essential for our
+approach to handle complex BIM model scenes and to cope with large-                5.1. Prerequisites of the approach
+sized images.
+    Nevertheless, for the purpose of large-scale dataset generation,                   The proposed approach enables the compilation of large numbers of
+further efficiency enhancement would be desirable. As seen in the table,           fully labeled photorealistic images in a short time by rendering BIM
+the prototype takes 51 s to generate and label a modest-size (768 × 576)           model scenes. Naturally, the quality of the chosen input BIM models has
+image that describes a typical model scene (i.e., Scene A with 55,328              a significant impact on the realism of the resulting images and the ac­
+triangles).                                                                        curacy of their annotations.
+                                                                                       The realism of the resulting images is directly dependent on that of
+4.3. Preliminary validation of effectiveness                                       the BIM model scenes, which includes two aspects. The first relates to
+                                                                                   the realism of the geometry and appearance (i.e., material and textures)
+    Generating synthetic data has value only if the images can be used             of individual BIM objects. An ideal BIM scene should reflect as-
+effectively for BSU tasks. We therefore carried out a set of experiments as        constructed or as-built building scenes with high level-of-detail geom­
+a preliminary check of the effectiveness of the synthetic data. We pre­            etry and realistic material and textures for objects included. Further­
+pared real and synthetic datasets and compared their performance in                more, the illumination-related objects and data such as building
+object instance segmentation with a deep learning model (Mask R-CNN                geolocation and lighting fixtures and relevant properties (e.g., location
+[53], a typical and widely used image segmentation algorithm).                     and shape of light source, brightness, intensity, color, and light distri­
+    We constructed a real training dataset with 400 real images, a syn­            bution mode) should be properly defined in the BIM models. All these
+thetic training dataset with 400 synthetic images, and a real test dataset         enable the rendering engine to generate appearance-realistic images. The
+with 80 real images. The real training images were captured from the               second aspect relates to the realism of the holistic scenes. Building
+interiors of four university office buildings and the real test images from        scenes represented by BIM models are often cleaner or more well-
+the interiors of 10 other university office buildings. The synthetic               organized than real-world scenes, where random objects can be found
+training images were automatically generated by our approach from 10               and the locations of moveable objects like desks and chairs can be
+BIM models of other residential and office buildings. In all these data­           arbitrary. It is thus necessary to introduce some “mess” to BIM models, e.
+sets, four common interior building elements (wall, door, floor, and               g., adding random objects and placing movable objects randomly, to
+ceiling) were labeled. Labelling annotations was done manually in real             make the captured images more scene-realistic.
+training and real test datasets, and automatically using our approach in               As revealed by the experiments, the accuracy of image annotations
+the synthetic training dataset.                                                    can be affected by quality issues of BIM models. One common issue is
+    Furthermore, to explore the effectiveness of augmenting synthetic              geometric clashes between BIM objects, which do not occur in real-
+data with a small amount of real data, we prepared two additional                  world building scenes. Deep learning models trained on synthetic im­
+training datasets:                                                                 ages with scenes that cannot exist in reality may lead to unexpected
+                                                                                   errors in understanding real-world images. Furthermore, geometric
+  - A mixed training dataset with 440 images that contains all the syn­            clashes can also lead to erroneous annotations (see Section 4.2.2).
+    thetic training images and 10% of the real training images, randomly           Therefore, geometric clashes in BIM models should be identified and
+    selected from the 400 real images.                                             corrected before applying this approach. Nowadays, many software
+  - A mixed training dataset with 480 images that contains all the syn­            packages like Solibri [77] offer effective functions to detect geometric
+    thetic training images and 20% of the real training images, randomly           clashes in BIM models.
+    selected from the 400 real images.                                                 Another major quality issue occurs when object and object part class
+                                                                                   names are incorrect, missing, inconsistent or too generic. For example,
+    In each training dataset, 90% of the images were used for training,            desks and chairs in Revit are generally classified as “Furniture” without
+and the remaining 10% were used for validation. The Mask R-CNN                     further distinction; different parts of a chair in Revit are not given spe­
+model pretrained on the large-scale COCO image dataset [88] was used               cific class names; and the wall's class name in Revit is “Walls” but in
+as the same starting point for each training dataset. To ensure fairness,          ArchiCAD it is “Wall”. To address the issues of inconsistent and generic
+all the training was implemented on the same computing device (i.e., a             class names, this study defined a small ontology that encompasses
+desktop with 64GB RAM and a NVIDIA RTX 3060 GPU with 12 GB
+memory) and used the same training strategy (i.e., two-stage early-
+stopping training strategy [54]) and hyperparameters (e.g., batch size of          Table 3
+2, learning momentum of 0.9, weight decay of 0.0001, learning rate (LR)            Performance of the Mask R-CNN model trained on different datasets.
+of 0.001 for 60 epochs in the first stage, LR of 0.0001 and 0.00002 for             Training dataset                        AP (%)                         AR(%)
+the first 90 epochs and the remaining epochs in the second stage).                  Real                                    52.00                          57.30
+    Table 3 shows the results of each trained model on the same test                Synthetic                               44.55                          50.83
+dataset. The fully synthetic dataset has weaker performance than the                Synthetic +10% real                     50.88                          55.35
+same dataset supplemented with 10% or 20% of real images, both of                   Synthetic +20% real                     54.85                          58.20
+
+which have very similar performance to that of the real image dataset,             Note. AP and AR refer to mean average precision and mean average recall [88]
+for both precision and recall. This suggests that a method that replaces           over all the target object instances, respectively.
+
+                                                                              18
+H. Ying et al.                                                                                                              Automation in Construction 154 (2023) 105016
+
+
+common architectural, furniture and MEP objects and applied a simple               further rendered with random date and time, checked, and distorted to
+keyword-based method to map Revit objects and/or their parts to the                generate valid photorealistic images with diverse visual effects. The
+ontology based on their Revit class type and the value of their Name               annotations of these images required by the above BSU tasks are
+property. Missing object or object part class information was assigned             computed by a ray tracing-based algorithm with relevant postprocessing
+manually. In the future, a more comprehensive ontology of building                 steps. A two-tier AABB tree indexing strategy is adopted to expedite the
+objects will be developed by incorporating the generic lexical database            expensive ray tracing process.
+WordNet [78] and existing building ontologies (e.g., IfcOWL [79] and                   Our approach was implemented as a Revit Plug-in, which was used to
+Brick [80]) and classification systems (e.g., OmniClass [81] and Uniclass          process 11 distinct and complex indoor BIM model scenes. A total of
+[82]), to support the creation of large-scale image datasets. Meanwhile,           1502 valid synthetic images containing 245,727 object part instances
+both rule-based [83] and machine learning [84,85] algorithms will be               were generated automatically in about 12 h. These images were anno­
+exploited to establish more generalized and dependable BIM object and              tated accurately except for some errors caused by the quality issues of
+object part classification methods.                                                the input BIM models. This demonstrates the accuracy, robustness, and
+                                                                                   efficiency of the approach. Furthermore, preliminary experiments show
+5.2. Limitations and future work                                                   that compared to real images, the synthetic images generated by our
+                                                                                   approach demonstrate very promising effectiveness for the challenging
+    Although the experiments demonstrate the accuracy and robustness               BSU task of building object instance segmentation. Therefore, our
+of the proposed approach in terms of automatic synthetic image gen­                approach can provide a useful and reliable tool for researchers and
+eration and annotation and the effectiveness of the generated synthetic            practitioners to prepare their own synthetic image datasets for specific
+images for the instance segmentation task, the approach and the study              BSU tasks in a cost-efficient way.
+have some limitations that are worthy of further development.                          Potentially, the approach can have two useful extensions. It currently
+    In its current implementation, the image capturing module requires             captures discrete RGB-D images instead of spatio-temporal continuous
+users to manually select distinct interior spaces of a BIM model for               RGB-D frames produced by a real RGB-D camera, which have proven to
+processing, to avoid capturing images of duplicate or similar indoor               be particularly useful for engineering applications such as 3D recon­
+scenes. This would be rather laborious and time-consuming for large-               struction and navigation. The first extension is thus to add a camera
+scale building models that contain thousands of spaces. An efficient               motion simulation module to upgrade the used virtual camera to be an
+automated method that can check space similarity and filter desired                RGB-D camera. The second extension is to adapt the current static BIM
+spaces is needed. Furthermore, this module requires users to input a               data extraction method to dynamic 4D BIM models. This would make it
+series of parameters, including horizontal and vertical grid intervals and         possible to generate synthetic image datasets for buildings under con­
+rotation angles (i.e., yaw, pitch, and roll), to generate feasible poses of        struction, which could greatly facilitate the use of deep learning tech­
+the virtual camera in each selected space. Setting smaller values for              niques for construction scene understanding.
+these parameters means more images can be captured. However, it also                   This study showcases an emerging application area of BIM, i.e., how
+means that more time is needed for valid image checking and labeling.              the rich and well-structured information stored in BIM models can be
+Hence, future research may attempt to develop appropriate optimization             extracted and transformed to generate large amounts of well-annotated
+algorithms for these parameters.                                                   training data automatically and cost-effectively. This data facilitates the
+    The image labeling module also has room for improvement in effi­               use of AI, particularly deep learning techniques in the AECO industry.
+ciency. As shown in Section 4.2.3, the embedded ray tracing process                Although this study focused on creating synthetic image data for image-
+could consume over 80% of the total run time of the proposed approach.             based BSU tasks, BIM data can also be converted into other formats such
+Given the parallel computing nature of ray tracing, GPU-based imple­               as point clouds and graphs for use in deep learning algorithms, and thus
+mentation would significantly improve the efficiency of the approach,              serving a broad range of engineering tasks such as scan-to-BIM and
+thereby benefiting the creation of large-scale datasets containing hun­            digital twin development.
+dreds of thousands of images.
+    Lastly, the effectiveness of the synthetic images generated by the
+                                                                                   Declaration of Competing Interest
+approach needs to be more systematically and rigidly examined.
+Currently, we have only assessed the effectiveness of the synthetic im­
+                                                                                       The authors declare that they have no known competing financial
+ages for the instance segmentation task through small-scale experi­
+                                                                                   interests or personal relationships that could have appeared to influence
+ments, considering only four building objects and one deep learning
+                                                                                   the work reported in this paper.
+model. In the future, both synthetic and real-world image datasets with a
+considerable size covering more object types should be created and
+                                                                                   Data availability
+tested with more commonly-used deep learning models. Likewise, the
+effectiveness of the synthetic images for the other eleven BSU tasks
+                                                                                      The source code of Revit Plugin and all the experiment data will be
+should be examined in a similar manner.
+                                                                                   published    soon     on     the     GitHub      at    https://github.
+                                                                                   com/EnochYing/BimImageNet
+6. Conclusions
+
+                                                                                   Acknowledgment
+    Deep learning-based building scene understanding (BSU) algorithms
+often require large-scale well-annotated datasets for training. Creating
+                                                                                      This research was supported by the Ministry of Science & Technol­
+such datasets involves tedious real-world data collection and costly and
+                                                                                   ogy, Israel, under grant #3-15651.
+laborious data labeling. This study proposes an automatic BIM-based
+synthetic image generation approach that can capture photorealistic
+images of BIM model scenes and compute various types of annotations                References
+for twelve BSU tasks, including camera pose estimation, scene recogni­
+                                                                                    [1] B. Ekanayake, J.K.W. Wong, A.A.F. Fini, P. Smith, Computer vision-based interior
+tion, depth estimation, 2D/3D object and object part detection, object                  construction progress monitoring: a literature review and future research
+and material semantic segmentation, object and object part instance                     directions, Autom. Constr. 127 (2021), 103705, https://doi.org/10.1016/j.
+segmentation, and panoptic segmentation. The approach includes a                        autcon.2021.103705.
+                                                                                    [2] B. Sherafat, C.R. Ahn, R. Akhavian, A.H. Behzadan, M. Golparvar-Fard, H. Kim, Y.
+parameterized method to determine virtual camera poses to capture 3D                    C. Lee, A. Rashidi, E.R. Azar, Automated methods for activity recognition of
+perspective views of indoor BIM model scenes. The captured views are                    construction workers and equipment: state-of-the-art review, J. Constr. Eng.
+
+
+                                                                              19
+H. Ying et al.                                                                                                                                  Automation in Construction 154 (2023) 105016
+
+     Manag. 146 (6) (2020) 03120002, https://doi.org/10.1061/(ASCE)CO.1943-                              randomization, Autom. Constr. 134 (2022), 104089, https://doi.org/10.1016/j.
+     7862.0001843.                                                                                       autcon.2021.104089.
+ [3] S. Tang, D. Roberts, M. Golparvar-Fard, Human-object interaction recognition for               [29] K. Bousmalis, A. Irpan, P. Wohlhart, Y. Bai, M. Kelcey, M. Kalakrishnan, L. Downs,
+     automatic construction site safety inspection, Autom. Constr. 120 (2020), 103356,                   J. Ibarz, P. Pastor, K. Konolige, S. Levine, Using simulation and domain adaptation
+     https://doi.org/10.1016/j.autcon.2020.103356.                                                       to improve efficiency of deep robotic grasping, in: IEEE International Conference
+ [4] A. Morar, A. Moldoveanu, I. Mocanu, F. Moldoveanu, I.E. Radoi, V. Asavei,                           on Robotics and Automation, 2018, pp. 4243–4250, https://doi.org/10.1109/
+     A. Gradinaru, A. Butean, A comprehensive survey of indoor localization methods                      ICRA.2018.8460875.
+     based on computer vision, Sensors 20 (9) (2020) 2641, https://doi.org/10.3390/                 [30] M. Johnson-Roberson, C. Barto, R. Mehta, S.N. Sridhar, K. Rosaen, R. Vasudevan,
+     s20092641.                                                                                          Driving in the matrix: Can virtual worlds replace human-generated annotations for
+ [5] Q. Lu, S. Lee, L. Chen, Image-driven fuzzy-based system to construct as-is IFC BIM                  real world tasks?, in: IEEE International Conference on Robotics and Automation,
+     objects, Autom. Constr. 92 (2018) 68–87, https://doi.org/10.1016/j.                                 2017, pp. 1–8, https://doi.org/10.1109/ICRA.2017.7989092.
+     autcon.2018.03.034.                                                                            [31] Q. Li, R. Cao, J. Zhu, X. Hou, J. Liu, S. Jia, Q. Li, G. Qiu, Improving synthetic 3D
+ [6] H. Fathi, F. Dai, M. Lourakis, Automated as-built 3D reconstruction of civil                        model-aided indoor image localization via domain adaptation, ISPRS J.
+     infrastructure using computer vision: achievements, opportunities, and challenges,                  Photogramm. Remote Sens. 183 (2022) 66–78, https://doi.org/10.1016/j.
+     Adv. Eng. Inform. 29 (2) (2015) 149–161, https://doi.org/10.1016/j.                                 isprsjprs.2021.10.005.
+     aei.2015.01.012.                                                                               [32] J. Chen, S. Li, D. Liu, W. Lu, Indoor camera pose estimation via style-transfer 3D
+ [7] J. Deng, W. Dong, R. Socher, L.J. Li, K. Li, L. Fei-Fei, Imagenet: a large-scale                    models, Comput. -Aided Civ. Infrastruct. Eng. 37 (3) (2022) 335–353, https://doi.
+     hierarchical image database, in: Proceedings of the IEEE Conference on Computer                     org/10.1111/mice.12714.
+     Vision and Pattern Recognition, 2009, pp. 248–255, https://doi.org/10.1109/                    [33] J.Y. Zhu, T. Park, P. Isola, A.A. Efros, Unpaired image-to-image translation using
+     CVPR.2009.5206848.                                                                                  cycle-consistent adversarial networks, in: Proceedings of the IEEE International
+ [8] T.Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, C.L. Zitnick,                      Conference on Computer Vision, 2017, pp. 2223–2232, https://doi.org/10.1109/
+     Microsoft coco: common objects in context, in: European Conference on Computer                      ICCV.2017.244.
+     Vision, 2014, pp. 740–755, https://doi.org/10.1007/978-3-319-10602-1_48.                       [34] Enscape, https://enscape3d.com/ (Last Accessed: February 10th, 2023).
+ [9] B. Zhou, H. Zhao, X. Puig, S. Fidler, A. Barriuso, A. Torralba, Scene parsing through          [35] v-Ray, https://www.chaos.com/ (Last Accessed: February 10th, 2023).
+     ade20k dataset, in: Proceedings of the IEEE Conference on Computer Vision and                  [36] M. Naseer, S. Khan, F. Porikli, Indoor scene understanding in 2.5/3d for
+     Pattern Recognition, 2017, pp. 633–641, https://doi.org/10.1109/                                    autonomous agents: a survey, IEEE Access 7 (2018) 1859–1887, https://doi.org/
+     CVPR.2017.544.                                                                                      10.1109/ACCESS.2018.2886133.
+[10] B. Xiao, S.C. Kang, Development of an image data set of construction machines for              [37] A. Garcia-Garcia, S. Orts-Escolano, S. Oprea, V. Villena-Martinez, J. Garcia-
+     deep learning object detection, J. Comput. Civ. Eng. 35 (2) (2021) 05020005,                        Rodriguez, A review on deep learning techniques applied to semantic
+     https://doi.org/10.1061/(ASCE)CP.1943-5487.0000945.                                                 segmentation, arXiv preprint (2017), https://doi.org/10.48550/
+[11] X. An, Z. Li, Z. Liu, C. Wang, P. Li, Z. Li, Dataset and benchmark for detecting                    arXiv.1704.06857. arXiv:1704.06857.
+     moving objects in construction sites, Autom. Constr. 122 (2021), 103482, https://              [38] J. Crespo, J.C. Castillo, O.M. Mozos, R. Barber, Semantic information for robot
+     doi.org/10.1016/j.autcon.2020.103482.                                                               navigation: a survey, Appl. Sci. 10 (2) (2020) 497, https://doi.org/10.3390/
+[12] H. Tajeen, Z. Zhu, Image dataset development for measuring construction                             app10020497.
+     equipment recognition performance, Autom. Constr. 48 (2014) 1–10, https://doi.                 [39] G. Tian, L. Liu, J. Ri, Y. Liu, Y. Sun, ObjectFusion: An object detection and
+     org/10.1016/j.autcon.2014.07.006.                                                                   segmentation framework with RGB-D SLAM and convolutional neural networks,
+[13] J. Hwang, J. Kim, S. Chi, J. Seo, Development of training image database using web                  Neurocomputing 345 (2019) 3–14, https://doi.org/10.1016/j.
+     crawling for vision-based site monitoring, Autom. Constr. 135 (2022), 104141,                       neucom.2019.01.088.
+     https://doi.org/10.1016/j.autcon.2022.104141.                                                  [40] Z.Q. Zhao, P. Zheng, S.T. Xu, X. Wu, Object detection with deep learning: a review,
+[14] Amazon SageMaker Data Labeling Pricing, https://aws.amazon.com/sag                                  IEEE Transactions on Neural Networks and Learning Systems 30 (11) (2019)
+     emaker/data-labeling/pricing/ (Last Accessed: February 10th, 2023).                                 3212–3232, https://doi.org/10.1109/TNNLS.2018.2876865.
+[15] AI Platform Data Labeling Service, https://cloud.google.com/ai-platform/data-la                [41] N. Zhang, J. Donahue, R. Girshick, T. Darrell, Part-based R-CNNs for fine-grained
+     beling/docs (Last Accessed: February 10th, 2023).                                                   category detection, in: European Conference on Computer Vision, 2014,
+[16] C.G. Northcutt, A. Athalye, J. Mueller, Pervasive label errors in test sets destabilize             pp. 834–849, https://doi.org/10.1007/978-3-319-10590-1_54.
+     machine learning benchmarks, arXiv preprint (2021), https://doi.org/10.48550/                  [42] C.R. Qi, W. Liu, C. Wu, H. Su, L.J. Guibas, Frustum pointnets for 3d object detection
+     arXiv.2103.14749 (arXiv: 2103.14749).                                                               from rgb-d data, in: Proceedings of the IEEE Conference on Computer Vision and
+[17] A. Handa, V. Patraucean, V. Badrinarayanan, S. Stent, R. Cipolla, Understanding                     Pattern Recognition, 2018, pp. 918–927, https://doi.org/10.1109/
+     real world indoor scenes with synthetic data, in: Proceedings of the IEEE                           CVPR.2018.00102.
+     Conference on Computer Vision and Pattern Recognition, 2016, pp. 4077–4085,                    [43] S. Arabi, A. Haghighat, A. Sharma, A deep-learning-based computer vision solution
+     https://doi.org/10.1109/CVPR.2016.442.                                                              for construction vehicle detection, Comput. -Aided Civ. Infrastruct. Eng. 35 (7)
+[18] J. Papon, M. Schoeler, Semantic pose using deep networks trained on synthetic                       (2020) 753–767, https://doi.org/10.1111/mice.12530.
+     RGB-D, in: Proceedings of the IEEE International Conference on Computer Vision,                [44] H. Son, H. Choi, H. Seong, C. Kim, Detection of construction workers under varying
+     2015, pp. 774–782, https://doi.org/10.1109/ICCV.2015.95.                                            poses and changing background in image sequences via very deep residual
+[19] Revit, https://www.autodesk.com/products/revit/overview (Last Accessed:                             networks, Autom. Constr. 99 (2019) 27–38, https://doi.org/10.1016/j.
+     February 10th, 2023).                                                                               autcon.2018.11.033.
+[20] G. Ros, L. Sellart, J. Materzynska, D. Vazquez, A.M. Lopez, The synthia dataset: A             [45] W. Fang, L. Ding, B. Zhong, P.E. Love, H. Luo, Automated detection of workers and
+     large collection of synthetic images for semantic segmentation of urban scenes, in:                 heavy equipment on construction sites: a convolutional neural network approach,
+     Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,                      Adv. Eng. Inform. 37 (2018) 139–149, https://doi.org/10.1016/j.aei.2018.05.003.
+     2016, pp. 3234–3243, https://doi.org/10.1109/CVPR.2016.352.                                    [46] A. Braun, A. Borrmann, Combining inverse photogrammetry and BIM for
+[21] I. Ha, H. Kim, S. Park, H. Kim, Image retrieval using BIM and features from                         automated labeling of construction site images for machine learning, Autom.
+     pretrained VGG network for indoor localization, Build. Environ. 140 (2018) 23–31,                   Constr. 106 (2019), 102879, https://doi.org/10.1016/j.autcon.2019.102879.
+     https://doi.org/10.1016/j.buildenv.2018.05.026.                                                [47] A. Adán, B. Quintana, S.A. Prieto, F. Bosché, Scan-to-BIM for ‘secondary’ building
+[22] D. Acharya, K. Kourosh, W. Stephan, BIM-PoseNet: indoor camera localization                         components, Adv. Eng. Inform. 37 (2018) 119–138, https://doi.org/10.1016/j.
+     using a 3D indoor model and deep learning from synthetic images, ISPRS J.                           aei.2018.05.001.
+     Photogramm. Remote Sens. 150 (2019) 245–258, https://doi.org/10.1016/j.                        [48] J. Long, E. Shelhamer, T. Darrell, Fully convolutional networks for semantic
+     isprsjprs.2019.02.020.                                                                              segmentation, in: Proceedings of the IEEE Conference on Computer Vision and
+[23] D. Acharya, S. Singha Roy, K. Khoshelham, S. Winter, A recurrent deep network for                   Pattern Recognition, 2015, pp. 3431–3440, https://doi.org/10.1109/
+     estimating the pose of real indoor images from synthetic image sequences, Sensors                   CVPR.2015.7298965.
+     20 (19) (2020) 5492, https://doi.org/10.3390/s20195492.                                        [49] T. Czerniawski, F. Leite, Automated segmentation of RGB-D images into a
+[24] Y. Hong, S. Park, H. Kim, H. Kim, Synthetic data generation using building                          comprehensive set of building components using deep learning, Adv. Eng. Inform.
+     information models, Autom. Constr. 130 (2021), 103871, https://doi.org/                             45 (2020), 101131, https://doi.org/10.1016/j.aei.2020.101131.
+     10.1016/j.autcon.2021.103871.                                                                  [50] A. Dimitrov, M. Golparvar-Fard, Vision-based material recognition for automated
+[25] J.G. Lee, J. Hwang, S. Chi, J. Seo, Synthetic image dataset development for vision-                 monitoring of construction progress and generating building information modeling
+     based construction equipment detection, J. Comput. Civ. Eng. 36 (5) (2022)                          from unordered site image collections, Adv. Eng. Inform. 28 (1) (2014) 37–49,
+     04022020, https://doi.org/10.1061/(ASCE)CP.1943-5487.0001035.                                       https://doi.org/10.1016/j.aei.2013.11.002.
+[26] J. Tobin, R. Fong, A. Ray, J. Schneider, W. Zaremba, P. Abbeel, Domain                         [51] C.V. Dung, Autonomous concrete crack detection using deep fully convolutional
+     randomization for transferring deep neural networks from simulation to the real                     neural network, Autom. Constr. 99 (2019) 52–58, https://doi.org/10.1016/j.
+     world, in: IEEE/RSJ International Conference on Intelligent Robots and Systems,                     autcon.2018.11.028.
+     2017, pp. 23–30, https://doi.org/10.1109/IROS.2017.8202133.                                    [52] A. Zhang, K.C. Wang, B. Li, E. Yang, X. Dai, Y. Peng, Y. Fei, Y. Liu, J.Q. Li, C. Chen,
+[27] J. Tremblay, A. Prakash, D. Acuna, M. Brophy, V. Jampani, C. Anil, T. To,                           Automated pixel-level pavement crack detection on 3D asphalt surfaces using a
+     E. Cameracci, S. Boochoon, S. Birchfield, Training deep networks with synthetic                     deep-learning network, Comput. -Aided Civ. Infrastruct. Eng. 32 (10) (2017)
+     data: Bridging the reality gap by domain randomization, in: Proceedings of                          805–819, https://doi.org/10.1111/mice.12297.
+     Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,                 [53] K. He, G. Gkioxari, P. Dollár, R. Girshick, Mask R-CNN, in: Proceedings of the IEEE
+     2018, pp. 969–977, https://doi.org/10.1109/CVPRW.2018.00143.                                        International Conference on Computer Vision, 2017, pp. 2961–2969, https://doi.
+[28] A. Assadzadeh, M. Arashpour, I. Brilakis, T. Ngo, E. Konstantinou, Vision-based                     org/10.1109/ICCV.2017.322.
+     excavator pose estimation using synthetically generated datasets with domain
+
+
+                                                                                               20
+H. Ying et al.                                                                                                                              Automation in Construction 154 (2023) 105016
+
+[54] H. Ying, S. Lee, A mask R-CNN based approach to automatically construct as-is IFC           [70] H. Ying, H. Zhou, A. Degani, R. Sacks, A two-stage recursive ray tracing algorithm
+     BIM objects from digital images, in: Proceedings of 36th International Symposium                 to automatically identify external building objects in building information models,
+     on Automation and Robotics in Construction, 2019, pp. 764–771, https://doi.org/                  Comput. -Aided Civ. Infrastruct. Eng. 37 (8) (2022) 991–1009, https://doi.org/
+     10.22260/ISARC2019/0103.                                                                         10.1111/mice.12776.
+[55] S. Naha, Q. Xiao, P. Banik, M.A. Reza, D.J. Crandall, Pose-guided knowledge                 [71] A. Borrmann, S. Schraufstetter, E. Rank, Implementing metric operators of a spatial
+     transfer for object part segmentation, in: Proceedings of the IEEE/CVF Conference                query language for 3D building models: octree and B-rep approaches, J. Comput.
+     on Computer Vision and Pattern Recognition Workshops, 2020, pp. 906–907,                         Civ. Eng. 23 (1) (2009) 34–46, https://doi.org/10.1061/(ASCE)0887-3801(2009)
+     https://doi.org/10.1109/CVPRW50498.2020.00461.                                                   23:1(34).
+[56] A. Kirillov, K. He, R. Girshick, C. Rother, P. Dollár, Panoptic segmentation, in:          [72] H. Ying, S. Lee, Automatic detection of geometric errors in space boundaries of IFC-
+     Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern                            BIM models using Monte Carlo ray tracing approach, J. Comput. Civ. Eng. 34 (2)
+     Recognition, 2019, pp. 9404–9413, https://doi.org/10.1109/CVPR.2019.00963.                       (2020) 04019056, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000878.
+[57] W.T. Calderon, D. Roberts, M. Golparvar-Fard, Synthesizing pose sequences from              [73] J.D. MacDonald, K.S. Booth, Heuristics for ray tracing using space subdivision, Vis.
+     3D assets for vision-based activity analysis, J. Comput. Civ. Eng. 35 (1) (2021)                 Comput. 6 (3) (1990) 153–166, https://doi.org/10.1007/BF01911006.
+     04020052, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000937.                               [74] A. Williams, S. Barrus, R.K. Morley, P. Shirley, An efficient and robust ray-box
+[58] B. Mahmood, S. Han, J. Seo, Implementation experiments on convolutional neural                   intersection algorithm, J. Graphics Tools 10 (1) (2005) 49–54, https://doi.org/
+     network training using synthetic images for 3D pose estimation of an excavator on                10.1145/1198555.1198748.
+     real images, Autom. Constr. 133 (2022), 103996, https://doi.org/10.1016/j.                  [75] T. Möller, B. Trumbore, Fast, minimum storage ray/triangle intersection,
+     autcon.2021.103996.                                                                              J. Graphics Tools 2 (1) (1997) 21–28, https://doi.org/10.1080/
+[59] D. Dwibedi, I. Misra, M. Hebert, Cut, paste and learn: Surprisingly easy synthesis               10867651.1997.10487468.
+     for instance detection, in: Proceedings of the IEEE international Conference on             [76] Q.Y. Zhou, J. Park, V Koltun, Open3D: A modern library for 3D data processing,
+     Computer Vision, 2017, pp. 1301–1310, https://doi.org/10.1109/ICCV.2017.146.                     arXiv preprint (2018), https://doi.org/10.48550/arXiv.1801.09847.
+[60] M.M. Soltani, Z. Zhu, A. Hammad, Automated annotation for visual recognition of             [77] Solibri, https://www.solibri.com/solibri-office (Last Accessed: February 19th,
+     construction resources using synthetic images, Autom. Constr. 62 (2016) 14–23,                   2023).
+     https://doi.org/10.1016/j.autcon.2015.10.002.                                               [78] G.A. Miller, WordNet, A Lexical Database for English, Communications of the ACM
+[61] P. Isola, J.Y. Zhu, T. Zhou, A.A. Efros, Image-to-image translation with conditional             38 (11) (1995) pp.39–41, https://doi.org/10.1145/219717.219748.
+     adversarial networks, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. 2017 (2017)           [79] P. Pauwels, W. Terkaj, EXPRESS to OWL for construction industry: Towards a
+     1125–1134, https://doi.org/10.1109/CVPR.2017.632.                                                recommendable and usable ifcOWL ontology, Autom. Constr. 63 (2016)
+[62] T. Salimans, I. Goodfellow, W. Zaremba, V. Cheung, A. Radford, X. Chen, Improved                 pp.100–133, https://doi.org/10.1016/j.autcon.2015.12.003.
+     techniques for training GANs, Advances in Neural Information Processing Systems             [80] Brick, https://brickschema.org/ (Last Accessed: February 10th, 2023).
+     (2016) 2234–2242, https://doi.org/10.1109/WACV48630.2021.00134.                             [81] OmniClass, https://www.csiresources.org/standards/omniclass (Last Accessed:
+[63] L. Mescheder, A. Geiger, S. Nowozin, Which training methods for GANs do actually                 February 10th, 2023).
+     converge?, in: International Conference on Machine Learning, 2018,                          [82] Uniclass, https://www.thenbs.com/our-tools/uniclass (Last Accessed: February
+     pp. 3481–3490, https://doi.org/10.1007/978-3-642-35740-4134.                                     10th, 2023).
+[64] H. Ying, S. Lee, A rule-based system to automatically validate IFC second-level             [83] L. Ma, R. Sacks, U. Kattel, T. Bloch, 3D object classification using geometric
+     space boundaries for building energy analysis, Autom. Constr. 127 (2021), 103724,                features and pairwise relationships, Comput. -Aided Civ. Infrastruct. Eng. 33 (2)
+     https://doi.org/10.1016/j.autcon.2021.103724.                                                    (2018) 152–164, https://doi.org/10.1111/mice.12336.
+[65] IFC Engine, https://rdf.bg/product-list/ifc-engine/ (Last Accessed: February 19th,          [84] J. Wu, T. Akanbi, J. Zhang, Constructing invariant signatures for AEC objects to
+     2023).                                                                                           support BIM-based analysis automation through object classification, J. Comput.
+[66] xbim toolkit, https://docs.xbim.net/ (Last Accessed: February 19th, 2023).                       Civ. Eng. 36 (4) (2022) 04022008, https://doi.org/10.1061/(ASCE)CP.1943-
+[67] H. Ying, S. Lee, Generating second-level space boundaries from large-scale IFC-                  5487.0001012.
+     compliant building information models using multiple geometry representations,              [85] C. Emunds, N. Pauen, V. Richter, J. Frisch, C. van Treeck, SpaRSE-BIM:
+     Autom. Constr. 126 (2021), 103659, https://doi.org/10.1016/j.                                    classification of IFC-based geometry via sparse convolutional neural networks,
+     autcon.2021.103659.                                                                              Adv. Eng. Inform. 53 (2022), 101641, https://doi.org/10.1016/j.aei.2022.101641.
+[68] J. Canny, A computational approach to edge detection, IEEE Trans. Pattern Anal.             [86] Blender, https://www.blender.org/ (Last Accessed: February 10th, 2023).
+     Mach. Intell. 6 (1986) 679–698, https://doi.org/10.1109/TPAMI.1986.4767851.                 [87] Unity, https://unity.com/ (Last Accessed: February 10th, 2023).
+[69] S. Daum, A. Borrmann, Processing of topological BIM queries using boundary                  [88] COCO, https://cocodataset.org/#detection-eval (Last Accessed: May 17th, 2023).
+     representation based methods, Adv. Eng. Inform. 28 (4) (2014) 272–286, https://
+     doi.org/10.1016/j.aei.2014.06.001.
+
+
+
+
+                                                                                            21
+

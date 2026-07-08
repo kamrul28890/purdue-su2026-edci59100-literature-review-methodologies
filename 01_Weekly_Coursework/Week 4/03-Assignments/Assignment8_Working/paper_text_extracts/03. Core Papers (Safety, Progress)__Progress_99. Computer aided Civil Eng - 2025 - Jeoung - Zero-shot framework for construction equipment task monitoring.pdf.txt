@@ -1,0 +1,1168 @@
+Received: 9 February 2025     Accepted: 25 April 2025
+
+DOI: 10.1111/mice.13506
+
+
+RESEARCH ARTICLE
+
+
+
+
+Zero-shot framework for construction equipment task
+monitoring
+
+Jaewon Jeoung                       Seunghoon Jung                          Taehoon Hong
+
+Department of Architecture &
+Architectural Engineering, Yonsei                       Abstract
+University, Seoul, Republic of Korea                    Vision-based monitoring of construction equipment is limited in scalability due
+Correspondence
+                                                        to the high resource demands of collecting and labeling large datasets across
+Taehoon Hong, Department of                             diverse environments. This study proposes a framework that employs Zero-Shot
+Architecture & Architectural                            Learning (ZSL) and Multimodal Large Language Model (MLLM) to recognize
+Engineering, Yonsei University, 50
+Yonsei-ro, Seodaemun-gu, Seoul, 03722,                  construction equipment tasks from video frames without additional training
+Republic of Korea.                                      data. The framework operates in two stages: (i) a zero-shot construction equip-
+Email: hong7@yonsei.ac.kr
+                                                        ment detection stage that includes detection and tracking modules and (ii) an
+Funding information                                     MLLM-based monitoring stage, utilizing the proprietary model (i.e., GPT-4o
+National Research Foundation of Korea;                  mini) to recognize tasks. Experiments showed that the framework achieved an
+Korea government (MSIT; Ministry of
+                                                        F1-score of 82.2% for equipment detection using ZSL. A Multiple Choice Ques-
+Science and ICT), Grant/Award Number:
+NRF-2021R1A3B1076769                                    tion (MCQ) dataset was constructed for evaluating MLLM, which achieved an
+                                                        accuracy of 79.0%. A practical case study, focusing on excavator tasks, demon-
+                                                        strated accurate recognition of both idle states and complex operations. These
+                                                        results highlight the proposed framework’s potential to automate construction
+                                                        equipment monitoring.
+
+
+
+1         INTRODUCTION                                                                 transformation, collecting information from construction
+                                                                                       sites through monitoring systems is essential. These data
+The issue of low productivity in the construction indus-                               enable site managers to accurately understand the opera-
+try has been a long-standing and well-known problem.                                   tion of construction equipment, the progress of tasks, and
+To overcome these challenges and enhance productivity,                                 the use of resources. Moreover, it serves as a fundamental
+digital transformation incorporating innovative technolo-                              step for automation and data-driven solutions for construc-
+gies such as Artificial Intelligence (AI) and Internet of                              tion equipment monitoring. Since construction equipment
+Things (IoT) sensors has been actively pursued (Barbosa                                accounts for 25%–40% of the total project cost, it is cru-
+et al., 2017; Kang et al., 2024). The digital transformation                           cial to include such equipment in monitoring systems,
+of the construction industry has been effectively intro-                               along with workers and construction materials, as key data
+duced in areas such as the automation of productivity                                  points (Phadatare & Charhate, 2016).
+analysis (Baek et al., 2024; Harichandran et al., 2023),                                  Traditionally, construction equipment monitoring was
+accident prevention systems (Shen et al., 2021), and struc-                            conducted through manual observation, where site man-
+ture health monitoring (Pan et al., 2023). To enable digital                           agers directly recorded equipment tasks. However, as
+
+
+
+This is an open access article under the terms of the Creative Commons Attribution License, which permits use, distribution and reproduction in any medium, provided the
+original work is properly cited.
+© 2025 The Author(s). Computer-Aided Civil and Infrastructure Engineering published by Wiley Periodicals LLC on behalf of Editor.
+
+
+3218      wileyonlinelibrary.com/journal/mice                                                                                  Comput Aided Civ Inf. 2025;40:3218–3238.
+                                                                                                                             14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                         3219
+
+
+construction sites have become larger and more com-            used VLMs to recognize various elements in construc-
+plex, manual observation has become time-consuming and         tion site images, including construction objects, personal
+prone to human error. With the advancement of AI tech-         protective equipment, and excavator activities (e.g., load-
+nologies and the increasing demand for digital transforma-     ing and digging), demonstrating the potential of ZSL and
+tion, vision-based methods, which utilize videos captured      VLMs in construction monitoring applications (Gil & Lee,
+by Closed Circuit TeleVision (CCTV) installed at con-          2024; Liang et al., 2024).
+struction sites or by Unmanned Aerial Vehicles (UAVs),            However, vision-based methods using ZSL still have lim-
+have emerged as promising non-contact methods (Reja            itations in construction equipment monitoring. First, since
+et al., 2022). Previous studies have shown that vision-based   these methods are designed to process single images, it
+methods can reliably provide information on the loca-          is difficult to capture changes in construction equipment
+tion and operations of construction equipment using deep       over time in videos. Second, while VLMs like CLIP are
+learning algorithms, such as Convolutional Neural Net-         pre-trained on general image–text pairs, they lack suffi-
+works (CNNs; S. Jung et al., 2022, 2023). Moreover, these      cient domain-specific data from construction sites, which
+methods have been applied for various purposes, such as        are still not sufficiently reflected.
+safety management (Park et al., 2024) and productivity            To address these limitations, this study proposes a
+analysis (J. Kim & Chi, 2020).                                 framework for monitoring construction equipment tasks
+   Although previous studies showed high reliability in        using a Multimodal Large Language Model (MLLM) capa-
+construction equipment monitoring, the large amount of         ble of processing multiple video frames. MLLM is designed
+data and labeling work still remains a challenge in ensur-     to simultaneously interpret different modalities, such as
+ing the performance of vision-based methods (J. Kim et al.,    text, images, and audio, demonstrating reliable perfor-
+2024). To overcome this, several studies have explored         mance in vision-language tasks that require semantic
+vision-based methods using Few-Shot Learning (FSL) and         reasoning—for example, generating detailed descriptions
+Zero-Shot Learning (ZSL) (Gil & Lee, 2024; Tang et al.,        of images and understanding scenes in images (Lin et al.,
+2024). FSL is a method that recognizes new tasks and iden-     2023). Notably, MLLM’s ability to handle long inputs
+tifies unseen classes using only a small number of labeled     allows it to effectively analyze temporal changes and tasks
+example images, while ZSL can perform these tasks with-        in construction equipment across multiple video frames.
+out any examples. Regarding FSL, J. Kim and Chi (2021)         Additionally, MLLM has been trained on an extensive
+showed that FSL could achieve more than twice the object       multimedia dataset containing over 5 billion image–text
+detection performance, compared to traditional supervised      pairs, significantly enhancing its generalizability, which
+learning when using 20 images. Wang and El-Gohary              holds great potential for collecting information on com-
+(2024), using FSL-based object detection, achieved 88.2%       plex construction equipment tasks with ZSL. The novelty
+precision in detecting 39 construction-related classes with    of this study can be summarized as follows.
+only 50 example images. Although monitoring systems
+using FSL have effectively recognized new construction         1. This study integrates vision-based methods using ZSL
+equipment with a few example images, they still require           for detection and tracking (i.e., Florence-2 and Segment
+domain-specific data to ensure performance. Moreover,             Anything Model 2, SAM2) with MLLM to recognize
+because FSL-based object detection requires training with         construction equipment tasks by processing multiple
+extensive labeled data for relevant classes, it remains           video frames.
+difficult to apply such methods directly in real-world         2. An Multiple Choice Question (MCQ) dataset was con-
+construction environments.                                        structed, covering three question types: spatial infer-
+   Since ZSL does not require any example images, it can          ence, task inference, and temporal event. This dataset
+improve the applicability of the monitoring system. How-          contributes to clarifying the scope and depth of infor-
+ever, to ensure reliable ZSL performance, it is necessary         mation that MLLMs can provide for construction
+to employ a pre-trained model using a large dataset. In           equipment monitoring.
+the field of computer science, researchers have collected      3. A framework is proposed that does not require
+approximately 400 million image–text pairs (Radford et al.,       any domain-specific data from construction sites by
+2021), which were then used to train Vision-Language              utilizing ZSL. Specifically, the proposed framework
+Models (VLMs), such as Contrastive Language-Image Pre-            was designed to function across the entire pro-
+training (CLIP). By learning generalized knowledge from           cess, including detection, tracking, and MLLM-based
+vast amounts of data, VLMs have offered a robust founda-          monitoring, without the need for additional model
+tion for ZSL. Accordingly, several studies have successfully      training.
+                                                                                                                                14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3220                                                                                                            JEOUNG et al.
+
+
+
+2      RELATED WORKS                                            construction sector. For example, J. Kim and Chi (2021)
+                                                                applied few-shot transfer learning with only 20 images of
+2.1    Construction monitoring using                            construction equipment, achieving a mean average pre-
+vision-based methods                                            cision exceeding 70% in object detection. Similarly, Cui
+                                                                et al. (2022) employed FSL to recognize rarely occurring
+Vision-based methods for construction equipment mon-            building facade defects, such as efflorescence and spalling
+itoring have become an accessible approach as cameras           with exposed rebars, using 30 images. Liang et al. (2024)
+have become widespread on construction sites. One of            employed the CLIP model within an FSL framework to
+the most significant applications in this area is the object    classify objects temporarily used on construction sites,
+detection method. Object detection methods have gained          such as materials and tools. They computed cosine sim-
+reliability and widespread use in the construction domain       ilarity scores to measure the similarity between image
+due to the rapid advancements in deep learning algo-            and text pairs. Gil and Lee (2024) detected human body
+rithms, such as You Only Look Once (YOLO; D. Kim                poses to extract head-only images, and then applied ZSL
+et al., 2019), and Faster Region-based Convolutional Neu-       to detect personal protective equipment. C. Chen et al.
+ral Network (R-CNN; J. Kim & Chi, 2019). They are used          (2023) used YOLO to detect excavators in videos and
+to retrieve localization information (i.e., bounding box)       employed an object tracker to capture excavator occur-
+and class information of construction objects (i.e., type of    rences across consecutive frames. They then input 25
+construction equipment) from a single image.                    detected frames into a ZSL model to classify three activities
+   The other application of vision-based methods involves       (i.e., loading, digging, and idling), achieving an accuracy
+activity recognition. Activity recognition methods are used     of 86% for excavator activity recognition. Overall, FSL
+to identify the activities of construction equipment from       and ZSL have overcome the challenges posed by data
+video and image. This method typically involves multiple        scarcity in construction sites and demonstrated reliable
+stages: object detection, tracking, and activity recognition.   performance.
+First, an object detection model extracts the bounding
+boxes and class information of various objects from each
+frame. These results are then passed to a tracking model,       2.2      MLLMs
+which assigns a unique ID to each detected object and
+tracks their movement across consecutive frames. Finally,       Large Language Models (LLMs) based on Transformer
+the tracked data are organized into a sequence of frames        architecture have rapidly advanced, integrating billions of
+(e.g., 16 or 32 frames) and is input into the activity recog-   parameters to perform a wide range of language tasks,
+nition model to classify the activities of construction         such as machine translation, text summarization, and
+equipment. For example, J. Kim and Chi (2019) used Faster       topic modeling. Notable examples include the Generative
+R-CNN and tracking algorithms to obtain the bounding            Pre-trained Transformer (GPT) and Bidirectional Encoder
+boxes of an excavator from each frame. They then applied        Representations from Transformers (BERT). It has been
+a CNN and long short-term memory-based activity recog-          reported that increasing the size of model and dataset
+nition model to classify the activities, such as digging,       directly enhances the performance of LLMs (Kaplan et al.,
+dumping, and hauling. Similarly, C. Chen et al. (2020)          2020). Surprisingly, while LLMs structurally share learning
+used a 3D CNN-based model to classify three activities          algorithms and model architecture with smaller models,
+of an excavator (i.e., digging, loading, and swinging) and      they exhibit new capabilities such as in-context learn-
+employed this information to automatically calculate the        ing, which allows them to temporarily learn new tasks
+earthmoving cycle. Consequently, the activity recognition       from prompts. For example, GPT-3 demonstrated FSL,
+method is widely used in construction monitoring systems        enabling it to solve new tasks with only a few exam-
+to extract semantic information from spatiotemporal data,       ples, a capability not observed in GPT-2 (Radford et al.,
+enabling tasks such as calculating the earthmoving cycle        2019). Another example is ChatGPT, which has shown
+(Roberts & Golparvar-Fard, 2019) and analyzing workers’         effective performance in dialogue-based tasks and demon-
+productive and non-productive states (Luo et al., 2019).        strated the ability to follow instructions without explicit
+   Despite the contributions of vision-based methods            task-specific examples through instruction tuning (Wei
+to construction monitoring systems, several limitations         et al., 2022). This has effectively addressed existing model
+remain. Most studies have relied on supervised learning         limitations, such as the cold-start problem, where ade-
+to train models, which require large volumes of data.           quate training data are unavailable. Accordingly, utilizing
+The process of collecting a substantial number of images        LLMs and generative AI models to develop human-like
+or videos and accurately labeling them consumes signif-         systems for various applications has emerged as a new
+icant time and resources. To mitigate these challenges,         research direction, showing significant potential for sys-
+FSL and ZSL approaches have been introduced in the              tem automation.
+                                                                                                                                14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                            3221
+
+
+   Leveraging the effective performance of LLMs, MLLMs          2.3      Research gaps
+have emerged by combining the complementary strengths
+of LLMs and VLMs. MLLMs generally consist of three              MLLMs have effectively addressed various vision-language
+parts: a modality encoder, a pretrained LLM, and a modal-       tasks via ZSL and have shown promise for applications
+ity interface (Yin et al., 2024). Modality encoders process     such as construction site monitoring. Accordingly, several
+inputs from various modalities—such as images, videos,          studies have applied MLLMs to construction-site contexts
+and audio—by converting them into embeddings that               to develop automated systems (H. Chen et al., 2024; Pu,
+LLMs can interpret. The pretrained LLMs then perform            Yang, Li, & Guo, 2024). For instance, Pu, Yang, Li, and Guo
+reasoning based on these multimodal inputs, while the           (2024) used MLLMs to generate reports related to site con-
+modality interface integrates information obtained from         ditions and safety hazards, demonstrating the potential for
+different modalities. MLLMs with this architecture have         accelerating the construction inspection process.
+demonstrated superior performance in vision-language               Although MLLMs have been successfully applied in the
+tasks, such as generating images from text descriptions,        construction field, the following research gaps remain.
+identifying and classifying objects and details in images,      First, previous studies focused on single images and did not
+and answering questions about image content. They have          utilize multiple video frames, which limited their ability
+also been applied across various industry domains, includ-      to recognize construction equipment tasks in a temporal
+ing medicine, education, and robotics (Z. Chen et al., 2024).   context. Specifically, it remains unclear whether MLLMs,
+Owing to the applicability of MLLMs, proprietary mod-           when provided with multiple video frames, will only offer
+els such as Google’s Gemini, and OpenAI’s ChatGPT have          information such as the color, location, and type of con-
+rapidly advanced through competition. In particular, pro-       struction equipment as in traditional image captioning
+prietary models offer Application Programming Interfaces        methods. Additionally, it is uncertain whether MLLMs
+(APIs), allowing non-experts who may lack the comput-           can detect operations or significant events involving con-
+ing resources to run large-parameter MLLMs to use them          struction equipment within specific frames. Second, while
+easily (Carolan et al., 2024). Additionally, between 2023       MLLMs could recognize simple and representative tasks
+and 2024, API costs significantly decreased, creating an        (e.g., the earthmoving task of an excavator), they had limi-
+environment where proprietary models could be adopted           tations in recognizing more complex tasks. This highlights
+economically. For example, the cost of GPT-4o in August         a knowledge gap in how to enhance MLLM’s ability to
+2024 was approximately one tenth that of GPT-4 in March         recognize complex tasks. Regarding the text prompt, it is
+2023, reaching $3 per million tokens (Nebuly, 2024).            important to determine what specific information should
+   Meanwhile, to effectively utilize in-context learning        be incorporated into the prompts to accurately recognize
+in MLLMs, prompt engineering that adjusts both text             distinct construction equipment tasks. Similarly, in visual
+prompts and visual inputs has been actively explored (Sht-      prompt engineering, understanding how to process and
+edritski et al., 2023; Yong et al., 2023). Regarding the text   emphasize visual inputs is essential for better directing the
+prompt, a representative method is to provide examples          attention to construction equipment.
+or additional information and context, similar to FSL, to          To address these challenges, the proposed framework
+elicit accurate and consistent responses. For example, Yong     employs a proprietary model capable of processing a long
+et al. (2023) demonstrated that adding domain-specific def-     length of tokens, and an MCQ dataset was created to clar-
+initions to text prompts can improve performance when           ify the scope and depth of information that MLLMs can
+detecting building defects. Regarding visual inputs, visual     provide for construction equipment monitoring. Moreover,
+prompt engineering modifies image pixels to direct the          this study introduces two approaches aimed at improving
+attention to specific regions. This is not limited to simply    the recognition of complex tasks: the idle-to-task approach
+cropping images but can also involve emphasizing specific       for optimizing text prompts and the cropped visual inputs
+elements within the image. For example, Shtedritski et al.      approach for refining visual inputs.
+(2023) showed that drawing a red circle around an object
+effectively directs attention to that region while preserving
+the global image context. Mani et al. (2022). demonstrated      3      METHODOLOGY
+that placing a red dot within an image could resolve ambi-
+guity in visual question answering, thereby improving the       3.1      Overall framework
+accuracy of responses. Pu, Yang, Shi, and Jin (2024) pro-
+posed a method that employs a mask segmentation model           The proposed framework aims to automatically analyze
+to segment regions in construction images and assign opti-      video data from construction sites to collect informa-
+mal alphanumeric marks to each area, thereby enhancing          tion about the location, idle state (i.e., idle or non-idle),
+the visual inputs for multimodal LLMs.                          and detailed operational tasks being performed by the
+                                                                                                                                14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3222                                                                                                            JEOUNG et al.
+
+
+                                                                then recognizes the objects (i.e., construction equipment)
+                                                                and generates their bounding boxes as output. The track-
+                                                                ing module receives the bounding boxes and all frames
+                                                                of the clip as input. This tracking module then tracks the
+                                                                objects and generates masks and unique IDs as output.
+                                                                In the MLLM-based monitoring stage, the text prompt
+                                                                and the cropped frames from the tracked results are used
+                                                                as input to provide information about the construction
+                                                                equipment tasks. Notably, the idle states and operational
+                                                                tasks are recognized separately as the MLLM is run twice
+                                                                according to the idle-to-task approach (see Section 3.3).
+
+
+                                                                3.2    Zero-shot construction equipment
+                                                                detection stage
+
+                                                                The zero-shot construction equipment detection stage
+                                                                automatically detects and tracks construction equipment
+                                                                within a clip. This stage provides a crucial foundation for
+                                                                refining data in the subsequent stage, where construction
+                                                                equipment tasks are analyzed in more detail. The zero-shot
+                                                                construction equipment detection stage consists of two
+                                                                modules: the detection module and the tracking module.
+                                                                   The detection module identifies the location and class
+                                                                of construction equipment by generating bounding boxes,
+                                                                which help track and analyze the construction equip-
+                                                                ment in the subsequent stage. The detection module uti-
+                                                                lizes Florence-2, a State-of-the-Art (SotA) object detection
+F I G U R E 1 The overall framework consists of the zero-shot   model developed by Microsoft, which can handle a variety
+construction equipment detection stage and the MLLM-based       of vision tasks and vision-language tasks, such as caption
+monitoring stage.
+                                                                generation, object detection, visual grounding, and image
+                                                                segmentation (Xiao et al., 2024). Specifically, Florence-2 is
+construction equipment over time. To process the multiple       capable of open vocabulary object detection, meaning it
+video frames over a long duration efficiently and reduce        can detect objects described by a text prompt without being
+memory usage, the proposed framework divides the video          limited to predefined classes. Trained on approximately
+into 30-s clips, setting each clip as the input unit to rec-    126 million image–text pairs, it can detect domain-specific
+ognize construction equipment operations. This duration         objects like construction equipment using ZSL. Florence-
+was selected because typical cycle times of construction        2 takes a single image and a text prompt as input and
+equipment operations, such as those of excavators, gen-         generates the corresponding bounding boxes related to a
+erally fall within a 30-s window, allowing meaningful           text prompt as output through its specialized architecture
+operational tasks to be captured (Sağlam & Bettemir, 2018),     (see Figure 2a). The inputted image is the first frame in
+while also helping reduce memory usage and enabling             the clip, which is fed into the DaViT vision encoder and
+consistent batching of visual inputs for MLLM processing.       transformed into visual token embeddings. Visual token
+   The framework consists of two stages (as shown in            embeddings represent image features in vector form, mak-
+Figure 1): (i) the zero-shot construction equipment detec-      ing them interpretable by the transformer-based model.
+tion stage and (ii) the MLLM-based monitoring stage. The        For the text prompt, the task description “< open vocab-
+zero-shot construction equipment detection stage auto-          ulary detection task >” is included, along with the input of
+matically detects and tracks the location of construction       construction equipment classes such as excavator, dump
+equipment within the clip (see Section 3.2). This stage         truck, and loader. Notably, the text prompt for construc-
+includes two modules: a detection module and a track-           tion equipment is designed to include word‑level category
+ing module. The detection module takes the first frame in       labels instead of full sentences or detailed descriptions.
+the clip and the text prompt, the class of the construction     This approach is consistent with the training data, as
+equipment to be detected, as input. This detection module       datasets such as Object365 (Shao et al., 2019), which are
+                                                                                                                                             14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                                         3223
+
+
+
+
+F I G U R E 2 The zero-shot construction equipment detection stage consisting of a detection module (left) and a tracking module (right).
+The detection module utilizes the Florence-2 model, and the tracking module utilizes the Segment Anything Model 2 (SAM2).
+
+
+
+integral to the dataset used to train Florence-2 (FLD‑5B),             for the construction equipment in the given frame based
+primarily employ word‑level annotations. The text prompt               on the input bounding boxes, and these masks are stored
+is then fed into BERT (i.e., encoder), which converts it               in a memory bank. The memory bank efficiently stores and
+into text and location embeddings. Location embeddings                 manages information from previous frames. In subsequent
+represent the coordinates of the box and are derived from              frames, SAM2 uses the memory attention module to ref-
+location tokens added to the tokenizer vocabulary list (T.             erence the memory from previous frames and predict the
+Chen et al., 2022). The visual token embeddings, along                 masks for the current frame. During this process, the mem-
+with the text and location embeddings, are processed                   ory attention module selectively utilizes the most relevant
+by a transformer-based multi-modal encoder-decoder to                  previous information in relation to the current frame. The
+generate the final output. The final output includes the               mask prediction results for each frame are stored back in
+coordinates of the bounding box, represented by the x                  the memory bank and are used for tracking in the follow-
+and y values of the top-left and bottom-right corners, and             ing frames. This process is repeated throughout the entire
+the label of the detected construction equipment class. If             video, ensuring continuous tracking of the construction
+no construction equipment is detected in the first frame,              equipment. As a result, SAM2 outputs a mask and unique
+the clip is considered to contain no equipment, prevent-               ID for the construction equipment in each frame of a 30-s
+ing unnecessary model operations and saving computing                  clip. Notably, the bounding boxes and unique IDs gener-
+resources across the entire framework.                                 ated around the masks in the last frame are carried over to
+   The tracking module tracks the detected construction                the subsequent clip, allowing for continuous recognition
+equipment across the sequential frames of the clip, gen-               and tracking of the same object across different 30-s clips.
+erating unique IDs and bounding boxes to continuously
+monitor the location of the equipment. For the tracking
+module, SAM2 is employed since it enables real-time, con-              3.3        MLLM-based monitoring stage
+tinuous tracking of target objects across multiple frames
+(Ravi et al., 2024). It demonstrates high performance                  The MLLM-based monitoring stage identifies the idle
+in tracking multiple objects simultaneously within video               states of construction equipment and automatically
+sequences while maintaining a small size with 38.9 mil-                recognizes operational tasks based on the tracked results
+lion parameters. It is particularly useful in dynamic and              provided by the zero-shot construction equipment detec-
+complex environments such as construction sites, as it                 tion stage. For the MLLM-based monitoring stage, the
+can maintain tracking continuity even when the object is               proprietary model “GPT-4o mini” is selected due to its
+temporarily obscured or leaves and re-enters the scene.                large context window, which can handle long token
+In addition, SAM2 has been trained on the SA-V dataset,                inputs, including both visual inputs (i.e., multiple cropped
+which includes over 51,000 videos with mask annotations,               frames) and text prompts simultaneously. Moreover, it has
+giving it the potential to effectively track domain-specific           high inference speed, low API cost, and can maintain reli-
+objects such as construction equipment. To track construc-             able output quality compared to other MLLMs. The visual
+tion equipment using SAM2, the bounding boxes of the                   inputs and text prompts provided to the MLLM were con-
+equipment detected by Florence-2 in the first frame are                figured based on the prompt guidelines from Google and
+input into SAM2 (see Figure 2b). SAM2 generates masks                  OpenAI (Google AI for Developers, 2024; OpenAI, 2024).
+                                                                                                                                          14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3224                                                                                                                      JEOUNG et al.
+
+
+
+
+F I G U R E 3 MLLM-based monitoring stage for recognizing construction equipment tasks with the idle-to-task approach (left) and the
+cropped visual inputs approach (right).
+
+
+Specifically, the images were base64-encoded and resized             detection stage. An example of this text prompt is: “Ana-
+so that their dimensions did not exceed 512 × 512 pixels.            lyze the frames of the {equipment} and describe the task of
+Additionally, the visual inputs were placed before the               the {equipment}.” Similarly, the response format in the API
+text prompt. To accurately recognize the construction                function is used to ensure the output is in sentence format.
+equipment tasks, two approaches are proposed. For the                   Second, the cropped visual inputs approach is a form
+text prompt, the idle-to-task approach is applied, and for           of visual prompt engineering designed to help the MLLM
+the visual inputs, the cropped visual inputs approach is             recognize construction equipment tasks more precisely. In
+applied.                                                             this approach, only the area related to the construction
+   First, the idle-to-task approach is proposed to recognize         equipment is used as visual input, meaning that spe-
+construction equipment tasks in two steps (see Figure 3a).           cific regions containing the equipment are cropped from
+In the first step, frames are provided as visual inputs              all frames in the clip. Specifically, based on the tracked
+along with a text prompt that asks about the idle state.             results provided by the zero-shot construction equipment
+By focusing exclusively on the idle state in the first step,         detection stage, the region where the construction equip-
+the idle-to-task approach establishes a foundation for ana-          ment appears is extracted from each frame by a unique
+lyzing non-idle equipment operations in the second step.             ID (see Figure 3b). To do this, the minimum and max-
+Specifically, the text prompt includes a definition of the           imum x and y coordinates of the masks in all frames
+idle state and the class of construction equipment used in           of the 30-s clip are calculated. A bounding box is then
+the zero-shot construction equipment detection stage. An             defined around these outermost coordinates, with a 10%
+example of this text prompt is: “Analyze the frames of the           margin added in all directions to crop each frame in the
+{equipment} and determine whether it is in an idle state. An         clip. The purpose of this approach is to remove unnec-
+idle state means that it is motionless, and it is not actively       essary background information and provide visual inputs
+engaging in any task.” The MLLM returns a binary output              that allow the MLLM to focus on the construction equip-
+regarding the idle state, and the response format in the API         ment tasks. Compared to non-cropped visual inputs of the
+function is used to strictly limit the output to a Boolean           same resolution, the cropped visual inputs contain more
+type (True or False). If the idle state is not detected, the         focused information about the construction equipment,
+second step is executed. The MLLM uses the same visual               enabling the MLLM to perform a more detailed analy-
+inputs (i.e., frames) and text prompt as in the first step.          sis. Moreover, by cropping frames based on the outermost
+The MLLM then generates a sentence output that pro-                  coordinates, this approach preserves contextual informa-
+vides a detailed description of the construction equipment           tion more effectively compared to using only bounding
+task. The text prompt includes the class of construction             boxes. For example, in a scenario where an excavator is
+equipment used in the zero-shot construction equipment               loading soil onto a truck, if only the bounding boxes related
+                                                                                                                                       14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                                   3225
+
+
+to the excavator are used as input, contextual informa-       TA B L E 1      Distribution of bounding boxes by class.
+tion about the truck may be omitted. Additionally, a text      –                  Training set                           Val. set
+prompt, such as “< Frame 00:01 >,” was added in front          Number of          1000            2000 4000      8000    2000
+of each frame to indicate the time information, enabling       samples
+the model to better understand the temporal context and        Dump truck         222             463    937     2980    702
+accurately analyze the events across consecutive frames.       Excavator          216             445    902     2264    505
+Accordingly, the combined prompt consisting of visual          Wheel loader       152             288    620     1447    347
+inputs and the text instruction was structured as fol-
+                                                               Backhoe loader 107                 212    456     1128    264
+lows: “< Frame 00:01> {base64-encoded image} < Frame
+                                                               Grader             111             227    453     1054    263
+00:02 > {base64-encoded image} . . . Analyze the frames of
+                                                               Compactor          127             239    494     966     234
+the {equipment} . . . .”
+                                                               Dozer              111             232    462     879     235
+                                                               Mobile crane       120             236    463     870     237
+4       EXPERIMENTS                                            Cement truck       103             211    430     650     201
+                                                               Tower crane        104             213    301     389     77
+4.1    Comparative analysis of
+construction equipment detection
+                                                              vocabulary detection, which requires prior knowledge
+This section aims to evaluate whether the zero-shot con-      of the construction equipment present in the images. To
+struction equipment detection stage can effectively detect    address this requirement, the construction equipment
+various types of construction equipment without domain-       classes from the ground truth labels were used as a text
+specific training data by utilizing ZSL. For this purpose,    prompt. For example, if the ground truth labels included
+a comparative analysis was conducted between Florence-        excavator and truck, the model was run twice, each time
+2 and YOLOv8. Additionally, the performance of YOLOv8         with “excavator” and “truck” entered as separate text
+under a limited data scenario was analyzed. All experi-       prompts. It is worth noting that FSL was not included
+ments were conducted on a local machine with a 12th-          for comparison because it requires a training phase using
+generation Intel Core i7-12700KF CPU, NVIDIA GeForce          extensive labeled data from related classes, which does
+RTX 3060 GPU, 32 GB RAM, using PyTorch 2.3.1 and              not align with the goal of evaluating models under limited
+CUDA 12.1.                                                    data conditions (J. Kim & Chi, 2021).
+                                                                 To systematically investigate the semantic boundaries of
+                                                              ZSL capabilities, an experiment was conducted by varying
+4.1.1       Dataset and experimental setup                    the descriptive detail in text prompts. Since ZSL capabil-
+                                                              ities rely on semantic understanding of input prompts,
+Regarding the dataset, the Alberta Construction Image         it is important to assess whether additional descriptive
+dataset (ACID) (Xiao & Kang, 2021; Xiao et al., 2022),        information, such as color or specific names, could affect
+which contains images from various construction sites,        detection accuracy. Specifically, the experiment explored
+was used. The ACID dataset consists of 10,000 images and      four distinct text prompt configurations: (i) construction
+includes ten types of construction equipment (see Table 1).   equipment class for baseline (e.g., excavator), (ii) domi-
+   Regarding the comparative models, the supervised           nant color combined with the equipment class (e.g., yellow
+learning model YOLOv8 was used. YOLOv8 was selected           excavator), (iii) manufacturer’s model name (e.g., Cater-
+due to its ability to achieve both real-time detection        pillar 336D), and (iv) a combination of dominant color
+performance and high accuracy. Additionally, to simulate      and manufacturer’s model name (e.g., yellow Caterpillar
+a limited data scenario, various sizes of training sets       336D). Toward this end, dominant colors and manufac-
+were configured. Specifically, the model was trained with     turer’s model names were manually assigned to each
+training sets consisting of 1000, 2000, 4000, and 8000        equipment instance in the validation set. Additionally,
+images. These training set sizes were chosen to reflect       Florence-2 was run separately for each text prompt con-
+the practical challenges of data collection and labeling,     figuration. The detected bounding boxes from each indi-
+starting with 1000 images (approximately 100 images per       vidual execution were then assigned class IDs, followed
+class) and gradually increasing the dataset size to analyze   by the Non-Maximum Suppression (NMS) to eliminate
+the trend of performance improvement. For the valida-         redundant and overlapping detections.
+tion set, 2000 images were used, and both the training           Regarding the evaluation metrics, precision, recall, and
+and validation sets were organized to ensure an equal         F1-score, which are commonly used to assess the perfor-
+distribution of the 10 classes. Florence-2 employs open       mance of object detection models, were used. Precision
+                                                                                                                                        14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3226                                                                                                                    JEOUNG et al.
+
+
+T A B L E 2 Comparison of precision, recall, and F1-score for You   T A B L E 3 Performance of the Florence-2 large across different
+Only Look Once (YOLO) v8 and Florence-2 models.                     text prompt configurations.
+                    Train      Precision    Recall   F1-score        Text prompt            Precision      Recall       F1-score
+ Model              samples    (%)          (%)      (%)             configuration          (%)            (%)          (%)
+ YOLOv8n            1000       67.2         56.4     61.3            Baseline               87.1           77.8         82.2
+                    2000       82.1         70.6     75.9            Color                  87.8           79.2         83.3
+                    4000       87.3         79.1     83.0            Manufacturer’s         57.1           53.8         55.4
+                    8000       93.0         83.0     87.7            model
+ YOLOv8s            1000       72.6         59.8     65.6            Color +                76.2           71.3         73.7
+                                                                     Manufacturer’s
+                    2000       84.4         74.2     79.0
+                                                                     model
+                    4000       90.0         81.5     85.5
+                    8000       90.3         87.7     89.0
+ YOLOv8m            1000       77.2         64.4     70.2
+                                                                    which is consistent with the neural scaling law (Hestness
+                    2000       84.4         76.8     80.4           et al., 2017). These results suggest that supervised learning
+                    4000       89.7         84.3     86.9           models can deliver high performance when provided with
+                    8000       93.0         90.1     91.6           sufficient data. In contrast, Florence-2 large outperformed
+ Florence-2 base    0          83.6         78.5     81.0           the YOLOv8 models when the training samples were fewer
+ Florence-2 large   0          87.1         77.8     82.2           than 2000. This demonstrates that Florence-2, which uti-
+                                                                    lizes ZSL, can offer practical advantages in limited data
+                                                                    scenarios.
+represents the proportion of correctly identified objects out          Table 3 shows the performance of Florence-2 large
+of all detected objects, while recall represents the propor-        across different text prompt configurations. The baseline
+tion of actual objects that were successfully detected. The         prompt, using only construction equipment class as text
+F1-score, which is the harmonic mean of precision and               prompt, achieved an F1-score of 82.2%, serving as a ref-
+recall, provides a balanced evaluation of the two metrics.          erence point for semantic flexibility analysis. When color
+For YOLOv8, the Intersection over Union (IoU) thresh-               information was included in the text prompt (e.g., yel-
+old was set at 0.45, and any detection with a confidence            low excavator), the F1-score increased to 83.3%. However,
+score higher than 0.25 was considered a true positive. In           introducing manufacturer’s model names reduced perfor-
+contrast, Florence-2 does not provide confidence scores             mance, achieving the lowest F1-score at 55.4%. The com-
+like supervised learning models (e.g., YOLOv8). Therefore,          bined prompt of color and manufacturer’s model name
+only the IoU threshold was used to evaluate Florence-2’s            partially mitigated this reduction, reaching an F1-score of
+performance.                                                        73.7%. These results indicate that Florence-2 can effectively
+                                                                    leverage simple semantic attributes, such as color, without
+                                                                    substantial loss in performance. Conversely, the inclusion
+4.1.2    Zero-shot detection performance                            of highly specific, domain-oriented details like manu-
+analysis                                                            facturer’s model names negatively impacts performance,
+                                                                    suggesting practical semantic boundaries of Florence-2’s
+Table 2 shows the precision, recall, and F1-score of                ZSL capabilities within construction equipment contexts.
+Florence-2 and YOLOv8 based on the size of the training                In conclusion, the results demonstrate that the per-
+samples. The values are derived by averaging the pre-               formance of ZSL and supervised learning models varies
+cision, recall, and F1-score across all classes. YOLOv8n,           depending on model size and the size of the training sam-
+YOLOv8s, and YOLOv8m have 3.2, 11.2, and 25.9 M param-              ples. The supervised learning models, such as YOLOv8,
+eters, respectively, while Florence-2 base and Florence-2           showed superior performance when there was sufficient
+large contain 0.23 and 0.77 B parameters. The experimen-            training data and computational resources. In contrast,
+tal results indicate that Florence-2 base and Florence-2            Florence-2, which utilizes ZSL, was particularly effec-
+large achieved an F1-score of 81.0% and 82.2%, respec-              tive in limited data scenarios. Moreover, the results pre-
+tively. On the other hand, YOLOv8n presented the lowest             sented that overly specific prompts (e.g., manufacturer’s
+F1-score of 61.3% when trained with 1000 samples, while             model names) negatively impact its accuracy, while sim-
+YOLOv8m achieved the highest F1-score of 91.6% when                 ple semantic attributes, such as color, can be effectively
+trained with 8000 samples. The YOLOv8 models showed                 leveraged. These findings imply that while Florence-2 is
+an improvement in precision, recall, and F1-score as the            highly suitable for immediate deployment in construc-
+size of the model and the training samples increased,               tion environments, practitioners should carefully consider
+                                                                                                                                   14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                               3227
+
+
+semantic specificity in prompt design to maximize its
+practical effectiveness.
+
+
+4.2 Performance evaluation of
+MLLM-based monitoring
+
+This section aims to evaluate the performance of the
+MLLM-based monitoring stage. For this purpose, the MCQ
+dataset was created using YouTube videos featuring con-
+struction equipment, and the evaluation was conducted
+                                                                  F I G U R E 4 Breakdown of the Multiple Choice Question
+using the proprietary models GPT-4o mini and Gemini
+                                                                  (MCQ) dataset by correct answer type.
+1.5 Flash APIs. The MCQ dataset was designed to clar-
+ify the scope and depth of information that MLLMs can
+provide for construction equipment monitoring. Moreover,          (H. Chen et al., 2024). Specifically, the MCQ dataset was
+the sensitivity of the models to variations in idle state defi-   designed for understanding where equipment is located
+nitions was investigated by examining six variations in the       in relation to its surroundings (spatial inference), what
+text prompt designs.                                              actions and tasks the equipment is performing (task infer-
+                                                                  ence), and when critical events occur within the opera-
+                                                                  tional timeline (temporal event questions). Although these
+4.2.1   MCQ dataset design for MLLM-based                         question types have limitations in evaluating compre-
+monitoring                                                        hensive monitoring aspects related to human–equipment
+                                                                  interactions or safety, they provide information regarding
+MCQ dataset was created to evaluate the MLLM-based                equipment productivity and operational states.
+monitoring stage. Since MLLMs that utilize ZSL can han-              First, spatial inference questions describe the position,
+dle a wide range of dialogue-based tasks, evaluating them         arrangement, and spatial relationships between construc-
+can be challenging. Accordingly, this study employed an           tion equipment and other objects (e.g., soils, workers, site,
+MCQ dataset, which allows for simple and quick eval-              and other equipment). These questions can be answered
+uations and is widely used in the computer vision field           based on a single image. For example, questions may be
+(Hendrycks et al., 2021; Wu et al., 2024). To create the MCQ      asked about the positional relationship between an exca-
+dataset, a total of 52 videos were collected from YouTube.        vator and a dump truck, which construction equipment is
+From each video, clips containing different scenes were           visible in the scene, or the spatial positioning between a
+extracted at intervals of less than 30 s, resulting in a total    bulldozer and an excavator.
+of 216 clips. The average length of each clip was approx-            Second, task inference questions require reasoning
+imately 28.5 s, with lengths ranging from 7 to 30 s. For          about the activity, task, or purpose of construction equip-
+each clip, questions with four possible answers were cre-         ment based on all the input frames. For example, questions
+ated, leading to a total of 1207 questions. Specifically, 782     might ask what task the excavator is performing (e.g.,
+questions (65.6%) and 213 questions (17.6%) focused on            earthmoving, transporting material) or what the likely
+activities and equipment, respectively, while the remain-         purpose of the bulldozer in the background is.
+ing 202 questions (16.7%) addressed aspects such as counts,          Third, temporal event questions require understanding
+colors, and environment (see Figure 4). Moreover, the             the timing, sequence, or specific frames where a partic-
+activity-related questions covered a diverse range of tasks,      ular event or action occurs. For instance, questions may
+such as digging, loading, unloading, lifting, carrying, push-     be asked when the excavator begins loading soil into the
+ing, leveling, breaking, demolition, and idling, enabling         dump truck, at which frames the excavator is lifting a rock
+the evaluation of performance across various construction         from the ground, when the loader appears to be idle, or
+equipment tasks. As a result, an average of 5.59 questions        which frame shows the first appearance of the dump truck.
+were generated per clip, with a minimum of three and a               To compare the performance of MLLMs and determine
+maximum of nine per clip.                                         the most appropriate model, three cases were compared:
+   The MCQ dataset consists of three types (see Table 4).         (i) Gemini 1.5 Flash (video), (ii) Gemini 1.5 Flash (frame),
+While a prior study has focused on spatial inference              and (iii) GPT-4o mini. Gemini 1.5 Flash was selected as
+questions—information that can be obtained from a single          a comparative model because, among various proprietary
+image—this study extends the evaluation framework by              models, it has the most similar API cost and model size
+incorporating task inference and temporal event questions         to GPT-4o mini. In particular, GPT-4o mini costs $0.15 per
+                                                                                                                                                 14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3228                                                                                                                             JEOUNG et al.
+
+
+
+
+TA B L E 4    Examples of three types of questions in the Multiple Choice Question (MCQ) dataset.
+ Type                       Examples
+ Spatial inference          Q. What type of equipment is primarily shown in the images?
+ (263 questions)            (A) Bulldozer (B) Excavator (C) Crane (D) Loader
+                            Q. What is the position of the excavator in relation to the dump truck during the loading process?
+                            (A) Beside the dump truck (B) Behind the dump truck (C) In front of the dump truck (D) Above the dump
+                            truck
+ Task inference             Q. What is the excavator doing in the sequence of images?
+ (331 questions)            (A) Moving soil (B) Breaking rocks (C) Lifting heavy materials (D) Transporting rocks
+                            Q. What activity does the bulldozer perform after the truck is loaded?
+                            (A) Starts digging (B) Pushes material (C) Moves to another location (D) Loads more material
+ Temporal event             Q. What activity is NOT observed in the Frame 00:18–00:20?
+ (613 questions)            (A) Excavator in the middle is drilling (B) Excavator on the left is digging (C) Multiple trucks in the
+                            background are stationary (D) Dump truck is being loaded with the material from the excavator
+                            Q. In which frame does the excavator idle with no movement?
+                            (A) Frame 00:01–00:10 (B) Frame 00:11–00:20 (C) Frame 00:21–00:30 (D) Excavator is actively working in all
+                            frames
+
+
+1 million input tokens, while Gemini 1.5 Flash costs $0.10
+per 1 million input tokens, making both models among the
+most cost-effective options (Artificial Analysis, 2024) and
+enabling improved scalability in real-world applications.
+Since Gemini 1.5 Flash can take both video files and mul-
+tiple frames as visual inputs, performance was compared
+based on the input format. In the case of Gemini 1.5 Flash
+(video), the video clip file was extracted at 1 frames per
+second (fps), resulting in a similar API cost as using multi-
+ple frames as visual inputs. As a result, Gemini 1.5 Flash
+(video) used a single video clip file as the visual input,
+while Gemini 1.5 Flash (frame) and GPT-4o mini used mul-
+tiple frames extracted at 1-s intervals from the clips as their
+visual inputs. Notably, to evaluate only the MLLM-based
+monitoring stage, the original non-cropped frames were                   F I G U R E 5 Comparison of the accuracy of the MLLMs based
+used. Meanwhile, to eliminate the inherent randomness                    on three types of questions: spatial inference, task inference, and
+of the MLLM, the temperature hyperparameter was set to                   temporal event questions.
+0, which controls the randomness in the model’s output;
+lower values result in more deterministic and consistent                 used as visual inputs rather than video. All cases achieved
+responses.                                                               over 80% accuracy, indicating that MLLMs can reliably
+                                                                         provide information about the location and appearance of
+                                                                         construction equipment.
+4.2.2   Evaluation of MLLM-based                                            Second, for the task inference questions, a similar pat-
+monitoring performance                                                   tern to the spatial inference results was observed. GPT-4o
+                                                                         mini achieved the highest accuracy at 88.8%. Notably, GPT-
+Figure 5 shows the accuracy of the MLLMs on the MCQ                      4o mini’s accuracy dropped by 5.5% for task inference
+dataset. The performance was evaluated based on three                    questions, compared to spatial inference. This suggests
+types of questions: spatial inference, task inference, and               that task inference, which requires reasoning across mul-
+temporal event questions.                                                tiple frames, poses a greater challenge, compared to spatial
+  First, for the spatial inference questions, GPT-4o mini                inference, which can be inferred from a single frame. Over-
+achieved the highest accuracy of 94.3%. On the other hand,               all, the models achieved between 79% and 89% accuracy,
+Gemini 1.5 Flash (video) and Gemini 1.5 Flash (frame)                    indicating that MLLMs can effectively capture information
+recorded accuracies of 80.2% and 84.4%, respectively, show-              about construction equipment tasks from multiple video
+ing that the model performed better when frames were                     frames.
+                                                                                                                                             14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                                         3229
+
+
+
+
+F I G U R E 6 Comparison of the accuracy of the MLLM (GPT-4o mini) with different visual input intervals (left), and the impact of site
+complexity, measured by the number of construction equipment in the clip (right).
+
+   Third, for the temporal event questions, there was a                task. For task inference questions, the performance varied
+noticeable drop in accuracy. GPT-4o mini recorded an                   by a maximum of 3.3% across the different intervals. In con-
+accuracy of 59.0%, which was 35.3% lower than for spa-                 trast, the accuracy for temporal event questions remained
+tial inference questions and 29.8% lower than for task                 low, with a maximum of 59%. Even when a 0.5-s inter-
+inference questions. Gemini 1.5 Flash (video) and Gemini               val was used, the accuracy did not improve compared to
+1.5 Flash (frame) recorded 55.8% and 55.5%, respectively,              when a 1-s interval was used, implying that simply increas-
+making temporal event questions the category with the                  ing the number of frames does not necessarily enhance
+lowest accuracy. These results suggest that MLLMs have                 performance in capturing specific temporal events.
+limitations in recognizing specific events through frame-                 Figure 6b shows the accuracy of GPT-4o mini accord-
+to-frame comparisons. Specifically, the temporal variations            ing to the number of construction equipment units present
+in construction equipment videos captured by stationary                in each clip, which reflects varying levels of environmen-
+cameras are often subtle, leading to minimal differences               tal complexity. The model achieved the highest accuracy
+in the visual embeddings between frames, which in turn                 when only one piece of equipment was visible, with 98.2%
+limits the recognition of events in specific frames. With              for spatial inference, 95.7% for task inference, and 65.0%
+accuracy below 60% across all cases, these findings high-              for temporal event questions. When two equipment units
+light the challenges MLLMs face in collecting information              were present, the accuracy slightly decreased to 96.4% for
+based on specific frames. This indicates limitations in                spatial inference, 91.0% for task inference, and 64.5% for
+achieving precise temporal accuracy at the second-by-                  temporal events. In scenes with three or more equipment
+second level, particularly for predicting the earthmoving              units, the performance further declined to 92.8%, 90.6%,
+cycle, which involves tasks such as digging and loading.               and 64.1% for each question type. Overall, the accuracy
+   When considering all question types, GPT-4o mini out-               dropped from 79.1% with one equipment unit to 77.7% with
+performed the other models with an overall accuracy                    three or more, suggesting that increased visual complexity
+of 79.0%, followed by Gemini 1.5 Flash (video) at 67.7%                may challenge the model’s reasoning capability. Neverthe-
+and Gemini 1.5 Flash (frame) at 70.0%. These results                   less, the model consistently maintained high accuracy for
+indicate that performance can vary across proprietary                  spatial and task inference questions, even in more com-
+models for construction equipment monitoring. How-                     plex scenes, indicating its potential applicability in varied
+ever, due to differences in API costs and data policies,               construction site environments.
+model selection cannot be based on performance alone.                     In conclusion, the results demonstrate the significant
+The results suggest that site managers must consider                   potential of MLLM-based monitoring for construction
+multiple factors comprehensively, not just performance,                equipment, achieving up to 79.0% accuracy on the MCQ
+when selecting an MLLM for construction equipment                      dataset. The models performed particularly well on spa-
+monitoring.                                                            tial and task inference questions, suggesting their value in
+   Figure 6a shows the accuracy of GPT-4o mini across                  recognizing the location and operational tasks of construc-
+different visual input intervals. The results showed that              tion equipment. However, accuracy was lower for temporal
+the model achieved an accuracy exceeding 92% for spatial               event questions, indicating the need for further improve-
+inference questions, which indicates that extensive tempo-             ments, such as fine-tuning (Y. Jung et al., 2024), to achieve
+ral context from multiple frames is not essential for this             second-by-second-level analysis. Meanwhile, the newly
+                                                                                                                                               14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3230                                                                                                                           JEOUNG et al.
+
+
+T A B L E 5 Six different prompt designs defining idle states for
+the idle-to-task approach, and the corresponding accuracies.
+ Case      Text prompt                                         Acc. (%)
+ P0        Analyze the frames of the {equipment} and           88.64
+           determine whether it is in an idle state.
+           (baseline)
+ PS        . . . An idle state means that it is stationary     90.91
+ PM        . . . An idle state means that it is motionless     92.42
+ PNA       . . . An idle state means that it is not actively   89.39
+           engaging in any task
+ PS+NA     . . . An idle state means that it is stationary,    91.67
+           and it is not actively engaging in any task
+ PM+NA     . . . An idle state means that it is motionless,    93.18
+           and it is not actively engaging in any task
+
+
+                                                                          F I G U R E 7 Real-world case study videos: (a) excavator
+developed MCQ dataset allowed for a systematic evalu-                     operations at a Busan construction site and (b) loader and dump
+ation of the performance of the MLLM in construction                      truck coordination from YouTube.
+equipment monitoring, which is expected to contribute to
+future research in this area.
+                                                                          ing idle states. In other words, the superior performance of
+                                                                          the PM+NA suggests that the term “motionless” provides a
+4.2.3        Sensitivity to the definition of idle state                  stricter, less ambiguous signal of zero movement than “sta-
+                                                                          tionary,” thereby allowing the model to a more decisively
+Table 5 presents a comparative analysis of idle state detec-              separate idle from non-idle frames.
+tion accuracy across six different definitions of “idle” used
+in the text prompt of the idle-to-task approach. Previous
+studies identified the idle state of construction equipment               4.3        Real-world case study
+based on frame-difference thresholds applied to the pix-
+els within the bounding box of detected equipment (C.                     In this section, the proposed framework was applied to
+Chen et al., 2023; Zou & Kim, 2007). Guided by this princi-               a video captured at an actual construction site to ver-
+ple, six distinct text prompts were formulated to examine                 ify its effectiveness. Specifically, an ablation study was
+their influence on the accuracy of GPT-4o mini in clas-                   designed to verify the effectiveness of two approaches
+sifying idle states (see Table 5). The experiment utilized                introduced to improve the performance of MLLM-based
+clips from two sources: (i) 96 clips were created by crop-                monitoring: the idle-to-task approach and the cropped
+ping ACID dataset images to each equipment’s bounding                     visual inputs approach. Furthermore, the framework’s per-
+box and duplicating each image into 30 identical frames                   formance was examined using videos featuring multiple
+to simulate a 30-s idle scenario; (ii) 36 clips representing              types of construction equipment.
+non-idle scenarios were selected from the MCQ dataset
+(see Section 4.2.1) and similarly cropped to the equipment’s
+bounding box, consistent with the idle-to-task approach                   4.3.1       Implementation details
+(see Section 3.3).
+   The results indicate that the baseline prompt definition               Figure 7 shows two videos for the case study. Figure 7a
+(P0 ) yielded the lowest accuracy at 88.64%. Adding either                shows the first video that was captured by CCTV at a con-
+spatial cues, such as “stationary” (PS , 90.91%) and “motion-             struction site in Busan. The video has a framerate of 30
+less” (PM , 92.42%), or functional cues, such as “not actively            fps, a resolution of 1920 × 1080, and a length of 13 min
+engaging in any task” (PNA , 89.39%), improved the accu-                  and 25 s. It includes earthmoving operations, such as exca-
+racy. Furthermore, combinations of spatial and functional                 vating and transporting soil from a filled pit and handling
+definitions resulted in even higher accuracy, with PS+NA                  wooden beams by loading them into the bucket and deliv-
+achieving 91.67% and PM+NA attaining the highest accuracy                 ering them to workers. Additionally, the last 3 min of the
+of 93.18%. These findings demonstrate that combining the                  video show the excavator in an idle state, making it ideal
+concepts of being physically motionless and functionally                  for assessing whether the proposed framework can effec-
+inactive provides the most precise description for identify-              tively analyze changes in construction equipment tasks
+                                                                                                                                  14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                              3231
+
+
+over time. The video was divided into 30-s intervals, pro-       ing stage and to assess their individual contributions. To
+ducing a total of 27 clips. Figure 7b is the second video        this end, the following three scenarios were additionally
+sourced from YouTube recorded at 30 fps, with a resolu-          evaluated for the first video: (A) when neither the idle-to-
+tion of 1920 × 1080, and a duration of 4 min and 30 s. It        task approach nor the cropped visual inputs approach was
+captures the earthmoving operations of a loader, including       applied, (B) when the cropped visual inputs approach was
+the loading of soil into a dump truck and the subsequent         not applied, and (C) when the idle-to-task approach was
+transportation of the truck, thereby illustrating the interac-   not applied.
+tion among multiple construction equipment. This video
+was also divided into 30-s intervals, yielding a total of nine   A. Scenario without both idle-to-task approach and
+clips.                                                              cropped visual inputs approach: This served as a
+   Regarding the models used for the proposed frame-                baseline for comparing the contributions of the two
+work, they were selected based on the results of prior              approaches. In this case, the MLLM-based monitor-
+experiments. For the detection module, Florence-2 large,            ing stage recognized the operational task immediately
+which showed the highest performance using ZSL, was                 without detecting the idle state and used the non-
+utilized. For open vocabulary object detection, the text            cropped frames as visual inputs.
+prompt “excavator” was used for the first video, while           B. Scenario without cropped visual inputs approach: In
+“wheel loader” and “dump truck” were used for the sec-              this case, the idle-to-task approach was applied, but
+ond video, resulting in the detection of a bounding box             non-cropped frames were used as visual inputs instead
+for the first frame of each clip. The tracking module               of cropped frames. Since the MLLM had to recognize
+employed SAM2, which recognized the region contain-                 tasks with the surrounding background included, this
+ing the excavator in all frames of the clip and extracted           scenario allowed for evaluating the effectiveness of the
+that region into cropped frames. In the MLLM-based mon-             cropped visual inputs approach, using only the regions
+itoring stage, GPT-4o mini, which achieved the highest              extracted by the zero-shot construction equipment
+accuracy on the MCQ dataset, was used, and the cropped              detection stage as visual inputs.
+frames based on the tracked results were used as the visual      C. Scenario without idle-to-task approach: In this case,
+inputs.                                                             the operational task was recognized immediately with-
+   Regarding the evaluation process, the binary output for          out detecting the idle state, allowing for an assessment
+the idle state and the sentence output for the operational          of the effectiveness of the idle-to-task approach that
+task, both generated by the MLLM-based monitoring stage,            distinguishes between idle and operational states.
+were analyzed to calculate the accuracy for each clip. First,
+evaluating the idle state was straightforward, as it was            Figure 8 shows a comparative analysis of recog-
+defined by the absence of movement. For instance, if no          nized operational tasks across the different monitoring
+pixel changes were observed in the tracked results of the        approaches. The timeline includes earthmoving opera-
+construction equipment across all frames, the clip was           tions, handling wooden beams, and idling, with the ground
+labeled as idle. Second, the description of the operational      truth displayed at the top. First, in scenarios (A) and (B),
+task was manually evaluated. Due to the complexity of            where the cropped visual inputs approach was not applied,
+interpreting sentence-level semantics and context, human-        16 out of the 27 clips were recorded as incorrect predictions.
+based evaluation provided greater reliability. Any inaccu-       Specifically, between Clips 7 and 9, the task of handling
+racies in the content of the description were marked as          wooden beams was incorrectly recognized as earthmoving
+incorrect predictions. For example, if a 30-s clip showed        operations. Additionally, the idle state starting from Clip
+an excavator scooping dirt and loading it back onto the          22 was misinterpreted as earthmoving operations. These
+ground, but the framework described it as “The excavator         results remained unchanged even when the idle-to-task
+scooping soil from the ground and loading it onto a truck,”      approach was applied without the cropped visual inputs
+it would be considered an incorrect prediction.                  approach. In other words, when the zero-shot construction
+                                                                 equipment detection stage was bypassed, incorrect predic-
+                                                                 tions continued to occur, and the idle-to-task approach
+4.3.2    Ablation study: Assessing idle-to-task                  alone was not sufficient to significantly improve accu-
+and cropped inputs approaches                                    racy. Second, in scenario (C), where the cropped visual
+                                                                 inputs approach was applied but the idle-to-task approach
+An ablation study was conducted to verify the effectiveness      was not, 11 out of 27 clips were recorded as incorrect pre-
+of the idle-to-task approach and the cropped visual inputs       dictions, showing improved performance. Specifically, the
+approach. The goal was to analyze the impact of each             task of handling wooden beams was correctly recognized
+method on the performance of the MLLM-based monitor-             between Clips 7 and 9 and between Clips 19 and 20. How-
+                                                                                                                                                14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3232                                                                                                                            JEOUNG et al.
+
+
+
+
+FIGURE 8      Results of the ablation study. The gradient in the ground truth labels represents the transition between tasks.
+
+
+
+TA B L E 6   Detailed responses of the proposed framework in the case study.
+ Clip No.     Idle state      Operational task
+ Clip 5       False           The excavator is tasked with digging and moving soil at a construction site, effectively scooping up dirt and
+                              positioning itself to clear the area for foundation work
+ Clip 6       False           The excavator is engaged in lifting and moving materials, likely soil or debris, at a construction site, while
+                              workers coordinate the operation. (Incorrect prediction)
+ Clip 8       False           The excavator is tasked with lifting and moving wooden materials at a construction site, working in
+                              coordination with the workers
+ Clip 18      False           The excavator is actively engaged in digging and moving materials on a construction site, lifting and
+                              positioning its bucket to scoop up dirt or debris while workers assist in the operation. (Incorrect prediction)
+ Clip 27      True            –
+
+
+ever, the idle state was not accurately recognized due to              various tasks, such as earthmoving operations like digging
+the use of a text prompt that did not include a detailed               and moving soil, as well as lifting and moving wooden
+description of idling for the MLLM. These results suggest              beams. Additionally, the sentence output, which includes
+that using an appropriate prompt is crucial for accurately             elements such as soil, wooden materials, and workers,
+recognizing construction equipment tasks. Last, in the                 indicates that the proposed framework can analyze the
+proposed framework, scenario (D), where both the idle-                 context related to construction equipment. However, some
+to-task approach and the cropped visual inputs approach                tasks were inaccurately recognized in several clips. For
+were applied, only five out of 27 clips were marked as                 example, in Clip 6, after the earthmoving operations
+incorrect predictions, showing the highest performance.                ended, the rotation of the excavator’s arm and body was
+Specifically, the idle state of the excavator depicted from            not detected. This highlights a limitation in the MLLM-
+Clip 22 was accurately identified. These findings indicate             based monitoring stage’s capability to focus on temporal
+that the proposed framework is most effective where both               events that occur in specific frames. Similar limitations
+approaches are used together.                                          were observed in the results for temporal event questions
+   Table 6 provides a detailed view of the idle state and              (see Section 4.2.2), suggesting that the framework has
+operational tasks output by the proposed framework.                    difficulty accurately processing tasks that occur only in
+These results suggest that the framework can recognize                 specific frames within a sequence. Nonetheless, the pro-
+                                                                                                                                         14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                                     3233
+
+
+posed framework successfully recognized the idle states
+and operational tasks (e.g., earthmoving operations, lift-
+ing and moving wooden beams), indicating that it can be
+effectively applied to automatically generate construction
+task reports or conduct productivity analyses based on the
+idle state, particularly in cases where minute-by-minute
+precision is required.
+   In conclusion, the case study showed that the proposed
+framework can effectively monitor various construction
+equipment tasks on a construction site. In particular,
+the introduction of two approaches—idle-to-task approach
+and cropped visual inputs approach—contributed to accu-
+rately recognizing complex construction equipment tasks.
+The practical implications of the results suggest that this
+framework could contribute to the automation of con-
+struction equipment monitoring and the digitalization of
+site management. By installing cameras on a construction
+site and applying the proposed framework, information
+on construction equipment tasks can be automatically
+collected.
+
+                                                                F I G U R E 9 The results of the proposed framework with four
+4.3.3    Assessing framework on multiple                        distinct configurations. In Clip 6, it indicates that the dump truck
+construction equipment                                          has disappeared, and the gradient in the ground truth labels
+                                                                represents the transition between tasks.
+
+This section evaluates the monitoring capability of the
+framework when multiple types of construction equip-            recognition of the wheel loader’s tasks across all four
+ment operate simultaneously within the same video frame.        configurations. During Clips 6 and 7, the wheel loader
+Specifically, the performance of the proposed framework         exhibited an idle state by maintaining a stationary posi-
+was evaluated using the second video featuring a wheel          tion while raising its bucket in preparation for loading,
+loader and a dump truck involved in earthmoving oper-           suggesting that the MLLM-based monitoring stage effec-
+ations. Additionally, this analysis examines the impact of      tively distinguishes subtle operational differences in active
+variations in the text prompt design on the accuracy of         and stationary contexts. Conversely, the performance var-
+the MLLM-based monitoring stage, as well as compares            ied for the dump truck across different configurations.
+Florence-2 large with a YOLOv8m trained on 8000 sam-            When the idle state was not explicitly defined in the text
+ples (see Table 2) to highlight the strengths and limitations   prompt (i.e., configurations (A) and (C)), the MLLM-based
+of the ZSL approach. Toward this end, four distinct config-     monitoring stage misclassified the dump truck’s task as
+urations were established for the evaluation (see Figure 9).    idle states in the first two clips. Additionally, stationary
+In configuration (A), YOLOv8 was used for detection,            moments when the dump truck was actively receiving soil
+and the idle-to-task approach was applied without explic-       (i.e., Clips 8 and 9) were incorrectly identified as idle.
+itly defining what constitutes an idle state (i.e., baseline    Conversely, explicitly defining the term “idle” in the text
+prompt definition (P0 ), see Section 4.2.3). In configuration   prompt (i.e., configurations (B) and (D)) improved idle
+(B), YOLOv8 was also used for detection, but the idle-          recognition accuracy by clarifying the distinction between
+to-task approach was applied with an explicit definition        idle and actively engaged stationary states. Regarding the
+of the idle state in the prompt (PM+NA ). In configuration      detection module performance, YOLOv8 consistently and
+(C), Florence-2 large was used for detection, and the idle-     robustly detected both equipment types, even when the
+to-task approach was applied without explicitly defining        dump truck partially moved out of frame (i.e., Clip 6).
+the idle state (P0 ). In configuration (D), Florence-2 large    In contrast, Florence-2 large experienced occasional mis-
+was used for detection, and the idle-to-task approach was       classification issues. For instance, in Clips 6 and 9, it
+applied with an explicit definition of idle in the prompt       incorrectly identified the dump truck as a wheel loader,
+(PM+NA ).                                                       which led the MLLM-based monitoring stage to incorrectly
+   Figure 9 shows a comparative analysis across the dif-        infer an “unloading” task that was not present. Nonethe-
+ferent configurations. The results showed the consistent        less, Florence-2 large consistently and accurately detected
+                                                                                                                                       14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3234                                                                                                                   JEOUNG et al.
+
+
+and tracked the wheel loader, resulting in reliable task
+recognition for this equipment throughout all video clips.
+   In conclusion, explicitly defining the idle state in the
+text prompt enhanced the accuracy of operational task
+recognition, particularly when distinguishing subtle dif-
+ferences between active engagement and idleness. The
+supervised learning models (i.e., YOLOv8) provided con-
+sistently robust performance, effectively handling multi-
+ple equipment types and partial occlusions. In contrast,
+the ZSL-based detection module exhibited accumulation
+errors due to sequential processing stages, whereby initial
+detection inaccuracies negatively influenced subsequent
+task recognition. Nonetheless, the proposed framework
+mitigates the cold-start issue by reducing reliance on exten-
+sive training data, thereby enabling rapid deployment in
+construction environments with limited data availability.
+Moreover, the accurate recognition of the wheel loader’s
+operational tasks suggests that the framework reliably
+detects continuously operating equipment, underscoring
+its suitability for scenarios involving constant equipment
+use.                                                            F I G U R E 1 0 Example of the user interface for automating the
+                                                                report generation of the construction equipment task by using the
+                                                                proposed framework.
+5      DISCUSSIONS
+
+5.1      Practical implications
+
+One of the key advantages of the proposed framework is its
+ability to function effectively without the need for training
+data by utilizing ZSL and MLLMs. Traditional supervised
+learning models require large volumes of labeled data to
+perform accurately, but in construction environments, col-
+lecting and labeling data are time-consuming, costly, and
+often impractical. This framework eliminates the reliance
+on labeled data, allowing it to be applied immediately
+to new sites. In particular, the framework is highly flex-
+ible, as it can recognize new construction equipment or
+tasks simply by changing the text prompts, without the
+need for training the model. Additionally, the framework        FIGURE 11        Processing time for a single 30-s clip.
+can handle rare construction equipment tasks (e.g., han-
+dling wooden beams) by leveraging MLLM. These features          ment operations on a minute-by-minute or hourly basis
+enable easy adoption by small construction companies            (see Figure 10). This not only reduces the workload for
+or projects with limited resources, as site managers can        site managers but also enables more precise project doc-
+effectively monitor construction equipment tasks.               umentation, which could enhance the overall quality of
+   In the case study, the idle states and main opera-           project management in the long term. This finding is in
+tional tasks in the first video were recognized with 81.5%      line with prior studies, which found that reports gener-
+accuracy, indicating that the proposed framework could          ated by LLMs for construction images met pre-established
+help automate the generation of construction equipment          standards for construction inspection report writing, as
+reports. Currently, creating daily work logs with manual        evaluated by a review team, highlighting the potential for
+observation is time-consuming and prone to human error.         practical application (Pu, Yang, Li, & Guo, 2024).
+Using the proposed framework, task descriptions gener-             Figure 11 shows the processing times for a single 30-s
+ated for each 30-s clip could be summarized by leveraging       clip at different visual input intervals. In the MLLM-
+LLMs, providing a comprehensive understanding of equip-         based monitoring stage, the API was called twice using
+                                                                                                                                  14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                              3235
+
+
+an idle-to-task approach. The results indicate that as           inherent challenge for the utilized models in effec-
+the interval between visual inputs increases, the total          tively understanding continuous, visually similar image
+processing time decreases. Specifically, a 1-s interval          sequences. In contrast, the framework achieves high
+resulted in a total processing time of 47.28 s, introducing      accuracy in spatial and task inference, making it effec-
+delays since the ideal processing time should not exceed         tive in scenarios where second-by-second temporal res-
+30 s. Although the MLLM-based monitoring stage itself            olution is not critical. Future work could fine-tune
+required 36.41 s, the zero-shot construction equipment           these models using a dataset consisting of construc-
+detection stage—if decoupled from the MLLM processing            tion site videos and temporal event-related MCQs, which
+through asynchronous API calls—could be processed                could enable them to better learn the distinctive visual
+in 10.88 s, suggesting that near-real-time performance is        characteristics inherent to construction sites and the
+attainable. Moreover, at a 2-s interval, the total processing    nuances of temporal event progression within these
+time was 26.38 s, which enables near-real-time monitoring        environments.
+of construction equipment, and also preserves spatial and           Second, while the proprietary model, GPT-4o mini,
+task inference performance at 95.1% and 90.6%, respec-           was effective in recognizing construction equipment tasks,
+tively (see Figure 6). In summary, while processing of a         it has limitations such as API costs. Moreover, some
+30-s clip prevents fully real-time monitoring, the proposed      construction companies may not be able to use pro-
+framework could be well-suited for applications that             prietary models due to security concerns, as their data
+require near-real-time feedback such as productivity anal-       policy restricts the transmission of sensitive information
+ysis and equipment operation management. However, its            to external servers. Future research could address these
+inherent delay may limit its applicability for safety-critical   limitations by exploring open-source alternatives.
+scenarios that demand instantaneous responses.                      Third, the current framework only allows the input of
+   Regarding price analysis, when the API is called twice        a single construction equipment type at a time in the
+per clip for idle-to-task approaches, it costs $0.014, which     detection stage. To address this limitation, future research
+amounts to $3.416 per hour, based on a rate of $0.15 per         could explore a multi-class detection module. Notably, the
+1 million input tokens. By using cached inputs or alterna-       detection modules in the proposed equipment detection
+tive models (such as Gemini 1.5 Flash), the cost could be        stage can be replaced with alternatives, such as super-
+reduced to as low as $1.708 per hour. Although these costs       vised learning models like YOLO, which showed improved
+could be significant for sites with heavy equipment usage,       performance if sufficient training data are available (see
+they are expected to be manageable for small to medium-          Table 2). While supervised models can enhance detec-
+sized construction companies operating at sites with             tion performance, the proposed ZSL-based detection stage
+lower equipment utilization. Moreover, with the contin-          remains effective in addressing the cold-start problem
+ued downward trend in API pricing for proprietary models,        when data are scarce.
+broader adoption of the framework can be anticipated.               Fourth, while the proposed framework demonstrated
+   Additionally, the proposed framework can be extended          reliable performance in the case study, it has yet to be
+to other monitoring tasks, such as worker behavior. How-         extensively validated across diverse construction environ-
+ever, modifications to the prompt design are necessary; for      ments, such as those involving varying lighting conditions,
+instance, in Florence-2, the text prompt can be changed to       weather scenarios, or equipment types. Broader testing
+“worker.” Alternatively, a pre-trained deep learning model       is necessary to ensure its robustness and generalizability
+for human detection could be utilized. Moreover, rather          under real-world conditions. Furthermore, the framework
+than applying an idle-to-task approach to monitor work-          currently does not consider scenarios involving human–
+ers using the MLLM, a prompt design aimed at capturing           machine coexistence, which is increasingly relevant in
+process-specific information can be adopted. For exam-           modern construction sites. Future work should incor-
+ple, in concrete construction, a prompt could be devised         porate such considerations to enhance the framework’s
+to extract information regarding specific processes such as      applicability.
+formwork installation, concrete curing, and compaction.             Last, it is acknowledged that if equipment is present in
+Future research should explore how to effectively adjust         later frames but not detected in the first frame, the corre-
+the MLLM inputs (i.e., text prompt and visual inputs) for        sponding clip may be incorrectly skipped. This limitation
+monitoring worker behavior.                                      stems from the current design, which uses the first frame as
+                                                                 the key frame to optimize processing efficiency. Addition-
+                                                                 ally, although the SAM2 model is employed for tracking
+5.2       Limitations                                            due to its reliability in maintaining object continuity across
+                                                                 frames, its performance may degrade in the presence
+First, the MLLM-based monitoring stage exhibits low              of long-term or dynamic occlusions—common in com-
+accuracy in temporal event questions. This suggests an           plex construction environments—potentially affecting the
+                                                                                                                                             14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3236                                                                                                                       JEOUNG et al.
+
+
+overall framework’s robustness. Future enhancements            AC K N OW L E D G M E N T S
+could include multi-frame scanning to reduce such risks.       This work was supported by the National Research
+                                                               Foundation of Korea(NRF) grant funded by the Korea
+                                                               government (MSIT; Ministry of Science and ICT) (NRF-
+6      CONCLUSION                                              2021R1A3B1076769).
+
+This study proposed a novel framework for construc-            REFERENCES
+tion equipment monitoring using ZSL and MLLM. In               Artificial Analysis. (2024). Comparison of models: Quality, perfor-
+the zero-shot construction equipment detection stage, a           mance & price analysis. artificial analysis. https://artificialanalysis.
+detection module using Florence-2 and a tracking module           ai/models
+using SAM2 were utilized. In the MLLM-based moni-              Baek, J., Kim, D., & Choi, B. (2024). Deep learning-based automated
+                                                                  productivity monitoring for on-site module installation in off-site
+toring stage, two approaches (i.e., idle-to-task approach
+                                                                  construction. Developments in the Built Environment, 18, 100382,
+and cropped visual inputs approach) were introduced to            https://doi.org/10.1016/j.dibe.2024.100382
+accurately recognize construction equipment tasks. The         Barbosa, F., Woetzel, L., Mischke, J., Ribeirinho, M. J., Sridhar, M.,
+following key findings and implications are summarized            Parsons, M., Bertram, N., & Brown, S. (2017). Reinventing con-
+below.                                                            struction through a productivity revolution. Report, McKinsey &
+                                                                  Company.
+1. The proposed framework achieved an F1-score of              Carolan, K., Fennelly, L., & Smeaton, A. F. (2024). A review of multi-
+                                                                  modal large language and vision models. arXiv preprint. https://
+   82.2% in detecting construction equipment even in
+                                                                  doi.org/10.48550/arXiv.2404.01322
+   scenarios without data. Moreover, the overall process
+                                                               Chen, C., Xiao, B., Zhang, Y., & Zhu, Z. (2023). Automatic vision-
+   of the proposed framework is designed to function              based calculation of excavator earthmoving productivity using
+   without training data, using ZSL and MLLM. This                zero-shot learning activity recognition. Automation in Construc-
+   eliminates the need for data collection and label-             tion, 146, 104702, https://doi.org/10.1016/j.autcon.2022.104702
+   ing in construction environments. Its flexibility allows    Chen, C., Zhu, Z., & Hammad, A. (2020). Automated excavators
+   for recognizing construction tasks by modifying text           activity recognition and productivity analysis from construction
+   prompts. This could be a particularly advantageous             site surveillance videos. Automation in Construction, 110, 103045,
+                                                                  https://doi.org/10.1016/j.autcon.2019.103045
+   solution for small and medium-sized construction com-
+                                                               Chen, H., Hou, L., Wu, S., Zhang, G., Zou, Y., Moon, S., & Bhuiyan,
+   panies lacking resources for extensive data labeling and
+                                                                  M. (2024). Augmented reality, deep learning and vision-language
+   training.                                                      query system for construction worker safety. Automation in Con-
+2. Through the constructed MCQ dataset, the capabili-             struction, 157, 105158, https://doi.org/10.1016/j.autcon.2023.105158
+   ties of the MLLM were systematically examined across        Chen, T., Saxena, S., Li, L., Fleet, D. J., & Hinton, G. (2022). Pix2seq: A
+   three question types—spatial inference, task inference,        language modeling framework for object detection. arXiv preprint,
+   and temporal event recognition—achieving accuracies            https://doi.org/10.48550/arXiv.2109.10852
+   of 94.3%, 88.8%, and 59.0%, respectively. This evalua-      Chen, Z., Xu, L., Zheng, H., Chen, L., Tolba, A., Zhao, L., K., Yu, &
+                                                                  H., Feng (2024). Evolution and prospects of foundation models:
+   tion clarified the scope and limitations of what MLLMs
+                                                                  From Large language models to large multimodal models. Com-
+   can offer for construction equipment monitoring, while         puters, Materials and Continua, 80(2), 1753–1808. https://doi.org/
+   also demonstrating their ability to provide reliable           10.32604/cmc.2024.052618
+   information on equipment location and tasks, con-           Cui, Z., Q., Wang, J., Guo, & N., Lu (2022). Few-shot classification of
+   tributing to the development of automated monitoring           façade defects based on extensible classifier and contrastive learn-
+   systems.                                                       ing. Automation in Construction, 141, 104381. https://doi.org/10.
+3. The case study conducted at an actual construction site        1016/j.autcon.2022.104381
+                                                               Gil, D., & G., Lee (2024). Zero-shot monitoring of construction work-
+   demonstrated that the proposed system could reliably
+                                                                  ers’ personal protective equipment based on image captioning.
+   recognize idle states and operational tasks. This sug-
+                                                                  Automation in Construction, 164, 105470, https://doi.org/10.1016/
+   gests that it can be utilized for automated reporting and      j.autcon.2024.105470
+   productivity analysis in construction projects.             Google AI for Developers. (2024). Gemini API Docs: File prompt-
+                                                                  ing strategies. Google. https://ai.google.dev/gemini-api/docs/file-
+  The findings highlight the potential of advanced AI             prompting-strategies
+models in facilitating digital transformation within the       Harichandran, A., Raphael, B., & Mukherjee, A. (2023). Equip-
+construction industry, offering a pathway toward efficient        ment activity recognition and early fault detection in automated
+                                                                  construction through a hybrid machine learning framework.
+and data-driven management practices.
+                                                                  Computer-Aided Civil and Infrastructure Engineering, 38(2), 253–
+                                                                  268. https://doi.org/10.1111/mice.12848
+                                                                                                                                                     14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JEOUNG et al.                                                                                                                                 3237
+
+
+Hendrycks, D., Burns, C., Basart, S., Zou, A., Mazeika, M., Song,         Luo, X., Li, H., Yang, X., Yu, Y., & Cao, D. (2019). Capturing and
+   D., & Steinhardt, J. (2021). Measuring massive multitask lan-            understanding workers’ activities in far-field surveillance videos
+   guage understanding. arXiv preprint. https://doi.org/10.48550/           with deep action recognition and Bayesian nonparametric learn-
+   arXiv.2009.03300                                                         ing. Computer-Aided Civil and Infrastructure Engineering, 34(4),
+Hestness, J., Narang, S., Ardalani, N., Diamos, G., Jun, H.,                333–351. https://doi.org/10.1111/mice.12419
+   Kianinejad, H., Patwary, M. M. A., Yang, Y., & Zhou, Y. (2017).        Mani, A., Yoo, N., Hinthorn, W., & Russakovsky, O. (2022). Point and
+   Deep learning scaling is predictable, empirically. arXiv preprint.       ask: Incorporating pointing into visual question answering. arXiv
+   https://doi.org/10.48550/arXiv.1712.00409                                preprint, https://doi.org/10.48550/arXiv.2011.13681
+Jung, S., Jeoung, J., Kang, H., & Hong, T. (2022). 3D convolutional       Nebuly. (2024). OpenAI GPT-4 API pricing. Nebuly, https://www.
+   neural network-based one-stage model for real-time action detec-         nebuly.com/blog/openai-gpt-4-api-pricing
+   tion in video of construction equipment. Computer-Aided Civil          OpenAI. (2024). OpenAI Docs: Guides for vision. OpenAI, https://
+   and Infrastructure Engineering, 37(1), 126–142. https://doi.org/10.      platform.openai.com/docs/guides/vision
+   1111/mice.12695                                                        Pan, X., Yang, T. Y., Xiao, Y., Yao, H., & Adeli, H. (2023).
+Jung, S., Jeoung, J., Lee, D. E., Jang, H., & Hong, T. (2023). Visual–      Vision-based real-time structural vibration measurement through
+   auditory learning network for construction equipment action              deep-learning-based detection and tracking methods. Engineer-
+   detection. Computer-Aided Civil and Infrastructure Engineering,          ing Structures, 281, 115676. https://doi.org/10.1016/j.engstruct.2023.
+   38(14), 1916–1934. https://doi.org/10.1111/mice.12983                    115676
+Jung, Y., Cho, I., Hsu, S.-H., & Golparvar-Fard, M. (2024). VisualSite-   Park, M., Kulinan, A. S., Tran, D. Q., Bak, J., & Park, S. (2024). Pre-
+   Diary: A detector-free Vision-Language Transformer model for             venting falls from floor openings using quadrilateral detection and
+   captioning photologs for daily construction reporting and image          construction worker pose-estimation. Automation in Construction,
+   retrievals. Automation in Construction, 165, 105483. https://doi.        165, 105536. https://doi.org/10.1016/j.autcon.2024.105536
+   org/10.1016/j.autcon.2024.105483                                       Phadatare, D. B., & Charhate, S. B. (2016). Impact of con-
+Kang, H., Kim, H., Hong, J., Jeoung, J., Lee, M., & Hong, T. (2024).        struction equipment’s on building site productivity. Interna-
+   Human-centered intelligent construction for sustainable cities.          tional Journal of Civil Engineering and Technology, 7(4), 513–
+   Automation in Construction, 168, 105788. https://doi.org/10.1016/        520.
+   j.autcon.2024.105788                                                   Pu, H., Yang, X., Li, J., & Guo, R. (2024). AutoRepo: A general
+Kaplan, J., McCandlish, S., Henighan, T., Brown, T. B., Chess, B.,          framework for multimodal LLM-based automated construction
+   Child, R., Gray, S., Radford, A., Wu, J., & Amodei, D. (2020). Scal-     reporting. Expert Systems with Applications, 255, 124601. https://
+   ing laws for neural language models. arXiv preprint. https://doi.        doi.org/10.1016/j.eswa.2024.124601
+   org/10.48550/arXiv.2001.08361                                          Pu, H., Yang, X., Shi, Z., & Jin, N. (2024). Automated inspection
+Kim, D., Liu, M., Lee, S. H., & Kamat, V. R. (2019). Remote proximity       report generation using multimodal large language models and
+   monitoring between mobile construction resources using camera-           set-of-mark prompting. ISARC. Proceedings of the International
+   mounted UAVs. Automation in Construction, 99, 168–182. https://          Symposium on Automation and Robotics in Construction, Lille,
+   doi.org/10.1016/j.autcon.2018.12.014                                     France (pp. 1003–1009).
+Kim, J., & Chi, S. (2019). Action recognition of earthmoving exca-        Radford, A., Kim, J. W., Hallacy, C., Ramesh, A., Goh, G., Agarwal,
+   vators based on sequential pattern analysis of visual features           S., Sastry, G., Askell, A., Mishkin, P., Clark, J., Krueger, G., &
+   and operation cycles. Automation in Construction, 104, 255–264.          Sutskever, I. (2021). Learning transferable visual models from
+   https://doi.org/10.1016/j.autcon.2019.03.025                             natural language supervision. Proceedings of Machine Learning
+Kim, J., & Chi, S. (2020). Multi-camera vision-based productivity           Research, Virtual (pp. 8748–8763).
+   monitoring of earthmoving operations. Automation in Construc-          Radford, A., Wu, J., Child, R., Luan, D., Amodei, D., & Sutskever,
+   tion, 112, 103121. https://doi.org/10.1016/j.autcon.2020.103121          I. (2019). Language models are unsupervised multitask learners.
+Kim, J., & Chi, S. (2021). A few-shot learning approach for database-       OpenAI blog, 1(8), 9.
+   free vision-based monitoring on construction sites. Automation         Ravi, N., Gabeur, V., Hu, Y.-T., Hu, R., Ryali, C., Ma, T., Khedr, H.,
+   in Construction, 124, 103566. https://doi.org/10.1016/j.autcon.2021.     Rädle, R., Rolland, C., Gustafson, L., Mintun, E., Pan, J., Alwala, K.
+   103566                                                                   V., Carion, N., Wu, C.-Y., Girshick, R., Dollár, P., & Feichtenhofer,
+Kim, J., Hwang, J., Jeong, I., Chi, S., Seo, J., & Kim, J. (2024).          C. (2024). SAM 2: Segment anything in images and videos. arXiv
+   Generalized vision-based framework for construction productiv-           preprint. https://doi.org/10.48550/arXiv.2408.00714
+   ity analysis using a standard classification system. Automation        Reja, V. K., Varghese, K., & Ha, Q. P. (2022). Computer vision-based
+   in Construction, 165, 105504. https://doi.org/10.1016/j.autcon.2024.     construction progress monitoring. Automation in Construction,
+   105504                                                                   138, 104245. https://doi.org/10.1016/j.autcon.2022.104245
+Liang, Y., Vadakkepat, P., Chua, D. K. H., Wang, S., Li, Z., &            Roberts, D., & Golparvar-Fard, M. (2019). End-to-end vision-based
+   Zhang, S. (2024). Recognizing temporary construction site objects        detection, tracking and activity analysis of earthmoving equip-
+   using CLIP-based few-shot learning and multi-modal prototypes.           ment filmed at ground level. Automation in Construction, 105,
+   Automation in Construction, 165, 105542. https://doi.org/10.1016/j.      102811. https://doi.org/10.1016/j.autcon.2019.04.006
+   autcon.2024.105542                                                     Sağlam, B., & Bettemir, Ö. H. (2018). Estimation of duration of
+Lin, K., Ahmed, F., Li, L., Lin, C.-C., Azarnasab, E., Yang, Z., Wang,      earthwork with backhoe excavator by Monte Carlo Simulation.
+   J., Liang, L., Liu, Z., Lu, Y., Liu, C., & Wang, L. (2023). MM-          Journal of Construction Engineering, Management & Innovation,
+   VID: Advancing video understanding with GPT-4V(ision). arXiv             1(2), 85–94. https://doi.org/10.31462/jcemi.2018.01085094
+   preprint. https://doi.org/10.48550/arXiv.2310.19773
+                                                                                                                                                     14678667, 2025, 21, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.13506, Wiley Online Library on [13/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+3238                                                                                                                               JEOUNG et al.
+
+
+Shao, S., Li, Z., Zhang, T., Peng, C., Yu, G., Zhang, X., Li, J., &          of Construction Engineering and Management, 148(7), 04022049.
+  Sun, J. (2019). Objects365: A large-scale, high-quality dataset for        https://doi.org/10.1061/(asce)co.1943-7862.0002297
+  object detection. Proceedings of the IEEE International Conference       Xiao, B., Wu, H., Xu, W., Dai, X., Hu, H., Lu, Y., Zeng, M., Liu, C.,
+  on Computer Vision, Seoul, Korea (pp. 8430–8439).                          & Yuan, L. (2024). Florence-2: Advancing a unified representation
+Shen, J., Yan, W., Li, P., & Xiong, X. (2021). Deep learning-based           for a variety of vision tasks. Proceedings of the IEEE/CVF Confer-
+  object identification with instance segmentation and pseudo-               ence on Computer Vision and Pattern Recognition, Seattle, WA (pp.
+  LiDAR point cloud for work zone safety. Computer-Aided Civil               4818–4829).
+  and Infrastructure Engineering, 36(12), 1549–1567. https://doi.org/      Yin, S., Fu, C., Zhao, S., Li, K., Sun, X., Xu, T., & Chen, E. (2024).
+  10.1111/mice.12749                                                         A survey on multimodal large language models. National Science
+Shtedritski, A., Rupprecht, C., & Vedaldi, A. (2023). What does              Review, 11(12), nwae403. https://doi.org/10.1093/nsr/nwae403
+  CLIP know about a red circle? Visual prompt engineering                  Yong, G., Jeon, K., Gil, D., & Lee, G. (2023). Prompt engineering for
+  for VLMs. Proceedings of the IEEE/CVF International Confer-                zero-shot and few-shot defect detection and classification using
+  ence on Computer Vision (ICCV), Paris, France (pp. 11987–                  a visual-language pretrained model. Computer-Aided Civil and
+  11997).                                                                    Infrastructure Engineering, 38(11), 1536–1554. https://doi.org/10.
+Tang, Y., Wang, Y., & Qian, Y. (2024). Railroad missing components           1111/mice.12954
+  detection via cascade region-based convolutional neural network          Zou, J., & Kim, H. (2007). Using hue, saturation, and value color space
+  with predefined proposal templates. Computer-Aided Civil and               for hydraulic excavator idle time analysis. Journal of Computing in
+  Infrastructure Engineering, 39(20), 3083–3102. https://doi.org/10.         Civil Engineering, 21(4), 238–246. https://doi.org/10.1061/(ASCE)
+  1111/mice.13279                                                            0887-3801(2007)21:4(238)
+Wang, X., & El-Gohary, N. (2024). Few-shot object detection and
+  attribute recognition from construction site images for improved
+  field compliance. Automation in Construction, 167, 105539. https://
+                                                                              How to cite this article: Jeoung, J., Jung, S., &
+  doi.org/10.1016/j.autcon.2024.105539
+                                                                              Hong, T. (2025). Zero-shot framework for
+Wei, J., Bosma, M., Zhao, V. Y., Guu, K., Yu, A. W., Lester, B., Du, N.,
+  Dai, A. M., & Le, Q. V. (2022). Finetuned language models are zero-         construction equipment task monitoring.
+  shot learners. arXiv preprint. https://doi.org/10.48550/arXiv.2109.         Computer-Aided Civil and Infrastructure
+  01652                                                                       Engineering, 40, 3218–3238.
+Wu, H., Zhang, Z., Zhang, E., Chen, C., Liao, L., Wang, A., Li, C.,           https://doi.org/10.1111/mice.13506
+  Sun, W., Yan, Q., Zhai, G., & Lin, W. (2024). Q-Bench: A benchmark
+  for general-purpose foundation models on low-level vision. arXiv
+  preprint. https://doi.org/10.48550/arXiv.2309.14181
+Xiao, B., & Kang, S.-C. (2021). Development of an image data set of
+  construction machines for deep learning object detection. Jour-
+  nal of Computing in Civil Engineering, 35(2), 05020005. https://doi.
+  org/10.1061/(asce)cp.1943-5487.0000945
+Xiao, B., Wang, Y., & Kang, S.-C. (2022). Deep learning image cap-
+  tioning in construction management: A feasibility study. Journal
+

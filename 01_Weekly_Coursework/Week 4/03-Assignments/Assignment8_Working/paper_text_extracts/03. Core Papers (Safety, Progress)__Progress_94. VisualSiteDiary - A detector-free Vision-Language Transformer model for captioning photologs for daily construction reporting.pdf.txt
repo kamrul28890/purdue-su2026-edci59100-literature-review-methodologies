@@ -1,0 +1,1242 @@
+                                                               Automation in Construction 165 (2024) 105483
+
+
+                                                                 Contents lists available at ScienceDirect
+
+
+                                                            Automation in Construction
+                                                        journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+VisualSiteDiary: A detector-free Vision-Language Transformer model for
+captioning photologs for daily construction reporting and image retrievals
+Yoonhwa Jung a ,∗, Ikhyun Cho b , Shun-Hsiang Hsu c , Mani Golparvar-Fard d
+a
+  Department of Civil and Environmental Engineering and Computer Science, University of Illinois at Urbana-Champaign, Urbana IL 61801, USA
+b
+  Department of Computer Science, University of Illinois at Urbana-Champaign, Urbana IL 61801, USA
+c
+  Department of Civil and Environmental Engineering, University of Illinois at Urbana-Champaign, Urbana IL 61801, USA
+d
+  Department of Civil and Environmental Engineering, Computer Science and Tech Entrepreneurship, University of Illinois at
+Urbana-Champaign, Urbana IL 61801, USA
+
+
+
+ARTICLE               INFO                              ABSTRACT
+
+Keywords:                                               This paper presents VisualSiteDiary, a Vision Transformer-based image captioning model which creates human-
+Computer vision                                         readable captions for daily progress and work activity log, and enhances image retrieval tasks. As a model
+Project controls                                        for deciphering construction photologs, VisualSiteDiary incorporates pseudo-region features, utilizes high-level
+Image captioning
+                                                        knowledge in pretraining, and fine-tunes for diverse captioning styles. To validate VisualSiteDiary, a new image
+Project management
+                                                        captioning dataset, VSD, is presented. This dataset includes many realistic yet challenging cases commonly
+Machine learning
+Natural language generation
+                                                        observed in commercial building projects. Experimental results using five different metrics demonstrate that
+Artificial intelligence                                 VisualSiteDiary provides superior-quality captions compared to the state-of-the-art image captioning models.
+                                                        Excluding the task of object recognition, the presented model also outperformed mPLUG –the state-of-the-art
+                                                        visual-language model– in the image retrieval task by 0.6% in precision and 0.9% in recall, respectively.
+                                                        Detailed discussions illustrate practical examples on how VisualSiteDiary improves the process of creating
+                                                        daily construction reports, paving the way for future developments in the field.
+
+
+
+1. Introduction                                                                                    contractors. Because the work is time-consuming [2–5], not a
+                                                                                                   whole lot of meaningful information is captured in these DCRs.
+    Construction sites are a hub of a variety of work activities conducted                         For example, a subcontractor may simply report ‘‘framing’’ work,
+by different trade contractors. For site managers, keeping everything                              without documenting where, when, what, and how much work
+in check across all work areas, poses a considerable challenge. While                              happened. Often, there are photos taken throughout the day,
+various tools provide a general project overview and expected progress,                            nevertheless, those photos are not closely correlated with the
+there remains one contractually-required practical tool that reveals                               DCRs, causing the wealth of information captured in photos to
+the true, real-time progress: daily logs or Daily Construction Reports                             also remain untouched.
+(DCRs). These DCR logs are a living record of a project as they represent                        • Analyzing DCRs is a data-intensive process– Tabulating non-
+the details of each day’s progress. Specifically, DCRs track on-site                               descriptive written note in plain English as well as correlating
+activities, keeping stakeholders on the same page on ‘what is there’                               them with pictures is a daunting task. As such, DCRs are not
+vs. ‘what should be there’, improving productivity and minimizing                                  properly used to prioritize, manage, and track work activities
+delays [1]. Neglecting or the absence of proper DCR documentation                                  often. Instead, receiving progress updates is mainly conducted
+heightens the risk of a minor problem escalating into a major one, as                              through phone calls or it is left for in person meetings in the
+DCRs are critical for protecting against disputes. Despite the significant                         trailer [1,6,7].
+value of DCRs, collecting, analyzing and reporting them is associated                            • DCRs in their current form captured across many projects are not
+with several challenges:                                                                           actionable– Because of the challenges associated with collecting
+                                                                                                   and analyzing photos and daily notes and the reliability issues of
+     • Collecting DCRs is time-consuming– To create DCRs, a superinten-                            DCRs, critical discussions around delays and schedule revisions
+       dent is required to take dedicated notes throughout the day.                                are delayed until weekly coordination meetings, which is often
+       Alternatively, one or two field engineers are put in charge of                              too late to proactively address potential delays [2,7–9].
+       collecting, analyzing, and tabulating notes provided by all trade
+
+
+    ∗ Corresponding author.
+      E-mail addresses: yoonhwa2@illinois.edu (Y. Jung), ihcho2@illinois.edu (I. Cho), hsus2@illinois.edu (S.-H. Hsu), mgolpar@illinois.edu (M. Golparvar-Fard).
+
+https://doi.org/10.1016/j.autcon.2024.105483
+Received 11 October 2023; Received in revised form 27 March 2024; Accepted 23 May 2024
+Available online 30 May 2024
+0926-5805/© 2024 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY-NC-ND license (http://creativecommons.org/licenses/by-
+nc-nd/4.0/).
+Y. Jung et al.                                                                                                                Automation in Construction 165 (2024) 105483
+
+
+
+
+                                    Fig. 1. A real-world example of a Daily Construction Report (DCR) that exhibits poor quality.
+
+
+
+     Fig. 1 illustrates an example of a DCR that lacks actionable insights            on users’ preference for image captioning styles. VisualSiteDiary demon-
+around ‘‘where’’, ‘‘how’’ and ‘‘what’’ of the work that happened on-site              strates that incorporating these three unique approaches improves
+on a particular calendar date.                                                        image captioning capabilities necessary for the identified use-cases.
+     A separate body of computer vision techniques has been developed                 To validate VisualSiteDiary, a new dataset combining four different
+to analyze images and videos for identifying progress changes or quality              datasets with new construction activity-oriented captions is provided
+issues, or detecting, tracking, and analyzing actions and the work                    for DCR generation. The main technical contributions are summarized
+context of resources –i.e., labor, equipment, and material– on project                in the following section.
+sites. A thorough review of these works can be found in [10,11].
+To date, these techniques have not extended to infer human-readable                   2. Related work
+descriptions of work activities (i.e., ‘‘what’’ work happened on the site,
+and or ‘‘how’’ the site has evolved over time), which is necessary for                   The advent of deep learning approaches used in natural language
+DCR reports. Most recent works have focused on image captioning                       processing (NLP) and computer vision (CV) techniques, has trans-
+techniques to generate human-readable descriptions for construction                   formed the way meaningful information is extracted from commonly
+                                                                                      available image and text data from construction sites [16,17]. Here,
+images [12–14]. However, the produced descriptions to date, do not
+                                                                                      we delve into three key areas as outlined below:
+offer any insights on the ‘‘what’’ and ‘‘how’’ of the work and specifically
+what objects the described work has been applied to. Their datasets
+                                                                                      2.1. Reality capture and reality mapping as stepping stones
+also do not cover diversity of construction activities that are typically
+found on a construction project. Furthermore, to mitigate the manual
+                                                                                          Over the past decade, reality capture and reality mapping solutions
+drafting of documents such as reports, meeting agendas, and change
+                                                                                      have established themselves as proven techniques for visually capturing
+requests, pre-defined templates or ontologies are developed for various
+                                                                                      and documenting existing conditions on construction. We differentiate
+document types [15]. Nonetheless, this approach remains inflexible and
+                                                                                      these solutions from one another by (a) categorizing reality capture
+still necessitates manual effort to populate content and format it into               as the process of manually or automatically pinning 360-degree or
+human-readable descriptions.                                                          perspective images on a floor plan; typically through Simultaneous
+     To fill in these gaps, this paper introduces a new vision transformer-           Localization and Mapping (SLAM) techniques; and (b) reality mapping
+based model, called VisualSiteDiary, which builds on a pretrained large               as the process of creating as-built 3D point clouds, mesh models,
+vision-language model. VisualSiteDiary aims to automatically generate                 and schematic floor plans from 360-degree or perspective videos and
+image content descriptions on various scenarios, enabling (1) auto-                   images; typically through a pipeline of image-based 3D reconstruction
+mated creation of construction daily reports and (2) image retrieval                  techniques. The result of either one of these two categories of solutions
+using text inputs from users. To provide essential insights required                  is an image-walk-through experience similar to Google street view. In
+for DCRs, we present the VSD image-caption dataset, which com-                        the case of reality mapping, these image walk-through experiences are
+prehensively deciphers the ‘‘what’’ and ‘‘how’’ of the work, along                    measurable. By visually communicating ongoing work and highlight-
+with the types of elements involved in construction activities, for the               ing discrepancies between as-designed and as-built conditions, these
+generation of detailed work descriptions for DCRs. Fig. 2 shows how                   solutions have already proven themselves to save time in construction
+VisualSiteDiary enables these use-cases.                                              coordination tasks, and reduce project risk [9,18,19]. Reality data offer
+     To improve the quality of text-based image descriptions, Visual-                 insights into the chronological ‘‘when’’ (timestamp) and geographical
+SiteDiary: (1) incorporate pseudo-region features; (2) utilize high-level             ‘‘where’’ (spatial context) of the ongoing work; however, understanding
+knowledge for the pre-training step where the model pre-learns overall                ‘‘what’’ work happened on the site, and or ‘‘how’’ the site has evolved
+difficulty knowledge of each input image, and (3) is fine-tuned based                 over time is often left to interpretation of the users.
+
+                                                                                  2
+Y. Jung et al.                                                                                                                  Automation in Construction 165 (2024) 105483
+
+
+
+
+                            Fig. 2. Overall concepts of automated daily construction reporting and text–image retrieval via VisualSiteDiary.
+
+
+2.2. Computer vision                                                                   translate human-written scheduling language to machinery ontological
+                                                                                       language [47]. For the automated generation of look-ahead plan revi-
+    Over the past two decades, the availability of large volumes of real-              sions, a Transformer-based language model is used to augment implicit
+ity capture data has triggered a large body of computer vision research.               dependency constraints in schedule sequences [48]. Alternatively, a
+Thorough reviews of these techniques can be found in [10,11]. Most                     chatbot system was proposed in [5], allowing construction workers
+relevant examples include: (a) extracting low-level features such as                   to submit daily construction reports by retrieving stored information
+intensity, color distribution, and texture, using filters [20–22] and more             based on natural language interaction.
+recently deep learning networks such as VGG-19 and ResNet-101 [23]                        Current techniques mainly focus on generating actionable insights
+for material cluster recognition and image retrieval, (b) 3D as-built                  from text documents and as such there were not directly extended to
+modeling and progress monitoring [2,8,24], (c) damage inspection [25–                  make insightful interpretation from construction photologs or integrat-
+28], and Convolutional Neural Networks (CNNs) such as Faster R-                        ing data from both text and image sources [17].
+CNN [29] and 3D ResNet for (d) productivity assessments [30–32], and
+(e) worker safety analysis [33–36] using ⟨Agent − Action − Object⟩ [34]                2.4. Image captioning of construction photologs
+tuples. These works exploit and extract spatio-temporal detection and
+analysis of objects, and their context. As such, their applications were                   In recent years, large-scale transformer-based language models such
+not extended to the task of providing a human-readable description of                  as GPT [50] and BERT [51] have significantly gained attention due
+the image needed for DCR and information retrieval purposes.                           to their outstanding performance in various NLP tasks. The success
+                                                                                       of pretraining these models on large datasets and fine-tuning them
+2.3. Natural language processing                                                       for specific downstream tasks inspired researchers to explore their
+                                                                                       application in computer vision domains, such as image recognition,
+    Recent research at the interface of NLP and computing in con-                      segmentation, and captioning tasks [52].
+struction has shown promising results in automatically discovering                         Image captioning, mainly enabled through multimodal deep learn-
+and extracting crucial knowledge to support a series of construction                   ing, has gained interest within the Architecture/Engineering/
+decision-making tasks [17,37,38]. Text mining and NLP techniques                       Construction (AEC) community [53] as well. To do so, CNN-RNN based
+have both been used to extract knowledge from unstructured and struc-                  architectures are mainly exploited to encode images and decode for
+tured text data commonly available in change orders, field reports,                    generating word sequences [12,14,54–56]. The CNN encoder is used
+accident records, and construction plans and schedules to solve for com-               to extract image features as an object detector, and an RNN decoder
+pliance checking [39–41], safety management [42–44], and planning                      is used to produce final text-based descriptions. Building on the CNN-
+and scheduling [45–49].                                                                RNN-based encoding–decoding architecture, image captioning models
+    For compliance checking, researchers have used Support Vector Ma-                  are presented to generate construction jobsite activity descriptions [12,
+chine Learning (ML) algorithms with bag-of-words representations [39],                 14,55], describe worker behavior descriptions [54], and explanations
+extracted syntactic and semantic features for extending Building In-                   of bridge damage [56]. Building on the successful performance of
+formation Modeling (BIM) data with regulatory concepts [40], and                       transformer networks in NLP tasks, a transformer decoder has been
+extracted rule terms and logic relationships from regulatory docu-                     used to generate construction heavy equipment scenes by combining
+ments [41]. For safety management, NLP techniques have been utilized                   a ResNet-101 encoder with self-critical sequence training (SCST) strat-
+for rule-based keyword matching [42] and ML algorithms based on                        egy [13]. Using a CNN-based image encoder as an object detector and
+Term Frequency-Inverse Document Frequency word vectorization [43].                     a language generation decoder, showed promising results in retrieving
+Additionally, Word2Vec embeddings have been used for retrieving                        human-readable descriptions from jobsite images.
+relevant safety accident cases from existing reports [44]. In the context                  While these preliminary works show the potential of integrating
+of construction planning, NLP techniques have been applied to auto-                    NLP and CV techniques, current models are still largely dependent
+matically learn planning knowledge from existing construction sched-                   on the performance of a CNN-based object detector. These models
+ules. To formalize construction planning and sequencing knowledge,                     incur substantial computational costs through processes like extracting
+Long Short-Term Memory Recurrent Neural Networks (LSTM-RNNs)                           salient regions with bounding boxes and employing regional operations
+are employed to model schedule activity sequences [45,46] and to                       such as Region of Interest Pooling and Region Proposal Network within
+
+                                                                                   3
+Y. Jung et al.                                                                                                         Automation in Construction 165 (2024) 105483
+
+
+modern CNN-based networks. These intermediate operations, unfortu-                     • Lack of detailed descriptions for DCRs: Without specifying ‘‘what’’
+nately, lead to training inefficiencies and heightened inference latency                 type of work and elements involved, hindering the creation of
+during predictions [57–60]. In addition, for generating captions, CNNs                   construction activities pertinent to DCRs (e.g., welding steels
+typically operate locally, processing input images via convolutional                     (others) → placing rebars for columns (ours)).
+operations, while RNN-based networks handle the linguistic part in an                  • Limited diversity in image-text datasets: Existing datasets only
+end-to-end manner. This architecture can lead to difficulties in effec-                  cover superstructure activities or earthwork separately, lacking
+tively modeling relationships between distant visual and linguistic ele-                 comprehensive representation of various construction scenarios.
+ments, resulting in an incapacity to fully grasp long-range dependencies               • Handling spatial information: Directly processing flattened grid
+and global context across both modalities [61].                                          visual features within the Transformer architecture poses a loss
+                                                                                         of spatial information.
+2.5. Detector-free vision-language transformer model for captioning pho-
+                                                                                       • Understanding construction scene complexity: The absence of pre-
+tologs
+                                                                                         trained Vision-Language models capable of understanding the
+                                                                                         intricacies and difficulties of each construction scene for caption
+    Recently, the Vision-Language Transformer (VL) architecture, in-
+                                                                                         generation.
+tegrating a pre-trained Vision Transformer (ViT) as an image feature
+encoder and a separate Transformer decoder for text generation, has                    • Inflexibility of caption generations: Limited to generating cap-
+become popular for image captioning tasks, showing state-of-the-art                      tions in a single style, disregarding user preferences and varying
+performance, while eliminating detectors. In general image captioning,                   use-case requirements.
+such as using MS COCO-caption [62], Mokady et al. [57] utilize a
+                                                                                       Different from previous works, we present (1) a new comprehen-
+mapping network to feed image embeddings extracted from a vision-
+                                                                                   sive visual dataset with ground truth daily reporting descriptions,
+language pre-trained Transformer model into a pre-trained Transformer
+                                                                                   covering a larger range of construction activities typically found in
+language model for generating image captions. Fang et al. [59] propose
+                                                                                   building construction projects, including site work, substructure, and
+a vision transformer-based captioning model incorporating Concept
+                                                                                   superstructure-related activities. Also, our ground-truth captions are
+Token Network for semantic prediction at the token level. Li et al.
+[58] introduce a pre-trained model with cross-modal skip-connections,              detailed with each significant work item, ‘activity purpose’, using ‘for
+significantly improving performance across multiple Vision-Language                what ’ phrase (e.g., for site work, for foundation, for exterior wall
+tasks, including image captioning. Moreover, Chen et al. [63] present              finish, for slab) to create fully detailed descriptions for DCRs. Next,
+self-resurrecting activation units for balancing features from the visual          we present (2) a detector-free Vision-Language Transformer model that
+and textual modalities, achieving state-of-the-art results on a medical            generates human-readable descriptions on various construction scenes,
+report generation dataset. For a comprehensive understanding of a                  which solely builds on a visual transformer architecture [52] instead of
+general Vision-Language Transformer architecture, refer to Section 3.1.            relying on an object detector encoder. To further enhance the quality
+    This transition to Vision-Language Transformer models yields sig-              of image descriptions, our model (VisualSiteDiary) is built on a pre-
+nificant improvements in both runtime and parameter efficiency [60].               trained large vision language (VL) model (mPLUG) [58], introducing
+However, flattened grid image features from the Transformer archi-                 (3) Pseudo-Region (PR) features to mitigate spatial information loss
+tecture can lead to a loss of spatial information [64]. Furthermore,               within the Transformer architecture, and (4) High-level image knowl-
+these general captioning models are solely evaluated on general image-             edge Pre-training (HP) before fine-tuning to discern the complexity
+caption datasets. Considering the dynamic and intricate nature of con-             (i.e., difficulty) of each construction scene, enabling the model to
+struction field images, these Vision-Language Transformer models tai-              allocate greater consideration on images with higher difficulty levels
+lored for general domains are not specifically designed, trained, or vali-         during caption generation. As a result, VisualSiteDiary outperforms the
+dated for creating DCRs, which require a detailed and complex explana-             state-of-the-art Vision Transformer baselines on our VSD dataset, gener-
+tion of ‘‘what’’ and ‘‘why’’ of the ongoing activities tied against ‘‘when’’       ating superior-quality captions. Also, during fine-tuning, VisualSiteDiary
+and ‘‘where’’ provided through reality capture or reality mapping data.            (5) generates each different style of captions based on user preferences.
+    Also, the construction image-caption dataset used in [12,14,54]
+                                                                                   A prototype demo to automate the generation of construction image
+only includes pictures from construction activities related to a building
+                                                                                   descriptions purely based on visual data; available to the public.1 The
+superstructure (e.g., masonry, reinforcing steel, and scaffolding work),
+                                                                                   following sections cover details on VisualSiteDiary’s architecture, our
+while Xiao et al. [13] only covers site work or activities related to
+                                                                                   dataset, experiment results, and discussions.
+excavating a substructure which involves heavy equipment. Hence, the
+performance of these models has only been tested under limited condi-
+tions and not comprehensively for typical DCR-related use-cases. Also,             3. Method: VisualSiteDiary
+their captioning did not include the critically needed information on
+‘‘what’’ is happening in the photo. For instance, the captioning in Zhong              In this paper, the primary objective is to enable seamless communi-
+et al. [14] displays descriptions such as ‘‘a worker in a yellow helmet is         cation between visual and textual information in diverse construction
+welding steel’’, without describing ‘‘what’’ type of work happening and            scenarios, resulting in the automated creation of DCRs and reliable
+on what element type (e.g., placing rebars for columns), even though               image-text retrieval. To achieve this, this paper presents, VisualSiteDiary
+the ‘how’ (welding) and ‘who’ (a worker) information is included. To
+                                                                                   which builds upon a pretrained vision-language mPLUG model [58], by
+offer valuable insights needed for DCRs, it is crucial to fully decipher
+                                                                                   employing three key strategies: effective visual region feature incorpo-
+the type of elements a construction activity applies to, such as those
+                                                                                   ration, a novel training method based on high-level key information
+related to ‘column’, ‘deck’, ‘exterior wall’, or ‘foundation’ for generating
+                                                                                   (the level of difficulty of each input image dataset), and fine-tuning
+DCR work descriptions.
+                                                                                   to leverage different styles of captions. The following sections explain
+2.6. How gap in knowledge is addressed in this paper                               these three approaches combined and show how VisualSiteDiary ef-
+                                                                                   fectively generates higher-quality captions reflecting different caption
+    This paper addresses key challenges to facilitate seamless communi-            styles (see Fig. 3).
+cation between visual and textual information in diverse construction
+scenarios, leading to automated creation of Daily Construction Reports
+(DCRs) and reliable image–text retrieval. These challenges, outlined in              1
+                                                                                       Our new caption data and code are made available at https://github.com/
+Section 2.5, can be summarized as follows:                                         joonv2/VisualSiteDiary.
+
+
+                                                                               4
+Y. Jung et al.                                                                                                               Automation in Construction 165 (2024) 105483
+
+
+
+
+                                                   Fig. 3. The overall flowchart of our proposed VisualSiteDiary.
+
+
+
+
+                                Fig. 4. Illustration of the baseline vision-language transformer model based on a pretrained mPLUG.
+
+
+3.1. Vision-language transformer model architecture                                  3.2. Pseudo Region features (PR)
+
+    For image captioning tasks, the Vision-Language Transformer (VL)                     In the ViT model architecture, a visual encoder extracts grid features
+model architecture combines a pre-trained Vision Transformer (ViT)                   about all patch information to cover the image as shown in Fig. 4.
+architecture as an encoder for image feature representation with a                   However, directly operating on flattened grid features can lead to a
+separate language generation decoder to generate captions. The choice                loss of spatial information [64]. To alleviate this problem and avoid the
+of ViT is inspired by [52,58,64] because this approach can be directly               explicit use of an object detector, the region features are presented by
+applied to a pure transformer to process images as sequences of patches,             embedding the region information of grid features based on multiple
+rather than the traditional reliance on regional operation in CNNs. ViT              centroids of image patch clusters, inspired by recent works [64,65],
+represents the simplest yet effective architecture for a VL model, em-               which implicitly model auxiliary information into the model for more
+ploying the transformer module to extract and process visual features                profound communications. The output of the mPLUG visual encoder,
+instead of separate deep visual embedder and regional operations, such               represented as a sequence of embeddings {𝑣0 , 𝑣1 , … , 𝑣𝑚 }, where 𝑚
+as those found in convolutional visual embedding networks like Faster                denotes the number of grids, is utilized. This is then passed through
+R-CNN and ResNets. As shown in Fig. 4, the ViT architecture consists                 the pseudo-region feature mechanism. The similarity between each grid
+of patch embedding, position embedding, and Transformer encoder                      feature {𝑣𝑖 } and 𝐾 learnable cluster centers {𝑐𝑘 } is computed using
+layers. The input image is divided into patches, which are projected                 a dot product function similar to Zeng et al. [64]. To map each grid
+into a vector space called embeddings. Each position of image patches                feature with the 𝑛th cluster, the following equation is employed:
+is preserved through position embedding. The ViT encoder layers allow                                   𝑇
+                                                                                                    𝑒𝑣𝑖 𝑐𝑛 +𝑏𝑛
+the model to weigh the importance of different patches through the                   𝑎𝑖,𝑛 = ∑                                                                        (1)
+                                                                                                𝑁     𝑣𝑖 𝑐𝑘𝑇 +𝑏𝑘
+self-attention mechanism and then generate feature representations for                          𝑘=1 𝑒
+each image patch.                                                                    where 𝑏𝑘 is a trainable parameter associated with each cluster 𝑛, and
+    To accomplish the captioning task, the presented model builds upon               𝑎𝑖,𝑛 ranges from 0 to 1. The closest region feature, 𝑟𝑛 , is calculated as:
+a modified and fine-tuned version of the mPLUG model [58]. The
+                                                                                              ∑
+                                                                                              𝑚
+mPLUG is a vision-language Transformer, which is pretrained on large                 𝑟𝑛 = ‖         𝑎𝑖,𝑛 (𝑣𝑖 − 𝑐̃𝑛 )‖                                                (2)
+amounts of image-text paired multimodal datasets. By concatenating                            𝑖=1
+visual and linguistic features as input, this Vision-Language Trans-                 where 𝑐̃𝑛 is a learnable parameter of the same size as 𝑐𝑛 and 𝑟𝑛 ,
+former model architecture enables self-attention to detect alignments                for each grid is normalized and concatenated with the output of the
+between visual and linguistic features. Furthermore, the cross-attention             visual encoder before being fed to the decoder. Fig. 5 provides an
+mechanism facilitates cross-modal interaction, conducting independent                illustration of how pseudo-region features are incorporated into our
+multi-modal fusion to address the information asymmetry problem                      model, compensating for the loss of spatial information caused by
+effectively. For fine-tuning the mPLUG model, a visual transformer                   flattening operation in the Transformer architecture. As shown later
+encoder converts raw image data into a sequence of embeddings, which                 (Section 5.3), this step enriches model’s ability to understand visual
+are then used in a transformer decoder with cross-attention layers                   regions (i.e., spatial information).
+for visual-aware text generation in a sequence-to-sequence learning
+approach. Fig. 4 shows the architecture of the baseline vision-language              3.3. High-level knowledge Pre-training (HP)
+transformer model, which is built upon a pretrained mPLUG. For the
+captioning task in this paper, this model is modified and fined-tuned                   In this work, we develop a novel pre-training strategy called high-
+through a process which is described in the following sections.                      level knowledge pre-training (HP) to enhance the quality of generated
+
+                                                                                 5
+Y. Jung et al.                                                                                                                Automation in Construction 165 (2024) 105483
+
+
+
+
+                                          Fig. 5. Illustration of Pseudo Region features (PR) mechanism in VisualSiteDiary.
+
+
+
+
+                                                   Fig. 6. Illustration of High-level knowledge Pre-training (HP).
+
+
+
+captions. Pre-training provides a good initialization point [51,66],                  4. Experimental and data setup
+enabling the model to benefit from the knowledge gained during pre-
+training [67] and as such we use that to predict the overall difficulty               4.1. Dataset
+of each input data image. As such, HP works as a primer for the
+model and makes the model well-prepared for the final image cap-                          Our dataset is a combination of four existing image datasets and
+tioning fine-tuning step, by leveraging the pre-learned overall difficulty            new image descriptions are annotated by the authors. The first dataset,
+knowledge [68]. Fig. 6 illustrates the process.                                       Alberta Construction Image Data Set (ACID) [13], contained 4000
+    The level of difficulty in creating image captions is evaluated based             images of ten different types of construction equipment: excavator,
+on the CIDEr score. To gauge the ‘difficulty’, first, the captions gener-             compactor, dozer, grader, dump truck, concrete mixer truck, wheel
+ated by the mPLUG baseline model is compared with the gold captions                   loader, backhoe loader, tower crane, and mobile crane. Second dataset
+on the dataset. Then, we establish four labels: ‘very easy’, ‘easy’, ‘hard’,          is from Liu et al. [12] which provides the image captioning dataset
+and ‘very hard’ based on the CIDEr quartile scores of our training data.              for five activity categories with a total of 5751 images collected from
+With these newly assigned labels on our dataset, we (pre)train our                    building construction sites: cart transportation, masonry work, rebar
+model to learn the difficulty level associated with input images for five             work, plastering, and tiling. Third dataset Zhai et al. [54] was created
+epochs. Through the HP process, the pre-trained large VL model can                    a total of 5211 images for captioning unsafe behavior of workers under
+discern the complexity of each construction scene image, allowing the                 five different construction objects: rebar, concrete, scaffold, wooden
+model to allocate greater consideration to images presenting higher dif-              template, and bricks. The SODA dataset [69], the last dataset used,
+ficulty levels during the caption generation process (i.e., fine-tuning),             consists of 19,864 images for 15 construction objects: person, vest,
+in contrast to images with relatively lower complexity.                               helmet, board, wood, rebar, brick, scaffold, handcart, cutter, electric
+                                                                                      box, hopper, hook, fence, and slogan, is adopted for data augmentation
+                                                                                      using pseudo captioning.
+3.4. Fine-tuning and accommodating user preferences
+                                                                                          Note, the ACID dataset mainly focuses on site work and substructure
+                                                                                      activities involving machinery, whereas the other three datasets [12,
+    During the fine-tuning process, all parameters of a model are fine-               54,69] primarily cover building superstructure activities. We combined
+tuned from pre-trained weights. As shown later, this allows the model                 these datasets into one comprehensive dataset with our new image
+to build upon its pre-trained knowledge and gains a better understand-                captions to evaluate the image captioning model’s performance across
+ing of visual features and context, resulting in performance improve-                 various scenarios.
+ment [51,66,67].
+    VisualSiteDiary is fine-tuned for 20 epochs. VisualSiteDiary (default)            4.2. Data cleaning, reorganization and groundtruth development
+is trained on both caption styles. To accommodate user preferences
+(compact style and detailed style), we provide two different fine-                        Generating reasonable image descriptions DCR use-case requires
+tuned models (VisualSiteDiary (compact) and VisualSiteDiary (detailed))               a well-defined linguistic schema. For construction image captioning
+on each caption style separately. The motivation behind providing                     tasks, previous research [12,13,54] formalized captions with ‘subject
+two different fine-tuned models is that users might want to receive                   (machinery or workers)’, ‘action’, ‘object (e.g., soil, concrete, and
+captions tailored to their writing style or documentation requirements,               brick)’ and ‘supplementary attributes’ (e.g., count, safety gears). For
+enhancing the flexibility and usability of our image captioning model.                instance, examples from these datasets include captions like ‘a backhoe
+
+                                                                                  6
+Y. Jung et al.                                                                                                                     Automation in Construction 165 (2024) 105483
+
+
+
+
+Fig. 7. Revised linguistic concepts of the main scene elements on the three existing construction image captioning datasets. We newly incorporated ‘‘work purpose’’ to elaborate
+‘‘what’’ activity information in the scene.
+
+
+loader is pushing soil’, ‘a worker is laying a ceramic tile’, and ‘a                       information to decide if predicted captions should be added to the
+concrete worker with a hard hat is pouring concrete’ from [12,13,54],                      dataset.
+respectively.                                                                                  Most computer vision solutions in the AEC industry were developed
+    However, this linguistic schema does not fully address the specific                    before recent vision-language models, and as such. more datasets for
+work items –work purpose– (e.g., leveling for foundation, pouring con-                     object detection [69,71] are available and contain images of various
+crete for deck, and tiling for interior wall finish). Since including all                  scenes. Taking advantage of the collected images and annotations, the
+significant activity objectives (i.e., ‘what’ information) that occur on                   fine-tuned model can make image-sentence pair of unseen scenes, and
+the daily work and gathered visual information is significant for DCRs,                    image-level information indicating which objects exist in an image is
+we reorganized the linguistic schema referring to two real-world com-                      extracted to filter out wrong predictions. By adding such data with-
+mercial building projects’ daily reports and activity descriptions from                    out manually creating captions, the visual representation of objects
+35 commercial building projects’ master schedules. We introduce the                        is aimed to be enhanced. Fig. 10 illustrates data augmentation using
+concept of ‘work purpose’ (Fig. 7) and subsequently create new image                       pseudo captioning. Pseudo-captions are those that only mention objects
+descriptions (Fig. 8). Additionally, instead of simply replacing verbs                     existing in images but not necessarily all of them in the detection
+with synonyms, we developed two distinct types of image descriptions,                      annotations. The augmented dataset will then be used to again fine-
+shown in Fig. 8: (1) a compact version for daily reports and updates,                      tune the model. The whole process can be performed iteratively so that
+and (2) a detailed version that provides elaborated information on                         the model matures on its performance.
+actions and safety.                                                                            As described previously, our VSD dataset was created to compensate
+    Another concern lies in the similarity between images in the original                  for the previous dataset’s problems with manual annotations. Since the
+training and validation set (see Fig. 9), where they share the same ac-                    original dataset is not equally distributed, the dataset is augmented
+tions, poses, and jobsite environments. This redundancy in the training                    with pseudo-captions as an automatic method that efficiently expands
+and validation dataset can lead to overfitting and may not validate the                    the coverage of the dataset. Using pseudo captioning, 1089 images from
+model performance when it applies to real-world problems. To mitigate
+                                                                                           SODA [69] dataset for construction object detection are selected to
+this problem, we re-split training and validation images, considering
+                                                                                           mainly improve the limited scenes of superstructure activities. Table 2
+their different scenes and jobsite environments.
+                                                                                           shows the statistics of our final VSD dataset.
+    Table 1 shows the skewed distribution of the captions for different
+categories in each original dataset inferred by counting their unigrams.
+As seen, the word frequencies are not equally distributed, especially                      4.4. Evaluation metrics
+masonry work in construction activities and reinforced in construction
+unsafe behavior, due to many redundant images by similar video files                           We evaluate the performance of VisualSiteDiary using five widely
+(Fig. 9). To reduce redundant images (same action, view, and jobsite                       used image captioning validation metrics: BLEU [72], ROUGE [73],
+environments) and balance the original datasets, we manually select                        METEOR [74], CIDEr [75], and SPICE [76]. These metrics help as-
+964 and 1762 images from [12,54] under different scenes as evenly                          sess the quality and relevance of the model-generated captions by
+as possible. Next, the dataset is augmented with additional images                         comparing them to reference captions created by human annotators.
+sourced from the SODA [69] object detection dataset using pseudo
+captioning techniques. This augmentation process enriches our dataset                      4.4.1. BLEU
+with a wider variety of construction scenes, as explained in Section 4.3.                      BLEU (Bilingual Evaluation Understudy) [72] is a metric originally
+                                                                                           developed for machine translation tasks, and it has been adapted for
+4.3. Data augmentation using pseudo captioning                                             evaluating image captioning. BLEU quantifies the overlap of contiguous
+                                                                                           sequences of 𝑛 words between the generated captions and the reference
+    Because creating groundtruth data from construction scenes is time-                    captions. It measures the precision of n-grams in the generated caption
+changing and complicated, a high variety of scenes in the training data                    compared to reference captions, indicating how much the words in the
+is required to ensure the model performance on unseen images. To                           machine-generated caption appear in the human reference captions.
+augment the scenes without additional labor work, pseudo captioning is                     The BLEU score is expressed as a percentage, where 0 indicates no sim-
+introduced to automatically obtain captions of new images from [69]                        ilarity between the generated captions and the reference captions. To
+by fine-tuning VisualSiteDiary using the new dataset. Cho et al. [70]                      compute the BLEU score, a brevity penalty is incorporated to penalize
+used pseudo captions to develop an open-vocabulary object detector,                        shorter generated captions and avoid favoring brevity:
+distilling knowledge of the well-trained image captioning model. Com-                                              {
+bining with the common pseudo labeling, where a confidence threshold                                                 1        if 𝑐 > 𝑟
+                                                                                           Brevity penalty (BP) =                      ,                       (3)
+is used to filter predictions, our pseudo captioning exploits image-level                                            𝑒(1−𝑟∕𝑐) if 𝑐 ≤ 𝑟
+
+                                                                                       7
+Y. Jung et al.                                                                                                                     Automation in Construction 165 (2024) 105483
+
+
+
+
+                                                      Fig. 8. Revised caption examples by indicating work task purposes.
+
+
+
+
+Fig. 9. Examples of train and validation dataset. (a): training and validation set from [12] has very similar actions and jobsite environment. (b): our new train and validation
+split considering diverse actions and jobsite environments to prevent the overfitting problem of the original dataset.
+
+
+
+                                                                                       8
+Y. Jung et al.                                                                                                                         Automation in Construction 165 (2024) 105483
+
+Table 1
+The number of unigrams for different categories in each image captioning dataset.
+ Dataset                                  Category                   Keywords (#)                                                                                   Total number
+                                          Excavator                  excavator (1610), excavators (201)                                                             1811
+                                          Compactor                  compactor (802), compactors (65)                                                               867
+                                          Dozer                      dozer (665), dozers (40), bulldozer (65), bulldozers (3)                                       773
+                                          Grader                     grader (959), graders (24)                                                                     983
+                                          Dump truck                 dump (1985), dump-trucks (4), dump-truck (4), dumptrucks (1), dumptruck (1)                    1995
+ ACID [13]
+                                          Concrete mixer truck       mixer (445), mixers (1)                                                                        446
+                                          Wheel loader               wheel (1431), wheel-loader (2), wheel_loader (2), wheel-loaders (1), wheelloader (1)           1437
+                                          Backhoe loader             backhoe (1053), backhoe-loader (2)                                                             1055
+                                          Tower crane                tower (246), tower-crane (1)                                                                   247
+                                          Mobile crane               mobile (762), mobile-crane (1), mobile-cranes (1)                                              764
+                                          Cart transporting          cart (372), carts (11)                                                                         383
+                                          Masonry work               brick (13 509), bricklaying (51), bricks (763), block (8938), blocks (139)                     23,400
+ Construction activities [12]             Rebar work                 steel (701), bar (54), bars (708)                                                              1463
+                                          Plastering                 plastering (1125), plastered (130)                                                             1255
+                                          Tiling                     tile (1087), tiles (758), tile-laying (10), tiling (17)                                        1872
+                                          Reinforced                 rebar (2), steel (12 798), bars (5654), bar (17)                                               18,471
+                                          Concrete                   concreter (825), concrete (7202), concreters (273)                                             8300
+ Construction unsafe behavior [54]        Scaffold                   scaffold (6477), scaffolder (1239), scaffolding (1976), scaffolders (1168), scaffolds (15)     10,875
+                                          Wooden template            wooden (110), formwork (5872), forms (66), form (4)                                            6052
+                                          Bricks                     bricklayers (942), bricks (4580), brick (1572), bricklayer (1558)                              8652
+
+
+
+
+                                                       Fig. 10. Illustration of Pseudo captioning to augment training data.
+
+
+Table 2                                                                                     of words (not necessarily consecutive), as it often represents the core
+The comprehensive statistics of our dataset.                                                meaning of the generated caption compared to simple 𝑛-gram matching.
+ Our dataset                                         Our image #      Our caption #         By considering the LCS, ROUGE-L addresses the limitation of standard
+ ACID [13]
+                                         Train       3200             6400                  ROUGE, which can be sensitive to the order of words and may not fully
+                                         Val         800              1600                  capture the semantic similarity between captions. The ROUGE scores
+ Construction activities [12]
+                                         Train       783              1566                  also range from 0% to 100%, where a higher score indicates better
+                                         Val         181              362                   similarity between the generated and reference captions.
+                                         Train       1562             3124
+ Construction unsafe behavior [54]                                                                          (1 + 𝛽 2 )RLCS PLCS
+                                         Val         200              400                   ROUGE_L =                             ,                                            (5)
+                                                                                                             RLCS + 𝛽 2 PLCS
+                                         Train       861              1722
+ Object detection dataset [69]
+                                         Val         228              456                   where RLCS and PLCS are recall and precision of LCS, respectively. The
+                                         Train       6406             12 812                parameter 𝛽 is typically set to 1.2 [62].
+ Total
+                                         Val         1409             2818                          LCS(X,Y)                LCS(X,Y)
+                                                                                            RLCS =             and PLCS =            ,                         (6)
+                                                                                                       𝑚                        𝑛
+                                                                                            where 𝑚 is the length of the reference caption, X, and 𝑛 is the length
+where 𝑐 is the length of the generated caption, 𝑟 is the reference corpus                   of the generated caption, Y.
+length. Then, the BLEU score is calculated as:
+                  ( 𝑛                     )                                                 4.4.3. METEOR
+                    1∑                                                                         METEOR (Metric for Evaluation of Translation with Explicit Order-
+BLEU = BP × exp           log(𝑝𝑟𝑒𝑐𝑖𝑠𝑖𝑜𝑛𝑖 ) ,                          (4)
+                    𝑛 𝑖=1                                                                   ing) [74] calculates the number of exact word matches and partial
+                                                                                            matches (i.e., alignment), allowing for the inclusion of synonyms and
+where 𝑛 is set as 4 in the baseline.
+                                                                                            paraphrases. The alignment between the generated captions and refer-
+                                                                                            ence captions is computed while minimizing the number of chunks by
+4.4.2. ROUGE_L
+                                                                                            matching exact words word by word using WordNet synonyms [77],
+    Similar to BLEU, ROUGE (Recall-Oriented Understudy for Gisting
+                                                                                            stem tokens, and paraphrases. A chunk is a set of consecutive words in
+Evaluation) [73] measures the overlap of 𝑛-grams in the human refer-                        an alignment. Ranging from 0% to 100%, a higher METEOR score in-
+ence captions that appear in the machine-generated caption. ROUGE_L                         dicates better similarity between the generated and reference captions.
+is a variant of the ROUGE metric that focuses on the longest common                         The METEOR score is calculated as follows:
+subsequence (LCS) between the generated and reference captions. The                                                         Precision × Recall
+idea behind ROUGE-L is to emphasize the longest matching sequence                           METEOR = (1 − Penalty) ×                                            (7)
+                                                                                                                         𝛼Precision + (1 − 𝛼)Recall
+
+                                                                                        9
+Y. Jung et al.                                                                                                                                       Automation in Construction 165 (2024) 105483
+
+
+                  (                                     )𝛽                                           agreement between the generated captions and the reference captions.
+                            # of chunks                                                              To enhance its robustness, this paper adopts CIDEr-D as a variant of
+Penalty = 𝛾 ×                                                ,                           (8)
+                      # of unigrams matched                                                          the CIDEr metric. CIDEr-D encourages models to produce diverse and
+where 𝛼 is a parameter for controlling relative weights of precision                                 distinct captions for a given image by making two key modifications.
+and recall. The default value of 𝛼 is set as 0.9. The parameter 𝛽 is for                             First, stemming is removed, ensuring that the correct forms of words are
+controlling the shape of the penalty as a function of fragmentation. The                             utilized rather than mapping singular and plural forms and different
+default value of 𝛽 is 3. The parameter 𝛾 is a relative weight assigned to                            tenses of verbs to the same token. Second, a Gaussian penalty is
+the fragmentation penalty. The default value of 𝛾 is set as 0.5.                                     introduced, which mitigates cases in the basic CIDEr that yield higher
+                                                                                                     scores when words of higher confidence are repeatedly used in lengthy
+                 𝑚                          𝑚
+Precision =             and     Recall =       ,                                         (9)         sentences. The changes in CIDEr-D result in the following equation:
+                 𝑤𝑔                         𝑤𝑟
+                                                                                                                             10 ∑
+                                                                                                                                      −(𝑙(𝑐𝑖 )−𝑙(𝑠𝑖𝑗 ))2       min(𝑔 𝑛 (𝑐𝑖 ), 𝑔 𝑛 (𝑠𝑖𝑗 )) ⋅ 𝑔 𝑛 (𝑠𝑖𝑗 )
+where 𝑚 is the number of matched tokens (unigrams) between the                                       CIDEr-D𝑛 (𝑐𝑖 , 𝑆𝑖 ) =        𝑒          2𝜎 2          ×                                             , (13)
+generated caption and the reference caption. 𝑤𝑔 is the number of words                                                       𝑚 𝑗                                     ‖𝑔 𝑛 (𝑐𝑖 )‖ ‖𝑔 𝑛 (𝑠𝑖𝑗 )‖
+in the generated caption, while 𝑤𝑟 is the number of words in the
+                                                                                                     where 𝑙(𝑐𝑖 ) and 𝑙(𝑠𝑖𝑗 ) are the length of generated and reference sen-
+reference caption.
+                                                                                                     tences, respectively. 𝜎 is typically set as 6. The final CIDEr-D is calcu-
+                                                                                                     lated in a similar manner to CIDEr.
+4.4.4. SPICE
+                                                                                                                           1 ∑
+                                                                                                                               𝑁
+    While traditional evaluation metrics primarily focus on 𝑛-gram over-
+                                                                                                     CIDEr-D(𝑐𝑖 , 𝑆𝑖 ) =         CIDEr-D𝑛 (𝑐𝑖 , 𝑆𝑖 ),                                                      (14)
+lap for linguistic tasks, SPICE (Semantic Propositional Image Caption                                                      𝑁 𝑛=1
+Evaluation) [76] leverages the semantic structure of scene descriptions
+                                                                                                     where 𝑁 is set as 4.
+to assess the semantic quality of generated captions. To generate se-
+mantic scene graphs, reference and machine-generated captions are
+                                                                                                     4.5. Model setup
+parsed through dependency parse trees that encode objects, attributes,
+and relations. The similarity of generated and reference scene graphs
+                                                                                                         The visual transformer encoder of VisualSiteDiary is initiated by
+is based on the F1-score over matching tuples in the generated and
+                                                                                                     mPLUG [58] as the backbone of VisualSiteDiary. Following the setting
+reference scene graphs. The use of WordNet [77] synonymy, following
+                                                                                                     of mPLUG, the text encoder is initiated by the first 6 layers of the
+the approach of METEOR, allows SPICE to consider synonymous ex-
+                                                                                                     BERT𝑏𝑎𝑠𝑒 [51], and the text decoder is initialized using the last 6 layers
+pressions while evaluating the captions. The SPICE score is reported on
+                                                                                                     of the BERT𝑏𝑎𝑠𝑒 . For the pseudo region feature layer, the number of
+a scale from 0% to 100%, with 0% indicating no semantic similarity and
+                                                                                                     cluster centers 𝐾 is set as 4. For high-level knowledge pretraining, we
+100% representing a perfect semantic alignment between the generated
+                                                                                                     (pre)trained our model for 5 epochs with a learning rate of 1e−5 and
+and reference captions.
+                                                                                                     batch size of 64 using AdamW [78], which is a variant of the popular
+                                                                                                     Adam optimization by decoupling the weight decay from the gradient-
+4.4.5. CIDEr
+                                                                                                     based update. Next, VisualSiteDiary is fine-tuned with cross-entropy loss
+    CIDEr (Consensus-based Image Description Evaluation) [75] is de-
+                                                                                                     for 20 epochs with a learning rate of 1e−5 and a batch size of 64 using
+signed to consider consensus among multiple reference captions by
+                                                                                                     the AdamW optimizer with a weight decay of 0.02. The resolution for
+employing a Term Frequency Inverse Document Frequency (TF-IDF)
+                                                                                                     all input images is set to 384 × 384. Additionally, the maximum length
+weighting for each 𝑛-gram across the dataset. The core idea behind the
+                                                                                                     of the generated captions is set as 25. All experiments are conducted
+CIDEr metric is that 𝑛-grams that frequently appear across all images in
+                                                                                                     on a single A100 GPU and with five random seeds, with average and
+the dataset should be assigned lower weights since they are likely to be
+                                                                                                     standard deviation reported.
+less informative (e.g., ‘a’ or ‘the’). The occurrence of an 𝑛-gram 𝑤𝑘 in
+a reference sentence 𝑠𝑖𝑗 is represented by ℎ𝑘 (𝑠𝑖𝑗 ), while the occurrence                           5. Results and discussion
+in a generated sentence 𝑐𝑖 is denoted by ℎ𝑘 (𝑐𝑖 ). The TF-IDF weighting
+𝑔𝑘 (𝑠𝑖𝑗 ) for each 𝑛-gram 𝑤𝑘 is computed as follows:                                                    In this section, we examine the quality of our new VSD dataset and
+                                       (                                             )
+                   ℎ𝑘 (𝑠𝑖𝑗 )                                 |𝐼|                                     the effects of the design decisions that distinguish VisualSiteDiary from
+𝑔𝑘 (𝑠𝑖𝑗 ) = ∑                    + log ∑                       ∑                       , (10)        baseline mPLUG through a number of analyses and ablation studies.
+                 𝑤𝑙 ∈𝛺 ℎ𝑙 (𝑠𝑖𝑗 )               𝐼𝑝 ∈𝐼 min(1, 𝑞 ℎ𝑘 (𝑠𝑝𝑞 ))
+              ⏟⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏟                                                                      Additionally, two real-world applications are presented: (1) automated
+                                   ⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏞⏟
+           TF of each 𝑛-gram 𝑤𝑘            the rarity of 𝑤𝑘 using its IDF                            DCR creation, and (2) text-to-image retrieval for multimedia content
+                                                                                                     management to highlight the practical utility of VisualSiteDiary.
+where 𝛺 is the vocabulary containing all 𝑛-grams and 𝐼 is the total
+number of images in the dataset.
+                                                                                                     5.1. Analysis of dataset quality
+   The CIDEr𝑛 score for 𝑛-grams of length 𝑛 is calculated by computing
+the average cosine similarity between the generated sentence (𝑐𝑖 ) and                                   For superstructure activities, since the original datasets [12,54]
+the reference sentences (𝑆𝑖 = {𝑠𝑖1 , … , 𝑠𝑖𝑚 }) for image 𝐼𝑖 :                                       adopt a more simple linguistic schema and contain many consecutive
+                       1 ∑ 𝑔 (𝑐𝑖 ) ⋅ 𝑔 (𝑠𝑖𝑗 )
+                               𝑛        𝑛
+                                                                                                     images, the predicted captions might not include sufficient information
+CIDEr𝑛 (𝑐𝑖 , 𝑆𝑖 ) =                                 ,                                  (11)
+                       𝑚 𝑗 ‖𝑔 𝑛 (𝑐𝑖 )‖ ‖𝑔 𝑛 (𝑠𝑖𝑗 )‖                                                  for daily construction reports, and the models could suffer from unseen
+                                                                                                     images. That is, the model can be vulnerable to overfitting based on
+where 𝑔 𝑛 is a vector formed by 𝑔𝑘 corresponding to all 𝑛-grams of length                            such datasets. To verify this, we separately fine-tune the mPLUG model
+𝑛 and ‖𝑔 𝑛 ‖ is the magnitude of the vector 𝑔 𝑛 .                                                    using the original datasets and VSD dataset. The fine-tuned models
+                                                                                                     are then evaluated with their corresponding validation sets. Instead of
+                      1 ∑
+                          𝑁
+CIDEr(𝑐𝑖 , 𝑆𝑖 ) =           CIDEr𝑛 (𝑐𝑖 , 𝑆𝑖 ),                                         (12)          comparing the overall performance, the metric values of each image
+                      𝑁 𝑛=1
+                                                                                                     are calculated one by one, and the result is summarized to present the
+where 𝑁 is set as 4.                                                                                 performance distribution. In Fig. 11, the metric values of each image
+   The CIDEr metric utilizes TF-IDF weighting to determine the im-                                   are divided by their maximum value, and the number of images is
+portance of individual 𝑛-grams based on their frequency across the                                   accumulated as the percentage along with ascending metric values.
+dataset, allowing it not to be bound to a specific range. Typically,                                 For the ACTV [12] and SAFE [54] datasets, Fig. 11(a) shows that
+CIDEr scores are positive values, with higher scores indicating better                               more than half of the images reach the highest score as well as the
+
+                                                                                                10
+Y. Jung et al.                                                                                                                          Automation in Construction 165 (2024) 105483
+
+
+
+
+Fig. 11. The performance distribution based the original [12,13,54] and VSD validation sets. x: the min–max normalized metric values; y: accumulated percentage. Figure (a)
+shows a sharp rise at the start or the end of the curve, demonstrating vulnerability to overfitting when using the original dataset. In contrast, Figure (b) presents smoother changes
+in the evaluation metric values on our VSD dataset, indicating mitigation of the extreme distribution observed in the original dataset and enhanced quality.
+
+
+Table 3
+The performance improvement of tower crane images on the ACID validation set.
+ Training dataset                                              BLEU@1          BLEU@2          BLEU@3          BLEU@4          METEOR           ROUGE_L          CIDEr        SPICE
+ Using images from [12,13,54] (Before augmentation)            67.4            58.8            51.4            42.2            37.5             65.8             203.5        65.9
+ Augmentation with images from [69] (VSD dataset)              69.8            60.5            53.2            44.7            38.8             67.5             252.8        67.3
+
+
+
+sharply climbing curves at the start and end. The situation indicates                         5.2. Overall performance of VisualSiteDiary
+that the difficulties of the validation images are not evenly distributed.
+By removing some consecutive images and re-formulating captions to                                Table 4 shows the overall performance of VisualSiteDiary along with
+satisfy the DCR application, VSD dataset leads to a better-distributed                        the state-of-the-art baselines on VSD dataset. We observe that mPLUG
+performance on each validation image. Fig. 11(b) presents more smooth                         is noticeably better than the other two baseline models (CLIP [57] and
+changes in the metric values, and the percentage of the extreme values                        GiT [80]), presumably due to its effective pre-training task. Based on
+becomes less among the whole datasets.                                                        this result, mPLUG forms the backbone of VisualSiteDiary, and PR and
+    On the contrary, for substructure activities, the ratio of very low                       HP are applied on top to further improve the overall performance.
+scores in the performance distribution based on the original ACID                             By comparing VisualSiteDiary and mPLUG from Table 4, we observe
+dataset [13] is much higher than the other two datasets in Fig. 11(a).                        that VisualSiteDiary outperforms the mPLUG baseline in all five metrics
+The extremely high score distribution in the ACTV [12] and SAFE                               and 0.7 points on the overall average. We also conduct a significance
+dataset [54] is due to the adopted synonym substitution strategy for                          test comparing VisualSiteDiary with mPLUG for a more robust evalu-
+augmenting the caption number up to 5 times greater and redun-                                ation. Since a single performance score is insufficient to validate the
+dant scenes across training and validation sets. The ACID dataset was                         effectiveness of the model, we follow [81] and apply the test with
+annotated by engineers using different personal styles and as such,                           a significance level of 0.01. We observe that the 𝑝-value is less than
+the dataset does not contain suggestions of objects and corresponding                         0.01 for the overall score validating the effectiveness of VisualSiteDiary
+actions. While the captioning principle makes the ACID’s captions more                        and performance improvement over the baseline model (Details are
+random and various, the training image samples are not enough and                             provided in Appendix C).
+cause a poorer performance on the ACID dataset. In addition to ad-
+dressing extreme distribution, VSD dataset also mitigates the negative
+                                                                                              5.3. Ablation studies and qualitative analyses
+impact of different captioning styles, revising them to be focused on the
+important work purpose for further DCR application. As demonstrated
+in Fig. 11(b), the ratio of very low performance decreases, and the                              In Sections 3.2 and 3.3, we described two methods of PR and
+distributions of the three datasets become more similar to each other.                        HP, to improve the performance of VisualSiteDiary. In this section, we
+    Additionally, through the augmentation from the SODA dataset [69]                         demonstrate their advantage through ablation studies and qualitative
+using pseudo captions, additional images of tower cranes are added                            analyses.
+to alleviate the imbalance of the number of objects that could cause
+biases. Using all the 94 images of tower cranes in the ACID validation                        5.3.1. Quantitative results
+set, the models based on the dataset with and without augmentation                                Ablation studies are conducted with and without each method, and
+are evaluated. Table 3 presents that all the metrics are improved                             the results are summarized in Table 4. We observe that both PR and HP
+about 2% after augmentation. By introducing more scenes without                               improve the mPLUG baseline model (avg. score from 110.3 to 110.7
+additional labor work but with image-level information to filter out                          for PR and from 110.3 to 110.8 for HP) and, when combined, further
+wrong predictions, the training dataset can be successfully enhanced,                         boost the performance (up to 111.0), verifying the effectiveness and
+and the feasibility of incorporating other available datasets from vision                     the orthogonality of the two methods. We analyze the model-generated
+tasks is validated.                                                                           captions in detail, in the next section.
+
+                                                                                         11
+Y. Jung et al.                                                                                                                       Automation in Construction 165 (2024) 105483
+
+Table 4
+Overall, ablation, and style-specific results of VisualSiteDiary. All experiments are the average of 5 runs with random seeds. Best performance marked in bold.
+ Dataset: VSD                                    BLEU@4                METEOR                 ROUGE_L                CIDEr                   SPICE                 Avg.
+ 1. Overall results
+   • CLIP [79]                                   44.7 (±0.2)           32.9 (±0.4)            60.3 (±0.4)            235.9 (±1.0)            42.9 (±0.7)           83.3 (±0.5)
+   • GiT [80]                                    44.8 (±0.2)           32.8 (±0.3)            60.1 (±0.5)            237.2 (±1.3)            43.4 (±0.4)           83.2 (±0.6)
+   • mPLUG [58]                                  57.2 (±0.4)           39.6 (±0.1)            70.4 (±0.2)            331.5 (±2.3)            52.8 (±0.3)           110.3 (±0.6)
+   • VisualSiteDiary (p-value < 0.01)            58.0 (±0.3)           39.9 (±0.1)            70.6 (±0.2)            333.7 (±3.0)            53.0 (±0.2)           111.0 (±0.7)
+ 2. Ablation results
+   • VisualSiteDiary                             58.0 (±0.3)           39.9 (±0.1)            70.6 (±0.2)            333.7 (±3.0)            53.0 (±0.2)           110.0 (±0.7)
+   • VisualSiteDiary w/o PR                      57.6 (±0.3)           39.8 (±0.2)            70.5 (±0.3)            333.4 (±2.2)            52.9 (±0.2)           110.8 (±0.6)
+   • VisualSiteDiary w/o HP                      57.8 (±0.2)           39.9 (±0.1)            70.5 (±0.2)            332.5 (±2.5)            52.9 (±0.2)           110.7 (±0.6)
+   • VisualSiteDiary w/o PR & HP                 57.2 (±0.4)           39.6 (±0.1)            70.4 (±0.2)            331.5 (±2.3)            52.8 (±0.3)           110.3 (±0.6)
+ 3. Style-specific results                                Avg. word count                            Avg. score (compact)                             Avg.score (detailed)
+   • VisualSiteDiary (Default)                                   9.9                                      98.3 (±0.4)                                    105.6 (±0.6)
+   • VisualSiteDiary-Compact                                     8.6                                     113.4 (±𝟎.𝟐)                                     74.4 (±0.6)
+   • VisualSiteDiary-Detailed                                   11.2                                      72.5 (±0.5)                                    122.8 (±𝟎.𝟑)
+
+
+
+5.3.2. Qualitative results                                                                   ‘fixing and tying’ rather than a simplistic ‘tying’, and ‘applying mortar
+    To delve into the effectiveness of VisualSiteDiary in utilizing im-                      to ceramic tile’ rather than ‘laying ceramic tile’. Therefore, through
+age information with the support of PR and HP, we compare the                                these qualitative comparisons, we demonstrate the effective ability of
+results between VisualSiteDiary and the vanilla mPLUG. The qualitative                       VisualSiteDiary in generating image captions that fully contain ‘what’
+comparisons reveal noticeable differences in the generated captions                          and ‘how’ information using the PR and HP strategy for the DCR
+(Detailed examples of qualitative results are provided in Fig. A.15                          creation.
+(Appendix A)). For example, the vanilla mPLUG created ‘a wheel loader
+arrives on site’. caption, not reflecting the fact that the image has                        5.4. Variable style-caption generation
+two different machines, a wheel loader and a dump truck. However,
+VisualSiteDiary generated a more accurate caption, ‘earthwork with a                             Undoubtedly, superintendents and project managers have different
+wheel loader and a dump truck for site work’, correctly incorporating                        preferred writing styles. Therefore, providing different caption styles
+information about both pieces of equipment. Moreover, in cases where                         based on the user’s preference is beneficial and crucial to satisfy various
+multiple machines were present, such as an excavator and two doz-                            users. Based on this motivation, we provide two additional versions of
+ers, VisualSiteDiary accurately presented image explanations with all                        VisualSiteDiary (VisualSiteDiary-Compact and VisualSiteDiary-Detailed) to
+equipment information, while the baseline mPLUG model generated                              accommodate a broader range of users who may prefer different writing
+‘two excavators’ only (Fig. A.15). Similarly, the vanilla mPLUG failed                       styles. Each version is fine-tuned using its corresponding style of gold
+to decipher concrete vibrator information, while our model generated                         captions. Note that this is possible due to the unique characteristic
+the caption with concrete vibrator information. These results indicate                       (having two distinct styles of gold captions per image) of the VSD
+                                                                                             dataset. Using these two variants together allows users to pick and
+that incorporating regional features implicitly through our PR method
+                                                                                             use the one corresponding to their preferred caption style, as a result
+allows VisualSiteDiary better to recognize accurate objects than the
+                                                                                             providing broader options to the users.
+baseline mPLUG model.
+                                                                                                 VisualSiteDiary is analyzed and the two variants in detail, and the
+    Another advantage of VisualSiteDiary lies in its good proficiency in
+                                                                                             results are summarized in the third section of Table 4 (note that the
+handling complex and challenging images that are difficult to interpret.
+                                                                                             original VisualSiteDiary is denoted by VisualSiteDiary (Default)). Here,
+Considering that the images acquired from original datasets encompass
+                                                                                             the default model shows low scores when the gold captions are re-
+diverse weather and lighting conditions, as well as various construction
+                                                                                             stricted to a specific style (98.3 w.r.t. compact gold captions and 105.6
+stages, such variability may pose challenges when directly applying
+                                                                                             w.r.t. detailed gold captions). This is because the default model, trained
+state-of-the-art approaches [82,83]. For instance, as shown in Fig. A.15,
+                                                                                             with both styles of captions, generates an arbitrary style of caption
+the gold caption contains four heavy equipment such as ‘with two
+                                                                                             given an input image (i.e., VisualSiteDiary (Default) generates compact
+wheel loaders and two excavators for foundation’. However, the actual
+                                                                                             captions for some images, detailed captions for some others, and mixed-
+objects in the image under cloudy weather and overexposed in the
+                                                                                             style captions for the rest). Due to this unpredictable behavior, the
+brightest parts of the image are two excavators, one wheel loader, and                       default VisualSiteDiary is inappropriate for generating captions with
+a dump truck. Despite this complexity and difficulty in deciphering                          the style set by the user. On the other hand, the two variants are
+the scene, VisualSiteDiary generated a correct caption that accounted                        each trained with only a single style of gold captions, thereby able to
+for the dump truck, understanding the complex content of the image.                          generate a fixed style of captions. The results showing much higher
+Since HP pre-training enables the model to learn the difficulty level                        scores on their corresponding caption styles (113.4 w.r.t compact gold
+of captioning tasks, VisualSiteDiary can leverage the learned difficulty                     captions for VisualSiteDiary-Compact and 122.8 w.r.t detailed gold cap-
+information and generate more precise captions, even in challenging                          tions for VisualSiteDiary-Detailed) and the average word counts of the
+scenarios.                                                                                   three models (VisualSiteDiary-Compact (8.6) < VisualSiteDiary (Default)
+    By incorporating regional information and learning the level of                          (9.9) < VisualSiteDiary-Detailed (11.2)) verify this assumption.
+difficulty in each image, VisualSiteDiary achieves superior results, gen-                        As a result, by utilizing VisualSiteDiary-Compact and VisualSiteDiary-
+erating more contextually relevant captions. In contrast, the baseline                       Detailed together, the users can generate their preferred style of cap-
+mPLUG struggles to comprehend visual information accurately. For                             tions for any input image, a practical advantage over other image
+instance, the caption generated by the baseline mPLUG ‘a worker                              captioning models.
+wearing a hard hat is standing on scaffold’ misses the crucial action of
+‘tying scaffold’. On the other hand, VisualSiteDiary can decipher images                     5.5. Application 1: VisualSiteDiary for automated daily construction report
+with precise information based on actions, purposes, and objects. For                        (DCR)
+example, instead of merely deciphering the purpose as ‘for wall’, Visual-
+SiteDiary understands the work purpose as ‘for exterior wall’. Similarly,                       Today, reality mapping which automatically maps images and vide-
+VisualSiteDiary can detail action information, generating captions like                      oframes against floor plans, organizes them over a project timeline in
+
+                                                                                        12
+Y. Jung et al.                                                                                                                   Automation in Construction 165 (2024) 105483
+
+
+
+
+Fig. 12. Automated DCR generation using VisualSiteDiary. Image descriptions are generated based on the compact style caption. The captured on-site visuals contain timestamps
+(i.e., ‘when’) and offer spatial context (i.e., ‘where’) such as Level 1 Zone A via reality mapping.
+
+
+
+a measurable form, provides the ‘when’ and ‘where’ context of daily                       5.6. Application 2: Image-text retrieval for multimedia content management
+construction photologs. To create DCRs using this data, two challenges
+should have been addressed [6,7]: providing (1) ‘what’ specific ac-                           VisualSiteDiary enables the integration of images and text-based in-
+tivities take place and (2) ‘how’ the site has evolved and changed                        formation. By generating text-based image descriptions, VisualSiteDiary
+over time. In this work, we demonstrated the potential of integrating                     extends visual-based content to the multimedia dataset (images with
+VisualSiteDiary with modern reality mapping solutions. By combining                       human-readable descriptions) and enables users to do a proper text-
+CV and NLP techniques, VisualSiteDiary allows the automatic genera-                       based search using natural language or queries. Table 5 shows the
+tion of descriptive textual information (‘what’ and ‘how’ information)                    result of text-to-image retrieval, where users input object-level text to
+for images captured on the construction site. When jobsite photos are                     get relevant images. For instance, using ‘masonry’ as a query retrieves
+captured and uploaded to our VisualSiteDiary, the uploaded visuals                        relevant images with 87.6% of recall value. These text-based image
+contain timestamps (i.e., ‘when’ information). On top of this, the re-                    searches are helpful to a number of applications such as identifying
+ality mapping system assists in identifying spatial context (i.e., ‘where’                most active areas of work through text queries about certain work
+information) such as Level 1 Zone A based on the visual information.                      packages; and reviewing the latest work for payment application.
+The generated descriptions can be integrated with the timestamp and                           To demonstrate the performance for this use-case, we compare
+spatial information, yielding the automation of DCR creation. Fig. 12                     the object-level recall value and the precision of generated captions
+shows an example of VisualSiteDiary to create DCR using real-world                        between VisualSiteDiary (ours) and the baseline mPLUG. The captions
+                                                                                          were created more accurately containing important object informa-
+project images. Also, the generated captions can be compared with the
+                                                                                          tion with VisualSiteDiary (89.5% precision) than the baseline mPLUG
+project schedule as a means of simple progress tracking, since they
+                                                                                          (88.9% precision). With more accurate captions, VisualSiteDiary con-
+include significant activities that align with the master schedule activity
+                                                                                          ducts the text-to-image retrieval task better with a 78.4% recall value
+descriptions.
+                                                                                          than the baseline mPLUG (77.5% recall value).
+    Another line of our method application for automated DCR in-
+                                                                                              To conduct an interactive search and exploration within the image-
+volves using time-lapse images from installed closed-circuit television
+                                                                                          text paired dataset, images are deployed into a vector space by ex-
+(CCTV) cameras on the jobsite. To demonstrate the capabilities of
+                                                                                          tracting visual features from the VisualSiteDiary visual encoder. Fig. 14
+VisualSiteDiary, we use 12 images from one-day time-lapse images.
+                                                                                          shows an example vector space of the visual features extracted from
+Given that the time-lapse images are stored in the system based on                        the VisualSiteDiary visual encoder. The vector space provides insights
+a temporal sequence, a part of generated captions is repetitive if the                    into visual similarities, including human-readable captions and high-
+jobsite environment is not much changed. To handle these images, we                       level category information. When a user selects one of their images,
+first generate each caption on each time-lapse image via VisualSiteDiary,                 our system automatically visualizes and retrieves related images based
+and then implement a BERT-based simple extractive summarization                           on their distance (i.e., similarity) in a vector space. For example, we
+model [84] to compress the important activities. As shown in Fig. 13,                     observe that images of rebar activity are situated close to scaffold
+we can extract the significant transitions of activities and textual de-                  activity images, while concrete activity images are located nearby
+scriptions from the time-lapse images. Therefore, VisualSiteDiary proves                  formwork activities.
+its ability to generate human-readable descriptions for fully automated                       This demonstrates the expanded capabilities of VisualSiteDiary be-
+DCRs purely based on visual information. This approach not only                           yond image captioning and the effectiveness of VisualSiteDiary, which
+streamlines the reporting process but also improves the comprehensive-                    empowers users to utilize multimodal datasets intuitively and facilitates
+ness and efficiency of daily reporting in construction. Furthermore, the                  seamless coordination among different project stakeholders, such as
+images employed in the generation of those DCRs (Figs. 12 and 13) are                     owners, contractors, and subcontractors, for effective project control
+external images, not included during the training or validation phase.                    and administration. Therefore, this integration of visual and text-based
+This inference serves to illustrate the robustness and adaptability of                    information leads to an efficient search system that fosters human–
+VisualSiteDiary.                                                                          computer interaction and content management.
+
+                                                                                     13
+Y. Jung et al.                                                                                                                    Automation in Construction 165 (2024) 105483
+
+
+
+
+                     Fig. 13. An example of employing time-lapse images for DCR and daily log generation using VisualSiteDiary (compact style version).
+
+
+
+
+                 Table 5
+                 The comparison of object-level recall and accuracy in text-to-image retrieval between our VisualSiteDiary and the baseline mPLUG model. TP =
+                 True Positive.
+                  Object                   # items           Recall of objects (%)                     # of TP           Precision of captions (%)
+                                                             VisualSiteDiary          mPLUG                              VisualSiteDiary          mPLUG
+                  Dump truck               377               90.5                     92.0             202               85.1                     86.2
+                  Excavator                367               89.6                     88.8             176               94.9                     96.0
+                  Dozer                    145               72.4                     69.7             61                88.5                     85.2
+                  Wheel loader             260               81.9                     80.8             136               80.9                     76.8
+                  Backhoe loader           197               88.3                     90.4             101               87.1                     88.2
+                  Mixer truck              105               94.3                     96.2             56                89.3                     85.0
+                  Compactor                174               86.2                     86.2             79                96.2                     96.2
+                  Tower crane              179               77.7                     52.5             89                79.8                     87.3
+                  Mobile crane             144               83.3                     87.5             62                96.8                     88.7
+                  Worker                   1110              95.7                     96.4             551               96.4                     96.2
+                  Helmet                   546               34.6                     37.2             199               95.0                     96.7
+                  Vest                     142               28.2                     26.1             50                80.0                     77.1
+                  Rebar                    400               86.5                     81.5             198               87.4                     78.7
+                  Concrete                 427               66.5                     71.5             160               93.1                     87.8
+                  Masonry                  251               87.6                     80.2             126               88.1                     83.7
+                  Plastering               106               100.0                    100.0            68                77.9                     88.3
+                  Tiling                   94                66.0                     70.2             33                93.9                     94.3
+                  Scaffold                 186               52.2                     57.0             68                77.9                     85.1
+                  Formwork                 118               85.6                     61.0             75                68.0                     69.8
+                  Total                    5322              78.4                     77.5             2485              89.5                     88.9
+
+
+
+
+Fig. 14. When a user selects one of their images, the multimedia content management system retrieves related images automatically based on their distance in a vector space,
+enabling efficient search and fostering human–computer interaction.
+
+
+
+
+                                                                                     14
+Y. Jung et al.                                                                                                         Automation in Construction 165 (2024) 105483
+
+
+5.7. Strengths and limitations                                                       pre-training. Lastly, we provide two distinct fine-tuning processes that
+                                                                                     allow customization according to user preferences or documentation
+    This section highlights the notable strengths of the proposed                    requirements. As a result, VisualSiteDiary produces superior-quality
+methodology while also acknowledging potential limitations that may                  captions compared to other state-of-the-art image captioning models
+influence its applicability and effectiveness in real-world construction             with 111.0 points on average of five evaluation metrics, enhancing
+scenarios. Further research and development efforts could focus on                   flexibility and usability.
+addressing these limitations to enhance the robustness and versatility                   To validate the method, we create a comprehensive image caption-
+of the proposed approach.                                                            ing dataset called VSD, based on our new linguistic schema, which
+    Strengths:                                                                       includes important activity purposes (i.e., work purposes) for DCR gen-
+     • Innovative methodology: Introducing novel techniques like                     eration. The enhanced quality of image captioning datasets is demon-
+       pseudo-region features and high-level knowledge pretraining en-               strated by conducting a thorough comparison of the performance dis-
+       hances the Vision-Language (VL) Transformer model, VisualSite-                tribution between our VSD dataset and the three original image cap-
+       Diary, for construction image captioning, replacing costly convo-             tioning datasets from [12,13,54]. In addition, the applications of the
+       lutional operations.                                                          presented model for the purposes of generating DCRs and image-text
+     • VSD dataset coverage & caption quality: VSD is the first well-                retrieval were discussed in detail. Specifically, two external construc-
+       balanced construction image-caption dataset encompassing site-                tion project images are used to demonstrate the model’s performance
+       work, substructure activity, and superstructure activity. It en-              in DCR generation. The experimental results show that the VisualSite-
+       sures the robustness of VisualSiteDiary and adaptability for DCR              Diary achieves 89.5% precision in image-text retrieval tasks, further
+       creation and text-to-image retrieval.                                         validating the application of the presented method for multimedia
+     • Comprehensive evaluation: The proposed model, VisualSiteDiary,                content management tasks in construction. For future work, the ca-
+       is thoroughly evaluated using diverse metrics. VisualSiteDiary                pabilities of the VisualSiteDiary model can be expanded to include
+       achieves state-of-the-art performance across all five metrics, com-           other applications, such as mapping look-ahead tasks from a project
+       pared to baseline models, demonstrating its effectiveness and                 schedule, incorporating semantic segmentation for computer vision
+       robustness. On top of this, the ability of VisualSiteDiary for the            progress monitoring, and coupling with generative chatbot systems
+       DCR creation application is demonstrated with unseen real-world               such as ChatGPT. Additionally, the image captioning dataset can be
+       project images (external construction site images).                           further augmented to enhance its richness and diversity. Additional
+     • Accommodating user preferences: The VSD dataset includes two                  practical investigations with site superintendents and field managers
+       caption styles (compact and detailed), enabling separate fine-                and by using practical Key Performance Indicators (KPIs) such as
+       tuning of models for each style. This enhances applicability and              cost and schedule performance can also help with offering a deeper
+       usability in practical construction applications, catering to user            understanding of the return-on-investment of systems that build on
+       preferences.                                                                  VisualSiteDiary’s model.
+Limitations:
+                                                                                     CRediT authorship contribution statement
+     • Inherent challenges in fine-tuning: While the VSD dataset covers
+       diverse construction scenarios, inherent limitations in fine-tuning
+       for entirely new scenes such as interior furniture and miscel-                    Yoonhwa Jung: Conceptualization, Data curation, Formal analysis,
+       laneous interior accessories and MEP activities may affect the                Investigation, Methodology, Project administration, Resources, Valida-
+       quality of captions in the construction contexts.                             tion, Visualization, Writing – original draft, Writing – review & edit-
+     • Need for real-world survey: Although validated with VSD for the               ing. Ikhyun Cho: Conceptualization, Data curation, Formal analysis,
+       model performance and external data for demonstrating appli-                  Methodology, Validation. Shun-Hsiang Hsu: Conceptualization, Data
+       cations, further real-world assessment via surveys to superinten-             curation, Formal analysis, Methodology, Resources, Software, Valida-
+       dents and managers may provide deeper insights into VisualSite-               tion, Visualization. Mani Golparvar-Fard: Supervision, Project admin-
+       Diary’s capabilities.                                                         istration, Conceptualization, Funding acquisition, Methodology, Writ-
+     • Discrete controllability: Fine-tuning strategies separately accom-            ing – original draft, Writing – review & editing.
+       modate discrete user preferences, potentially limiting control-
+       lability when users seek intermediate options between caption                 Declaration of competing interest
+       styles (e.g., 0.3 of detail level in the range of compact (level 0) to
+       detail (level 1)).
+                                                                                         The authors declare the following financial interests/personal rela-
+                                                                                     tionships which may be considered as potential competing interests:
+6. Conclusions
+                                                                                     Yoonhwa Jung reports financial support was provided by National
+                                                                                     Science Foundation.
+    This paper proposes a novel vision transformer-based model, called
+VisualSiteDiary, that automatically generates image content descrip-
+tions on various scenarios, unlocking a new way of two real-world                    Data availability
+applications: (1) automated daily construction report system and (2)
+text-to-image retrieval for multimedia content management. In con-                      I have shared the link to our data.
+trast to previous approaches, VisualSiteDiary directly employs a pure
+transformer to process images as sequences of patches, rather than the
+traditional reliance on CNNs with bounding boxes. More specifically,                 Acknowledgment
+we incorporate three key approaches using a pretrained large vision-
+language model. First, we effectively embedded pseudo visual region                      This material is in part based upon works supported by the National
+features (PR) into the model, addressing the loss of spatial information             Science Foundation, United States [1446765,2020227]. The opinions,
+caused by the flattening operation in the ViT architecture. Second, we               findings, and conclusions or recommendations expressed are those of
+developed a novel pre-training strategy called high-level knowledge                  the authors and do not reflect the views of the NSF, or the companies
+pre-training (HP) to leverage the knowledge of difficulty levels during              mentioned above.
+
+                                                                                15
+Y. Jung et al.                                                                                                                  Automation in Construction 165 (2024) 105483
+
+
+
+
+                                  Fig. A.15. Qualitative results comparing our VisualSiteDiary results with baseline mPLUG results.
+
+
+Appendix A. Examples of generated captions via VisualSiteDiary                        Table B.6
+                                                                                      The statistics of original construction image-caption datasets.
+                                                                                       Dataset                                                   Image #        Caption #
+    VisualSiteDiary is presented for automated DCR creation. To demon-
+strate the effectiveness of the support of the PR and HP methods, 10                                                               Train         3200           6735
+                                                                                       ACID [13]
+                                                                                                                                   Val           800            1493
+images from the bottom 100 were randomly selected by sorting them
+                                                                                                                                   Train         4601           23 005
+in descending order based on the CIDEr value. This experiment allows                   Construction activities [12]
+                                                                                                                                   Val           1150           5750
+us to demonstrate performance on the most difficult images to create
+                                                                                                                                   Train         3648           18 240
+captions. Fig. A.15 shows qualitative results of comparing the generated               Construction unsafe behavior [54]
+                                                                                                                                   Val           1563           7815
+captions for these images for both VisualSiteDiary and the baseline
+mPLUG model. Our demo2 provides several live inference examples.
+
+Appendix B. Original image-caption datasets in construction                           validation sets. Moreover, unlike other datasets which simply substitute
+                                                                                      verbs with synonyms, VSD includes two distinct types of image descrip-
+    Existing construction image-caption pair datasets [12,13,54] are                  tions (compact and detailed), enhancing usability and accommodating
+limited in scope, covering only specific scenarios such as earthwork                  user preferences. Although the original datasets appear extensive in
+or superstructure activities separately as discussed in Section 4.2. Con-             terms of images and captions (See Table B.6), their redundancy both
+sequently, research based on these datasets lacks comprehensive vali-                 in images and captions and lack of real-world validation are notable
+dation across diverse construction contexts. Additionally, the division               limitations.
+of training/validation sets within these datasets often results in redun-
+dancy, with same poses, actions, and jobsite environments depicted. To                Appendix C. Significance test
+address these limitations, we combined existing image-caption datasets
+to encompass a broader range of construction activities and restruc-                      Deep learning models, with their numerous hyperparameters and
+tured training/validation sets to eliminate redundancy and balance                    non-convexity, converge based on random initialization during train-
+dataset composition, resulting in no redundancy across the training and               ing. The significance test aims to determine the superior and statis-
+                                                                                      tically significant algorithm by analyzing empirical validation score
+                                                                                      distributions. Following the approach from [81], we compared our
+   2
+     Demo is made available at https://github.com/joonv2/VisualSiteDiary/             method (VisualSiteDiary) with a baseline model (mPLUG). The input of
+tree/demo.                                                                            this significance test consists of three components (results from method
+
+                                                                                 16
+Y. Jung et al.                                                                                                                          Automation in Construction 165 (2024) 105483
+
+
+A, results from method B, and a confidence level) to evaluate whether                          [17] S. Baek, W. Jung, S.H. Han, A critical review of text-based research in construc-
+one method is ‘‘stochastically greater’’ than the other, with details                               tion: Data source, analysis method, and implications, Autom. Constr. 132 (2021)
+provided in [81]. The test yields a minimum epsilon value, interpreted                              103915, http://dx.doi.org/10.1016/j.autcon.2021.103915.
+                                                                                               [18] J.J. Lin, M. Golparvar-Fard, Construction progress monitoring using cyber-
+to ascertain the significance of the results as follows:
+                                                                                                    physical systems, in: Cyber-Phys. Syst. Built Environ., Springer International
+                                                                                                    Publishing, Cham, 2020, pp. 63–87, http://dx.doi.org/10.1007/978-3-030-
+     • 𝜖 > 0.5: We cannot say A is better than B.
+                                                                                                    41560-0_5.
+     • 𝜖 ≤ 0.5: A is better than B.                                                            [19] A. Ibrahim, M. Golparvar-Fard, K. El-Rayes, Multiobjective optimization of reality
+     • 𝜖 = 0: A is stochastically dominant over B.                                                  capture plans for computer vision–driven construction monitoring with camera-
+                                                                                                    equipped UAVs, J. Comput. Civ. Eng. 36 (5) (2022) 04022018, http://dx.doi.
+    With a confidence level of 0.99 (equivalent to a significance level of                          org/10.1061/(ASCE)CP.1943-5487.0001032.
+0.01), the significance test conducted on our model yielded minimum 𝜖                          [20] I.K. Brilakis, L. Soibelman, Y. Shinagawa, Construction site image retrieval based
+values of 0. This outcome indicates that VisualSiteDiary exhibits stochas-                          on material cluster recognition, Adv. Eng. Inform. 20 (4) (2006) 443–452,
+tic superiority over the mPLUG baseline at a confidence level of 0.99,                              http://dx.doi.org/10.1016/j.aei.2006.03.001.
+affirming the efficacy of our approach with a statistical significance of                      [21] A. Dimitrov, M. Golparvar-Fard, Vision-based material recognition for automated
+𝑝 < 0.01.                                                                                           monitoring of construction progress and generating building information mod-
+                                                                                                    eling from unordered site image collections, Adv. Eng. Inform. 28 (1) (2014)
+                                                                                                    37–49, http://dx.doi.org/10.1016/j.aei.2013.11.002.
+References                                                                                     [22] J. DeGol, M.G. Fard, D. Hoiem, Geometry-informed material recognition, in: 2016
+                                                                                                    IEEE Conference on Computer Vision and Pattern Recognition, CVPR, 2016, pp.
+ [1] D.A. Pogorilich, The daily report as a job management tool: a publication                      1554–1562, http://dx.doi.org/10.1109/CVPR.2016.172.
+     of the American Association of Cost Engineers, Cost Eng. 34 (2) (1992)                    [23] W. Fang, P.E. Love, H. Luo, S. Xu, A deep learning fusion approach to retrieve
+     23–25, URL https://www.proquest.com/scholarly-journals/daily-report-as-job-                    images of People’s unsafe behavior from construction sites, Dev. Built Environ.
+     management-tool/docview/220432251/se-2. (Access date 27 July 2023).                            12 (2022) 100085, http://dx.doi.org/10.1016/j.dibe.2022.100085.
+ [2] M. Golparvar-Fard, J. Bohn, J. Teizer, S. Savarese, F. Peña-Mora, Evaluation              [24] J.J. Lin, K.K. Han, M. Golparvar-Fard, A framework for model-driven acquisition
+     of image-based modeling and laser scanning accuracy for emerging automated                     and analytics of visual data using UAVs for automated construction progress
+     performance monitoring techniques, Autom. Constr. 20 (8) (2011) 1143–1155,                     monitoring, in: Computing in Civil Engineering 2015, 2015, pp. 156–164, http:
+     http://dx.doi.org/10.1016/j.autcon.2011.04.016.                                                //dx.doi.org/10.1061/9780784479247.020.
+ [3] G.-F. Mani, F. Peña-Mora, Application of visualization techniques for construction        [25] J.J. Lin, A. Ibrahim, S. Sarwade, M. Golparvar-Fard, Bridge inspection with aerial
+     progress monitoring, in: Computing in Civil Engineering (2007), 2007, pp.                      robots: Automating the entire pipeline of visual data capture, 3D mapping, defect
+     216–223, http://dx.doi.org/10.1061/40937(261)27.                                               detection, analysis, and reporting, J. Comput. Civ. Eng. 35 (2) (2021) 04020064,
+ [4] J.-R. Lin, Z.-Z. Hu, J.-P. Zhang, F.-Q. Yu, A natural-language-based approach to
+                                                                                                    http://dx.doi.org/10.1061/(ASCE)CP.1943-5487.0000954.
+     intelligent data retrieval and representation for cloud BIM, Comput.-Aided Civ.
+                                                                                               [26] S.-H. Hsu, H.-T. Hung, Y.-Q. Lin, C.-M. Chang, Defect inspection of indoor
+     Infrastruct. Eng. 31 (1) (2016) 18–33, http://dx.doi.org/10.1111/mice.12151.
+                                                                                                    components in buildings using deep learning object detection and augmented
+ [5] J. Cho, G. Lee, A chatbot system for construction daily report information man-
+                                                                                                    reality, Earthq. Eng. Eng. Vib. (2023) 1–14, http://dx.doi.org/10.1007/s11803-
+     agement, in: ISARC. Proceedings of the International Symposium on Automation
+                                                                                                    023-2152-5.
+     and Robotics in Construction, Vol. 36, IAARC Publications, 2019, pp. 429–437,
+                                                                                               [27] P. Tang, D. Huber, B. Akinci, Characterization of laser scanners and algorithms
+     http://dx.doi.org/10.22260/ISARC2019/0058.
+                                                                                                    for detecting flatness defects on concrete surfaces, J. Comput. Civ. Eng. 25 (1)
+ [6] S. Chin, K. Kim, Y.-S. Kim, Generate-select-check based daily reporting system,
+                                                                                                    (2011) 31–42, http://dx.doi.org/10.1061/(ASCE)CP.1943-5487.0000073.
+     J. Comput. Civ. Eng. 19 (4) (2005) 412–425, http://dx.doi.org/10.1061/(ASCE)
+                                                                                               [28] J. Chen, Y.K. Cho, CrackEmbed: Point feature embedding for crack segmentation
+     0887-3801(2005)19:4(412).
+                                                                                                    from disaster site point clouds with anomaly detection, Adv. Eng. Inform. 52
+ [7] H.D. Jeong, D.D. Gransberg, K.J. Shrestha, Framework for advanced
+                                                                                                    (2022) 101550, http://dx.doi.org/10.1016/j.aei.2022.101550.
+     daily work report system, Mid-Am. Transp. Cent. (2015) 1–138, URL
+                                                                                               [29] R. Girshick, Fast R-CNN, in: 2015 IEEE International Conference on Computer
+     https://intrans.iastate.edu/app/uploads/2018/03/framework_for_advanced_
+                                                                                                    Vision, ICCV, 2015, pp. 1440–1448, http://dx.doi.org/10.1109/ICCV.2015.169.
+     daily_work_report_system_w_cvr.pdf. (Access date 25 Jul 2023).
+                                                                                               [30] D. Roberts, M. Golparvar-Fard, End-to-end vision-based detection, tracking and
+ [8] M. Golparvar-Fard, F. Peña Mora, S. Savarese, D4AR-A 4-dimensional aug-
+                                                                                                    activity analysis of earthmoving equipment filmed at ground level, Autom.
+     mented reality model for automating construction progress monitoring data
+                                                                                                    Constr. 105 (2019) 102811, http://dx.doi.org/10.1016/j.autcon.2019.04.006.
+     collection, processing and communication, Electron. J. Inf. Technol. Constr. 14
+                                                                                               [31] C. Chen, Z. Zhu, A. Hammad, Automated excavators activity recognition and
+     (2009) 129–153, URL https://citeseerx.ist.psu.edu/document?repid=rep1&type=
+                                                                                                    productivity analysis from construction site surveillance videos, Autom. Constr.
+     pdf&doi=338e04a889d11a6c6d46827dada3e67dda1833ce. (Access date: 31 Aug
+                                                                                                    110 (2020) 103045, http://dx.doi.org/10.1016/j.autcon.2019.103045.
+     2023).
+ [9] M. Golparvar-Fard, F. Pena-Mora, S. Savarese, Automated progress monitoring               [32] K. Hara, H. Kataoka, Y. Satoh, Can spatiotemporal 3D CNNs retrace the history of
+     using unordered daily construction photographs and IFC-based building informa-                 2D CNNs and ImageNet? in: 2018 IEEE/CVF Conference on Computer Vision and
+     tion models, J. Comput. Civ. Eng. 29 (1) (2015) 04014025, http://dx.doi.org/                   Pattern Recognition, 2018, pp. 6546–6555, http://dx.doi.org/10.1109/CVPR.
+     10.1061/(ASCE)CP.1943-5487.0000205.                                                            2018.00685.
+[10] J. Yang, M.-W. Park, P.A. Vela, M. Golparvar-Fard, Construction performance               [33] W. Fang, L. Ding, H. Luo, P.E. Love, Falls from heights: A computer vision-
+     monitoring via still images, time-lapse photos, and video streams: Now, tomor-                 based approach for safety harness detection, Autom. Constr. 91 (2018) 53–61,
+     row, and the future, Adv. Eng. Inform. 29 (2) (2015) 211–224, http://dx.doi.                   http://dx.doi.org/10.1016/j.autcon.2018.02.018.
+     org/10.1016/j.aei.2015.01.011.                                                            [34] S. Tang, D. Roberts, M. Golparvar-Fard, Human-object interaction recognition for
+[11] S. Xu, J. Wang, W. Shou, T. Ngo, A.-M. Sadick, X. Wang, Computer vision                        automatic construction site safety inspection, Autom. Constr. 120 (2020) 103356,
+     techniques in construction: a critical review, Arch. Comput. Methods Eng. 28                   http://dx.doi.org/10.1016/j.autcon.2020.103356.
+     (2021) 3383–3397, http://dx.doi.org/10.1007/s11831-020-09504-3.                           [35] M.-W. Park, I. Brilakis, Construction worker detection in video frames for
+[12] H. Liu, G. Wang, T. Huang, P. He, M. Skitmore, X. Luo, Manifesting construction                initializing vision trackers, Autom. Constr. 28 (2012) 15–25, http://dx.doi.org/
+     activity scenes via image captioning, Autom. Constr. 119 (2020) 103334, http:                  10.1016/j.autcon.2012.06.001.
+     //dx.doi.org/10.1016/j.autcon.2020.103334.                                                [36] J. Park, J. Chen, Y.K. Cho, D.Y. Kang, B.J. Son, CNN-based person detection
+[13] B. Xiao, Y. Wang, S.-C. Kang, Deep learning image captioning in construction                   using infrared images for night-time intrusion warning systems, Sensors 20 (1)
+     management: A feasibility study, J. Constr. Eng. Manage. 148 (7) (2022)                        (2020) 34, http://dx.doi.org/10.3390/s20010034.
+     04022049, http://dx.doi.org/10.1061/(ASCE)CO.1943-7862.0002297.                           [37] M. Bilal, L.O. Oyedele, J. Qadir, K. Munir, S.O. Ajayi, O.O. Akinade, H.A.
+[14] B. Zhong, L. Shen, X. Pan, L. Lei, Visual attention framework for identifying                  Owolabi, H.A. Alaka, M. Pasha, Big data in the construction industry: A review of
+     semantic information from construction monitoring video, Saf. Sci. 163 (2023)                  present status, opportunities, and future trends, Adv. Eng. Inform. 30 (3) (2016)
+     106122, http://dx.doi.org/10.1016/j.ssci.2023.106122.                                          500–521, http://dx.doi.org/10.1016/j.aei.2016.07.001.
+[15] C. Wu, X. Li, Y. Guo, J. Wang, Z. Ren, M. Wang, Z. Yang, Natural language                 [38] F. Amer, Y. Jung, M. Golparvar-Fard, Transformer machine learning language
+     processing for smart construction: Current status and future directions, Autom.                model for auto-alignment of long-term and short-term plans in construction,
+     Constr. 134 (2022) 104059, http://dx.doi.org/10.1016/j.autcon.2021.104059.                     Autom. Constr. 132 (2021) 103929, http://dx.doi.org/10.1016/j.autcon.2021.
+[16] J. Kim, Visual analytics for operation-level construction monitoring and                       103929.
+     documentation: State-of-the-art technologies, research challenges, and future             [39] D.M. Salama, N.M. El-Gohary, Semantic text classification for supporting auto-
+     directions, Front. Built Environ. 6 (2020) 575738, http://dx.doi.org/10.3389/                  mated compliance checking in construction, J. Comput. Civ. Eng. 30 (1) (2016)
+     fbuil.2020.575738.                                                                             04014106, http://dx.doi.org/10.1061/(ASCE)CP.1943-5487.0000301.
+
+
+                                                                                          17
+Y. Jung et al.                                                                                                                           Automation in Construction 165 (2024) 105483
+
+
+[40] J. Zhang, N.M. El-Gohary, Extending building information models semiauto-                 [59] Z. Fang, J. Wang, X. Hu, L. Liang, Z. Gan, L. Wang, Y. Yang, Z. Liu, Injecting
+     matically using semantic natural language processing techniques, J. Comput.                    semantic concepts into end-to-end image captioning, in: Proceedings of the
+     Civ. Eng. 30 (5) (2016) C4016004, http://dx.doi.org/10.1061/(ASCE)CP.1943-                     IEEE/CVF Conference on Computer Vision and Pattern Recognition, CVPR, 2022,
+     5487.0000536.                                                                                  pp. 18009–18019, http://dx.doi.org/10.48550/arXiv.2112.05230.
+[41] D. Guo, E. Onstein, A.D.L. Rosa, A semantic approach for automated rule compli-           [60] W. Kim, B. Son, I. Kim, ViLT: Vision-and-language transformer without con-
+     ance checking in construction industry, IEEE Access 9 (2021) 129648–129660,                    volution or region supervision, in: M. Meila, T. Zhang (Eds.), Proceedings of
+     http://dx.doi.org/10.1109/ACCESS.2021.3108226.                                                 the 38th International Conference on Machine Learning, in: Proceedings of
+[42] A.J.-P. Tixier, M.R. Hallowell, B. Rajagopalan, D. Bowman, Automated content                   Machine Learning Research, Vol. 139, PMLR, 2021, pp. 5583–5594, URL https:
+     analysis for construction safety: A natural language processing system to extract              //proceedings.mlr.press/v139/kim21k.html.
+     precursors and outcomes from unstructured injury reports, Autom. Constr. 62               [61] Z. Zhai, X. Chen, Y. Huang, L. Zhao, B. Cheng, Q. He, Joint multi-scale
+     (2016) 45–56, http://dx.doi.org/10.1016/j.autcon.2015.11.001.                                  information and long-range dependence for video captioning, Int. J. Multimedia
+[43] F. Zhang, H. Fleyeh, X. Wang, M. Lu, Construction site accident analysis using                 Inf. Retr. 12 (2) (2023) 37, http://dx.doi.org/10.1007/s13735-023-00303-7.
+     text mining and natural language processing techniques, Autom. Constr. 99                 [62] X. Chen, H. Fang, T.-Y. Lin, R. Vedantam, S. Gupta, P. Dollár, C.L. Zitnick,
+     (2019) 238–248, http://dx.doi.org/10.1016/j.autcon.2018.12.016.                                Microsoft coco captions: Data collection and evaluation server, 2015, pp. 1–7,
+[44] T. Kim, S. Chi, Accident case retrieval and analyses: Using natural language                   http://dx.doi.org/10.48550/arXiv.1504.00325, arXiv preprint arXiv:1504.00325.
+     processing in the construction industry, J. Constr. Eng. Manage. 145 (3) (2019)           [63] J. Chen, H. Guo, K. Yi, B. Li, M. Elhoseiny, Visualgpt: Data-efficient adaptation
+     04019004, http://dx.doi.org/10.1061/(ASCE)CO.1943-7862.0001625.                                of pretrained language models for image captioning, in: Proceedings of the
+[45] H. Alikhani, C. Le, H.D. Jeong, A deep learning algorithms to generate activity                IEEE/CVF Conference on Computer Vision and Pattern Recognition, 2022, pp.
+     sequences using historical as-built schedule data, in: Creative Construction E-                18030–18040, http://dx.doi.org/10.48550/arXiv.2102.10407.
+     Conference 2020, Budapest University of Technology and Economics, 2020, pp.               [64] P. Zeng, H. Zhang, J. Song, L. Gao, S2 Transformer for image captioning,
+     2–6, http://dx.doi.org/10.3311/CCC2020-039.                                                    in: International Joint Conference on Artificial Intelligence, Vol. 5, 2022, pp.
+[46] F. Amer, M. Golparvar-Fard, Modeling dynamic construction work template from                   1608–1614, http://dx.doi.org/10.24963/ijcai.2022%2F224.
+     existing scheduling records via sequential machine learning, Adv. Eng. Inform.            [65] I. Cho, Y. Jung, J. Hockenmaier, SIR-ABSC: Incorporating syntax into roBERTa-
+     47 (2021) 101198, http://dx.doi.org/10.1016/j.aei.2020.101198.                                 based sentiment analysis models with a special aggregator token, in: H. Bouamor,
+[47] Y. Hong, H. Xie, G. Bhumbra, I. Brilakis, Improving the accuracy of schedule                   J. Pino, K. Bali (Eds.), Findings of the Association for Computational Linguistics:
+     information communication between humans and data, Adv. Eng. Inform. 53                        EMNLP 2023, Association for Computational Linguistics, Singapore, 2023, pp.
+     (2022) 101645, http://dx.doi.org/10.1016/j.aei.2022.101645.                                    8535–8550, http://dx.doi.org/10.18653/v1/2023.findings-emnlp.572.
+[48] F. Amer, Y. Jung, M. Golparvar-Fard, Construction schedule augmentation                   [66] L. Yao, R. Huang, L. Hou, G. Lu, M. Niu, H. Xu, X. Liang, Z. Li, X. Jiang, C.
+     with implicit dependency constraints and automated generation of lookahead                     Xu, FILIP: Fine-grained interactive language-image pre-training, 2021, pp. 1–18,
+     plan revisions, Autom. Constr. 152 (2023) 104896, http://dx.doi.org/10.1016/j.                 http://dx.doi.org/10.48550/arXiv.2111.07783, ArXiv, abs/2111.07783.
+                                                                                               [67] A. Radford, K. Narasimhan, T. Salimans, I. Sutskever, Improving language
+     autcon.2023.104896.
+[49] Y. Hong, H. Xie, G. Bhumbra, I. Brilakis, Comparing natural language processing                understanding by generative pre-training, OpenAI (2018) 1–12, URL
+     methods to cluster construction schedules, J. Constr. Eng. Manage. 147 (10)                    https://s3-us-west-2.amazonaws.com/openai-assets/research-covers/language-
+     (2021) 04021136, http://dx.doi.org/10.1061/(ASCE)CO.1943-7862.0002165.                         unsupervised/language_understanding_paper.pdf. (Access date 25 Mar 2024).
+                                                                                               [68] I. Cho, U. Kang, Pea-KD: Parameter-efficient and accurate knowledge distillation
+[50] T. Brown, B. Mann, N. Ryder, M. Subbiah, J.D. Kaplan, P. Dhariwal, A. Neelakan-
+                                                                                                    on BERT, PLoS One 17 (2) (2022) e0263592, http://dx.doi.org/10.1371/journal.
+     tan, P. Shyam, G. Sastry, A. Askell, S. Agarwal, A. Herbert-Voss, G. Krueger, T.
+                                                                                                    pone.0263592.
+     Henighan, R. Child, A. Ramesh, D. Ziegler, J. Wu, C. Winter, C. Hesse, M. Chen,
+                                                                                               [69] R. Duan, H. Deng, M. Tian, Y. Deng, J. Lin, SODA: A large-scale open site object
+     E. Sigler, M. Litwin, S. Gray, B. Chess, J. Clark, C. Berner, S. McCandlish, A.
+                                                                                                    detection dataset for deep learning in construction, Autom. Constr. 142 (2022)
+     Radford, I. Sutskever, D. Amodei, Language models are few-shot learners, in: Ad-
+                                                                                                    104499, http://dx.doi.org/10.1016/j.autcon.2022.104499.
+     vances in Neural Information Processing Systems, vol. 33, Curran Associates, Inc.,
+                                                                                               [70] H.-C. Cho, W.Y. Jhoo, W. Kang, B. Roh, Open-vocabulary object detection using
+     2020, pp. 1877–1901, URL https://proceedings.neurips.cc/paper_files/paper/
+                                                                                                    pseudo caption labels, 2023, pp. 1–10, http://dx.doi.org/10.48550/arXiv.2303.
+     2020/file/1457c0d6bfcb4967418bfb8ac142f64a-Paper.pdf. (Access data 31 Aug
+                                                                                                    13040, ArXiv, abs/2303.13040.
+     2023).
+                                                                                               [71] H. Kim, H. Kim, Y.W. Hong, H. Byun, Detecting construction equipment using
+[51] J. Devlin, M.-W. Chang, K. Lee, K. Toutanova, BERT: Pre-training of deep bidi-
+                                                                                                    a region-based fully convolutional network and transfer learning, J. Comput.
+     rectional transformers for language understanding, in: Proceedings of the 2019
+                                                                                                    Civ. Eng. 32 (2) (2018) 04017082, http://dx.doi.org/10.1061/(ASCE)CP.1943-
+     Conference of the North American Chapter of the Association for Computational
+                                                                                                    5487.0000731.
+     Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers),               [72] K. Papineni, S. Roukos, T. Ward, W.-J. Zhu, Bleu: a method for automatic
+     Association for Computational Linguistics, Minneapolis, Minnesota, 2019, pp.                   evaluation of machine translation, in: Proceedings of the 40th Annual Meeting
+     4171–4186, http://dx.doi.org/10.18653/v1/N19-1423.                                             of the Association for Computational Linguistics, Association for Computational
+[52] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner,              Linguistics, Philadelphia, Pennsylvania, USA, 2002, pp. 311–318, http://dx.doi.
+     M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, N. Houlsby, An                   org/10.3115/1073083.1073135.
+     image is worth 16x16 words: Transformers for image recognition at scale, 2021,            [73] C.-Y. Lin, ROUGE: A package for automatic evaluation of summaries, in:
+     pp. 1–22, http://dx.doi.org/10.48550/arXiv.2010.11929, arXiv:2010.11929.                       Text Summarization Branches Out, Association for Computational Linguistics,
+[53] J.D.N. nez Morales, Y. Jung, M. Golparvar-Fard, Bi-directional image-to-text                   Barcelona, Spain, 2004, pp. 74–81, URL https://aclanthology.org/W04-1013.
+     mapping for NLP-based schedule generation and computer vision progress                    [74] S. Banerjee, A. Lavie, METEOR: An automatic metric for MT evaluation with im-
+     monitoring, in: Construction Research Congress 2024, 2024, pp. 826–835, http:                  proved correlation with human judgments, in: Proceedings of the ACL Workshop
+     //dx.doi.org/10.1061/9780784485262.084.                                                        on Intrinsic and Extrinsic Evaluation Measures for Machine Translation and/Or
+[54] P. Zhai, J. Wang, L. Zhang, Extracting worker unsafe behaviors from construction               Summarization, Association for Computational Linguistics, Ann Arbor, Michigan,
+     images using image captioning with deep learning–based attention mechanism,                    2005, pp. 65–72, URL https://aclanthology.org/W05-0909.
+     J. Constr. Eng. Manage. 149 (2) (2023) 04022164, http://dx.doi.org/10.1061/               [75] R. Vedantam, C.L. Zitnick, D. Parikh, CIDEr: Consensus-based image descrip-
+     JCEMD4.COENG-12096.                                                                            tion evaluation, in: 2015 IEEE Conference on Computer Vision and Pattern
+[55] Y. Wang, B. Xiao, A. Bouferguene, M. Al-Hussein, H. Li, Vision-based method                    Recognition, CVPR, 2015, pp. 4566–4575, http://dx.doi.org/10.1109/CVPR.
+     for semantic information extraction in construction by integrating deep learning               2015.7299087.
+     object detection and image captioning, Adv. Eng. Inform. 53 (2022) 101699,                [76] P. Anderson, B. Fernando, M. Johnson, S. Gould, SPICE: Semantic propositional
+     http://dx.doi.org/10.1016/j.aei.2022.101699.                                                   image caption evaluation, in: Computer Vision – ECCV 2016, Springer Interna-
+[56] P.-J. Chun, T. Yamane, Y. Maemura, A deep learning-based image captioning                      tional Publishing, Cham, 2016, pp. 382–398, http://dx.doi.org/10.1007/978-3-
+     method to automatically generate comprehensive explanations of bridge damage,                  319-46454-1_24.
+     Comput.-Aided Civ. Infrastruct. Eng. 37 (11) (2022) 1387–1401, http://dx.doi.             [77] G.A. Miller, WordNet: A lexical database for english, Commun. ACM 38 (11)
+     org/10.1111/mice.12793.                                                                        (1995) 39–41, http://dx.doi.org/10.1145/219717.219748.
+[57] R. Mokady, A. Hertz, A.H. Bermano, ClipCap: CLIP prefix for image captioning,             [78] I. Loshchilov, F. Hutter, Decoupled weight decay regularization, in: International
+     2021, pp. 1–10, http://dx.doi.org/10.48550/arXiv.2111.09734, CoRR, abs/2111.                   Conference on Learning Representations, 2019, pp. 1–18, http://dx.doi.org/10.
+     09734.                                                                                         48550/arXiv.1711.05101.
+[58] C. Li, H. Xu, J. Tian, W. Wang, M. Yan, B. Bi, J. Ye, H. Chen, G. Xu, Z. Cao, J.          [79] A. Radford, J.W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,
+     Zhang, S. Huang, F. Huang, J. Zhou, L. Si, MPLUG: Effective and efficient vision-              A. Askell, P. Mishkin, J. Clark, G. Krueger, I. Sutskever, Learning transferable
+     language learning by cross-modal skip-connections, in: Proceedings of the 2022                 visual models from natural language supervision, in: Proceedings of the 38th
+     Conference on Empirical Methods in Natural Language Processing, Association                    International Conference on Machine Learning, Vol. 139, PMLR, 2021, pp.
+     for Computational Linguistics, Abu Dhabi, United Arab Emirates, 2022, pp.                      8748–8763, URL https://proceedings.mlr.press/v139/radford21a.html. (Access
+     7241–7259, http://dx.doi.org/10.18653/v1/2022.emnlp-main.488.                                  data Aug 31, 2023).
+
+
+                                                                                          18
+Y. Jung et al.                                                                                                                        Automation in Construction 165 (2024) 105483
+
+
+[80] J. Wang, Z. Yang, X. Hu, L. Li, K. Lin, Z. Gan, Z. Liu, C. Liu, L. Wang, GIT:            [82] A. Entezami, H. Sarmadi, B. Behkamal, A novel double-hybrid learning method
+     A generative image-to-text transformer for vision and language, 2022, pp. 1–49,               for modal frequency-based damage assessment of bridge structures under dif-
+     http://dx.doi.org/10.48550/arXiv.2205.14100, ArXiv abs/2205.14100.                            ferent environmental variation patterns, Mech. Syst. Signal Process. 201 (2023)
+[81] R. Dror, S. Shlomov, R. Reichart, Deep dominance - how to properly compare                    110676, http://dx.doi.org/10.1016/j.ymssp.2023.110676.
+     deep neural models, in: Proceedings of the 57th Annual Meeting of the Asso-              [83] A. Entezami, H. Sarmadi, B. Behkamal, Long-term health monitoring of concrete
+     ciation for Computational Linguistics, Association for Computational Linguistics,             and steel bridges under large and missing data by unsupervised meta learning,
+     Florence, Italy, 2019, pp. 2773–2785, http://dx.doi.org/10.18653/v1/P19-1266,                 Eng. Struct. 279 (2023) 115616, http://dx.doi.org/10.1016/j.engstruct.2023.
+     URL https://aclanthology.org/P19-1266.                                                        115616.
+                                                                                              [84] Y. Liu, Fine-tune BERT for extractive summarization, 2019, pp. 1–6, http://dx.
+                                                                                                   doi.org/10.48550/arXiv.1903.10318, ArXiv, abs/1903.10318.
+
+
+
+
+                                                                                         19
+

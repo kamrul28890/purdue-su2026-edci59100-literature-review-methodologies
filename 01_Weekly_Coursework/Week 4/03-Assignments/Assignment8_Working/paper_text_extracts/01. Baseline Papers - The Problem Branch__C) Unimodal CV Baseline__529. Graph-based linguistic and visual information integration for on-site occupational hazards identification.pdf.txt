@@ -1,0 +1,1604 @@
+                                                                Automation in Construction 137 (2022) 104191
+
+
+                                                                  Contents lists available at ScienceDirect
+
+
+                                                             Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Graph-based linguistic and visual information integration for on-site
+occupational hazards identification
+Shi Chen *, Kazuyuki Demachi, Feiyan Dong
+Department of Nuclear Engineering and Management, School of Engineering, The University of Tokyo, Tokyo, Japan
+
+
+
+
+A R T I C L E I N F O                                    A B S T R A C T
+
+Keywords:                                                Construction sites are hazardous with various potential hazards that can occur at any time. The combination of
+Construction safety                                      different factors always causes the construction fatalities, and the majority of these fatalities could be prevented
+Occupational hazards identification                      if workers followed on-site regulatory rules. However, compliance of regulatory rules is not strictly enforced
+Personal protective equipment (PPE)
+                                                         among workers due to all kinds of reasons. Although previously proposed vision-based approaches are available
+Deep learning
+Graph
+                                                         for occupational hazards identification, the practicality is limited by the lack of automated understanding and
+                                                         adaptability to regulatory rules changes. In response to these gaps, this paper proposes a novel graph-based
+                                                         framework that integrates linguistic and visual information to process regulatory rule sentences and images
+                                                         for on-site occupational hazards identification. Particularly, a regulatory rules processing approach is presented
+                                                         to automatically extract and represent the key linguistic information of regulatory rules and a vision-based image
+                                                         scene information understanding approach is introduced to process on-site images by the combination of deep
+                                                         learning-based object detection and individual detection using geometric relationships analysis. Additionally, an
+                                                         automated reasoning approach is proposed to provide the integration of the processed linguistic and visual in­
+                                                         formation and perform hazards identification. The hazards of two scenes, i.e., “working on height” and “oper­
+                                                         ating a grinder”, were successfully identified with significantly higher performance compared to the baseline
+                                                         model.
+
+
+
+
+1. Introduction                                                                               and equipment are one of the most serious of all construction accidents.
+                                                                                              A total of 2210 construction fatalities occurred in the United States
+    The construction industry is a very hazard intensive field, with the                      because of traumatic brain injury (TBI), which represented 25% of all
+construction phase being the one with the most occurrences of occu­                           construction fatalities during 2003 and 2010 [4]. The Occupational
+pational accidents. According to the United States’ Bureau of Labor                           Safety and Health Administration (OSHA) in the United States stipulated
+Statistics (BLS), the number of construction fatalities in the US has                         that workers working in areas where there is a possible danger of head
+gradually increased from 924 to 1066 between 2015 and 2019 [1].                               injury from impact, or from falling or flying objects, or from electrical
+Similarly, in Japan, there were 1522 construction fatal accidents during                      shock and burns shall be protected by hard hats [5]. Construction-
+2015–2019 [2]. These accidents not only resulted in irreparable fatal­                        related occupational eye injuries are an important cause of vision loss.
+ities and economic losses, but also restricted the sustainable develop­                       According to the National Institute for Occupational Safety and Health
+ment of the construction industry to a certain extent.                                        (NIOSH), an average of 2000 United States workers require medical
+    As the construction is extremely vulnerable to the interference of                        treatment for job-related eye injuries every day [6]. The majority of
+various subjective and objective factors, once any sudden problem oc­                         construction-related eye injuries are preventable. The reasons cited for
+curs it will pose a potential threat to the life and property safety of the                   the majority of eye injuries include the non-wearing of available eye
+on-site construction workers. However, the majority of these fatalities                       protection or wearing of inappropriate eye protection for the current
+could be prevented if workers wore appropriate personal protective                            task [7]. Fine dust and particles, gases and vapors can be produced when
+equipment (PPE), e.g., hard hats, gloves, body harness [3], and followed                      using machine tools. Silica dust from bricks can cause lung and airway
+on-site regulatory rules. The consequences of head injuries caused by                         diseases such as emphysema, bronchitis, silicosis, and may increase the
+falling from height or being stuck by vehicles and other moving plants                        risk of cancer. PPE, such as respirators or dust masks, are used to
+
+
+ * Corresponding author.
+   E-mail address: shichen@g.ecc.u-tokyo.ac.jp (S. Chen).
+
+https://doi.org/10.1016/j.autcon.2022.104191
+Received 25 March 2021; Received in revised form 9 January 2022; Accepted 26 February 2022
+Available online 8 March 2022
+0926-5805/© 2022 Elsevier B.V. All rights reserved.
+S. Chen et al.                                                                                                           Automation in Construction 137 (2022) 104191
+
+
+controls these hazards [8]. OSHA indicates the workers shall be ensured             drawbacks of these approaches.
+to wear eye or face protection when exposed to eye or face hazards from
+flying particles, molten metal, liquid chemicals, acids or caustic liquids,         2.1. Vision-based occupational hazards identification approaches
+chemical gases or vapors, or potentially injurious light radiation [9].
+Construction workers who are six feet or more above lower levels are at                 Vision-based approaches are now widely used for automated iden­
+risk for serious injury or death if they should fall. According to BLS, there       tification of occupational hazards, as deep learning-based object detec­
+were 320 fatal falls to a lower level out of 1008 construction fatalities in        tion methods have shown remarkable performance on most visual tasks
+2018, which indicates fall accidents are a substantial burden and an                in the architecture, engineering and construction (AEC) industry. Fang
+impediment to accomplishing occupational safety in the construction                 et al. [11] proposed an object detection-based method using Faster R-
+industry [10].                                                                      CNN to automatically detect construction workers’ non-hardhat-use
+    Nonetheless, even with prior education and training, construction               (NHU). A total of 81,000 image frames were collected from various
+workers may not precisely follow on-site safety regulations due to rea­             construction sites as a training dataset and the bounding boxes that
+sons such as momentary carelessness, fatigue working. Thus, on-site                 surround workers in the images were annotated as the ground truth to
+occupational safety monitoring is becoming increasingly important for               train the model. Wu et al. [12] deployed Single Shot Multibox Detector
+safety management and an automated on-site occupational hazards                     (SSD) with presented reverse progressive attention (RPA) for NHU
+identification system which of the effectiveness of designs in reducing             identification. A benchmark dataset GDUT-HWD was created by
+human factors error and is able to carry out occupational hazards                   downloading Internet images retrieved by search engines to train the
+identification to predict the prevention of all kinds of accidents accu­            SSD-RPA model. In contrast to [11], only the head regions of workers
+rately, needs to be taken into consideration. At present, vision-based              were annotated as the ground truth. Nath et al. [13] introduced and
+occupational hazards identification are gradually being widely used                 tested models built on YOLOv3 architecture to verify PPE (hard hat and
+due to the extensive deployment of surveillance cameras on construction             vest) compliance of workers. Three approaches were verified concerning
+sites. However, in order to achieve precise site management, regulatory             different classifiers (e.g., decision tree, VGG-16, ResNet-50, Xception, or
+rules vary from region to region and may change due to external con­                Bayesian). In their extended work [14], the Pictor-v2 dataset was
+ditions. For example, workers were generally required to wear masks                 introduced, which contains 1105 crowd-sourcing and 1402 web-mined
+only in areas where large amounts of dust could be generated, but due to            annotated images of building, equipment, and worker. This dataset
+the spread of the COVID-19 pandemic, the mask wearing requirement                   was used to train, validate, and test YOLO algorithms for real-time
+was modified to apply to the entire construction site. Therefore the                detection of these three common object categories in construction im­
+ability of automatically understanding regulatory rules to dynamically              agery. Shen et al. [15] proposed a NHU identification approach by
+respond to the diversity of on-site safety management requirements will             making use of DenseNet-based face detection and bounding box
+be a major challenge for the practicality of current vision-based occu­             regression. These approaches generally consider the bounding box of
+pational hazards identification systems.                                            workers as the output of the object detection model, which is indeed
+    In response to these difficulties, this paper proposes a graph-based            well achieved in single hazard identification tasks (e.g., NHU) with a
+framework that integrates linguistic and visual information to process              binary classification, i.e., “individual using PPE” and “individual not
+regulatory rule sentences and images for on-site occupational hazards               using PPE”. Nevertheless, when it comes to a multi-hazard identification
+identification. As the first step toward the end, an automated regulatory           task, e.g., n classes of appropriate PPE use identification, the output will
+rules processing approach is proposed to extract and represent the key              increase to 2n, which may lead to difficulties in training data preparation
+linguistic information of regulatory rules that is intended to indicate the         and degradation of detection performance. Recently, deep learning-
+potential occupational hazards. The proposed approach utilizes natural              based pose estimation algorithms have achieved impressive results in
+language processing (NLP)-based syntactic structure analysis to auto­               unconstrained environments, showing the potential for worker detec­
+matically generate syntactic features and represent key linguistic in­              tion in complex on-site environments. Studies have been carried out to
+formation in a computable hierarchical graph structure based on                     compensate for the insufficiency of object detection-based approaches
+automated ontology modeling. Subsequently, a vision-based image                     for occupational hazards by combining deep learning-based pose esti­
+scene information understanding approach is developed to process on-                mation models [16,17]. Chen et al. [16] introduced a vision-based
+site images. Individuals’ body joint positions and objects (e.g., PPE,              approach to detect the proper use of multi-class radiation PPE in nu­
+tools) are detected by the deep learning-based pose estimation model                clear power plants via a combination of deep learning-based object
+and object detection model, respectively. Relationships between detec­              detection and pose estimation using Euclidean distance between
+ted individuals and objects are further obtained by geometric relation­             bounding boxes of detected PPE and the neck keypoint of detected in­
+ship analysis to represent the visual information in the scene graph.               dividual. Xiong et al. [17] presented an extensible pose-guided
+Finally, an automated reasoning approach based on graph structure                   anchoring framework aimed at multi-class PPE compliance detection.
+analysis is deployed to provide the integration of obtained linguistic and          A pose estimator was deployed to detect individuals and provide joint-
+visual information and perform hazards identification. In the experi­               level anchors for guiding the localization of different PPE items.
+ments, the proposed model was able to identify the hazards of two                   Compared to object detection-based approaches, human skeletons pro­
+scenes, i.e., “working on height” and “operating a grinder”, with high              vide more fine-grained information about a person (e.g., location and
+precision and recall. The experimental results demonstrate the effec­               visibility), especially in the case of occlusion, and is more effective for
+tiveness and robustness of the proposed approach for on-site occupa­                multi-hazard identification task (needs only n outputs for a n-class
+tional hazards identification.                                                      hazard identification task).
+
+2. Related works                                                                    2.2. Integrating linguistic and visual information for occupational hazards
+                                                                                    identification
+   In this section, we first review the traditional vision-based ap­
+proaches for on-site hazards identification, including approaches that                  As regulatory rules may change at any time in practical engineering,
+use deep learning-based object detection, and novel approaches that                 a occupational hazards identification model with the ability to dynam­
+combine deep learning-based object detection with pose estimation.                  ically adapt to rule adjustments would be more practical and robust. To
+Next, we investigate approaches that integrate linguistic information               this end, a unified model integrating linguistic and visual information
+with vision-based models to address the requirements for improved                   would enable the automatic and effective identification of hazards in
+practicality and robustness. Finally, we summarize the benefits and                 compliance with regulatory rules even when changes are made to them.
+
+                                                                                2
+S. Chen et al.                                                                                                        Automation in Construction 137 (2022) 104191
+
+
+Several explorations to this end have already been carried out [18–23].           this paper is dedicated to the proposal and development of a graph-
+Xiong et al. [18] developed an Automated Hazards Identification System            based framework for occupational hazards identification integrating
+(AHIS) to evaluate the operation descriptions generated from site videos          linguistic and visual information with (1) perceptual capabilities that
+against the safety guidelines extracted from the textual documents with           enable automated extraction of descriptive key information from text for
+the assistance of the ontology of construction safety. Two types of crucial       regulatory understanding (e.g., prohibit using tool A to perform opera­
+hazards, i.e., failing to wear a hard hat and walking beneath the cane,           tion B) and entities (individuals and objects) from on-site images for
+were successfully identified. Zhang et al. [19] proposed an automatic             scene understanding (e.g., a worker is using tool A to perform operation
+identification method that integrating object detection and ontology to           B), and (2) reasoning capabilities that automatically perform compli­
+identify risks in the construction process and prevent construction ac­           ance checking of regulatory rules covering improper use of PPE and
+cidents. Fang et al. [20] integrated computer vision algorithms with              risky individual behaviors at construction sites. In this section, the
+ontology models to develop a knowledge graph that consists of an                  proposed framework is described in detail.
+ontological model for hazards, knowledge extraction, and knowledge
+inference for hazard identification, which can automatically identify
+                                                                                  3.1. Overview of the proposed framework
+falls from heights hazards in varying contexts from images. Wu et al.
+[21] introduced a conceptual framework that combines computer vision
+                                                                                     The generic pipeline of the proposed framework is illustrated in
+and ontology techniques to semantically reasoning falls from height
+                                                                                  Fig. 1, which comprises three modules:
+(FFH) hazards. Mask R-CNN was used to detect visual information from
+on-site photos while the safety regulatory knowledge was represented by
+                                                                                    (1) Linguistic information extraction module automatically pro­
+ontology and semantic web rule language (SWRL) rules. Knan et al. [22]
+                                                                                        cesses all the input regulatory rules and transforms natural lan­
+proposed a correlation-based approach for mobile scaffold safety
+                                                                                        guage sentences into computable graph structure representation
+monitoring and detecting worker’s unsafe behaviors. The scaffolding
+                                                                                        through syntactic feature generation and semantic analysis.
+related regulations were analyzed manually. Mask R-CNN was used as
+                                                                                    (2) Visual information extraction module automatically extracts
+classification and segmentation of worker’s tasks combined with object
+                                                                                        the entities (individuals and objects) in the input image and
+correlation detection (OCD) module to identify worker’s unsafe behav­
+                                                                                        performs relationship analysis between entities for graph struc­
+iors. However, both [18–22] require manual processing of regulatory
+                                                                                        ture representation. In contrast to the approaches of construction
+information to establish the taxonomy of hazards, which is a time-
+                                                                                        sites scene understanding using only object detection models or
+consuming and error-prone task. In addition, the implementation of
+                                                                                        pose estimation models, the visual information extraction module
+hazards reasoning in these works requires third-party software (e.g.,
+                                                                                        in this paper combines the two for a more effective representation
+Protégé.) rather than being performed in a unified model, which reduces
+                                                                                        of scene information. Additionally, the notion of scene graph is
+their practicality. Liu et al. [23] initially established a linguistic
+                                                                                        used for visual information representation, which is a calculable
+description schema for manifesting scenes, and created two unique
+                                                                                        structure and allows to represent the richness of entities and re­
+dedicated image captioning datasets for method validation. A general
+                                                                                        lationships between entities that can exist in an intuitive graph-
+model architecture for image captioning was then developed by
+                                                                                        structure.
+combining an encoder-decoder framework with a deep neural network
+                                                                                    (3) Automated reasoning module takes the graphs output from the
+for manifesting construction activity scenes. However, it does not pro­
+                                                                                        linguistic and visual information extraction modules as input and
+vide automatic compliance checking of regulatory rules.
+                                                                                        performs occupational hazards identification based on graph
+                                                                                        structure analysis.
+2.3. Summary
+                                                                                     The proposed framework in this paper is based on our previous work
+   Notably, literature survey has indicated the following issues and
+                                                                                  [24], compared to which this paper has the following improvements:
+directions that are of great interest both academically and in engineering
+terms.
+                                                                                    (1) This paper originally proposes an automated linguistic informa­
+                                                                                        tion extraction approach using NLP-based syntactic structure
+   (1) The widely used vision-based occupational hazards identification
+                                                                                        analysis with ontology modeling to extract key information from
+       approaches [11–15] using deep learning-based object detection
+                                                                                        regulatory rules. It is more practical and efficient than the manual
+       models are not applicable when performing multi-hazard iden­
+                                                                                        regulatory information extraction used in [24]. The extracted
+       tification tasks. In contrast, a combination of deep learning-based
+                                                                                        linguistic information is represented by a novel hierarchical
+       object detection and pose estimation models [16,17] can be more
+                                                                                        graph structure proposed in [24], which is further refined in this
+       effective for identification.
+                                                                                        paper by addressing the prohibition relationships in regulatory
+   (2) In order to improve the practicality and robustness of occupa­
+                                                                                        rules.
+       tional hazards identification models to adapt to dynamic changes
+                                                                                    (2) In contrast to [24], this paper employs the existing state-of-the-
+       in regulatory rules, models that integrate linguistic information
+                                                                                        art vision-based object detection model, i.e., YOLOv4, resulting
+       representation would be an enhancement to current vision-based
+                                                                                        in better scene understanding performance compared to [24].
+       models.
+                                                                                    (3) Apart from the proper use identification of PPE addressed in [24],
+   (3) Investigations have been carried out to integrate linguistic and
+                                                                                        this paper also performs the automatic identification of the safe
+       visual information to automatically and efficiently identify haz­
+                                                                                        operation of grinder, which is a relatively more challenging task.
+       ards according to regulatory rules [18–23]. However, these works
+       provided no solution for automated regulatory information pro­
+       cessing and the manual process is time-consuming, costly, and              3.2. Linguistic information extraction
+       error-prone. Besides, their hazard reasoning modules require the
+       use of third-party software. Such factors affect the practicality of           The manual process of regulatory rules is time-consuming, costly and
+       these approaches for on-site deployment.                                   error-prone due to the large number of regulatory documents, the dif­
+                                                                                  ferences in format and semantics of their provisions, and the volume and
+3. Methodology                                                                    complexity of the information described. To address this gap, we pro­
+                                                                                  pose a semantic analysis approach based on NLP and ontology to extract
+    In order to address the aforementioned issues, the work presented in          linguistic information for automated regulatory rule processing.
+
+                                                                              3
+S. Chen et al.                                                                                                      Automation in Construction 137 (2022) 104191
+
+
+
+
+                                                    Fig. 1. Generic pipeline of the proposed framework.
+
+
+3.2.1. Pre-processing                                                              (2) Morphological analysis is performed to map various nonstandard
+    Regulatory rules are first pre-processed to prepare the raw text for               forms of a word (e.g., the plural form of a noun, the past tense of a
+further analysis, which consists of tokenization and morphological                     verb) to its lexical form (e.g., the singular form of a noun, the
+analysis.                                                                              infinitive form of a verb). As an example, in Fig. 2, “forks” and
+                                                                                       “moving” are mapped to their lexical forms “fork” and “move”,
+   (1) Tokenization is the process of splitting a phrase, sentence, para­              respectively.
+       graph, or an entire text document into smaller units, such as
+       sentences or words. Each of these smaller units is called tokens          3.2.2. Feature generation
+       [25]. The regulatory rules are divided into tokens, where a token             The pre-processed tokens are further processed to generate syntactic
+       is a single word, a number, a punctuation mark, a whitespace              features to describe the text. The proposed feature generation approach
+       characters, or a symbol. This process is intended to prepare the          consists of Part-of-speech (POS) tagging and dependency parsing.
+       text for further unit-based processing, which parses the text ac­
+       cording to common delimiters (i.e., white spaces and punctua­               (1) POS tagging: a POS is a category of words that have similar
+       tions) with disambiguation consideration (e.g., “,” as a delimiter              syntactic properties. POS tagging is the process of marking up a
+       in a number instead of punctuation). As shown in Fig. 2, given the              word in a text (corpus) as corresponding to a particular POS. As
+       raw text from regulatory documents, boundaries of the token are                 an example in Fig. 3, “raise” and “forks” are tagged as VERB and
+       recognized and labeled out using the “<token>” (i.e., starting of               NOUN, respectively.
+       a token) or “</token>” (i.e., ending of a token) tags.                      (2) Dependency parsing: dependency syntax postulates that syntactic
+                                                                                       structure consists of relations between lexical items. In linguis­
+                                                                                       tics, the head of a phrase is the word that determines the syntactic
+                                                                                       category of that phrase and the other elements of the phrase
+                                                                                       modify the head (head’s dependents) [26], that is, a word depends
+                                                                                       on another either if it is a complement or a modifier of the latter.
+                                                                                       The output of dependency parsing is structured as a tree, i.e.,
+                                                                                       dependency tree, as illustrated in Fig. 3, where each arrow con­
+                                                                                       nects a head to a dependent and is typed with the name of syn­
+                                                                                       tactic relations (dependency labels). For example, “lower” is the
+                                                                                       head of the phrase “lower forks”, which is modified by its direct
+                                                                                       object (labeled as dobj) “forks”. “raise” is the root of the sentence
+                                                                                       and not depend on others.
+
+                                                                                 3.2.3. Ontology-based semantic analysis
+                                                                                     In our linguistic information extraction approach, both syntactic
+                                                                                 (POS tags, dependencies) and semantic features are generated. Semantic
+                                                                                 features are generated using an ontology-based semantic analysis
+                                                                                 method. As common regulatory rule sentences are formed with entities,
+                 Fig. 2. An example of text preprocessing.
+
+                                                                             4
+S. Chen et al.                                                                                                           Automation in Construction 137 (2022) 104191
+
+
+
+
+                                                           Fig. 3. An example of feature generation.
+
+
+together with their attributes and the relations between each entity, the              (3) Relation is the base class used to define the relationship between
+three base classes in our proposed ontology model are Entity, Status, and                  two instances of Entity, which is subdivided into QuantitativeR­
+Relation (as illustrated in Fig. 4)                                                        elation (e.g., wear) and ComparativeRelation (e.g., less than).
+                                                                                     QuantitativeRelation⊑Relation                                               (8)
+   (1) Entity is the base class for modeling the various types of entities
+       described in the regulatory rules, and its attributes are shown in
+                                                                                     ComparativeRelation⊑Relation                                                (9)
+       Table 1. Specifically, the attribute hasStatus is a list that describes
+       the status of an instance of class Entity, which refers to an instance            As shown in Table 3, the attribute hasHeads and hasTargets are used
+       of the class Status:                                                          to create relationships between certain instances of Entity to other in­
+                                                                                     stances of Entity.
+∀hasStatus.Status⊑Status                                                  (1)
+                                                                                     ∀hasHeads.Head⊑Entity                                                     (10)
+   Subsequently, the attribute hasRelation refers to a list of instances of
+the class Relation to create relationships between instances of Entity.              ∀hasTargets.Target⊑Entity                                                 (11)
+∀hasRelations.Relation⊑Relation                                           (2)            Besides, for the QuantitativeRelation class, the attribute hasRela­
+    The attribute hasRequirementType is used to specify the type of                  tionType is used to specify the type of a QuantitativeRelation: modification
+requirement: obligation (i.e., “must…”), prohibition (i.e., “must not…”),            (e.g., move), possession (e.g., wear), or loacting (e.g., on).
+or condition (i.e., “if…then…”). Additionally, three subclasses of Entity                Additionally, to enhance the automated information extraction
+are defined in ontology which inherit all attributes of the base class to            capability of the proposed ontology model, we adopt a gazetteer that
+further describe the entities in regulatory rule sentences: Object (on-site          provides the following set of term lists for the instantiation of the
+inanimate objects), Person, and Area (the place where a Person is                    ontology:
+working on or a Object is set to).
+                                                                                       (1) PPE List: hard hat, safety helmet, safety glasses, dust mask, full
+Object⊑Entity                                                             (3)              face mask, glove, welding glove, heavy-duty rubber glove, insu­
+                                                                                           lated glove, body harness, work shoes, boots, safety toed
+Person⊑Entity                                                             (4)              footwear;
+                                                                                       (2) Vehicle List: car, forklift, crane, dump truck, bulldozer, front
+Area⊑Entity                                                               (5)
+                                                                                           Loader, grader, trencher;
+                                                                                       (3) Tool List: grinder, saw, circular saw, drill, hammer, crowbar, drill
+   (2) Status is the base class used to describe the status of Entity in­                  machine, polisher, vibrator, trowel;
+       stances, which is subdivided into StaticStatus (e.g., dismantled)               (4) Supply List: ladder, power line, barrel, box, brick, block, guardrail,
+       and DynamicStatus (e.g., moving).                                                   mid-rail, toeboard, load, fork;
+                                                                                       (5) Person List: worker, construction worker, operator, observer, or­
+StaticStatus⊑Status                                                       (6)
+                                                                                           dinary person;
+                                                                                       (6) Area List: work area, height, heavy equipment, scaffold, con­
+DynamicStatus⊑Status                                                      (7)
+                                                                                           struction site;
+    As shown in Table 2, the attributes hasQuantityValue and hasQuan­                  (7) Dynamic Status List: welding, cutting, grinding, nailing, concrete
+tityUnit are used to specify the detailed quantity value in the a Status (e.               work, moving;
+g., 5 m).                                                                              (8) Static Status List: erected, moved, dismantled, altered, height,
+                                                                                           width, volume;
+                                                                                       (9) Comparative Relation List: less than, greater than, equal to, at least,
+                                                                                           at most;
+
+
+                                                                                 5
+S. Chen et al.                                                                                                                     Automation in Construction 137 (2022) 104191
+
+
+
+
+                                                            Fig. 4. The framework of the proposed ontology model.
+
+
+                                                                                              (line 5 in Algorithm 1). Q contains the route along which the algorithm
+Table 1
+                                                                                              is currently searching. For each step, a toekn is dequeued2 from Q (line 7
+The attributes of the class Entity.
+                                                                                              in Algorithm 1) while all its dependents are enqueued into Q (line 9 in
+  Name                   Type         Description                                             Algorithm 1). Subsequently, the syntactic relation (dependency label)
+  hasName                String       The name of an entity.                                  connecting the dependent to its head is obtained and the phrasal rela­
+  hasDescription         String       The description of an entity.                           tionship parsing is performed as the following patterns:
+  hasStatus              List         The (dynamic or static) status of an entity.
+  hasRelations           List         The relations connected to an entity.
+  hasRequirementType     String       The requirement type attached to an entity in the
+                                                                                                   (1) If the dependency label of the dependent is compound (either a
+                                      rule sentence.                                                   noun modifying the head of noun phrase, a number modifying the
+                                                                                                       head of quantifier phrase, or a hyphenated word (or a preposi­
+                                                                                                       tion) modifying the head of the prepositioanl phrase) or amod
+  (10) Modification Relation List: drive, move, use, equip, provide, sup­                              (adjectival modifier: an adjective or an adjective phrase that
+       port, raise, lower, handle, contact;                                                            modifies the meaning of another word), then the dependent needs
+  (11) Possession Relation List: has, wear;                                                            to be merged together with the head to form a new token (line 11
+  (12) Locating Relation List: on, from, over, enter, around;                                          in Algorithm 1). As an example, for the regulatory rule “Use
+  (13) Quantity Unit List: foot, m, cm, kg, g, ton;                                                    safety net systems or personal fall arrest systems.”, the compound
+                                                                                                       dependent “safety” and the adjectival modifier dependent “net” are
+    As an example, for the regulatory rule “Wear a hard hat on a con­                                  merged together with the head “system” to form a new token
+struction site”, the items “hard hat” and “construction site” are included                             “safety net systems”.
+in the PPE list and Area list, respectively, and the items “wear” is included                      (2) If the dependency label of the dependent is nsubj (nominal subject:
+in the Possession Relations list.                                                                      a non-clausal constituent in the subject position of an active
+    Based on the ontology modeling, we perform phrase relationship                                     verb), which usually indicates an action taken by an individual in
+analysis on the dependency tree. The pipeline of the proposed phrasal                                  regulatory rules, then the head and the dependent are instanced as
+relationship parsing is introduced in Algorithm 1. To parse relationships                              QuantitativeRelation and Person, respectively. Besides, the attri­
+of each head with all its dependents, we use the Breadth-first Search (BFS)                            bute hasRelations of the instance of the dependent is set to the
+algorithm to traverse all tokens in the dependency tree T generated from                               instance of the head (line 14 in Algorithm 1). As an example, for
+a regulatory rule sentence.                                                                            the regulatory rule “Operators shall always wear seatbelts.”, the
+Algorithm        1. BFS-based          algorithm      for    phrasal      relationship                 head “wear” is identified as an QuantitativeRelation and its nom­
+analysis.                                                                                              inal subject “Operators” is identified as an Person.
+                                                                                                   (3) If the dependency label of the dependent is nsubjpass (nominal
+      At the start, the root token of T is enqueued1 into the token queue Q                            passive subject: a non-clausal constituent in the subject position
+
+
+  1                                                                                            2
+      Adds an item to the end of a queue.                                                          Removes and returns the item at the beginning of a queue.
+
+                                                                                          6
+S. Chen et al.       Automation in Construction 137 (2022) 104191
+
+
+
+
+                 7
+S. Chen et al.                                                                                                                   Automation in Construction 137 (2022) 104191
+
+
+       of a passive verb), then the head and the dependent are instanced              Table 2
+       as QuantitativeRelation and Entity, respectively. Additionally, to             The attributes of the class Status.
+       provide more detailed description of the dependent token, further
+                                                                                        Name                   Type          Description
+       searching is performed in the Gazetteer lists to identify whether
+       the dependent token is available in PPE List, Vehicle List, Tool List,           hasName                String        The name of a status.
+                                                                                        hasDescription         String        The description of a status.
+       Supply List, or Area List to instance dependent as a subclass of                 hasQuantityValue       Double        The quantity value specified in a status.
+       Entity. Besides, the attribute hasRelations of the instance of the               hasQuantityUnit        String        The quantity unit specified in a status.
+       dependent is set to the instance of the head. Subsequently, a pas­               hasRequirementType     String        The requirement type attached to a status in the
+       sive object needs to be added into the phase by the instantiation                                                     rule sentence.
+       of a Person in the ontology model (line 20 in Algorithm 1). As an
+       example, for the regulatory rule “Safety glasses or face shields are
+       worn when exposed to any electrical hazards including work on                  Table 3
+       energized electrical systems.”, the head “worn” is identified as an            The attributes of the class Relation.
+       QuantitativeRelation and its nominal passive subject “Safety
+                                                                                        Name                   Type         Description
+       glasses” is identified as an Entity (further instanced as PPE by
+                                                                                        hasName                String       The name of a relation.
+       searching the Gazetteer lists).
+                                                                                        hasDescription         String       The description of a relation.
+   (4) If the dependency label of the dependent is dobj (direct object: a               hasHeads               List         The heads connected to a relation.
+       noun phrase that is the accusative object of a (di)transitive verb),             hasTargets             List         The targets connected to a relation.
+       then the head and the dependent are instanced as QuantitativeR­                  hasRequirementType     String       The requirement type attached to a relation in the
+       elation and Entity, respectively. Additionally, to provide more                                                      rule sentence.
+
+       detailed description of the dependent token, further searching is
+       performed in the Gazetteer lists to identify whether the dependent                    head “lower” has a adverbial clause modifier “moving”, thus the
+       token is available in PPE List, Vehicle List, Tool List, Supply List, or              hasRequirementType attribute of “moving” is set to “Condition”.
+       Area List to instance dependent as a subclass of Entity. Subse­                   (9) Other dependency labels are all ignored.
+       quently, a subject needs to be added into the phase by the
+       instantiation of a Person in the ontology model (line 20 in Algo­                All of the instances are stored in a topological set S of the ontology
+       rithm 1). As an example, for the regulatory rule “Never enter an               model, which contains the semantic information of the regulatory rules.
+       unprotected trench.”, the head “enter” is identified as an Quan­
+       titativeRelation and its direct object “unprotected trench” is                 3.2.4. Linguistic information representation
+       identified as an Entity (further instanced as Area by searching the                The extracted regulatory information are first encoded in the logic
+       Gazetteer lists).                                                              representation with semantic phrases and logical connectives. The in­
+   (5) If the dependency label of the dependent is prep (prepositional                stances in the topological set S are transformed to semantic phrases
+       modifier: any prepositional phrase that modifies the meaning of                which are defined as a triplet (e.g., (element1, connection, element2)). We
+       its head), then the classes of the head and the dependent in the               define two types of triplets to represent the relationship between two
+       ontology model are both identified as QuantitativeRelation. And                entities or the status of an entity as shown in Table 4. For semantic
+       prep in regulatory rules usually indicates a conditional clause is             phrases of entity relationships, “element1” or “element2” is a instance of
+       followed, thus hasRequirementType attribute of the instance of the             Entity in the ontology model, which can be an instance of Person (e.g.,
+       dependent is set to “Condition” (line 25 in Algorithm 1). Subse­               worker), an instance of Object (e.g., glove), or an instance of Area (e.g.,
+       quently, if the head had no nominal subject, a passive object                  construction site), while “connection” is an instance of QuantitativeR­
+       needs to be added into the phase by the instantiation of a Person              elation which semantically connects entities with limitations. On the
+       in the ontology model. As an example, for the regulatory rule                  other hand, for semantic phrases of a entity status, “element1” is a
+       “Wear a safety helmet on a construction site.”, the head “Wear”                instance of Entity, “element2” is a instance of Status (e.g., moving) in the
+       and its prepositional modifier “on” are identified as an                       ontology model, and “connection” in this case is set as “be”.
+       QuantitativeRelation.                                                              Furthermore, we use four types of logical connectives to represent
+   (6) If the dependency label of the dependent is conj (conjunct: a                  the requirement types in the regulatory rules:
+       dependent of the leftmost conjunct in coordination), then the
+       head and its conjunct are put into a container C in which all in­                 (1) If…then… (→) is used to indicate a conditional relation that as­
+       stances share their attributes (line 27 in Algorithm 1). As an                        signs the conditional requirement triplets (one or more) on the
+       example, for the regulatory rule “Do not raise or lower the forks                     left to the instructed triplets (one or more) on its right;
+       while the forklift is moving.”, the head “raise” and its conjunct                 (2) Negation (¬) is used to indicate that the requirement type of the
+       “lower” share their attributes.                                                       triplet to its right is prohibition;
+   (7) If the dependency label of the dependent is neg (negation modifier:               (3) Logical conjunction (∧) is used to indicate a conjunction rela­
+       an adverb that gives negative meaning to its head), then the                          tionship between the triplets;
+       hasRequirementType attribute of the instance of the head is set to                (4) Logical disjunction (∨) is used to indicate a disjunction relation­
+       “Prohibition” which represents a prohibition relationship in a                        ship between the triplets.
+       regulatory rule (line 29 in Algorithm 1). As an example, for the
+       regulatory rule “Never enter an unprotected trench.”, the head                    As an example, Fig. 5(b) demonstrates the logic representation of the
+       “enter” has a negative modifier “Never”, thus the hasRequir­                   regulatory rules in Fig. 5(a).
+       ementType attribute of “enter” is set to “Prohibition”.
+   (8) If the dependency label of the dependent is advcl (adverbial clause
+       modifier: a clause that acts like an adverbial modifier), which in             Table 4
+       regulatory rules usually indicates a conditional clause is followed,           Examples of phrases in the regulatory rules and the transformed triplets.
+       then the hasRequirementType attribute of the instance of the head
+                                                                                        Type                    Phrases                             Triplets
+       is set to “Condition” which represents a condition relationship
+       (line 32 in Algorithm 1). As an example, for the regulatory rule                 Entity relationship     “operator wears seatbelt”           (operator, wear, seatbelt)
+                                                                                        Entity status           “forklift is moving”                (forklift, be, moving)
+       “Do not raise or lower the forks while the forklift is moving.”, the
+
+                                                                                  8
+S. Chen et al.                                                                                                             Automation in Construction 137 (2022) 104191
+
+
+    Based on the logic representation (Fig. 5(b)), we use graph structures            sentences are transformed into a calculable and structured hierarchical
+to represent regulatory information. However, even though the notion                  graph with the ability to represent complex requirements in the lin­
+of graph representation has attracted researchers’ attention for on-site              guistic information of regulatory rules.
+scene understanding in AEC industry, approaches for representing lin­
+guistic information of regulatory rules using graph structure have not                3.3. Visual information extraction
+yet emerged because the pairwise relationships in traditional scene
+graph cannot represent the complex relationships in regulatory rules:                     We propose a novel scene understanding approach employing scene
+                                                                                      graph as the basic notion of information representation structure to
+   (1) Conditional relationships, e.g., use body harness when working                 extract visual information from images, the base framework of which
+       on height;                                                                     has been presented in our previous work [24]. As the current experi­
+   (2) Prohibition relationships, e.g., never operate a grinder near face;            mental objective is to perform automated compliance checking on reg­
+                                                                                      ulatory rules related to the proper use of PPE and safe operation of tools
+    To this end, we have proposed an original hierarchical graph struc­               in the scenes of working on height and grinder operation at construction
+ture in our previous work to represent the linguistic information                     sites, this paper mainly addresses three types of objects: head protection
+extracted from regulatory rules [24]. We further improve this hierar­                 PPE (hard hats, safety glasses, and dust masks), grinders and body
+chical graph structure in this paper by dealing with the prohibition re­              harnesses.
+                                     ̂ V,
+lationships in regulatory rules. Let G(   ̂ C)
+                                        ̂ E, ̂ be the hierarchical graph
+of the regulatory rules, where V ̂ is the set of vertices to represent the            3.3.1. Entity extraction
+                                                     {                                    An entity extractor for processing images obtained from on-site
+elements in the semantic phrase triplets and ̂  E = {μ, ν, s, r, t} : (μ, ν) ∈        surveillance cameras is developed. For each image, individual(s) are
+̂2 , μ ∕
+          }
+V      = ν is the set of edges to represent the relationships in the se­              detected, together with their body joint positions, using OpenPose [27].
+mantic phrase triplets (s and r are the connections to represent a entity             Meanwhile, objects (e.g., PPE, tools) are recognized and localized by
+relationship and a entity status, respectively. t is the edge property to             training an object detection model based on YOLOv4 [29].
+indicate the type of the requirements: obligation rule or prohibition
+rule). Ĉ = {k⇀I : k ∈ E,
+                       ̂ I ⊆ E}
+                              ̂ is the set of conditional relations                     (1) Individual detection: in contrast to the common vision-based on-
+assigning instructed triplets to conditional triplets, which are stored in a                site occupational hazards identification approaches [11–15], we
+hash map. The structure of a hierarchical graph is visualized in Fig. 5(c):                 employ an individual detection model to specify individual fea­
+                                                                                            tures. This strategy makes our entity extractor be more robust
+   (1) Dots on the inner layer represent elements of the conditional                        with viewpoint changes and different individual postures. The
+       triplets;                                                                            workers’ postures are characterized by extracting the body joint
+   (2) Dots on the intermediate layer represent elements of the                             positions of the individuals in the image using OpenPose [27],
+       instructed prohibition triplets;                                                     which is the state-of-the-art model for estimating human pose in
+   (3) Dots on the outer layer represent elements of the instructed                         images. Instead of the conventional top-down approaches which
+       obligation triplets;                                                                 employ a person detector and performing single-person pose
+   (4) The red lines in the circle denote the conditional relations be­                     estimation for each detected person, OpenPose provides a
+       tween triplets.                                                                      bottom-up approach by detecting all body parts in the image and
+                                                                                            associating them with different person. OpenPose provides the
+    In this example, the regulatory hierarchical graph is consists of the                   positions of 18 body joints (pre-trained using MSCOCO 2016
+                                                                                            keypoints challenge dataset [28], see Fig. 6). The choice of
+         ̂ = {person, construction site, chemical, safety helmet, glove}, the
+vertices V
+                                                                                            OpenPose is motivated for its functionality on RGB images or
+edges      E = {(person, construction site, on), (person, chemical, contact),
+           ̂
+                                                                                            videos taken by on-site surveillance cameras. This provides a
+(person, chemical, handle), (person, safety helmet, wear, obligation), (person,             huge benefit in comparison to the skeletal tracking capability of
+glove, wear, obligation)}, and the conditional relationships set C         ̂=               RGB-D devices which depend on depth information. Besides, in
+{((person, construction site, on))⇀                                                         contrast to the top-down approaches, the inference time of
+((person, safety helmet, wear, obligation)),    ((person, chemical, contact),               OpenPose is invariant to the number of people in the image and
+(person, chemical, handle)) ⇀ ((person, glove, wear, obligation))}.                         able to provide real-time performance.
+    Consequently, regulatory rules documented with natural language
+
+
+
+
+Fig. 5. An example of the regulatory rules and its hierarchical graph. (a) The regulatory rules are decomposed and transformed to (b) the logic representation; (c)
+Hierarchical graph.
+
+
+                                                                                  9
+S. Chen et al.                                                                                                                                       Automation in Construction 137 (2022) 104191
+
+
+                                                                                  relationship on the associated individual-object pairs M, which
+                                                                                  address three types of objects in this paper:
+
+                                                                                      (1) Head protection PPE (hard hats, safety glasses, and dust masks).
+
+                                                                                      For each associated individual and head protection PPE {i*, j*} ∈ M
+                                                                                  their relationship is identified by measuring a distance. Considering the
+                                                                                  fact that both the individual and object detection model acquire position
+                                                                                  information based on image pixel coordinates that vary with the dis­
+                                                                                  tance relative to the camera, we take advantage of the Euclidean dis­
+                                                                                  tance among detected neck keypoint (body parts 1 in Fig. 6) and hip
+                                                                                  keypoints (body parts 8 and 11 in Fig. 6) of i* as a dynamic reference
+                                                                                  threshold, which will keep changing synchronously when the distance
+                                                                                  between the individual and the camera changes:
+                                                                                                (√̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                                                                                                    (                   )          (    2                )           2
+                                                                                  βi* ↔ j* = max                    x(1)
+                                                                                                                     i*
+                                                                                                                         − x(8)
+                                                                                                                            i*
+                                                                                                                                            + y(1)
+                                                                                                                                               i*
+                                                                                                                                                   − y(8)
+                                                                                                                                                      i*
+                                                                                                                                                                         ,
+                                                                                                      √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅ )                   (12)
+                                                                                                       (                       )2 (                              )2̅
+                                                                                                          x(1)
+                                                                                                            i*
+                                                                                                                 −    x (11)
+                                                                                                                        i*
+                                                                                                                                     +      y (1)
+                                                                                                                                              i*
+                                                                                                                                                    −    y (11)
+                                                                                                                                                           i*
+                                                                                                                                                                        ⋅γ
+
+
+                                                                                  where γ is the scaling coefficient to strike the relationship analysis for
+                                                                                  different head protection PPE, which was obtained based on ergonomic
+                   Fig. 6. Output format of OpenPose.                             analysis and statistical experiments on randomly selected samples from
+                                                                                  the validation dataset. For hard hats, safety glasses, dust masks, and full-
+   (2) Object detection: objects recognition and localization are carried         face masks, γ is set to 0.8, 0.7, 0.6, 0.6, respectively.
+       out using a light-weight object detection model. To achieve the                 If the Euclidean distance between the position (xj*, yj*) of the
+       optimal trade-off between speed and accuracy on a multi-class              bounding box of j* and detected neck keypoint (body parts 1 in Fig. 6) of
+       object detection task, we suggest that one-stage approaches are            i* is smaller than the reference threshold βi*↔j*, then the relationship
+       preferable options, e.g., YOLO and its variants [30–32], which             between the i* and j* is created; otherwise, even though j* is associated
+       skips the region proposal stage and runs detection directly over a         with i*, no relationship is created between them:
+       dense sampling of possible locations, and it leads to a simpler                       {
+                                                                                               “wear” , if dh (i* , j* ) < βi* ↔ j*
+       architecture and makes it extremely fast. In contrast to the one-          ci* ↔ j* =                                                             (13)
+                                                                                               N/A,   otherwise
+       stage object detection model deployed in our previous works, i.
+       e., YOLOv3 [32], this paper adopts YOLOv4 [29], a newly                    where
+       improved model of the YOLO family, for the PPE detection task.                               √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                                                                                                     (                    )2 (                           )2
+       YOLOv4 uses a deep network architecture, i.e., CSPDarknet53
+                                                                                  dh (i* , j* ) =       x(1)
+                                                                                                          i*
+                                                                                                               − xj* + y(1)              i*
+                                                                                                                                               − yj*                                       (14)
+       [33], as the backbone for feature extraction. Meanwhile, spatial
+       pyramid pooling (SPP) block [34] is added to CSPDarknet53 to
+       increase the receptive field and to separate the most significant          and ci*↔j* indicates the connection to create the relationship between i*
+       contextual features. Furthermore, in contrast to the Feature               and j* as a semantic phrase (i*, ci*↔j*, j*) (e.g., (person, wear, hard hat) or
+       Pyramid Network (FPN) [35] used in YOLOv3 for object detec­                not.
+       tion, YOLOv4 uses PANet [36] as a parameter aggregation
+       method for different detector levels. These new features of                    (2) Grinders
+       YOLOv4 improve the efficiency and performance for multi-class
+       object detection, which make YOLOv4 a reasonable option for                   Currently in this work, two regulatory rules related to grinder proper
+       real-time processing for industrial purpose. Compared with                 use are addressed to create a individual-grinder relationship:
+       models such as Faster R-CNN, SSD, etc., which are commonly
+       used to perform visual tasks in the AEC domain [11–15], YOLOv4                (A) “Always use two hands when operating a grinder”.
+       is one of the most performing novel object detection models
+       currently available. Additionally, YOLOv4 provides model                      Let Bg* = (xg*, yg*, wg*, hg*) be the detected bounding box of a grinder
+       scaling functionality, which makes it adaptable to varying on-site         g* which is associated with the detected individual i*. Firstly, the
+       hardware devices with different compute capabilities (general              Euclidean distance from the left wrist keypoint and right wrist keypoint
+       GPUs, low-end GPUs, or high-end GPUs) and thus increases the               (body parts 7 and 4 in Fig. 6) of i* to the position (xg*, yg*) of g* is
+       usability of the occupational hazards identification system.               calculated (Fig. 7):
+                                                                                             √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                                                                                                (                  )          (                    )̅
+                                                                                                                                2                                2
+3.3.2. Individual-object relationship analysis                                    dl (i* , g* ) =
+                                                                                                              (7)                            (7)
+                                                                                                        xi* − xg* + yi* − yg*
+    We first associate the detected objects with the detected individuals,                           √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅                           (15)
+                                                                                                      (                    )    2     (                    )̅    2
+with the aim of providing a prior knowledge for individual-object rela­                *    *
+                                                                                  dr (i , g ) =             x(4)
+                                                                                                             i*
+                                                                                                                 −      xg*         +       y(4)
+                                                                                                                                             i*
+                                                                                                                                                 −    yg*
+tionship analysis and reducing computational complexity. A weighted
+bipartite graph is constructed to represent the detected entities and we             If the grinder is close enough to the wrists, then the individual is
+perform individual-object association as a minimum weighted matching              identified as holding the grinder:
+in bipartite graphs. Subsequently, we analyze the individual-object
+
+
+
+
+                                                                             10
+S. Chen et al.                                                                                                                                                  Automation in Construction 137 (2022) 104191
+
+
+
+
+                                Fig. 7. Relationship identification strategies to address the rule “Always use two hands when operating a grinder”.
+
+
+
+
+             {
+                  1   , if dl (i* , g* ) < βi* ↔ g* or dr (i* , g* ) < βi* ↔ g*
+hi* ↔ g* =                                                                                                                                                                                            (16)
+                  0   , otherwise
+
+
+
+where βi*↔g* is the reference threshold calculated based on the size of                            where βi*↔g* is the reference threshold calculated based on the
+the bounding box of g*:                                                                            Euclidean distance among detected neck keypoint (body parts 1 in
+              (          )
+βi* ↔ g* = max wg* , hg*                                           (17)                            Fig. 6) and hip keypoints (body parts 8 and 11 in Fig. 6) of i* with γ =
+                                                                                                   0.3:
+     If hi*↔g* = 1, then relationship identification needs to be further                                        (√̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                                                                                                                    (                   )          (                     )
+performed to identify whether the individual i* is holding the grinder g*                                                                             2                              2
+                                                                                                   βface    = max               x(1) − x(8)               + y(1) − y(8)                  ,
+using single hand or two hands. It’s known that when an object is                                   i* ↔ g*                      i*     i*                   i*     i*
+
+holding by two hands the distance between the wrists is small. Thus, the                                             √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅ )               (21)
+                                                                                                                      (                       )   2     (                       )̅
+                                                                                                                                                                                 2
+relationship between i* and g* is identified as follows:                                                                    x(1)
+                                                                                                                             i*
+                                                                                                                                 −     x(11)
+                                                                                                                                        i*
+                                                                                                                                                      +     y(1)
+                                                                                                                                                             i*
+                                                                                                                                                                 −     y(11)
+                                                                                                                                                                        i*
+                                                                                                                                                                                             ⋅γ
+                             {
+                               “use”, “two hands”, “operate”   , if dl ↔ r (i* ) < βi* ↔ g*
+ci* ↔ h* , h*i* , ch* ↔ g* =
+       i *          i *        “use”, “single hand”, “operate” , otherwise                         and ci*↔g*face indicates the connection to create the relationship be­
+                                                                                    (18)           tween the face of i* and g* as a semantic phrase (face, ci*↔g*face, g*) (e.g.,
+                                                                                                   the relationship (face, near, grinder) is created in Fig. 8)
+where hi** indicates the hands status (e.g., two hands, single hand)
+when operating a grinder while ci*↔hi** and chi**↔g* create the rela­                                 (3) Body harnesses:
+tionship between i* and hi**, hi** and g*, as semantic phrases (i*,
+ci*↔hi**, hi**), (hi**, chi**↔g*, g*), respectively (e.g., the relationship                            Let Bh* = (xh*, yh*, wh*, hh*) be the bounding box of a detected body
+(person, use, two hands), (two hands, operate, grinder) is created in Fig. 7).                     harnesses h* which is associated with the detected individual i*. Their
+                                                                                                   relationship is identified by performing the geometric relationship
+   (B) “Never operate a grinder near face”.                                                        analysis for the key point (xi*↔h*k, yi*↔h*k), the geometric center of the
+                                                                                                   neck keypoint (body part 1 in Fig. 6) and hip keypoints (body parts 8 and
+   For the detected individual i* and the associated grinder g*, the                               11 in Fig. 6) of i*, which is given as follows:
+Euclidean distance from the neck keypoint (body part 1 in Fig. 6) of i* to
+the position (xg*, yg*) of the bounding box of g* is calculated:                                                 xi(1)   (8)   (11)
+                                                                                                                    * + xi* + xi*
+                                                                                                   xki* ↔ h* =
+           √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅                                                    3
+              (                  )   2      (              2     )̅                                                                                                                                   (22)
+dn (i* , g* ) =                                                                      (19)
+                        (1)                   (1)
+                       xi* − xg*         + yi* − yg*                                                             y(1)
+                                                                                                                  i*
+                                                                                                                      + y(8)
+                                                                                                                         i*
+                                                                                                                             + y(11)
+                                                                                                                                i*
+                                                                                                   yki* ↔ h* =
+                                                                                                                          3
+     If the grinder is close enough to the neck, then the relationship be­
+                                                                                                      If (xi*↔h*k, yi*↔h*k) is in the bounding box Bh*, then the relationship
+tween the grinder and the face of individual is created:
+                                                                                                   between i* and h* is created; otherwise, even though h* is associated
+           {
+             “near” , if dn (i* , g* ) < βi* ↔ g*                                                  with i*, no relationship is created between them:
+cface
+  *
+ i ↔g  * =                                                            (20)
+             N/A      , otherwise
+
+
+                                                                                              11
+S. Chen et al.                                                                                                             Automation in Construction 137 (2022) 104191
+
+
+
+
+                              Fig. 8. Relationship identification strategies to address the rule “Never operate a grinder near face”.
+
+
+
+
+                                           Fig. 9. The individual-body harnesses relationship identification strategies.
+
+
+
+
+   Fig. 10. An example of on-site image and its scene graph. (a) On-site image; (b) Individual-object relationships extracted from (a); (c) Scene graph G(V, E).
+
+
+
+                                                                                12
+S. Chen et al.                                                                                                                                 Automation in Construction 137 (2022) 104191
+
+             ⎧                               [                  w *]
+             ⎪                                     w*
+                                 xik* ↔ h* ∈ xh* − h , xh* + h and
+                                                                                       ̂ in G(
+                                                                                       C       ̂ E,
+                                                                                             ̂ V,  ̂ C)
+                                                                                                      ̂ (Fig. 11(b)). As the example showed in Fig. 11, V′ =
+             ⎪ “wear” , if
+             ⎪
+             ⎪
+             ⎪
+             ⎨                              [
+                                                     2             2
+                                                                     ]                 {(person, grinder, operate), (person, construction site, on)}. Subsequently,
+                                                   h            h          (23)
+                                                                                                                                           ′           ′
+                                                      *            *
+ci* ↔ h* =
+             ⎪                   yki* ↔ h* ∈ yh* −  h
+                                                        , yh* +   h
+                                                                                       the corresponding vertices V
+                                                                                                                  ̂ and edges E
+                                                                                                                              ̂ are retrieved by traversing C
+                                                                                                                                                            ̂
+             ⎪
+             ⎪                                      2            2
+             ⎪                                                                                                     ′       ′       ′                                         ′
+             ⎪
+             ⎩                                                                         and a subgraph G ̂ (V̂ ,E                                ̂ G
+                                                                                                               ̂ ) (Fig. 11(c)) is created from G. ̂ contains all
+                 N/A   , otherwise
+                                                                                       regulatory rules for the situation of the on-site image and is further used
+                                                                                       for hazards identification.
+where ci*↔h* indicates the connection to create the relationship between
+i* and h* as a semantic phrase (i*, ci*↔h*, h*) (e.g., the relationship                Algorithm 2.           Relevant regulatory rules extraction algorithm.
+(person, use, body harness)) is created in Fig. 9).
+
+                                                                                       3.4.2. Hazards identification
+3.3.3. Visual information representation                                                                                                                                             ′   ′       ′
+    Based on the semantic phrases established by individual-object                        Based on the extracted relevant regulatory rules graph G    ̂ ,E
+                                                                                                                                                   ̂ (V  ̂ ),
+relationship analysis, we generate a scene graph for image informa­                    reasoning for hazards identification is performed by checking compli­
+tion representation for each image. Given a scene graph G(V, E) of an on-              ance of prohibition and obligation regulatory rules. Pruning is first
+site image, where V is the set of vertices to represent the objects in the             performed on G      ̂ (V
+                                                                                                               ′
+                                                                                                               ̂ ,̂
+                                                                                                                       ′       ′
+                                                                                                                    E ) to extract the prohibition regulatory rules
+semantic phrase triplets and E = {{μ, ν, τ} : (μ, ν) ∈ V2, μ ∕
+                                                             = ν} is the set of                       ′ (   ′   ′ )
+
+edges to represent the individual-object relationships in the image (τ is              subgraph G P V P , E P and the obligation regulatory rules subgraph
+                                                                                                    ̂     ̂   ̂
+                                                                                         ′ (      ′ )
+the connections to represent a entity relationship or a entity status). In
+                                                                                              ′
+                                                                                       ̂ V
+                                                                                       G O
+                                                                                                ̂ . The processing of pruning is described in Algorithm 3. As
+                                                                                             ̂ ,E
+                                                                                              O   O
+the example in Fig. 10, the scene graph G(V, E) (Fig. 10(c)) of the on-site            demonstrated in Fig. 12, given a relevant regulatory rules graph
+image (Fig. 10(a)) is consists of the vertices V = {person, hard hat, dust               ′   ′       ′
+
+mask, grinder}, the edges E = {(person, hard hat, wear), (person, dust mask,           G
+                                                                                       ̂ (V  E ), where V’
+                                                                                          ̂ ,̂          ̂ = {person, construction site,
+wear), (person, grinder, operate), (person, two hands, use), (two hands,                             hard hat, dust mask, safety glasses, grinder, face, two hands}
+grinder, operate)}. As this example shows, the proposed visual informa­                          ′
+
+tion extraction module enables the generation of graph structures con­                 and E  ̂ = {(person, construction site, on), (person, hard hat, wear, obliga­
+taining scene information (individuals, objects, etc.) through automated               tion), (person, dust mask, wear, obligation), (person, grinder, operate), (per­
+perception and achieves scene understanding. Notably, on the basis of                  son, safety glasses, wear, obligation), (person, two hands, use), (two hands,
+the proposed approach, the task of visual information extraction is also               grinder, operate, obligation), (grinder, face, near, prohibition)}, by perform­
+extendable to other scenes by increasing the categories of object
+                                                                                                                                                           ′ (  ′   ′ )
+                                                                                       ing pruning the prohibition regulatory rules subgraph G           ̂ V
+                                                                                                                                                           P
+                                                                                                                                                                  ̂ is
+                                                                                                                                                               ̂ ,E
+                                                                                                                                                                P   P
+detection together with geometric feature analysis. Further discussion                                                                 ′                                                     ′
+
+on extendability of the proposed approach in different scenes is given in              extracted        where        V
+                                                                                                                     ̂ = {person, grinder, face}
+                                                                                                                        P                            and     E
+                                                                                                                                                             ̂ =
+                                                                                                                                                               P
+Appendix B.                                                                             {(grinder, face, near, prohibition)}, together with the obligation regula­
+                                                                                                                       ′ (  ′   ′ )           ′
+                                                                                       tory rules subgraph G         ̂ V
+                                                                                                                       O    O EO
+                                                                                                                           ̂ ,̂     where V ̂ = {person, hard hat,
+                                                                                                                                              O
+                                                                                                                                                                                             ′
+
+3.4. Automated reasoning for hazards identification                                    dust mask, safety glasses, grinder, two hands} and E                  ̂ =
+                                                                                                                                                               O
+                                                                                       {(person, hard hat,wear, obligation), (person, dust mask, wear, obligation),
+3.4.1. Relevant regulatory rules extraction                                            (person, safety glasses, wear, obligation), (person, two hands, use), (two
+    To specify the reasoning targets and reduce the computational                      hands, grinder, operate, obligation)}.
+complexity, the relevant regulatory rules for the scene information of                 Algorithm 3.           Relevant regulatory rules graph pruning algorithm.
+the on-site image need to be first extracted.
+    As processed in Algorithm 2, given a scene graph G(V, E) (Fig. 11(a))                 Prohibition regulatory rules reasoning is performed based on
+of on-site image, where V is the set of vertices to represent the detected             compliance checking between the scene graph G(V, E) of on-site image
+entities in the obtained on-site images and E = {{μ, ν, τ} : (μ, ν) ∈ V2, μ ∕
+                                                                                                                                                                    ′    ′       ′
+                                                                            =          and the prohibition regulatory rules subgraph G
+                                                                                                                                     ̂ P (V    E P ). As pro­
+                                                                                                                                          ̂P , ̂
+ν} is the set of edges to represent the individual-object relationships in                                                                                 ′
+                                                                                       cessed in Algorithm 4, if an edge ̂e P of Ê P exists in E, which means a
+                                                                                                                                                 ′
+
+
+the image, the conditional relationship triplets are extracted by
+                                                                                       prohibition entities relationship exists in the on-site image scene, then
+searching a subset V′ ⊆ V which is the keys of the conditional relation set
+
+
+
+
+                                          ′   ′   ′
+                                         ̂ (V
+Fig. 11. (c) is the relevant rules graph G     ̂ ) extracted from (b) regulatory rules hierarchical graph G(
+                                            ̂ ,E                                                             ̂ E,
+                                                                                                          ̂ V,    ̂ and contains all regulatory rules for the situation
+                                                                                                               ̂ C)
+of (a) on-site image scene graph G(V, E).
+
+                                                                                  13
+S. Chen et al.                                                                                                                       Automation in Construction 137 (2022) 104191
+
+
+
+
+                                                                              ′   ′    ′                                                                 ′       ′        ′
+                                                                          ̂ (V
+Fig. 12. By performing pruning on (a) the relevant regulatory rules graph G     ̂ ), (b) the prohibition regulatory rules subgraph G
+                                                                             ̂ ,E                                                  ̂ P (V    E P ) and (c) the obli­
+                                                                                                                                        ̂P , ̂
+                                     ′    ′   ′
+gation regulatory rules subgraph G    ̂O , E
+                                 ̂ O (V    ̂ O ) are extracted.
+
+
+̂e P is extracted as a violated regulatory prohibition rule and the on-site
+   ′                                                                                                                                         ′
+                                                                                           a    bijective     function           f : V→ V
+                                                                                                                                        ̂O       such                that     ∀u,       v ∈ V,
+image scene is hence identified as hazardous.                                                                                ′                                                      ′
+                                                                                           (u, v) ∈ E ↔ (f(u) , f(v) ) ∈ E
+                                                                                                                         ̂ O , which is denoted as G ≅ G
+                                                                                                                                                       ̂O                               [37].
+Algorithm 4. Prohibition regulatory rules reasoning algorithm.                                                                                   ′           ′        ′
+                                                                                           Otherwise, G(V, E) is non-isomorphic to G
+                                                                                                                                   ̂ O (V
+                                                                                                                                        ̂O , E
+                                                                                                                                             ̂ O ) and the violated
+    The obligation regulatory rules reasoning for hazards identification
+                                                                                                                                                     ′
+                                                                                           obligation regulatory rules HO = {(μ, ν, τ) ∈ E                  ∈ E } from the
+                                                                                                                                         ̂ O , (μ, ν, s, r) ∕
+of the on-site image is performed based on the isomorphism between G                       on-site image are identified (Algorithm 5). In the case of G(V, E) in
+                 ′   ′   ′
+(V, E) and G    ̂O , E
+           ̂ O (V    ̂ O ). In graph theory, an isomorphism is a mapping                                       ′    ′    ′
+                                                                                           Fig. 11(a) and G
+                                                                                                          ̂ O (V    E O ) in Fig. 12(c), HO = (person, safety glasses,
+                                                                                                               ̂O , ̂
+between two graph structures of the same type that can be reversed by                      use) which represents the hazard that the person is not wearing safety
+                                                                                           glasses when operating the grinder.
+                                                     ′    ′       ′
+an inverse mapping. G(V, E) is isomorphic to G
+                                             ̂ O (V    E O ), if there exists
+                                                  ̂O , ̂
+
+
+                                                                                  14
+S. Chen et al.                                                                                                    Automation in Construction 137 (2022) 104191
+
+
+
+
+Algorithm 5. Obligation regulatory rules reasoning algorithm.                   identify potential occupational hazards.
+
+
+4. Experiments and results                                                      4.1. Experimental description
+
+   The purpose of the current experiments is to extract the key infor­          4.1.1. Target regulatory rules
+mation of the target regulatory rules using the proposed linguistic in­            To demonstrate the validity of the proposed linguistic information
+formation extraction module, followed by scene understanding of the             extraction approach in this paper, we selected six regulatory rules from
+images in the testing dataset using the proposed visual information
+extraction module, which finally performs a compliance checking of the
+images based on the extracted key information of the regulatory rules to
+
+
+                                                                           15
+S. Chen et al.                                                                                                                  Automation in Construction 137 (2022) 104191
+
+
+
+
+                                                                                     Table 6
+Table 5                                                                              Information of the collected testing dataset of the scene “working on height”.
+Information of collected training dataset.                                            Distance       Number of       Related        Number of             Number of
+                                                                                      (m)            images          PPE            positive samples      negative samples
+                 Number of real-world        Number of web-mined     Total
+                 image samples               image samples                                                           Hard hat       866                   634
+                                                                                                                     Dust
+  Hard hat       3003                        1322                    4325                                                           818                   682
+                                                                                      3              1500            mask
+  Dust mask      3099                        186                     3285
+                                                                                                                     Safety
+  Safety         2180                        115                     2305                                                           635                   865
+                                                                                                                     belt
+    glasses
+                                                                                                                     Hard hat       900                   600
+  Body           347                         135                     482
+                                                                                                                     Dust
+    harness                                                                                                                         750                   750
+                                                                                      5              1500            mask
+  Grinder        2005                        355                     2360
+                                                                                                                     Safety
+  Overall        10,634                      2113                    12,747                                                         750                   750
+                                                                                                                     belt
+                                                                                                                     Hard hat       900                   600
+                                                                                                                     Dust
+on-site occupational safety guides in Japan to perform the experiments:               7              1500            mask
+                                                                                                                                    775                   725
+
+                                                                                                                     Safety
+                                                                                                                                    725                   775
+   (1) “Wear a hard hat on a construction site.”                                                                     belt
+   (2) “Wear a dust mask on a construction site.”3
+   (3) “Use body harness when working on height.”
+   (4) “Wear a safety glasses when operating a grinder.”
+                                                                                     Table 7
+   (5) “Always use two hands when operating a grinder.”
+                                                                                     Information of the collected testing dataset of the scene “operating a grinder”.
+   (6) “Never operate a grinder near face.”
+                                                                                      Number of         Related PPE /     Number of positive           Number of negative
+                                                                                      images            tool              samples                      samples
+4.1.2. Image datasets
+    To create a training dataset for object detection, we collected images                              Hard hat          735                          765
+                                                                                                        Safety glasses    643                          857
+of hard hats, dust masks, safety glasses, body harness, and grinders from
+                                                                                      1500              Dust mask         1072                         428
+two sources: real-world images and web-mined images. Real-world im­                                     Grinder           443                          7831
+ages were obtained using a SONY α5000 digital camera at six different                                                                                  4672
+places (including construction sites, school campus, and experimental                 1
+                                                                                          operate a grinder using single hand.
+rooms) under different environmental conditions (e.g., level of illumi­               2
+                                                                                          operate a grinder near face.
+nation, visual range) and the obtained images are all 1440 × 1080 in
+resolution. Web-mined images were retrieved by search engines using a
+                                                                                     and operating a grinder. Seven volunteers were instructed to perform
+web crawler. The resolution of these collected web images ranges from
+                                                                                     different behaviors wearing different PPEs. The testing images were
+150 × 150 to 4896 × 3672. A total of 6029 images containing 12,747
+                                                                                     taken in different contexts, and the individuals in the images were at
+objects were collected and annotated as listed in Table 5.
+                                                                                     different distances from the camera and in different postures, which
+    Furthermore, to address compliance with these six regulatory rules,
+                                                                                     made the identification of the model more difficult and more meaningful
+we created a testing dataset that contains two scenes: working on height
+                                                                                     for verifying its validity and robustness. For the scene of “working on
+                                                                                     height”, we captured at three different distances (3 m, 5 m, 7 m) from
+                                                                                     the camera on the rooftop of an eight-floor building, and randomly
+  3
+    At some construction sites in the Fukushima area of Japan that dispose of        selected 1500 images from the collected images sequence at each dis­
+radioactive waste, workers are required to wear dust masks to prevent inha­          tance as the test samples. Also, for the scene of “operating a grinder”, we
+lation of radioactive dust.
+
+                                                                                16
+S. Chen et al.                                                                                                      Automation in Construction 137 (2022) 104191
+
+
+Table 8                                                                          identification of individuals who are properly using PPE/grinder, FP
+Defination of TP, FP, and FN.                                                    (false positive) is the number of wrong identification of individuals who
+                    Predicted                   Ground truth                     are properly using PPE/grinder, while FN (false negative) is the number
+                                                                                 of the ground truth not identified as defined in Table 8.
+  TP                Proper use (safe)           Proper use (safe)
+  FP                Proper use (safe)           Improper use (hazardous)
+  FN                Improper use (hazardous)    Proper use (safe)                4.2. Regulatory rules processing system development
+
+                                                                                    Based the linguistic information extraction approach introduced
+also demonstrated the operation indoors and near the pipeline, and
+                                                                                 above, we have developed a novel automated regulatory rules process­
+selected a random sample of 1500 images for the test. The collected
+                                                                                 ing system. The open-source libraries spaCy [38], networkx [39],
+testing dataset of grinder operating includes normal operation and two
+                                                                                 graphviz [40] are deployed for feature generation, graph structure gen­
+types of hazardous operation (operating a grinder using single hand and
+                                                                                 eration, visualization, respectively.
+operating a grinder near face). The details are provided in Table 6 and
+Table 7, where positive samples refer to individuals who follow the
+regulatory rules, and negative samples refer to individuals who do not           4.3. Object detection model training
+follow regulatory rules.
+                                                                                     We build the YOLOv4-CSP (CSPDarknet53 as the backbone for
+4.1.3. Evaluation metrics                                                        feature extraction) model using PyTorch and initialize the model based
+   Precision and recall were adopted to evaluate the performance of the          on the pre-trained weights on the MSCOCO 2017 object detection
+proposed approach:                                                               dataset [28]. We train the YOLOv4 model for 200 epochs by stochastic
+                                                                                 gradient descent (SGD), and throughout training we use a batch size of
+                   TP                                                            8, a momentum of 0.9 and a decay of 0.0005. The learning rate is
+Precision =                                                          (24)
+                 TP + FP                                                         initialized to 1e − 2 and is decreasing following the cosine function. 80%
+             TP                                                                  samples in the training dataset are used for training the YOLOv4 model,
+Recall =                                                             (25)        and the remaining 20% samples are reserved for validating the training
+           TP + FN
+                                                                                 process to prevent overfitting. The training and validating losses are
+where TP (true positive) is defined as the number of correct                     plotted in Fig. 13. Some detected examples from the validating dataset
+                                                                                 are visualized in Fig. 14.
+
+
+
+
+                                                       Fig. 13. Training and validating losses.
+
+                                                                            17
+S. Chen et al.                                                                                                         Automation in Construction 137 (2022) 104191
+
+
+
+
+                                               Fig. 14. Object detection examples on the validating dataset.
+
+
+
+
+                                 Fig. 15. The dependency tree of regulatory rule: “Wear a hard hat on a construction site.”
+
+
+   All experiments are performed on a machine with Intel Core i7-                      demonstrates an example of the ontology modeling of the regu­
+7820× (8 cores, 3.6GHz), 32GB DDR4 SDRAM RAM, NVIDIA GeForce                           latory rule “Wear a hard hat on a construction site”.
+GTX 1080 Ti GPU (11GB of GDDR5X memory and 3584 CUDA cores).                       (3) Next, the information extracted from the ontology model is
+                                                                                       encoded in logic representations using semantic phrases and
+4.4. Experimental results                                                              logical connectives in order to further structure the linguistic
+                                                                                       information in regulatory rules. The logic representations of the
+4.4.1. Linguistic information extraction results                                       selected six regulatory rules are shown in Table 9 which correctly
+    We perform linguistic information extraction experiments on the                    demonstrated the extracted entities and requirements from reg­
+selected six regulatory rules using the developed automated regulatory                 ulatory rules.
+rules processing system with the following steps:                                  (4) Finally, based on the logic representation, the hierarchical graph
+                                                                                       ̂ V,
+                                                                                       G(    ̂ C)
+                                                                                          ̂ E,  ̂ is generated for linguistic information representation
+   (1) Firstly, the dependency trees, with both POS tags and dependency                 as demonstrated in Fig. 17, where V  ̂ = {person, construction site,
+       labels, are created as the outputs of the pre-processing and                     height, grinder, hard hat, body harness, dust mask, safety glasses,
+       feature generation stages. With this step, each regulatory rule
+                                                                                        face, two hands}, the edges E   ̂ = {(person, construction site, on),
+       sentence is properly decomposed into minimal units (tokens)
+                                                                                        (person, height, on), (person, grinder, operate), (person, hard hat,
+       with linguistic properties and inter-unit semantic relations (de­
+                                                                                        wear, obligation), (person, body harness, use, obligation), (person, dust
+       pendency) are generated for further analysis. As an example, the
+                                                                                        mask, wear, obligation), (person, safety glasses, wear, obligation),
+       output dependency tree of the regulatory rule “Wear a hard hat
+                                                                                        (person, face, near, prohibition), (person, use, two hands, obligation),
+       on a construction site” is shown in Fig. 15.
+                                                                                        (two hands, operate, grinder)}, and the conditional relations set
+   (2) Subsequently, semantic analysis is performed by ontology
+       modeling to automatically extract the entities from the de­
+                                                                                        ̂ = {((person, construction site, on))⇀((person, hard hat,
+                                                                                        C                                                                  wear,
+       pendency trees generated in the previous step, together with their               obligation), (person, dust mask, wear, obligation)), ((person, height,
+       attributes and relations between them. Up to this point, each                    on)) ⇀ ((person, body harness, use, obligation)), ((person, grinder,
+       regulatory rule has been automatically transformed from a nat­                   operate)) ⇀ ((person, safety glasses, wear, obligation), (person, face,
+       ural language sentence into a model composed of multiple inter-                  near, prohibition), (person, use, two hands, obligation), (two hands,
+       related instances capable of describing scenes. Fig. 16                                                ̂ V,
+                                                                                        operate, grinder))}. G( ̂ ̂   ̂ contains all linguistic information
+                                                                                                                   E, C)
+                                                                                        of the target regulatory rules which demonstrated the effective of
+
+
+                                                                             18
+S. Chen et al.                                                                                                                         Automation in Construction 137 (2022) 104191
+
+
+
+
+                                         Fig. 16. Ontology modeling for regulatory rule: “Wear a hard hat on a construction site.”
+
+
+                                                                                                   targets and reduce the computational complexity. As the testing dataset
+Table 9                                                                                            contains two scenes, i.e.”working on height“ and ”operating a grinder“,
+Logic representation of regulatory rules from on-site occupational safety guides.                                                                     (         )
+                                                                                                   two relevant rules subgraphs Ĝ h(V    ̂ h ) and G
+                                                                                                                                     ̂ h, E         ̂g V     ̂ g are automati­
+                                                                                                                                                        ̂ g, E
+  No.     Regulatory rules               Logic representation
+                                                                                                   cally generated as illustrated in Fig. 19(b) and Fig. 19(c), respectively.
+  1       Wear a hard hat on a           ((person, on, construction site)) → () ∧ ((person,        Reasoning for hazards identification is performed based on compliance
+          construction site.             wear, hard hat))
+                                                                                                   checking between the G(V, E) and its relevant rules subgraph. Fig. 20
+  2       Wear a dust mask on a          ((person, on, construction site)) → () ∧ (person,
+          construction site.             wear, dust mask))                                         illustrates the identification examples on the testing dataset. Our model
+  3       Use body harness when          ((person, on, height)) → () ∧ ((person, use, body         detects the individuals and objects in the obtained image (Fig. 20(a))
+          working on height.             harness))                                                 and visualizes an intuitive scene graph in Fig. 20(b). The hazards
+  4       Wear a safety glasses when     ((person, operate, grinder)) → () ∧ ((person,             identification results are shown in Fig. 20(c).
+          operating a grinder.           wear, safety glasses))
+  5       Always use two hands when      ((person, operate, grinder)) → () ∧ ((person, use,
+                                                                                                       The quantitative results under different scenes are reported in
+          operating a grinder.           two hands) ∧ (two hands, operate, grinder))               Table 10 and Table 11. The resolution of the individual regions in the
+  6       Never operate a grinder near   ((person, operate, grinder)) → (¬(grinder, near,          testing image gradually became smaller as the distance between the
+          face.                          face)) ∧ ()                                               camera and individuals increased. However, benefiting from YOLOv4’s
+                                                                                                   ability of detecting small objects, the identification precision and recall
+                                                                                                   of the proposed model are not significantly affected. For the scene
+         the proposed approach on automated linguistic information
+                                                                                                   “working on height”, the proposed model successfully identifies
+         extraction and representation.
+                                                                                                   improper hard hat use in testing images at all distances with 100%
+                                                                                                   overall precision and 99.89% overall recall. And for the identification
+   The automated generated hierarchical graph G(             ̂ E,
+                                                          ̂ V,    ̂ was
+                                                               ̂ C)
+                                                                                                   results of proper dust mask use, the proposed model is also able to
+reviewed by a team of researchers and on-site managers, and the correct
+                                                                                                   achieve significant performance with with 100% overall precision and
+representation of the six target regulatory rules was finally confirmed.
+                                                                                                   99.74% overall recall. Furthermore, in the experiments of proper body
+                                                          ̂ V,
+Fig. 18 visualizes the subgraphs of each rule included in G(   ̂ C),
+                                                             ̂ E, ̂ from
+                                                                                                   harness use identification, the performance of the proposed model is
+which it is observed that each of the six regulatory rules is correctly                            slightly decreased on the side view in far-field images (92.97% recall in
+represented by the graph structure. In addition, we provide more results                           the 7 m case), but still achieves 100% overall precision and 97.01%
+of linguistic information extraction for different scenes in Appendix A.                           overall recall. For the scene “operating a grinder”, most of the PPE
+                                                                                                   (safety glasses and dust masks) in the testing images are relatively small
+4.4.2. Hazards identification results                                                              due to the operating postures and camera angles. The grinder is also not
+    We evaluate the performance of the proposed model on our testing                               easily identifiable due to the angle and hand obscuration. All of these
+dataset to address compliance with the six regulatory rules. For each on-                          add to the difficulty of the model for hazards identification. For the
+site image the entities in it are first detected and a scene graph G(V, E) is                      identification results of proper safety glasses use, which is considered to
+automatically generated to represent its scene information. When a                                 be the most challenging in the experiments because most safety glasses
+hazard identification is performed, the subgraph composed of relevant                              in the testing images are transparent and the recognition will be
+regulatory rules are automatically extracted first to specify the reasoning
+
+                                                                                              19
+S. Chen et al.                                                                                                        Automation in Construction 137 (2022) 104191
+
+
+
+
+                                     Fig. 17. The hierarchical graph generated from on-site occupational safety guides.
+
+
+seriously affected by the level of the illumination, the proposed model           suggested that on-site hazards identification systems with the ability to
+achieves 96.40% precision and 70.76% recall. The proposed model also              automatically understand and dynamically adapt to changes in regula­
+achieves notable performance at 99.90% precision and 95.62% recall for            tory rules to improve practicality, as regulatory rules vary from region to
+the identification results of proper dust mask in scene “operating a              region and may change due to external conditions.
+grinder” despite the relatively small dust masks in the testing images.
+Additionally, the identification of hazardous operation of the grinder is
+also well accomplished by the proposed model. For the hazardous                   5.1. Contributions
+behavior of single-handed operation of a grinder, the proposed model is
+also able to achieve significant performance with 97.01% precision and                To address current gaps noted above, this paper proposes a graph-
+100% recall. The dangerous behavior of operating a grinder near face is           based framework that integrates linguistic and visual information to
+also successfully identified with 98.60% precision and 88.49% recall.             process regulatory rule sentences and images for on-site occupational
+    To benchmark the performance of our proposed model, We also                   hazards identification. Particularly, the following originalities and
+perform the hazards identification experiments on the YOLOv3-based                achievements are thought to be the contribution of this paper.
+model introduced in our previous work [24], which has achieved                        The linguistic information extraction approach proposed in this
+state-of-the-art performance for improper PPE use identification. This            paper originally deploys NLP-based syntactic structure analysis with the
+result serves as the baseline for the following comparisons. As listed in         ontology concept to automatically extract and represent key information
+Table 10 and Table 11, the proposed model in this paper achieves better           from regulatory rules in AEC domains. The extracted linguistic infor­
+performance than the baseline model in both “working on height” and               mation is represented by a novel hierarchical graph structure introduced
+“operating a grinder” scenes. Notably, the recall rate of proper dust mask        in our previous work [24], which is further refined in this paper by
+identification and near-face grinder operating identification in the ex­          addressing the prohibition relationships in regulatory rules. In contrast
+periments of the “operating a grinder” scene improved significantly               to other integrated models [18–23], our model is capable of automati­
+compared to the baseline model (95.62% vs. 70.99%, 88.49% vs.                     cally extracting and representing the linguistic information of regulatory
+79.23%). Overall, the proposed model outperforms the baseline model               rules and using a unified model for hazards reasoning without the
+in terms of both precision (“working on height” scene: 100% vs. 99.99%,           requirement of third-party software. As for on-site deployment, our
+“operating a grinder” scene: 98.60% vs. 97.37%) and recall (“working              system allows direct reading of textual data (e.g., regulatory documents,
+on height” scene: 99.02% vs. 97.78%, “operating a grinder” scene:                 meeting memos) for automated processing, and safety monitoring of
+88.49% vs. 79.23%).                                                               different regions of the site can be performed without any system setup
+                                                                                  by site managers, which is more practical than the other integrated
+5. Discussion                                                                     models surveyed. As demonstrated in Fig. 18, the key information
+                                                                                  contained in the six target regulatory rules that require addressing in the
+    Construction workers are required to follow on-site regulatory rules          current experiment are all correctly represented in the graph structure.
+in order to avoid occupational hazards. However, compliance of regu­              In addition, in the hazards reasoning experiments, the proposed
+latory rules is not strictly enforced among workers due to all kinds of           approach properly extracts the corresponding subgraphs of relevant
+reasons. Even though vision-based on-site hazards identification systems          regulatory rules from the generated hierarchical graph in response to the
+have been widely used to enhance compliance checking, it remains to be            visual information of different scenes (Fig. 19).
+                                                                                      A novel scene understanding approach is presented in this paper
+
+                                                                             20
+S. Chen et al.                                                                                                                   Automation in Construction 137 (2022) 104191
+
+
+
+
+                                                                                                                ̂ V,
+                                            Fig. 18. Subgraph visualization of the regulatory rules included in G(   E, C).
+                                                                                                                   ̂ ̂  ̂
+
+
+
+
+                                       (         )
+             ̂ h (V
+Fig. 19. (b) G         ̂ h ) and (c) G
+                  ̂ h, E             ̂g V     ̂ g are the relevant rules graphs extracted from (b) regulatory rules hierarchical graph G(
+                                         ̂ g, E                                                                                        ̂ V      ̂ and contains all regulatory
+                                                                                                                                             E, C)
+                                                                                                                                          ̂, ̂
+rules for the situation of target scenes”working on height“ and ”operating a grinder“.
+
+
+employing scene graph as the basic notion of information representation                   grained information about a person, especially in the case of occlu­
+structure to automatically perceive visual information from images. The                   sion, and is more effective for multi-hazard identification task, which
+extraction of entities in the scene combines deep learning-based object                   has been verified in our previous work [24] to have better performance
+detection and pose estimation as human skeletons provide more fine-                       compared to the commonly used object detection-based approaches in
+
+
+                                                                                     21
+S. Chen et al.                                                              Automation in Construction 137 (2022) 104191
+
+
+
+
+                 Fig. 20. Identification examples on the testing dataset.
+
+
+
+
+                                           22
+S. Chen et al.                                                                                                                     Automation in Construction 137 (2022) 104191
+
+
+Table 10
+Hazards identification results of the scene “working on height”.
+  Distance (m)              Model                Hard hat                                    Dust mask                                    Body harness
+
+                                                 Precision (%)          Recall (%)           Precision (%)            Recall (%)          Precision (%)           Recall (%)
+
+                            Baseline             100                    95.50                100                      100                 100                     100
+  3
+                            This paper           100                    100                  100                      100                 100                     100
+                            Baseline             100                    94.78                99.87                    99.73               100                     98.27
+  5
+                            This paper           100                    100                  100                      99.87               100                     98.40
+                            Baseline             100                    90.89                100                      95.74               100                     92.28
+  7
+                            This paper           100                    99.89                100                      99.35               100                     92.97
+                            Baseline             100                    96.74                99.96                    99.70               100                     96.97
+  Overall
+                            This paper           100                    99.96                100                      99.74               100                     97.01
+
+
+
+
+Table 11
+Hazards identification results of the scene “operating a grinder”.
+  Model          Hard hat                         Safety glasses                 Dust mask                        Grinder1                       Grinder2
+
+                 Precision (%)      Recall (%)    Precision (%)    Recall (%)    Precision (%)       Recall (%)   Precision (%)    Recall (%)    Precision (%)    Recall (%)
+
+  Baseline       99.19              99.59         93.17            69.98         99.74               70.99        95.09            100           97.37            79.23
+  This paper     99.32              100           96.40            70.76         99.90               95.62        97.01            100           98.60            88.49
+  1
+      operate a grinder using single hand.
+  2
+      operate a grinder near face.
+
+
+the surveyed vision-based works [11–15]. According to our previous                         relationship analysis in the examples of failed identification. To address
+work [24], this paper presents some improvements in visual information                     this gap, future enhancements will consider the use of 3D pose estima­
+extraction. We employ the existing state-of-the-art vision-based object                    tion and object detection models.
+detection model, i.e., YOLOv4, which is one of the most performing                             The hazards reasoning approach presented in this paper is based on
+novel object detection models currently available compared with other                      frame-by-frame graph structure analysis without considering time-series
+object detection models used in [24] and other surveyed works [11–17].                     relationships. However, a hazard behavior is usually composed of
+   Additionally, apart from the proper use identification of PPE                           multiple hazard actions, and the introduction of time-series analysis
+addressed in our previous work [24], the proposed automated reasoning                      provides a more precise description of hazard behaviors. In our future
+module in this paper also performs the identification of the safe use of                   work, we will investigate the use of time-series analysis models to
+tools, which is a more complex task. Effectiveness of the model proposed                   dynamize the graph structure for hazards identification and prediction.
+in this paper were experimentally evaluated on two scenes, i.e.,
+“working on height” and “operating a grinder”. To benchmark the per­                       6. Conclusion
+formance, results were compared with the model introduced in our
+previous work [24], and reported in Table 10 and Table 11. The results                         This paper has presented a novel approach integrating linguistic and
+demonstrate that the model proposed in this paper achieves better                          visual information to process regulatory rule sentences and images for
+perceptual capabilities for scene understanding, especially in the com­                    on-site occupational hazards identification. First, we propose a regula­
+plex scenes of safe operation of grinder.                                                  tory rules processing approach to automatically extract and represent
+                                                                                           the key linguistic information of regulatory rules that is intended to
+                                                                                           indicate the potential occupational hazards which need to be identified.
+5.2. Limitations                                                                           Subsequently, we introduce a vision-based image scene information
+                                                                                           understanding approach to process on-site images by the combination of
+    Further extensions of this work will be investigated in the following                  deep learning-based object detection and individual detection using
+directions considering the limitations of the approach proposed in this                    geometric relationships analysis. Additionally, an automated reasoning
+paper.                                                                                     approach is proposed to provide the integration of the processed lin­
+    The linguistic information extraction approach proposed in this                        guistic and visual information and perform hazards identification. The
+paper utilizes a pre-trained spaCy parser to generate syntactic features,                  hazards of two scenes, i.e., “working on height” and “operating a
+however we observe that the parser fails in generating correct POS tags                    grinder”, were successfully identified. The test results indicate that our
+and dependency labels when addressing some uncommon construction-                          model was capable of identifying the on-site occupational hazards with
+specific words, which would result in the subsequent semantic analysis                     high precision (“working on height” scene: 100%, “operating a grinder”
+not proceeding properly. In our coming work, we plan to collect and                        scene: 98.60%) and recall rate (“working on height” scene: 99.02%,
+annotate extensive construction-related documents to train a better                        “operating a grinder” scene: 88.49%) under different environmental
+parser to solve this issue.                                                                conditions. Further improvements will be to train a better syntactic
+    Although the model proposed in this paper obtains a better perfor­                     parser for ensuring the proper extraction of linguistic information, and
+mance with respect to the baseline model [24] for automated identifi­                      to improve the performance of visual information representation by
+cation of the safe operation of grinder, we nevertheless notice the                        introducing 3D entity extraction and time-series analysis.
+inadequacy of the 2D geometric distance in individual-object
+
+
+
+
+                                                                                      23
+S. Chen et al.                                                                                                                                      Automation in Construction 137 (2022) 104191
+
+
+Declaration of Competing Interest                                                                   Acknowledgments
+
+      None.                                                                                            This research was funded by Japan Society for the Promotion of
+                                                                                                    Science (JSPS) Grants-in-Aid for Scientific Research Grant No.
+                                                                                                    19K05324.
+
+
+
+Appendix A. Additional linguistic information extraction results
+
+    To further validate the correctness and generalizability of the developed automated regulation processing system, we performed linguistic in­
+formation extraction experiments on regulatory rules from the OSHA Pocket Guide “Worker Safety Series: Construction” [3], with the following
+selected regulatory rules shown below, which contain different construction scenes (e.g. scaffolding, forklifts, etc.):
+
+   (1) “Unstable objects, such as barrels, boxes, loose bricks or concrete blocks must not be used to support scaffolds or planks.”
+   (2) “Scaffold must be equipped with guardrails, midrails and toeboards.”
+   (3) “Scaffolds must be at least 10 feet from electric power lines at all times.”
+   (4) “(Worker on height) Use safety net systems or personal fall arrest systems.”
+   (5) “Avoid using ladders with metallic components near electrical work and overhead power lines.”
+   (6) “Never enter an unprotected trench.”
+   (7) “(Forklift) do not move a load over workers.”
+   (8) “Operators shall always wear seatbelts.”
+   (9) “Construction workers should wear work shoes or boots with slip-resistant and puncture-resistant soles.”
+  (10) “Do not raise or lower the forks while the forklift is moving.”
+
+   The logic representations of the selected regulatory rules are shown in Table A.12 which correctly demonstrated the extracted entities and re­
+quirements from regulatory rules. Additionally, Fig. A.21 visualizes the generated graphs of the selected regulatory rules. Although these regulatory
+rules cover different scenes at construction sites and are relatively more complex in terms of syntactic structure, the developed automated regulation
+processing system still correctly represents their linguistic information in graph structure.
+
+Table A.12
+Logic representation of the regulatory rules from the OSHA Pocket Guide.
+
+  No.     Regulatory rules                                                           Logic representation
+
+  1       Unstable objects, such as barrels, boxes, loose bricks or concrete         (¬ (barrel, support, scaffold) ∨ ¬ (box, support, scaffold) ∨ ¬ (brick(be, loose), support, scaffold) ∨ ¬ (block
+          blocks must not be used to support scaffolds or planks.                    (be, concrete), support, scaffold) ∨ ¬ (barrel, support, plank) ∨ ¬ (box, support, plank) ∨ ¬ (brick(be,
+                                                                                     loose), support, plank)∨ ¬(block(be, concrete), support, plank)) ∧ ()
+  2       Scaffold must be equipped with guardrails, midrails and toeboards.         () ∧ ((guardrail, equip, scaffold) ∧ (midrail, equip, scaffold) ∧ (toeboard, equip, scaffold))
+  3       Scaffolds must be at least 10 ft from electric power lines at all times.   () ∧ ((scaffold, from(>10 feet), electric power line))
+  4       (Worker on height) Use safety net systems or personal fall arrest          ((worker, on, height)) → () ∧ ((worker, use, safety net system) ∨ (worker, use, personal fall arrest system))
+          systems.
+  5       Avoid using ladders with metallic components near electrical work          ((worker, use, ladders(be, metallic components)) → (¬(ladders(be, metallic components), near,
+          and overhead power lines.                                                  electricalwork) ∧ ¬ (ladders(be, metallic components), overhead, powerlines)) ∧ ()
+  6       Never enter an unprotected trench.                                         (¬ (worker, enter, trench(be, unprotected)) ∧ ()
+  7       (Forklift) do not move a load over workers.                                ((forklift, move, load)) → (¬(load, over, worker)) ∧ ()
+  8       Operators shall always wear seatbelts.                                     () ∧ ((operator, wear, seatbelt))
+  9       Construction workers should wear work shoes or boots with slip-            () ∧ ((construction worker, wear, work shoes) ∨ (construction worker, wear, boots(be, (slip − resistant ∧
+          resistant and puncture-resistant soles.                                    puncture − resistant soles)))
+  10      Do not raise or lower the forks while the forklift is moving.              ((forklift, be, moving)) → (¬(worker, raise, forks) ∧ ¬ (worker, lower, forks)) ∨ ()
+
+
+
+
+                                                                                               24
+S. Chen et al.                                                                              Automation in Construction 137 (2022) 104191
+
+
+
+
+                 Fig. A.21. The hierarchical graphs generated from the OSHA Pocket Guide.
+
+
+
+
+                                                    25
+S. Chen et al.                                                                                                      Automation in Construction 137 (2022) 104191
+
+
+Appendix B. Further discussion on extendability in different scenes
+
+   According to the above regulatory rule representations, the task of hazards identification can be extended to other scenes by adding the corre­
+sponding categories (e.g. ladders, forklifts, etc.) of object detection in the graph structure together with geometric feature analysis. Fig. B.22 provides
+some examples of how the proposed approach can be extended to other scenes with individuals detected using OpenPose and objects that can be
+detected in the future by training a YOLOv4 model containing more categories. For example, for the regulatory rule “(Forklift) do not move a load over
+workers.”, the hazard of a scene can be reasoned by analyzing the geometric position of the detected individual with respect to the detected load of a
+forklift (whether it is overhead) as shown in Fig. B.22(a). And for the regulatory rule “Operators shall always wear seatbelts.”, as demonstrated in
+Fig. B.22(b) the hazard of whether or not wearing a seatbelt can be reasoned through similar analysis as in section 3.3.2 regarding the relationship
+between individuals and body harnesses. In addition for the regulatory rule “Construction workers should wear work shoes or boots with slip-resistant
+and puncture-resistant soles.”, similar to the analysis of the relationship between individuals and hard hats in section 3.3.2, it is possible to identify
+whether work shoes are worn by analyzing the geometric position of a detected individual’s ankles (body parts 10 and 13 in Fig. 6) in relation to the
+detected work shoes as shown in Fig. B.22 (c).
+
+
+
+
+                                        Fig. B.22. Examples of how the proposed approach extends to other scenes.
+
+
+
+
+                                                                            26
+S. Chen et al.                                                                                                                              Automation in Construction 137 (2022) 104191
+
+
+References                                                                                            ontology, Autom. Constr. 119 (2020), 103310, https://doi.org/10.1016/j.
+                                                                                                      autcon.2020.103310.
+                                                                                                 [21] H. Wu, B. Zhong, H. Li, P. Love, X. Pan, N. Zhao, Combining computer vision with
+ [1] Bureau of Labor Statistics, Industries at a Glance: Construction. https://www.
+                                                                                                      semantic reasoning for on-site safety management in construction, J. Build. Eng. 42
+     bls.gov/iag/tgs/iag23.htm, 2021. Accessed date: 9 February 2021.
+                                                                                                      (2021) 103036, https://doi.org/10.1016/j.jobe.2021.1030360.
+ [2] Japan Industrial Safety and Health Association, OSH Statistics in Japan,
+                                                                                                 [22] N. Khan, M.R. Saleem, D. Lee, M.W. Park, C. Park, Utilizing safety rule correlation
+     https://www.jisha.or.jp/english/statistics/index.html,
+                                                                                                      for mobile scaffolds monitoring leveraging deep convolution neural networks,
+     Accessed date: 9 February 2021.
+                                                                                                      Comput. Ind. 129 (2021), 103448, https://doi.org/10.1016/j.
+ [3] Occupational Safety & Health Administration, Worker safety series: construction,
+                                                                                                      compind.2021.103448.
+     https://www.osha.gov/Publications/OSHA3252/3252.html, Accessed
+                                                                                                 [23] H. Liu, G. Wang, T. Huang, P. He, M. Skitmore, X. Luo, Manifesting construction
+     date: 9 January 2022.
+                                                                                                      activity scenes via image captioning, Autom. Constr. 119 (2020), 103334, https://
+ [4] S. Konda, H.M. Tiesman, A.A. Reichard, Fatal traumatic brain injuries in the
+                                                                                                      doi.org/10.1016/j.autcon.2020.103334.
+     construction industry, 2003-2010, Am. J. Ind. Med. 59 (2016) 212–220, https://
+                                                                                                 [24] S. Chen, K. Demachi, Automation in construction towards on-site hazards
+     doi.org/10.1002/ajim.22557.
+                                                                                                      identification of improper use of personal protective equipment using deep
+ [5] Occupational Safety & Health Administration, Safety and Health Regulations for
+                                                                                                      learning-based geometric relationships and hierarchical scene graph, Autom.
+     Construction: Head protection, https://www.osha.
+                                                                                                      Constr. 125 (2021) 103619, https://doi.org/10.1016/j.autcon.2021.103619.
+     gov/laws-regs/regulations/standardnumber/1926/1926.100,
+                                                                                                 [25] G. Grefenstette, P. Tapanainen, What is a word, what is a sentence? Problems of
+     Accessed date: 9 February 2021.
+                                                                                                      tokenization, in: Proceedings of the 3rd International Conference on
+ [6] National Institute for Occupational Safety and Health, EYE SAFETY,
+                                                                                                      Computational Lexicography, 1994, pp. 79–87. https://citeseerx.ist.psu.edu/vie
+     https://www.cdc.gov/niosh/topics/eye/, Accessed date: 9 February
+                                                                                                      wdoc/download?doi=10.1.1.31.8947rep=rep1type=pdf.
+     2021.
+                                                                                                 [26] J. Miller, A Critical Introduction to Syntax, Continuum International Publishing
+ [7] A.L. Dannenberg, L.M. Parver, R.J. Brechner, L. Khoo, Penetration eye injuries in
+                                                                                                      Group, 2011. ISBN: 9780826497048.
+     the workplace: the National eye Trauma System Registry, Arch. Ophthalmol. 110
+                                                                                                 [27] Z. Cao, G. Hidalgo Martinez, T. Simon, S.-E. Wei, Y.A. Sheikh, OpenPose: Realtime
+     (6) (1992) 843–848, https://doi.org/10.1001/archopht.1992.01080180115038.
+                                                                                                      multi-person 2D pose estimation using part affinity fields, IEEE Trans. IEEE Trans.
+ [8] Government of Western Australia, Department of Commerce, WorkSafe Division,
+                                                                                                      Pattern Anal. Machine Intel. 43 (2021) 172–186, https://doi.org/10.1109/
+     Guide to using dust masks in construction work, https://www.commerce.wa.
+                                                                                                      tpami.2019.2929257.
+     gov.
+                                                                                                 [28] T. Lin, M. Maire, S. Belongie, L. Bourdev, R. Girshick, J. Hays, P. Perona,
+     au/sites/default/files/atoms/files/guide_to_using_dust_mask.
+                                                                                                      D. Ramanan, C.L. Zitnick, P. Dollár, Microsoft COCO: common objects in context,
+     pdf, Accessed date: 9 February 2021.
+                                                                                                      Proc. Eur. Conf. Comp. Vision (2014) 740–755, https://doi.org/10.1007/978-3-
+ [9] Occupational Safety & Health Administration, Occupational Safety and Health
+                                                                                                      319-10602-1_48.
+     Standards: Eye and face protection, https://www.osha.
+                                                                                                 [29] C.Y. Wang, A. Bochkovskiy, H.Y.M. Liao, Scaled-yolov4: scaling cross stage partial
+     gov/laws-regs/regulations/standardnumber/1910/1910.133,
+                                                                                                      network, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (2021) 13029–13038.
+     Accessed date: 9 February 2021.
+                                                                                                      https://openaccess.thecvf.com/content/CVPR2021/html/Wang_Scaled-YOLOv4_S
+[10] Bureau of Labor Statistics, Census of Fatal Occupational Injuries Summary.
+                                                                                                      caling_Cross_Stage_Partial_Network_CVPR_2021_paper.html.
+     https://www.bls.gov/news.release/cfoi.nr0.htm, 2018. Accessed
+                                                                                                 [30] J. Redmon, S. Divvala, R. Girshick, A. Farhadi, You only look once: unified, real-
+     date: 9 February 2021.
+                                                                                                      time object detection, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (2016)
+[11] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-
+                                                                                                      779–788, https://doi.org/10.1109/CVPR.2016.91.
+     use by a deep learning method from far-field surveillance videos, Autom. Constr.
+                                                                                                 [31] J. Redmon, A. Farhadi, YOLO9000: Better, faster, stronger, Proc. IEEE Conf.
+     85 (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.
+                                                                                                      Comput. Vis. Pattern Recognit. (2017) 6517–6525, https://doi.org/10.1109/
+[12] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn
+                                                                                                      CVPR.2017.690.
+     by construction personnel: a deep learning approach and benchmark dataset,
+                                                                                                 [32] J. Redmon, A. Farhadi, YOLOv3: An incremental improvement, arXiv preprint, htt
+     Autom. Constr. 106 (2019), 102894, https://doi.org/10.1016/j.
+                                                                                                      p://arxiv.org/abs/1804.02767.
+     autcon.2019.102894.
+                                                                                                 [33] C.Y. Wang, H.Y.M. Liao, I.H. Yeh, Y.H. Wu, P.Y. Chen, J.W. Hsieh, CSPNET: a new
+[13] N.D. Nath, A.H. Behzadan, S.G. Paal, Deep learning for site safety: real-time
+                                                                                                      backbone that can enhance learning capability of CNN, Proc. IEEE Conf. Comput.
+     detection of personal protective equipment, Autom. Constr. 112 (2020), 103085,
+                                                                                                      Vis. Pattern Recognit. (2020) 1571–1580, https://doi.org/10.1109/
+     https://doi.org/10.1016/j.autcon.2020.103085.
+                                                                                                      CVPRW50498.2020.00203.
+[14] N.D. Nath, A.H. Behzadan, Deep convolutional networks for construction object
+                                                                                                 [34] K. He, X. Zhang, S. Ren, J. Sun, Spatial pyramid pooling in deep convolutional
+     detection under different visual conditions, Front. Built Environ. 6 (2020) 97,
+                                                                                                      networks for visual recognition, IEEE Trans. Pattern Anal. Mach. Intell. 37 (2015)
+     https://doi.org/10.3389/fbuil.2020.00097.
+                                                                                                      1904–1916, https://doi.org/10.1109/TPAMI.2015.2389824.
+[15] J. Shen, X. Xiong, Y. Li, W. He, P. Li, X. Zheng, Detecting safety helmet wearing on
+                                                                                                 [35] T.-Y. Lin, P. Dollár, R. Girshick, K. He, B. Hariharan, S. Belongie, Feature pyramid
+     construction sites with bounding-box regression and deep transfer learning, Comp.
+                                                                                                      networks for object detection, Proc. IEEE Conf. Comput. Vis. Pattern Recognit.
+     Aided Civil Infrastruct. Eng. (2020) 1–17, https://doi.org/10.1111/mice.12579.
+                                                                                                      (2017) 2117–2125, https://doi.org/10.1109/CVPR.2017.106.
+[16] S. Chen, K. Demachi, A vision-based approach for ensuring proper use of personal
+                                                                                                 [36] S. Liu, L. Qi, H. Qin, J. Shi, J. Jia, Path aggregation network for instance
+     protective equipment (PPE) in decommissioning of Fukushima daiichi nuclear
+                                                                                                      segmentation, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (2018) 8759–8768,
+     power station, Appl. Sci. 10 (2020) 5129, https://doi.org/10.3390/app10155129.
+                                                                                                      https://doi.org/10.1109/CVPR.2018.00913.
+[17] R. Xiong, P. Tang, Pose guided anchoring for detecting proper use of personal
+                                                                                                 [37] S.M. Hsieh, C.C. Hsu, L.F. Hsu, Efficient method to perform isomorphism testing of
+     protective equipment, Autom. Constr. 130 (2021), 103828, https://doi.org/
+                                                                                                      labeled graphs, Proc. Int. Conf. Comp. Sci. Appl. (2006) 422–431, https://doi.org/
+     10.1016/j.autcon.2021.103828.
+                                                                                                      10.1007/11751649_46.
+[18] R. Xiong, Y. Song, H. Li, Y. Wang, Onsite video mining for construction hazards
+                                                                                                 [38] spaCy: Industrial-strength NLP. https://spacy.io/. Accessed date: 9 February
+     identification with visual relationships, Adv. Eng. Inform. 42 (2019), 100966,
+                                                                                                      2021.
+     https://doi.org/10.1016/j.aei.2019.100966.
+                                                                                                 [39] NetworkX: Network Analysis in Python. https://networkx.org/. Accessed date: 9
+[19] M. Zhang, M. Zhu, X. Zhao, Recognition of high-risk scenarios in building
+                                                                                                      February 2021.
+     construction based on image semantics, J. Comput. Civ. Eng. 34 (2020) 04020019,
+                                                                                                 [40] J. Ellson, E. Gansner, L. Koutsofios, S.C. North, G. Woodhull, Graphviz - open
+     https://doi.org/10.1061/(asce)cp.1943-5487.0000900.
+                                                                                                      source graph drawing tools, Proc. Int. Symp. Graph Draw. (2001) 483–484,
+[20] W. Fang, L. Ma, P.E.D. Love, H. Luo, L. Ding, A. Zhou, Knowledge graph for
+                                                                                                      https://doi.org/10.1007/3-540-45848-4_57.
+     identifying hazards on construction sites: integrating computer vision with
+
+
+
+
+                                                                                            27
+

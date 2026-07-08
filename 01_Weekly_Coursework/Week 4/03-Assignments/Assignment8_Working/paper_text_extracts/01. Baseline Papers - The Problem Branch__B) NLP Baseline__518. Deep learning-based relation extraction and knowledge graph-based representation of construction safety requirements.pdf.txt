@@ -1,0 +1,1055 @@
+                                                                 Automation in Construction 147 (2023) 104696
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Deep learning-based relation extraction and knowledge graph-based
+representation of construction safety requirements
+Xiyu Wang, Nora El-Gohary *
+Department of Civil and Environmental Engineering, University of Illinois at Urbana-Champaign, 205 N. Mathews Ave., Urbana, IL 61801, United States
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Field compliance checking aims to check the compliance of site operations with applicable construction safety
+Relation extraction                                       regulations for detecting violations. Relation extraction provides an automated solution to extract relations that
+Construction safety                                       describe construction safety requirements from unstructured text. However, previous relation extraction efforts
+Fall protection
+                                                          are limited in their extraction capabilities, representation, and automation. To address this gap, this paper
+Field compliance checking
+Deep learning
+                                                          proposes a deep learning-based method to automatically extract and represent relations that describe fall pro­
+Knowledge graphs                                          tection requirements. The proposed method: (1) uses a CNN-based model, with pre-trained word and position
+Word embeddings                                           embeddings, to automatically extract domain-specific relations, and (2) represents the extracted requirements in
+                                                          the form of knowledge graph-based queries, which helps decompose complex requirements into manageable
+                                                          units while keeping these units connected in a scalable graph structure. The proposed method was tested on 20
+                                                          OSHA sections, and has achieved 87.5% precision, 83.4% recall, and 85.4% F-1 measure, which indicates good
+                                                          relation extraction performance.
+
+
+
+
+1. Introduction                                                                                natural language processing (NLP) techniques to analyze construction
+                                                                                               safety documents. For example, Feng and Chen [19] proposed a deep
+    Field compliance checking aims to detect violations to construction                        learning-based framework to extract extract event-related information
+safety regulations to protect workers from potential safety incidents.                         (e.g., date, location, and accident type) from accident news reports for
+This is because a large portion of construction site accidents occur as a                      construction safety management. Rupasinghe and Panuwatwanich [60]
+result of field noncompliances, which usually include damaged or no                            proposed a rule-based method to mine hazard information from accident
+personal protective equipment (PPE); inoperative or inappropriate                              reports. Baker et al. [4] proposed approaches to extract injury precursors
+equipment; and wrong poses, operations, or work sequences [13]. For                            using NLP techniques (a set of text patterns). Zhong et al. [89] presented
+fall fatalities in particular, according to an analysis of the Construction                    a deep learning-based framework to mine hazard knowledge from haz­
+FACE Database (CFD), noncompliance of personal fall arrest systems has                         ard records. Chi et al. [14] proposed a semi-automated approach to
+caused >77% of all deaths [16]. To identify such field noncompliances,                         develop a gazetteer that can eventually support information extraction
+different solutions have been proposed for mitigating the risks and                            from construction safety regulations. Collectively, these efforts either
+consequences of potential safety incidents, among which utilizing                              focused on the analysis of injury and accident reports or focused on the
+computer vision techniques for safety checking has attracted an                                extraction of hazard factors. There is, thus, a lack of research efforts that
+increasing amount of research attention. These research efforts include                        focused on automatically extracting requirements from construction
+using computer vision techniques to detect personal protective equip­                          safety regulations for supporting field compliance.
+ment (PPE) [17,50], recognize workers’ operations [59,65], and track                               Information extraction offers an opportunity to automatically extract
+the trajectory of labor and equipment onsite [66].                                             safety requirements. In recent years, there is a growing body of literature
+    However, compared with the rich body of literature in applying                             in the construction domain that aims to propose different methods for
+computer vision techniques, limited studies have explored the use of                           extracting information from various construction regulatory documents,
+
+
+
+   Abbreviations: NLP, natural language processing; CNN, convolutional neural networks; RNN, recurrent neural networks; BiLSTM, bidirectional long short term
+memory; BIM, building information modeling.
+ * Corresponding author.
+   E-mail addresses: xiyuw2@illinois.edu (X. Wang), gohary@illinois.edu (N. El-Gohary).
+
+https://doi.org/10.1016/j.autcon.2022.104696
+Received 21 June 2022; Received in revised form 12 October 2022; Accepted 28 November 2022
+Available online 9 January 2023
+0926-5805/© 2022 Published by Elsevier B.V.
+X. Wang and N. El-Gohary                                                                                             Automation in Construction 147 (2023) 104696
+
+
+including but not limited to energy conservation codes, quality stan­             checking rules, but often lacked in capturing information about real-
+dards, and general building codes [22,48,49,52,57,61,64,80,83,90–92].             time site operations to detect field noncompliance (e.g., [39]); and/or
+These methods mainly vary in two aspects: (1) the approach for                    (3) were designed as management tools (e.g., HCSS Safety field app
+extraction, e.g., rule-based [38,57,80], machine learning-based [34,68],          [23]) for organizing incident reports, documenting observations from
+or deep learning-based [61,84,90]. These efforts have laid a solid                coworkers, and/or collecting workers’ physical states, rather than
+foundation for extracting information from construction safety regula­            capturing and comparing site information with safety requirements to
+tions, with deep learning approaches offering the highest potential for           detect noncompliance.
+limiting human involvement in developing the information extraction                   On the other hand, the majority of BIM software systems available on
+methods (e.g., eliminating the need for handcrafted rules); and (2) the           the market that aim to conduct automated compliance checking are
+targeted semantic information elements to be extracted, e.g., building-           limited in supporting construction field safety checking scenarios. For
+code requirements [83], utility spatial configurations from utility ac­           example, safety checking using Solibri [63] relies heavily on (1) BIM
+commodation policies [75], or construction procedural constraints and             models that are typically covering design information and are lacking
+attributes for quality compliance [91].                                           real-time field information on construction operations (equipment,
+    However, most of the aforementioned efforts mainly either focused             labor, etc.); and (2) hard-coded safety requirements embedded in the
+on extracting named entities or considered relations as a type of infor­          software, which require manual effort to read the safety regulations and
+mation element [57,61,72,90], which makes them limited in capturing               encode the requirements in computable rule formats. Other commercial
+the different types of relation classes and in expressing the rich seman­         software systems that can be used in the construction phase are limited
+tics in the original documents. More research studies are therefore               in compliance checking scope and generalizability to address various
+needed to bridge five main knowledge gaps in relation extraction for              scenarios. For example, smartvid.io (ECT [67]) mainly considers
+construction domain applications. First, existing relation classes in other       checking the existence of PPE such as gloves, reflective vests, and
+relation extraction efforts (e.g., “Place_Of_Birth” in the linguistics            footwear [50], but it cannot check compliance with applicable safety
+domain) cannot be directly transferred, because they are not suitable to          requirements, which express different conditions and exceptions for
+describe situations in the construction safety domain. Thus, relations            various fall-related scenarios. Therefore, more research efforts are
+that describe construction safety requirements need to be identified and          needed to develop methods for identifying noncompliances automati­
+extracted. Second, existing efforts (e.g., [72]) in the construction              cally for diverse accident scenarios in the field. Extracting requirements
+domain are limited in considering non-verbal-predicate relations,                 from construction safety regulations and representing them in a struc­
+redundant relations, and relation directions. Third, most of the existing         tured and computer-processable format is the first step towards such an
+efforts in the construction domain fall short in their scalability and            automated field checking process.
+generalizability, because they require a heavy amount of human assis­
+tance. Fourth, limited efforts in the construction domain have explored           2.2. Relation extraction
+generating query graphs for knowledge graph-based reasoning directly
+from text, which would help identify new or missing information not                   Relation extraction is the task of recognizing and classifying se­
+explicitly expressed in the original text for subsequent analysis. Fifth,         mantic relations from unstructured text into several predefined classes
+limited attention has been paid to developing queries that can support            [51]. For example, in the sentence “Defective safety net components
+deep learning-based automated reasoning, especially hyper-relational              shall be removed from service”, relation extraction would recognize and
+queries for representing nested relations.                                        classify the relation between “safety_net_component” and “defective” as
+    To address these gaps, this paper proposes a new method to auto­              “Is”, and the relation between “safety_net_component” and “service” as
+matically extract and represent safety requirements from construction             “Keep_From”. Early relation extraction efforts have proposed various
+safety regulations. The proposed method: (1) uses deep learning to                rule-based and traditional machine learning-based (as opposed to deep
+automatically extract domain-specific relations (e.g., Located_At and             learning-based) methods [15,70,79], which have achieved good per­
+Engage_In) about fall protection requirements from the regulations to             formance but have typically required much human effort to develop the
+add interlinks to the isolated named entities extracted in Wang and El-           extraction rules or conduct feature engineering.
+Gohary [71]; (2) uses word- and position-embedding features to                        In recent years, outside the construction domain, deep learning-
+improve the relation extraction performance; and (3) represents the               based methods have been used for relation extraction and many novel
+extracted safety requirements (both relations and named entities) in the          neural network models have been proposed [29]. Among them, con­
+form of query graphs to facilitate future discovery of implicit or missing        volutional neural networks (CNN)-based models and recurrent neural
+information, as well as knowledge graph-based compliance reasoning.               networks (RNN)-based models have received high popularity and
+The proposed method was tested using fall-related sections from Occu­             reached good and comparable performance levels [47]. For example,
+pational Safety and Health Administration (OSHA) 29 CFR 1926 [52].                Hendrickx et al. [24] achieved an F-1 measure of 84.1% in relation
+                                                                                  extraction from the SemEval-2010 dataset using a CNN-based model and
+2. Background                                                                     84.0% using an RNN-based model. Similar performance was shown for
+                                                                                  variants of the two model types as well. For example, Shen and Huang
+2.1. Current practices for automated field compliance checking                    [62] achieved an F-1 measure of 85.9% on the same dataset using an
+                                                                                  Attention-based CNN model. The entity-aware Attention bidirectional
+    Automated field compliance checking aims to automatically check               long short term memory (BiLSTM) [37], an RNN-based model, achieved
+whether workers’ behaviors and their surrounding environment are                  an F-1 measure of 85.2% using the same dataset. Another branch of
+adhering to applicable safety regulations, norms, procedures, and                 research efforts has also attempted to improve performance by adding
+guidelines [33]. In addition to the research efforts that utilize computer        sentence hierarchies such as dependency paths as additional features
+vision techniques (described in Section 1), existing research efforts and         [7,77].
+construction site practices have explored using various emerging tech­                Depending on the types of supervision received, those deep learning-
+nologies, such as building information modeling (BIM), wearable de­               based methods can be further divided into two categories: distant and
+vices, and smart systems (e.g., [3,12,27,53,82,95]). However, the                 fully supervised methods. Distant supervised methods learn from unla­
+majority of these systems or applications are limited in supporting               beled data with the help of some external knowledge bases. For example,
+automated field compliance checking because they (1) mainly focused               Mintz et al. [46] used the Freebase [6], a semantic knowledge base, for
+on checking violations in the design to identify potential hazards or risks       distant supervised learning. In general, research on distant supervised
+(e.g., [35]); (2) developed ontologies to represent a set of safety               methods attempts to experiment with different deep learning
+
+                                                                              2
+X. Wang and N. El-Gohary                                                                                               Automation in Construction 147 (2023) 104696
+
+
+architectures or different knowledge bases for performance improve­               identify the target information from large amounts of available facts
+ment. Example efforts that adopt either CNN-based models or RNN-                  represented in a knowledge graph [10]. Traditional reasoning methods
+based models but receive different levels of supervision include het­             depend heavily on external databases and query languages, which can
+erogeneous representations for neural relation extraction (HRERE) [74],           be time-consuming and subject to the quality and coverage of existing
+language understanding with knowledge-based embeddings (LUKE)                     knowledge graphs. On the contrary, neural reasoners are faster and can
+[76], and advanced prototypical networks (Proto-ADV) [21]. Fully su­              better adapt to the incompleteness in existing knowledge graphs, which
+pervised relation extraction methods, on the other hand, are more                 makes them potentially efficient for field compliance checking. A
+suitable for construction applications, because (1) they do not require           research area that has recently attracted research attention is query
+external knowledge bases, which are currently unavailable in the con­             representation for neural reasoning [1,78], especially to represent
+struction domain; and (2) customized relation classes can be easily               arbitrary logic operators such as conjunction (∧), disjunction (∨), and
+incorporated through additional classes/labels.                                   negation (¬) together with other triples in complex query graphs. This is
+                                                                                  particularly important for safety compliance reasoning, because con­
+2.3. Knowledge graphs                                                             struction safety requirements cover different situations and are typically
+                                                                                  represented using multiple logic operators. For example, the query
+    A knowledge graph is a multi-relational graphical network that uses           graph for the sentence “the attachment point of the body harness shall be
+different relations as directed edges to connect concepts or entities for         located in the center of the wearer’s back near shoulder level, or above
+representing information (e.g., information extracted from text or da­            the wearer’s head” would contain two locations for the attachment point
+tabases) in a semantically rich and structured way [5]. Such graphical            connected by a disjunction operator.
+network structure not only helps express relational connectivity in an                There exist two ways to represent query graphs that involve logic
+intuitive way, but also helps discover implicit, missing, or new infor­           operators: (1) as directed acyclic graphs with symbolic logic operators.
+mation through edge traversal, because some relations may not be                  Knowledge graph-based reasoning methods then seek to retrieve sub­
+explicitly expressed or some entities may be omitted in the original data         graphs that match with the query graphs. However, subgraph matching
+(e.g., natural language sentences) [11,28]. Knowledge graphs thus show            is relatively sensitive to data quality, producing correct answers largely
+three significant advantages, which are especially beneficial for field           when facts in the knowledge graph are complete and accurate, which is
+compliance checking applications. First, knowledge graphs can store               not the case in real-world knowledge graphs [10,56,94]; and (2) as
+relations between entities explicitly due to its graph-like structure, un­        dependency or computation graphs to be mapped to an embedding
+like other representation approaches such as traditional relational da­           space together with facts from the knowledge graph [55,56]. Knowledge
+tabases in which entities are stored in the form of tables and are linked         graph-based reasoning methods then seek to identify entities or relations
+by separate linking tables that cannot represent the exact semantic re­           which are nearest to the queries in the embedding space as answers to be
+lations. Second, knowledge graphs typically allow more flexibility to             returned. Such embedding methods can robustly handle missing re­
+easily add or remove classes and relations from the knowledge-graph               lations and have achieved good performance in various reasoning tasks
+schema. Since construction safety regulations are becoming more                   such as knowledge graph completion [93].
+stringent as safety knowledge improves [52], using knowledge graphs
+requires less manual work to keep up with updates. Third, knowledge               3. State of the art and knowledge gaps in relation extraction
+graphs allow for faster information retrieval due to their structure,
+compared with other representation approaches [25]. For example,                      In the area of relation extraction, in addition to the efforts outside the
+Chen et al. [9] showed that knowledge graphs have outperformed                    construction domain as discussed in Section 2, there is a growing
+traditional relational databases in querying and retrieving trans­                number of research efforts undertaken to extract relations from con­
+portation data [9]. This is because information retrieval using knowl­            struction documents. For example, Zhang and El-Gohary [80] proposed
+edge graphs usually starts from the related named entities, and only              a semantic rule-based natural language processing approach to auto­
+scans relations in their neighborhood for desired information.                    matically extract requirements, including quantitative relations and
+    Due to their aforementioned characteristics, and hence the prom­              comparative relations, from building codes. Ren and Zhang [57] pro­
+ising performance in various applications such as knowledge retrieval,            posed a semantic rule-based method with a set of natural language
+question-answering, knowledge recommendation, and knowledge visu­                 processing techniques to extract successive and parallel relations from
+alization, knowledge graphs have been successfully deployed by many               construction procedural documents. Liu and El-Gohary [41] proposed a
+leading companies to organize their business data such as Google,                 semantic neural network ensemble–based dependency parsing method
+Amazon, eBay, IBM, and LinkedIn [10,11]. Multiple open knowledge                  to automatically extract dependency relations between bridge-related
+graphs were published as well, such as DBpedia, YAGO, and Google’s                entities. Zhong et al. [90] proposed a deep learning-based method to
+Knowledge Graph [28]. Recently, knowledge graphs have been applied                classify relations between entities about construction procedural re­
+in more research fields. For example, some research efforts have                  quirements into seven predefined categories. Despite the contributions
+attempted to develop knowledge graphs to model hazardous chemical                 of these efforts, five gaps of knowledge exist.
+knowledge for risk management [86]. In the construction domain, a few                 First, existing relation classes in other relation extraction efforts are
+efforts focused on developing knowledge graphs for a number of ap­                not sufficient/suitable to describe the complex situations in the con­
+plications. For example, Chen and Luo [8] constructed an ontology-                struction safety domain, and thus cannot be directly applied. For
+based knowledge graph using noun phrases extracted from different                 example, only nine relation classes such as “Cause-Effect” and “Part-
+abstracts in the construction literature for bibliometric analysis. Fang          Whole” have been considered in the SemEval-2010 dataset, six relation
+et al. [17] developed a small-scale knowledge graph for modeling                  classes such as “Agent-Artifact” and “Organization-Affiliation” have
+detected site objects with spatial relations. Jiang et al. [30] constructed       been considered in the ACE05 dataset [69], and 24 relation classes such
+a small-scale knowledge graph for representing the connections among              as “Contain” and “Place_Of_Birth” have been considered in the New York
+different construction safety standards (e.g., “Specification of Inspection       Times dataset [58]. Also, as can be inferred from these examples, which
+of Construction Hoist Equipment” “instance_of” “Machinery                         are all from relation extraction efforts outside of the construction
+Management”).                                                                     domain, many of the existing relation classes in these efforts can be
+                                                                                  either too general or irrelevant to describe construction safety re­
+2.4. Query representation for knowledge graph-based reasoning                     quirements. Similarly, existing relation classes from other construction
+                                                                                  subdomains cannot be directly applied to construction safety applica­
+   Reasoning over knowledge graphs aims to infer new information or               tions either. This is because relations in domain-specific applications
+
+                                                                              3
+X. Wang and N. El-Gohary                                                                                                 Automation in Construction 147 (2023) 104696
+
+
+tend to be specific and can vary in semantics and detail from one sub­                query graphs that can support deep learning-based field compliance
+domain/application to another. For example, construction safety regu­                 reasoning. Queries in most of the previous efforts were developed in a
+lations can include interactions between the workers and their                        traditional way using some particular query languages such as SPARQL
+environment. Thus, for instance, relations describing construction pro­               and GQL. Reasoning using such queries relies heavily on external da­
+cedural constraints (e.g., the seven relations such as “Before”, “Start”,             tabases and query engines, requires longer processing time, and can be
+and “During” in [90]) are not sufficient to describe those interactions. In           dependent on the quality of knowledge graphs, which can eventually
+addition, most of the existing research efforts in the construction domain            impede the effectiveness of field compliance checking. There are a few
+paid limited attention to the directions of relations. However, in natural            research efforts on developing query graphs to perform deep learning-
+language sentences, each relation often has two associated directions (e.             based reasoning directly in the embedding space. However, despite
+g., “support” and “supported by” can both indicating a relation of                    considering the conjunction and disjunction logic operators, these ef­
+“Support”), which need to be inferred from the context for accurate                   forts paid less attention to hyper-relational queries or nested relations
+representation of the requirement semantics.                                          [1,78], which are important for accurately representing the extracted
+    Second, most of the existing relation extraction methods, especially              safety requirements.
+the research efforts in the construction domain, are limited in consid­
+ering non-verbal-predicate or redundant relations. On one hand, exist­                4. Proposed method for relation extraction
+ing efforts mainly focus on extracting simple predicates (i.e., verbs) as
+relations (e.g., [72]). However, relations sometimes exist not only in the                The proposed information extraction and information modeling
+form of predicates, in which case extracting merely predicates can lead               method uses deep learning models to automatically extract domain-
+to missing information. For example, “Same_As” is an important type of                specific relations and represent the extracted safety requirements in a
+relation that describes the comparison between entities, but it cannot be             semantically rich and structured way. The proposed relation extraction
+extracted using methods that only consider predicates as relations.                   method seeks to automatically identify semantic relations such as
+Missing such information in the extracted safety requirements could                   “Break” and “Tip_Over” from unstructured text, and classify them into
+lead to missing the detection of noncompliance instances and eventually               several predefined relation classes such as “Fail” for normalizing
+serious accidents onsite. On the other, current research efforts extract              different expressions that refer to the same relation, as illustrated in
+relations without considering that different expressions can be used to               Fig. 1. A total of 56 relation classes were first identified based on a
+refer to the same relation (e.g., [72]). For example, relations such as               thorough review of relevant documents and research efforts. After pre­
+“Conform_To” and “Meet” can both express that the compliance check­                   defining the relation classes and preprocessing the raw text, a deep
+ing subject should be compliant to a specific requirement; however, they              learning-based model was developed to automatically recognize and
+are considered as different relations in the extracted requirements using             classify relations based on their syntactic and semantic features. In
+the existing extraction methods.                                                      developing the relation extraction model, two alternative deep learning
+    Third, most of the existing relation extraction methods in the con­               models were tested: CNN-based (Attention-based CNN) and RNN-based
+struction domain still rely heavily on human assistance, thus can fall                model (Entity-aware Attention BiLSTM). These two types of models
+short in their scalability and generalization. On one hand, rule-based                were selected for testing because they are two mature types of deep
+information/relation extraction methods (e.g., [57,72,75,81]) require                 learning models that have achieved comparable performance in the
+hand-crafted rules. On the other hand, traditional machine learning-                  computational linguistics domain (see Section 2.2) but that also have
+based (as opposed to deep learning-based) extraction methods (e.g.,                   different focuses and merits (see Section 2.2), thus a comparison of the
+[40,68]) require highly engineered features that are obtained through                 two can help provide insights in terms of which structures, layers, or
+trial and error. Only a limited number of efforts have explored deep                  techniques are more effective in addressing complex domain-specific
+learning approaches (e.g., [61,84,90]). More research efforts are needed              text, which can ultimately lead to optimized model structures specif­
+to further explore the use of deep learning (especially fully supervised              ically for tasks in the construction safety domain. Additional deep
+deep learning, as described in Section 2.2) in relation extraction – for              learning models, such as transformer-based models, can also be tested in
+example to explore the use of feature embeddings to enhance the                       future work, as discussed in Section 6. Pre-trained features were used to
+extraction capabilities and performance.                                              leverage the rich semantics of these features, which were obtained using
+    Fourth, there is a lack of information extraction efforts that allow a            a large amount of annotated data from the computational linguistics
+direct pipeline to generate queries for discovery of new information and              domain. Two state-of-the-art static word embeddings were selected and
+improved analytics using knowledge graphs, which is especially needed                 incorporated into the proposed method for comparative evaluation: the
+for regulation analytics. Knowledge graphs use a graphical network to                 continuous bag-of-words (CBOW) embedding [45] and the global vector
+represent relations as interlinks to connect concepts or entities for                 (GloVe) embedding [54]. After relation extraction, all the extracted
+maintaining the rich semantics in the original data [5]. Due to the ability           requirements (including relations extracted in this study and named
+to traverse through edges, reasoning over such graphical structure can                entities extracted in [71]) were represented in the form of knowledge
+help discover new relations or entities that are not explicitly expressed             graph-based queries. Fig. 2 summarizes the research methodology,
+(e.g., spatial relations that were not identified from site images, or                which includes six primary tasks: relation identification, text pre­
+omissions of named entities in the text) [11,28], which are important in              processing, feature preparation, relation extraction, knowledge graph-
+identifying noncompliance instances. Thus, knowledge graphs and                       based relation representation, and evaluation. An example to further
+queries have been used in compliance-related applications outside of the              illustrate the application of the proposed relation extraction method is
+construction domain. For example, Kaltenboeck [32] developed queries                  shown in Fig. 3.
+based on different European laws for international-business applica­
+tions. In the construction domain, Fang et al. [18] converted a checklist             4.1. Relation identification
+of unsafe behavior rules into Cypher queries to identify hazards in a
+knowledge graph, which stores detected site information, for improved                    A review of 20 OSHA sections related to fall protection and of pre­
+hazard identification. However, most queries from previous knowledge                  vious efforts on ontology-based modeling of construction safety
+graph-based reasoning efforts were developed manually, thus are small                 knowledge was conducted to identify the main semantic relations that
+in scale (e.g., six rules in Fang et al. [18]). There is a lack of efforts that       are needed to represent fall protection requirements [42,73,85,87,88].
+use NLP techniques to directly create queries from construction-domain                A total of 56 relation classes were identified, which aim to cover the
+text for supporting knowledge graph-based reasoning.                                  main relations without redundant expressions. They were further
+    Fifth, studies in query representations are needed for developing                 grouped into five main types: (1) comparative or spatial relations, which
+
+                                                                                  4
+X. Wang and N. El-Gohary                                                                                              Automation in Construction 147 (2023) 104696
+
+
+
+
+                                                 Fig. 1. Example relations extracted from an OSHA clause.
+
+
+
+
+                                                              Fig. 2. Research methodology.
+
+
+
+
+                                         Fig. 3. Application of proposed relation extraction method, with example.
+
+
+describe comparisons or spatial locations, such as “Above” and “Below”;           “Whichever_Greater”, and “Whichever_Less”): the direction is either
+(2) interaction relations, which describe the interactions of the workers         from head entity to tail entity or from tail entity to head entity. For
+with their environment, such as “Face”, “Access”, and “Change”; (3)               example, in the sentence “anticipated loads(1) caused by ice buildup(2)
+constraint relations, which describe conditions or situations, such as            …”, the relation is that tail entity (2) causes the head entity (1). In the
+“Except” and “Conditioned_On”; (4) descriptive relations, which                   sentence “ladder deflection(1) cause the ladder(2) to …”, the relation is
+describe the the properties, characteristics, or components of the en­            that head entity (1) causes the tail entity (2).
+tities, such as “Is” (e.g., is steep) and “Has” (e.g., has unprotected side
+and edge); and (5) logic relations such as “And” and “Or”. Most of the
+negated relations (e.g., “does not create a hazard”) were treated as              4.2. Text preprocessing
+separate relations (e.g., “Not_Cause”) to minimize the number of nega­
+tion operations for enhancing the efficiency of the knowledge graph-                 Text preprocessing aims to prepare the raw text in a format that
+based reasoning. Table 1 lists all the identified relation classes with           would be ready for subsequent analysis. Preprocessing consists of cor­
+examples and their corresponding relation types. Most of these relations          recting misspelling, removing redundant punctuation, tokenization, and
+are unidirectional (except relations such as “And”, “Or”, “Same_As”,              sentence splitting. Correcting misspelling and removing redundant
+                                                                                  punctuation aims to reduce the noise in the text. Tokenization aims to
+
+                                                                              5
+X. Wang and N. El-Gohary                                                                                                       Automation in Construction 147 (2023) 104696
+
+
+                    Table 1
+                    Identified relation classes with examples.
+                      Relation                  Example(s)                                                            Relation type
+
+                      Located_At                in, on the face of, at the edge of
+                      Part_Of                   steps of portable ladders, wells for fixed ladders
+                      Less_Or_Equal_To          nor beyond, less than, nor more than, not to exceed
+                      Greater_Or_Equal_To       more than, at least, not less than, exceed
+                      Same_As                   same as, i.e.
+                      Whichever_Greater         whichever is greater, whichever is later
+                      Whichever_Less            whichever is less
+                      Related_To                related, about
+                      Close_To                  is closer to, near
+                      Above                     above
+                                                                                                                      Comparative or spatial relation
+                      Below                     below
+                      Over                      over the edge of …
+                      Not_Over                  would not go over, not overhang
+                      Into                      into or through, falling through
+                      Behind                    behind
+                      Between                   within, at intervals
+                      From                      from, between … and …, start at
+                      To                        to, between … and …, to which
+                      After                     after
+                      Before                    until, before, prior to
+                      Cause                     cause, so that, such that, because of
+                      Not_Cause                 in no case … be such that, it will not create a greater hazard to …
+                      Conform_To                shall conform to, in conformance with, meet
+                      Provide                   provide, to provide, shall be provided
+                      Support                   supported, to support, shall be capable of supporting
+                      Not_Support               shall not be used to support, without supporting
+                      Decide                    decide, shall determine
+                      Protect                   shall be protected by, protect
+                      Keep_From                 keep from, prohibit from, be removed from, be withdrawn from
+                      Allow                     shall permit, to allow
+                      Use                       by the use of, by, through
+                      Use_For                   for, apply to, are used for, are designed for
+                      Not_Use_For               not apply to, used … not for                                          Interaction relation
+                      Use_As                    as, is used as
+                      Not_Use_As                shall not be used as
+                      Engage_In                 engaged in, performing
+                      Not_Engage_In             who is not engaged in, not in
+                      Change                    change, affect
+                      Match                     be compatible with, match
+                      Fail                      break, tip over, fail, fall
+                      Not_Reduce                shall not reduce
+                      Access                    to reach, access
+                      Parallel                  that parallels, shall be parallel, along
+                      Surround                  around, encircle
+                      Face                      shall face, face
+                      Conditioned_On            only when, if, provided that
+                      Except                    unless, except, excluding
+                                                                                                                      Constraint relation
+                      Because                   because, because of, for, as
+                      Otherwise                 otherwise, or
+                      Has                       shall have, to have, have, contain
+                      Not_Has                   without, shall not have
+                                                                                                                      Descriptive relation
+                      Is                        shall be, were, are
+                      Is_Not                    shall not be
+                      But                       but, however
+                      Or                        or                                                                    Logic relation
+                      And                       and, in addition to, besides
+
+
+
+divide each sequence from the text into units of words. Sentence split­                   text of 6 billion words. Both word embeddings can capture the semantics
+ting aims to recognize the boundaries of sentences and divide them into                   of each word, with its context, and represent them in the form of
+chunks.                                                                                   continuous and dense feature vectors, so that words similar in meaning
+                                                                                          are closer to each other in their embedding space. Compared to other
+                                                                                          static word embeddings (e.g., Skip Gram), CBOW and GloVe were
+4.3. Feature preparation                                                                  selected for testing because they typically show better performance in
+                                                                                          relation extraction [26,36]. Position embedding is used to differentiate
+    Two types of features were used for relation extraction: word                         the importance of each word due to its location in the sentence. This is
+embedding and position embedding. For word embedding, two state-of-                       because usually words closer to the given entities are more informative.
+the-art static word embeddings were selected for comparison: CBOW                         Position information is thus calculated with reference to the head entity.
+and GloVe embeddings. The CBOW embedding is pre-trained on 100                            For example, in the sentence “All <e1>fall protection</e1> required
+billion words from Google News. However, it does not encode explicit                      by <e2>1926.501</e2> shall …”, the relative distance from the word
+global information. The GloVe embedding, on the other hand, develops                      “required” to the head entity is 1, and the relative distance from the tail
+a global co-occurrence matrix to represent probabilities that a given                     entity “1926.501” to the head entity is 3, which are encoded in the
+word will co-occur with others. It is pre-trained on Wikipedia and Web
+
+                                                                                      6
+X. Wang and N. El-Gohary                                                                                              Automation in Construction 147 (2023) 104696
+
+
+position embedding.                                                              concatenated together for a full representation of an input sentence. The
+                                                                                 multi-layer perceptron layers take in all the concatenated vectors and
+4.4. Deep learning-based relation extraction                                     transform them into probabilities. Relation class tags with the highest
+                                                                                 probabilities are then selected as predictions. The Attention-based CNN
+   Two deep learning-based relation extraction models, a CNN-based               architecture is illustrated in Fig. 4.
+model (Attention-based CNN) and an RNN-based model (Entity-aware
+Attention BiLSTM), were developed and tested for comparative                     4.4.2. Proposed entity-aware attention BiLSTM model
+evaluation. CNN and RNN were selected for the reasons outlined at                     The proposed Entity-aware Attention BiLSTM model contains five
+the beginning of Section 4. A fully supervised learning approach was             main types of layers: embedding layers, self-attention layer, bidirec­
+adopted for the reasons outlined in Section 2.2.                                 tional LSTM layer, entity-aware attention layer, and the multi-layer
+                                                                                 perceptron layers. The embedding layers consist of two components
+4.4.1. Proposed attention-based CNN model                                        that correspond to the aforementioned two features. The outputs from
+    The proposed Attention-based CNN model contains four main types              the two embedding layers are concatenated before being fed into the
+of layers: embedding layers, convolution layer, attention layer, and             self-attention layer, which is implemented using the multi-head atten­
+multi-layer perceptron layers. The embedding layers consist of three             tion formulation. The self-attention layer is used to capture the
+components: word embedding, position embedding, and part-of-speech               distinctive information in a sentence by measuring the correlation be­
+(POS) embedding. The word embedding layer starts from the pre-trained            tween words. Then the outputs from the self-attention layer are fed into
+embedding (CBOW or GloVe, as per Section 4.3), then adjusts itself to            the bidirectional LSTM layer for computing the feature values and
+the semantics in the construction safety domain during training. The             capturing the context information of each word. The entity-aware
+position embedding layer provides the relative location information of           attention layer is used afterwards to calculate the attention weights by
+each word, as described previously. The POS embedding layer aims to              considering three factors: (1) the semantic and syntactic features of each
+encode the POS tag of each word, which indicates the lexical category of         given entity pair, (2) the relative positions of the surrounding words to
+that word, such as noun, verb, and adjective. A total of 15 POS categories       the target entity pair, and (3) the entity classes of the target entity pair.
+were considered and obtained using the Stanford CoreNLP Toolkit [44].            The multi-layer perceptron layers then transform the outputs from the
+With the lexical category of each word encoded, the model can capture            entity-aware attention layer into relation class predictions, in the same
+more relation classes than predicates. The outputs for each word from            way as the proposed Attention-based CNN model. To prevent over­
+these three embeddings are then concatenated before being fed into the           fitting, L2 (squared) regularization was added to the model. The Entity-
+CNN layer and the attention layer. The CNN layer, consisting of a                aware Attention BiLSTM architecture is shown in Fig. 5.
+convolution layer and a max-pooling layer, is used to extract local
+character-level features. The convolution process in the convolution             4.5. Knowledge graph-based relation representation
+layer aims to extract features by applying different filters. The max-
+pooling layer aims to keep the most important features for sentences             4.5.1. Query structure development
+with variable lengths. The outputs from the CNN layer are represented               The extracted safety requirements were represented as query graphs,
+as sentence convolution vectors. For the attention layer, attention              using computation graphs, for supporting subsequent field compliance
+weights are calculated to quantitatively model the contextual relevance          reasoning using knowledge graphs, where nodes correspond to named
+of the words. Then attention-based context vectors are calculated as a           entities and edges correspond to relations, as illustrated in Fig. 6(a).
+weighted sum of the words based on their attention weights. The outputs          Extracted entity-relation triples (i.e., output from relation extraction)
+from both the CNN layer and the attention layer, namely sentence                 were treated as atomic components of query graphs, which were con­
+convolution vectors and attention-based context vectors, are                     nected using a set of logic operators. Conjunction and disjunction
+
+
+
+
+                                               Fig. 4. Architecture of proposed attention-based CNN model.
+
+                                                                             7
+X. Wang and N. El-Gohary                                                                                                            Automation in Construction 147 (2023) 104696
+
+
+
+                                                                                                       tej
+                                                                   z
+
+                                                                                                                         he1, he2
+
+                                                                    i             v        W H hi Pie1 Pie2   W E he1 te1 he2 te2
+
+
+
+
+                                       S
+
+
+
+
+                                           Fig. 5. Architecture of proposed entity-aware attention BiLSTM model.
+
+
+
+
+Fig. 6. Example of query structure development: (a) Components of query graphs; (b) Query graph with disjunction operation; and (c) Query graph with
+conjunction operation.
+
+
+operators are handled using additional blank nodes and auxiliary edges,               4.5.2. Query graph coding
+as illustrated in Fig. 6(b) and (c). There are three types of edges: (1)                  Query graph coding aims to represent query graphs with the struc­
+projection, which uses the semantic relations predefined in Section 4.1               ture described previously into a computer-processable format. The
+(except logic relations) to connect the nodes; (2) union, which indicates             atomic components of the query graphs are in the form of (h, r, t, qp),
+a disjunction operation at the additional blank node it points to; and (3)            where h means head entity, r means relation, t means tail entity, and the
+intersection, which indicates a conjunction operation at the additional               optional qp = {(qa1, qe1), …} means the set of qualifiers, with {qa1, qa2,
+blank node it points to. For example, in the sentence “employee … shall               …} as qualifier attributes and {qe1, qe2, …} as qualifier values. Query
+be protected by guardrail systems or personal fall arrest systems”, two               graph coding includes four main steps. First, the entity-relation triples
+nodes, “guardrail_system” and “personal_fall_arrest_system”, were first               obtained from the relation extraction were converted to the correct
+projected to their corresponding blank nodes using the “Protect” rela­                form, i.e., directions corrected to be from head entity to tail entity, and
+tion, then connected to a single blank node (where the disjunction will               relation corrected to be in the middle. For example, the triple from the
+be executed) using union edges. Similarly, in the sentence “Articulating              sentence “anticipated loads(1) caused by ice buildup(2) …” was converted
+boom platforms … shall have both upper and lower controls”, the                       to (ice_buildup, Cause, anticipated_ice), with head entity and tail entity
+“articulating_boom_platform” node is connected to a blank node for                    switched. Second, entities and relations in the query graph were
+representing the conjunction operation, which is further connected to                 assigned with an index, such that the developed query graphs can be
+two blank nodes using intersection edges and then further connected to                more simplified and less repetitive for subsequent compliance
+the two nodes “upper_control” and “lower_control”. Qualifiers were then               reasoning. For example, the triple “(employee, Above, danger­
+added, to convert the triple-based queries into hyper-relational queries,             ous_equipment)” was mapped to “(11, 11, 65)”. Third, qualifiers were
+which can provide further fine-grained constraints for reasoning [1,78].              added to the main triples for providing additional constraints. Espe­
+This is especially necessary in representing construction safety re­                  cially, triples indicating comparisons or spatial relations with values
+quirements because relations are sometimes nested. For example, in the                were checked for their validity as qualifiers. For example, as per Fig. 7
+phrase “employee on a walking/working surface 6 feet or more above a                  (a), “Above(walking_working_surface, lower_level)” and “Great­
+lower level”, three triples were extracted using relation extraction                  er_Or_Equal_To(walking_working_surface, 6_feet)”, which were extrac­
+methods that assume flat relations: “Located_At(employee, walking_­                   ted from the sentence “each employee on a walking/working surface 6
+working_surface)”, “Above(walking_working_surface, lower_level)”, and                 feet (1.8 m) or more above a lower level”, are indicating a spatial
+“Greater_Or_Equal_To(walking_working_surface, 6_feet)”. However, the                  relation with values and were thus merged into one triple with a qual­
+relation “Greater_Or_Equal_To” is in fact constraining the relation                   ifier “(walking_working_surface, Above, lower_level,{(distance, >=
+“Above”, with a “distance” attribute and some particular value. There­                6_feet)})” for a more accurate representation. Fourth, brackets were
+fore, a qualifier of distance was added to the relation of “Above”, with a            added to connect the atomic components in each clause, which include
+qualifier value of “≥= 6 feet”, as follows: “Above{(distance: >= 6 feet)}(­           logic operators such as “And” and “Or”, with a proper name to indicate
+walking_working_surface, lower_level)”.                                               the query types in terms of number of nodes and operators. For example,
+
+
+                                                                              8
+X. Wang and N. El-Gohary                                                                                                  Automation in Construction 147 (2023) 104696
+
+
+
+
+                           Fig. 7. Query graphs for representing safety requirements: (a) 1926.501(b)(1); and (b)1926.451(g)(1)(ii).
+
+
+“employee … shall be protected from falling by the use of guardrail                 4.6. Evaluation metrics
+systems, safety net systems, or personal fall arrest systems”, a name of
+“3u” was used to describe the query of “((guardrail_system, Protect,                    Precision (P), recall (R), and F-1 measure were used to evaluate the
+employee), (safety_net_system, Protect, employee), (personal_fall_arrest            relation extraction performance. The three metrics were calculated by
+_system, Protect, employee))”, which involves a disjunction operation               comparing the recognized relations with the annotated gold standard, as
+among the three types of protection systems that are combined using                 shown in Eqs. (1)–(3). Precision is defined as the number of correctly
+brackets. Query graphs for each clause were coded using Python 3 and                recognized relations divided by the total number of all recognized re­
+were stored in separate files.                                                      lations. Recall is defined as the number of correctly recognized relations
+    This query-graph representation helps decompose complex re­                     divided by the total number of all relations that should be recognized. F-
+quirements into manageable units, while keeping these units connected               1 measure is the weighted harmonic mean of precision and recall. A
+in a robust and scalable graph structure for supporting subsequent field            precision-recall curve was also plotted to illustrate the tradeoff between
+compliance checking. The graph structure can also help identify missing             precision and recall across different probabilities, and the area under the
+information in the original regulations, due to occasional omissions in             curve (AUC) was calculated. A higher AUC indicates that misclassifica­
+the natural language sentences. For example, for the sentence “employee             tion is less likely to happen. The margins of error at 95% confidence
+on a walking/working surface with an unprotected side or edge which is              level were also calculated for the precision, recall, and F-1 measure to
+6 feet (1.8 m) or more above a lower level” [as in Fig. 7(a)], there exists a       evaluate the sensitivity of the performance results.
+triple “Above(walking_working_surface, lower_level)” with a certain
+                                                                                         number of correctly recognized relations
+value. It can be inferred that since the employee is located on the                 P=                                                                            (1)
+                                                                                         total number of all recognized relations
+“walking_working_surface”, they can be above the “lower_level” as well.
+Thus, an edge from “employee” to “lower_level” can be identified and                            number of correctly recognized relations
+added through traversing the links, such that the represented safety                R=                                                                            (2)
+                                                                                         total number of all relations that should be recognized
+requirements can be more complete and accurate in describing in­
+terconnections among the entities.                                                           2×P×R
+                                                                                    F− 1=                                                                         (3)
+                                                                                              P+R
+
+
+
+                                                                                9
+X. Wang and N. El-Gohary                                                                                                     Automation in Construction 147 (2023) 104696
+
+
+                                                                                         to simplify subsequent compliance reasoning; and (2) depending on the
+5. Experimental results and discussion
+                                                                                         context in the sentence, the word “and” can sometimes indicate an “Or”
+                                                                                         relation, which was corrected during annotation. For example, in the
+    The proposed relation extraction method was tested using OSHA
+                                                                                         sentence “Guardrail systems used on ramps and runways shall be erected
+sections related to fall protection. A set of experiments were conducted
+                                                                                         along each unprotected side or edge”, the requirement actually applies
+to evaluate the proposed method, including: (1) comparing the perfor­
+                                                                                         to guardrail systems at any of the two locations (i.e., ramps or runways),
+mance of the two deep learning models in relation extraction (see Sec­
+                                                                                         thus was corrected to “Or”. The annotation process was conducted by
+tion 4.4), and (2) evaluating the impact of different word embeddings
+                                                                                         three annotators who have background in both civil engineering and
+(see Section 4.3). The experiments were implemented using tensorflow
+                                                                                         NLP. An inter-annotator agreement of 91.3% in F-1 measure was ach­
+and PyTorch on NVIDIA GeForce RTX 2070 SUPER.
+                                                                                         ieved, which indicates the reliability of the gold standard [2]. Due to the
+                                                                                         complexity of OSHA clauses, one clause can contain multiple entity-
+5.1. Data preparation and gold standard development                                      relation triples. The resulting dataset, thus, included a total number of
+                                                                                         7927 entity-relation triples after the annotation (represented as 1147
+    Twenty (20) OSHA sections related to fall protection were used for                   query graphs), which were split into training and testing datasets at a
+developing the dataset. The selected sections cover a variety of fall-                   ratio of 85:15. The relation extraction performance was evaluated by
+related topics such as general fall protection, fall protection systems,                 comparing the extracted results with the developed gold standard, using
+guardrail systems, and positioning device systems, as listed in Table 2.                 the aforementioned evaluation metrics (Section 4.6). An example of the
+The dataset was annotated, following the tagging scheme of the                           annotation is shown in Table 3, and the distribution of relation classes is
+SemEval-2010 dataset from the computational linguistics domain, to                       illustrated in Fig. 8.
+create the gold standard for training and testing the relation extraction                    A normality test was then conducted to determine whether the
+model. During the annotation, special situations were considered for the                 dataset follows a normal distribution to further understand its charac­
+“And” relation: (1) most requirements containing “And” were extracted                    teristics. Two metrics for measuring the shape of the distribution were
+as separate entity-relation triples according to algebraic properties. For               calculated for a statistical test: skewness and kurtosis [31]. Skewness is
+example, in the sentence “Dee-rings and snaphooks shall have a mini­                     used to describe if the distribution is symmetrical. A symmetrical dis­
+mum tensile strength of 5,000 pounds (22.2 kN)”, triples of “Has(dee-                    tribution will have a skewness of 0. A highly skewed distribution will
+ring, tensile_strength)” and “Has(snaphook, tensile_strength)” were an­                  have a skewness of <-1 or >1. The annotated dataset resulted in a
+notated, instead of annotating a triple of “And(dee-ring, tensile_s­                     skewness of 0.5107, which means that it is moderately skewed. Kurtosis
+trength)”, which does not accurately reflect the semantics in the original               is used to describe the height and sharpness of the central peak,
+text. This can also help minimize the number of conjunction operations                   compared to a standard bell curve. A normal distribution will have a
+                                                                                         kurtosis of 0 [20]. The annotated dataset resulted in a kurtosis of
+Table 2                                                                                  − 0.9994, which means that the distribution has thinner tails and fewer
+Selected OSHA sections related to fall protection.                                       classes with extremely low frequency than a normal distribution.
+ Topic                           Section(s)                                              Therefore, the relation classes are not normally distributed. This
+                                                                                         matches with Zipf’s law in the computational linguistics domain [43],
+ General requirements            1926.451, 1926.501, 1926.1051
+                                 1926.502, 1926.760, 1926.1423, 1926 Subpart R           which points out that the distribution of words is highly imbalanced,
+ Fall protection systems
+                                 App G                                                   with some occurring very frequently and others occurring rarely.
+ Guardrail systems               1926 Subpart M App B
+ Personal fall arrest systems    1926 Subpart M App C
+                                                                                         5.2. Relation extraction performance
+ Positioning device systems      1926.104, 1926.105, 1926 Subpart M App D
+ Personal protective
+                                 1926.95, 1926.96, 1926.100
+   equipment                                                                                 A total number of 1190 entity-relation triples were extracted from
+ Scaffolds                       1926.452, 1926 Subpart L App A                          the testing dataset, resulting in 671 query graphs after query graph
+ Ladders                         1926.1053
+                                                                                         coding. Example computation graphs and coded queries for each query
+ Aerial lifts                    1926.453
+ Housekeeping                    1926.25
+                                                                                         graph are illustrated in Fig. 7. The hyperparameters of the two models
+                                                                                         were finetuned for achieving optimized performance. The selected
+                                                                                         hyperparameters are listed in Table 4. The performance results and
+                                                                                         precision-recall curves for the two models are shown in Figs. 9 and 10,
+                                                                                         respectively, which show that both models achieved good relation
+Table 3                                                                                  extraction performance. The proposed Attention-based CNN model,
+Examples of annotated entity-relation triples.                                           with GloVe embedding, achieved the best results, 87.5% precision,
+ Original sentence         Annotated sentencea              Relation     Relation        83.4% recall, and 85.4% F-1 measure (as per Fig. 9), and was hence
+                                                            class        indexb          selected. Comparatively, it also showed a slightly lower margin of error.
+ Each employee on a                                                                      In comparison, the proposed (RNN-based) Entity-aware Attention
+   walking/working         Each <e1>employee</e1>                                        BiLSTM model achieved 83.7%, 81.9%, and 82.8%, respectively, as
+   surface shall be        on a <e2>walking working                                      shown in Fig. 9. The superior performance of the proposed CNN-based
+   protected from          surface</e2> shall be
+                                                            Located_At   1               model is likely because CNN better captures local features with small
+   objects falling         protected from objects falling
+   through holes           through holes (including                                      translations, while RNN better captures context with sequential features.
+   (including              skylights) by covers.                                         In the construction safety regulations, informative words indicating re­
+   skylights) by covers.                                                                 lations are usually in the vicinity of the given entity pairs, which can be
+ No employee shall be      No employee shall be allowed                                  more useful than the dependency structure and sequential features
+   allowed in an area      in an area where an
+   where an employee       <e1>employee</e1> is
+                                                                                         captured by an RNN-based model.
+                                                            Protect      48                  Despite the performance difference, both models were effective in
+   is being protected      being protected by a
+   by a safety             <e2>safety monitoring                                         capturing the distinctive semantics between or outside the given entity
+   monitoring system.      system</e2>.                                                  pairs using the attention mechanism. Example results for the attention
+ a
+    e1 = head tag; e2 = tail tag.                                                        mechanism are shown in Table 5. In each example sentence, words with
+ b
+    Odd number = relation direction is head to tail; even number = relation              the highest attention weight(s) from both models are marked in bold.
+direction is tail to head.                                                               For example, in the sentence “1926.501 sets forth requirements for
+
+                                                                                    10
+X. Wang and N. El-Gohary                                                                                              Automation in Construction 147 (2023) 104696
+
+
+
+
+                                                            Fig. 8. Distribution of relation classes.
+
+
+
+Table 4
+                                                                                    employers(1) to provide fall protection systems(2)”, the word “provide”
+Hyperparameters of the models.
+                                                                                    between the given entity pair was assigned with the highest attention
+ Hyperparameter            Attention-based CNN   Entity-aware Attention             weight. In the sentence “Each employee who is constructing a leading
+                           model                 BiLSTM model
+                                                                                    edge(1) 6 feet(2) (1.8 m) or more”, the words “or more” outside the
+ Dropout rate              0.5                   0.7                                given entity pair were assigned with the highest attention weights.
+ Word-embedding            300                   300
+                                                                                       Fig. 9 illustrates the results of testing the two word embeddings,
+   dimension
+ Position-embedding        50                    50                                 CBOW and GloVe. The results showed a small difference in the perfor­
+   dimension                                                                        mance of the CBOW and GloVe embeddings. For example, an average
+ POS-embedding             15                    N/A                                precision, recall, and F-1 measure of 87.5%, 83.4%, and 85.4%,
+   dimension                                                                        respectively, were obtained for the proposed Attention-based CNN
+ Max-sentence length       150                   150
+ L2 weight                 N/A                   0.00001
+                                                                                    model with GloVe embedding, compared to 86.4%, 83.1%, and 84.7%
+ Epoch                     40                    40                                 with CBOW embedding. Similarly, comparing the GloVe and CBOW
+ Optimizer                 Stochastic gradient   Adadelta                           embeddings, in Fig. 10(a) and (b), also shows that both achieved com­
+                           descent                                                  parable performance (slightly better for the GloVe). These results may
+
+
+                                                                               11
+X. Wang and N. El-Gohary                                                                                                          Automation in Construction 147 (2023) 104696
+
+
+
+
+                    Fig. 9. Relation extraction performance results using CNN-based and RNN-based models with different word embeddings.
+
+
+
+
+     Fig. 10. Precision-recall curve: (a) Curve for proposed attention-based CNN model; and (b) Curve for proposed Entity-aware Attention BiLSTM model.
+
+
+                                                                                            5.3. Error analysis
+Table 5
+Example results for attention mechanism.
+                                                                                                An error analysis was conducted to identify the sources of errors.
+ Relation                  Example results of attention weights                             Ambiguity is a major error source for both models, especially when the
+                           1926.501 sets forth requirements for <e1>employers</e1>          relations are indicated using prepositions only. For example, in the
+ Provide
+                           to provide <e2>fall protection systems</e2>.                     phrase “the ability(1) of a ladder(2) to sustain”, the actual relation class is
+                           <e1>Employees</e1> shall be allowed to work on walking
+                                                                                            “Has”, with a direction from (2) to (1), since (1) is one attribute (2)
+ Conditioned_On            working surfaces only when <e2>walking working
+                           surfaces</e2> have the strength.
+                                                                                            possesses. However, in the phrase “steps(1) of portable ladders(2)”, the
+                           Each employee who is constructing a <e1>leading edge             actual relation class is “Part_Of”, with a direction from (1) to (2), since
+ Greater_Or_Equal_To
+                           </e1> <e2>6 feet</e2> (1.8 m) or more,                           (1) is a component of (2). In both cases, there is only one preposition “of”
+ Less_Or_Equal_To          <e1>length of climb</e1> is less than <e2>24 feet</e2>           that can provide relevant information for predictions, hence the diffi­
+                           The <e1>cantilevered portion</e1> of the platform is able
+ Not_Has                                                                                    culty to distinguish such cases. Similar situations can be found with
+                           to support employees without <e2>tipping</e2>.
+                           Except when <e1>portable ladders</e1> are used to gain           other prepositions such as “for”, “at”, “in”, “by”, and “to”. Therefore,
+ Except                    access to fixed ladders, the <e2>portable ladders</e2>           extracting relations from the text with such ambiguities can be difficult.
+                           shall be offset with a platform.                                     Frequent omission is another source of error, in which case there is
+                                                                                            no sufficient information for the model to make the correct predictions.
+                                                                                            For example, in the phrase “leaving both hands(1) free(2)”, the actual
+indicate that different types of static word embeddings might show                          relation class is “Is”, with a direction from (1) to (2), since (2) is an
+similar performance levels for this domain-specific application, and                        attribute of (1). However, there are no other words near the given en­
+hence it might be beneficial to further explore dynamic word embed­                         tities supporting such prediction due to omission. Similarly, in the
+dings such as ELMO (Embeddings from Language Models) and BERT                               phrase “one-eighth(1) the working length(2)”, words for indicating re­
+(Bidirectional Encoder Representations from Transformers) embeddings                        lations between the given entities are omitted, which makes it difficult
+in future work.                                                                             to predict the correct relations.
+                                                                                                A lack of domain knowledge can also lead to incorrect predictions.
+
+
+                                                                                       12
+X. Wang and N. El-Gohary                                                                                                 Automation in Construction 147 (2023) 104696
+
+
+For example, in the sentence “When the employee(1) is ascending or                   treated as an attribute not cardinality). The use of additional operators
+descending a ladder(2)…”, the actual relation is “Use”, with a direction             such as cardinality and aggregation can be considered and tested in
+from (1) to (2), since both ascending and descending are the actions for             future work. Fifth, the dataset size used in this study is limited. Given
+(1) to use (2). Similarly, in the phrase “If the slope(1) is steeper than one        there are 56 relations classes in total, the developed dataset in this study
+vertical in eight horizontal(2)…”, the actual relation class is “Great­              may not contain sufficient training samples for certain relation classes.
+er_Or_Equal_To”, with a direction from (1) to (2), since a steeper slope             To further improve the relation extraction performance and generaliz­
+has a higher ratio. However, there is no sufficient context, background              ability, more text (including clauses from other sources of construction
+information, or term explanations for each OSHA clause. It is, therefore,            safety regulations) needs to be added to the current dataset.
+difficult for the model to make the desired predictions.
+    Depending on the context, keywords that occur in certain relation                7. Contributions to the body of knowledge
+classes sometimes do not indicate that relation, which makes it difficult
+for both models to produce correct predictions, even when the attention                  This research offers a new method for automatically extracting re­
+mechanism can effectively capture the most distinctive words. For                    lations that describe fall protection requirements from construction
+example, the word “or” can indicate an “Otherwise” relation between                  safety regulations and representing the extracted information in the
+“perpendicular” and “opposing_angle_tieback”, rather than an “Or”                    form of knowledge graph-based queries. From an intellectual perspec­
+relation in the sentence “tiebacks shall be installed perpendicular to …,            tive, the proposed method improves the information extraction meth­
+or opposing angle tiebacks shall be installed”, because it refers to the             odology and application in the construction safety domain in four
+situation that the first condition is not met. The word “and” can indicate           primary ways. First, it is the first effort to use a deep learning-based
+a “To” relation in the phrase “distance between the bottom horizontal                method with a combination of word and position embeddings to
+band and the next higher band”, because it indicates the end of that                 improve the domain-specific relation extraction performance. The pro­
+distance. Another example is related to word “but” in the sentence                   posed deep learning-based method can reduce the amount of human
+“safety nets shall be installed …, but in no case more than 30 feet below            assistance required in the relation extraction process. The adopted two
+the walking/working surface”, which does not indicate a “but” relation               embeddings can bring rich semantics from the computational linguistics
+between “safety_net” and “30_feet”. However, it is combined with its                 domain and distinguish informative words in a sentence for a deeper
+subsequent phrase of “in no case” to be a negation for phrase of “more               understanding of the text and better capturing of the domain-specific
+than”, which eventually indicates a “Less_Or_Equal_To” relation for                  features. Second, this study considered non-verbal predicate relations,
+describing the distance between the two levels.                                      redundant relations, and the directions of the relations in the relation
+    There are two other sources of error for domain-specific relation                extraction, which helps accurately describe complex situations consid­
+extraction. First, there are significantly more relation classes in this             ered in the safety regulations without redundancy. The set of relation
+study, with fewer training samples within each relation class. For                   classes it identified was effective in describing fall-related requirements
+example, the SemEval-2010 dataset using general-domain text considers                from OSHA. The relations could also be utilized – as is or with adapta­
+nine relation classes, while in our application, a total of 56 relation              tion – for analyzing other construction safety documents such as the fall-
+classes were considered. Considering that our dataset size is smaller, it            related standards from the American National Standards Institute
+may not contain sufficient training samples for certain relation classes.            (ANSI), safety reports, etc. Third, the proposed method can directly
+Second, sentences in construction safety regulations are more complex,               generate a structured representation for the requirements extracted
+which makes relation extraction difficult. Such complexity includes                  from construction-domain text. The query-graph representation helps
+longer sentences with a high density of information to be extracted,                 decompose complex requirements into smaller manageable units that
+clauses with nested conditions to describe a particular scenario, and                are connected in a robust and scalable graph structure. The graph
+different text patterns across sections.                                             structure can also facilitate the discovery of implicit information
+                                                                                     through edge traversal to allow for more complete and accurate repre­
+6. Limitations                                                                       sentation of the safety requirements. Deep learning-based automated
+                                                                                     reasoning methods can also be developed based on such query graphs.
+    Four main limitations of the work are acknowledged, which point to               Deep learning-based reasoning methods do not rely on external data­
+four directions of future work. First, the identified relations are not              bases or query languages and can conduct reasoning in a dense and
+necessarily complete or exhaustive, especially if additional safety topics           compact embedding space, which would allow for better reasoning
+or contexts are considered. This is expected because relations in domain-            performance, generalizability, flexibility, and speed than traditional
+specific applications can vary in semantics and detail from one sub­                 query language-based compliance checking methods. The query graphs
+domain/topic to another. Additional testing on different OSHA topics is              developed in this study can also be integrated with existing query graphs
+needed to assess if the identified relations are sufficient, or if additional        from other domains (e.g., the WD50K-QE [1] and FB15k [56]) to support
+adaptation or extension effort is needed. Second, in developing the                  future potential efforts that may leverage out-of-domain large-scale
+relation extraction model only two alternative deep learning models                  graph structures with techniques like transfer learning for improved
+were tested, a CNN-based model (Attention-based CNN) and an RNN-                     knowledge graph-based question answering and reasoning. Fourth, the
+based model (Entity-aware Attention BiLSTM). In future work, the                     proposed deep learning-based relation extraction method with the two
+authors plan to test additional types of deep learning-based models,                 types of features, as well as the method for developing query graphs, are
+especially transformer-based models, including different transformer                 adaptable to more safety topics and more accident types. Adapting and
+variants and model architectures. Third, only two different static word              using the proposed method for multiple safety subdomains could help
+embeddings were tested and compared in this study. Additional existing               address different types, scenarios, and contexts of accidents – and
+word embeddings could be tested in future work, including dynamic                    possibly interdependencies and/or interactions among them – for
+word embeddings (e.g., ELMO) or existing domain-specific word em­                    improved field compliance checking.
+beddings (e.g., [83]). In addition, in future work, the authors also plan to             From a practical perspective, this paper contributes to the practice of
+train a domain-specific word embedding using large quantities of con­                field compliance checking in three ways. First, the paper offers a relation
+struction regulatory documents or dictionaries from multiple construc­               extraction method to automatically extract safety requirements from
+tion subdomains, which can be more effective in further improving the                construction safety regulations, which could be integrated into existing
+relation extraction performance (and performance of other NLP appli­                 or future software applications for field compliance checking. The use of
+cations in the construction domain). Fourth, the proposed query graph                the proposed method could help eliminate (or reduce) the manual effort
+representation may be limited in representing cardinality (e.g., “both” is           that would be needed to hardcode the extracted requirements into
+
+                                                                                13
+X. Wang and N. El-Gohary                                                                                                     Automation in Construction 147 (2023) 104696
+
+
+computable rules (which is the status-quo if using existing software).             ontologies with knowledge graphs provides knowledge graphs with
+Second, the proposed method can extract and represent requirements                 enhanced schema(s), enriched semantics, and improved reasoning ca­
+that cover a variety of safety-related operation scenarios in the field,           pabilities. Third, the authors will also explore the use of the proposed
+which could help in checking compliance for different situations onsite.           graph-based representation to support further document and safety
+The use of the proposed method could, thus, help improve the applica­              analytics. For example, we could leverage the graph analytics to uncover
+tion, scope, and generalizability of existing field compliance checking            hidden links to discover the underlying reasons leading to non­
+systems and practices. Third, the resulting knowledge graph-represented            compliances or common factors contributing to multiple violations. We
+safety requirements can be easily integrated with other data/informa­              will also focus on using the query graphs to discover missing re­
+tion/knowledge or within other existing software systems. For example,             quirements, which were hidden due to the implicitness in the natural
+safety checking software could easily add a module to represent the                language sentences, to improve the accuracy and completeness of the
+construction safety requirements in the form of knowledge queries, such            represented safety requirements and hence improved compliance
+that when real-time field information is collected, it could be checked            assessment. Such analysis could also help bring new insights on how to
+for compliance with these requirements.                                            further improve/refine the writing of the safety regulations to prevent/
+                                                                                   reduce requirements from being vulnerable to subjective (incorrect)
+8. Conclusions and future work                                                     interpretations that could compromise safety and lead to accidents. This
+                                                                                   is essential because current safety practices are in many cases non­
+    This paper proposed a method to automatically extract domain-                  compliant, because workers heavily depend on their own understand­
+specific relations that describe fall protection requirements from con­            ing/interpretation of the OSHA requirements and/or the direct guidance
+struction safety regulations, as well as represent the extracted re­               they receive from the safety manager – both which may not be fully
+quirements as query graphs for supporting subsequent knowledge                     compliant with OSHA. Fourth, beyond information extraction, the au­
+graph-based field compliance checking. The proposed relation extrac­               thors will devote their efforts to developing computer vision-based
+tion method uses a deep learning model to automatically identify re­               methods to detect site information from images or videos and using
+lations from unstructured text and classify them into predefined relation          graph-based automated reasoning for supporting field compliance
+classes. Two types of features were used to leverage the rich semantics            checking. Special attention will be paid to how to align these two sets of
+from the computational linguistics domain and to help distinguish                  information properly and how to interpret compliance checking sce­
+informative words in a sentence: pre-trained word embedding and po­                narios correctly. These factors are crucial in identifying non­
+sition embedding. Two alternative deep learning models, a CNN-based                compliances, sending feedback to relevant workers promptly, and
+model (Attention-based CNN) and an RNN-based model (Entity-aware                   improving overall field compliance. Our ultimate goal is to leverage
+Attention BiLSTM), were developed and comparatively evaluated. An                  deep learning as well as other artificial intelligence techniques,
+attention mechanism was added to both models to better capture                     including NLP and computer vision, to automate the process of detecting
+distinctive words. A query-graph representation was proposed to                    violations to construction safety regulations promptly and consistently
+represent the extracted safety requirements with explicit semantics in a           with minimized human assistance.
+structured way that represents requirements in the form of smaller
+manageable units that are connected in a robust and scalable graph
+                                                                                   Declaration of Competing Interest
+structure. The proposed method was tested on 20 OSHA sections related
+to fall protection.
+                                                                                       The authors declare that they have no known competing financial
+    The proposed Attention-based CNN model with GloVe embedding
+                                                                                   interests or personal relationships that could have appeared to influence
+achieved an average precision, recall, and F-1 measure of 87.5%, 83.4%,
+                                                                                   the work reported in this paper.
+and 85.4%, respectively, which showed higher performance than the
+Entity-aware Attention BiLSTM model with GloVe embedding (83.7%,
+                                                                                   Data availability
+81.9%, and 82.8% in precision, recall, and F-1 measure, respectively). A
+small difference in the relation extraction performance was shown
+                                                                                       Data will be made available on request.
+across the two word embeddings. For example, the Attention-based CNN
+model with CBOW embedding showed insignificantly lower results
+(86.4%, 83.1%, and 84.7%) than with GloVe embedding (87.5%, 83.4%,                 Acknowledgements
+and 85.4%, respectively). Five conclusions can, thus, be drawn from the
+experimental results. First, the proposed relation extraction method was               The authors would like to thank the National Science Foundation
+effective in automatically recognizing and classifying domain-specific             (NSF). This paper is based on work supported by NSF under Grant No.
+relations from unstructured text with good performance and mini­                   1827733. Any opinions, findings, and conclusions or recommendations
+mized human assistance. Second, the proposed CNN-based model                       expressed in this material are those of the authors and do not necessarily
+(Attention-based CNN) showed better performance than the proposed                  reflect the views of NSF.
+RNN-based model (Entity-aware Attention BiLSTM), due to its ability to
+better capture local features with small translations. Third, the attention        References
+mechanism used in both models was able to capture the distinctive in­
+                                                                                    [1] D. Alivanistos, M. Berrendorf, M. Cochez, M. Galkin, Query embedding on hyper-
+formation located either between or outside the given entity pairs,                     relational knowledge graphs, arXiv preprint (2021), https://doi.org/10.48550/
+which helps enhance the extraction performance. Fourth, the models                      arXiv.2106.08166 arXiv:2106.08166.
+using GloVe embedding achieved comparable performance in extracting                 [2] R. Artstein, Inter-annotator agreement, in: Handbook of Linguistic Annotation,
+                                                                                        Springer, Dordrecht, 2017, pp. 297–313, https://doi.org/10.1007/978-94-024-
+the domain-specific relations compared with those using the CBOW                        0881-2_11.
+embedding. Fifth, the developed query graphs were able to successfully              [3] I. Awolusi, E. Marks, M. Hallowell, Wearable technology for personalized
+represent the extracted safety requirements and logic operators.                        construction safety monitoring and trending: review of applicable devices, Autom.
+                                                                                        Constr. 85 (2018) 96–106, https://doi.org/10.1016/j.autcon.2017.10.010.
+    In their future work, the authors plan to explore four main directions.
+                                                                                    [4] H. Baker, M.R. Hallowell, A.J.P. Tixier, Automatically learning construction injury
+First, the authors will conduct additional research, implementation, and                precursors from text, Autom. Constr. 118 (2020), 103145, https://doi.org/
+testing efforts to address the aforementioned limitations, as discussed in              10.1016/j.autcon.2020.103145.
+Section 6. Second, the authors will explore the integration of ontologies           [5] L. Bellomarini, D. Fakhoury, G. Gottlob, E. Sallinger, Knowledge graphs and
+                                                                                        enterprise AI: The promise of an enabling technology, in: In 2019 IEEE 35th
+with knowledge graphs to enhance the representation and reasoning                       International Conference on Data Engineering, IEEE, 2019, pp. 26–37, https://doi.
+capabilities of the proposed query-graph representation. Integrating                    org/10.1109/ICDE.2019.00011.
+
+
+                                                                              14
+X. Wang and N. El-Gohary                                                                                                                       Automation in Construction 147 (2023) 104696
+
+ [6] K. Bollacker, C. Evans, P. Paritosh, T. Sturge, J. Taylor, Freebase: a collaboratively        [30] Y. Jiang, X. Gao, W. Su, J. Li, Systematic knowledge management of construction
+     created graph database for structuring human knowledge, in: Proceedings of the                     safety standards based on knowledge graphs: a case study in China, Int. J. Environ.
+     2008 ACM SIGMOD International Conference on Management of Data, 2008,                              Res. Public Health 18 (20) (2021) 10692, https://doi.org/10.3390/
+     pp. 1247–1250, https://doi.org/10.1145/1376616.1376746.                                            ijerph182010692.
+ [7] R. Cai, X. Zhang, H. Wang, Bidirectional recurrent convolutional neural network               [31] T.A. Jones, Skewness and kurtosis as criteria of normality in observed frequency
+     for relation classification, in: Proceedings of the 54th Annual Meeting of the                     distributions, J. Sediment. Res. 39 (4) (1969) 1622–1627, https://doi.org/
+     Association for Computational Linguistics, 2016, pp. 756–765, https://doi.org/                     10.1306/74D71EC9-2B21-11D7-8648000102C1865D.
+     10.18653/v1/P16-1072.                                                                         [32] M. Kaltenboeck, P. Boil, P. Verhoeven, C. Sageder, E. Montiel-Ponsoda, P. Calleja-
+ [8] H. Chen, X. Luo, An automatic literature knowledge graph and reasoning network                     Ibáñez, Using a legal knowledge graph for multilingual compliance services in
+     modeling framework based on ontology and natural language processing, Adv.                         labor law, contract management, and geothermal energy, in: Technologies and
+     Eng. Inform. 42 (2019), 100959, https://doi.org/10.1016/j.aei.2019.100959.                         Applications for Big Data Value, Springer, Cham, 2022, pp. 253–271, https://doi.
+ [9] J. Chen, Q. Song, C. Zhao, Z. Li, Graph database and relational database                           org/10.1007/978-3-030-78307-5_12.
+     performance comparison on a transportation network, in: International Conference              [33] U. Khalid, A. Sagoo, M. Benachir, Safety management system (SMS) framework
+     on Advances in Computing and Data Sciences, Springer, Singapore, 2020,                             development–mitigating the critical safety factors affecting health and safety
+     pp. 407–418, https://doi.org/10.1007/978-981-15-6634-9_37.                                         performance in construction projects, Saf. Sci. 143 (2021), 105402, https://doi.
+[10] X. Chen, S. Jia, Y. Xiang, A review: knowledge reasoning over knowledge graph,                     org/10.1016/j.ssci.2021.105402.
+     Expert Syst. Appl. 141 (2020), 112948, https://doi.org/10.1016/j.                             [34] T. Kim, S. Chi, Accident case retrieval and analyses: using natural language
+     eswa.2019.112948.                                                                                  processing in the construction industry, J. Constr. Eng. Manag. 145 (3) (2019)
+[11] Z. Chen, Y. Wang, B. Zhao, J. Cheng, X. Zhao, Z. Duan, Knowledge graph                             04019004, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001625.
+     completion: a review, IEEE Access 8 (2020) 192435–192456, https://doi.org/                    [35] K. Kincelova, C. Boton, P. Blanchet, C. Dagenais, Fire safety in tall timber building:
+     10.1109/ACCESS.2020.3030076.                                                                       a BIM-based automated code-checking approach, Buildings 10 (7) (2020) 121,
+[12] W.F. Cheung, T.H. Lin, Y.C. Lin, A real-time construction safety monitoring system                 https://doi.org/10.3390/buildings10070121.
+     for hazardous gas integrating wireless sensor network and building information                [36] S. Lai, K.S. Leung, Y. Leung, SUNNYNLP at SemEval-2018 Task 10: A support-
+     modeling technologies, Sensors 18 (2) (2018) 436, https://doi.org/10.3390/                         vector-machine-based method for detecting semantic difference using taxonomy
+     s18020436.                                                                                         and word embedding features, in: Proceedings of the 12th International Workshop
+[13] C.F. Chi, S.Z. Lin, Classification scheme and prevention measures for caught-in-                   on Semantic Evaluation, 2018, pp. 741–746, https://doi.org/10.1061/10.18653/
+     between occupational fatalities, Appl. Ergon. 68 (2018) 338–348, https://doi.org/                  v1/S18-1118.
+     10.1016/j.apergo.2017.12.007.                                                                 [37] J. Lee, S. Seo, Y.S. Choi, Semantic relation classification via bidirectional lstm
+[14] N.W. Chi, K.Y. Lin, N. El-Gohary, S.H. Hsieh, Gazetteers for information extraction                networks with entity-aware attention using latent entity typing, Symmetry 11 (6)
+     applications in construction safety management, in: Computing in Civil                             (2019) 785, https://doi.org/10.3390/sym11060785.
+     Engineering 2017, 2017, pp. 401–408, https://doi.org/10.1061/                                 [38] J. Lee, J.S. Yi, J. Son, Development of automatic-extraction model of poisonous
+     9780784480847.050.                                                                                 clauses in international construction contracts using rule-based NLP, J. Comput.
+[15] A. Culotta, J. Sorensen, Dependency tree kernels for relation extraction, in:                      Civ. Eng. 33 (3) (2019) 04019003, https://doi.org/10.1061/(ASCE)CP.1943-
+     Proceedings of the 42nd Annual Meeting of the Association for Computational                        5487.0000807.
+     Linguistics, 2004, pp. 423–429, https://doi.org/10.3115/1218955.1219009.                      [39] X. Li, D. Yang, J. Yuan, A. Donkers, X. Liu, BIM-enabled semantic web for
+[16] X.S. Dong, J.A. Largay, S.D. Choi, X. Wang, C.T. Cain, N. Romano, Fatal falls and                  automated safety checks in subway construction, Autom. Constr. 141 (2022),
+     PFAS use in the construction industry: findings from the NIOSH FACE reports,                       104454, https://doi.org/10.1016/j.autcon.2022.104454.
+     Accid. Anal. Prev. 102 (2017) 136–143, https://doi.org/10.1016/j.                             [40] K. Liu, N. El-Gohary, Similarity-based dependency parsing for extracting
+     aap.2017.02.028.                                                                                   dependency relations from bridge inspection reports, in: 2017 ASCE International
+[17] W. Fang, L. Ding, P.E. Love, H. Luo, H. Li, F. Pena-Mora, C. Zhou, Computer vision                 Workshop on Computing in Civil Engineering, 2017, pp. 316–323, https://doi.org/
+     applications in construction safety assurance, Autom. Constr. 110 (2020), 103013,                  10.1061/9780784480823.038.
+     https://doi.org/10.1016/j.autcon.2019.103013.                                                 [41] K. Liu, N. El-Gohary, Semantic neural network ensemble for automated
+[18] W. Fang, L. Ma, P.E. Love, H. Luo, L. Ding, A. Zhou, Knowledge graph for                           dependency relation extraction from bridge inspection reports, J. Comput. Civ.
+     identifying hazards on construction sites: integrating computer vision with                        Eng. 35 (4) (2021) 04021007, https://doi.org/10.1061/(ASCE)CP.1943-
+     ontology, Autom. Constr. 119 (2020), 103310, https://doi.org/10.1016/j.                            5487.0000961.
+     autcon.2020.103310.                                                                           [42] Y. Lu, Q. Li, Z. Zhou, Y. Deng, Ontology-based knowledge modeling for automated
+[19] D. Feng, H. Chen, A small samples training framework for deep learning-based                       construction safety checking, Saf. Sci. 79 (2015) 11–18, https://doi.org/10.1016/j.
+     automatic information extraction: case study of construction accident news reports                 ssci.2015.05.008.
+     analysis, Adv. Eng. Inform. 47 (2021), 101256, https://doi.org/10.1016/j.                     [43] C. Manning, H. Schutze, Foundations of Statistical Natural Language Processing,
+     aei.2021.101256.                                                                                   MIT Press, 1999. ISBN 0262133601.
+[20] R.A. Fisher, Statistical methods for research workers, in: Breakthroughs in statistics        [44] C.D. Manning, M. Surdeanu, J. Bauer, J.R. Finkel, S. Bethard, D. McClosky, The
+     (pp. 66-70), Springer, New York, NY, 1992. ISBN: 9351286584.                                       Stanford CoreNLP natural language processing toolkit, in: Proceedings of 52nd
+[21] T. Gao, X. Han, H. Zhu, Z. Liu, P. Li, M. Sun, J. Zhou, FewRel 2.0: Towards more                   Annual Meeting of the Association for Computational Linguistics, 2014, pp. 55–60,
+     challenging few-shot relation classification, arXiv preprint (2019), https://doi.org/              https://doi.org/10.3115/v1/P14-5010.
+     10.48550/arXiv.1910.07124 arXiv:1910.07124.                                                   [45] T. Mikolov, K. Chen, G. Corrado, J. Dean, Efficient estimation of word
+[22] D. Guo, E. Onstein, A.D. La Rosa, A semantic approach for automated rule                           representations in vector space, arXiv preprint (2013), https://doi.org/10.48550/
+     compliance checking in construction industry, IEEE Access 9 (2021)                                 arXiv.1301.3781 arXiv:1301.3781.
+     129648–129660, https://doi.org/10.1109/ACCESS.2021.3108226.                                   [46] M. Mintz, S. Bills, R. Snow, D. Jurafsky, Distant supervision for relation extraction
+[23] HCSS, Safety Reporting. https://www.hcss.com/lp/safety-reporting/?utm_mediu                        without labeled data, in: Proceedings of the Joint Conference of the 47th Annual
+     m=cpc&utm_source=google&utm_campaign=2020_Search_NB_Safety&utm_t                                   Meeting of the ACL and the 4th International Joint Conference on Natural
+     erm=construction%20safety%20reporting&utm_content=135128133489__                                   Language Processing of the AFNLP, 2009, pp. 1003–1011, https://doi.org/
+     624656767901_c&creative=624656767901&keyword=construction%20safety%                                10.3115/1690219.1690287.
+     20reporting&matchtype=p&network=g&device=c&product=safety&brand                               [47] M. Miwa, M. Bansal, End-to-end relation extraction using lstms on sequences and
+     =nb&gclid=Cj0KCQjwnP-ZBhDiARIsAH3FSRfKsSb1o2naAsLv0MVe6w                                           tree structures, arXiv preprint (2016), https://doi.org/10.48550/
+     EYbeFWRj8tpPnA7a-Oy8fQoTKQl0FtpUYaAq0yEALw_wcB, 2022 (Oct 7, 2022).                                arXiv.1601.00770 arXiv:1601.00770.
+[24] I. Hendrickx, S.N. Kim, Z. Kozareva, P. Nakov, D.O. Séaghdha, S. Padó,                      [48] S. Moon, G. Lee, S. Chi, H. Oh, Automated construction specification review with
+     S. Szpakowicz, Semeval-2010 task 8: Multi-way classification of semantic relations                 named entity recognition using natural language processing, J. Constr. Eng.
+     between pairs of nominals, arXiv preprint (2019), https://doi.org/10.48550/                        Manag. 147 (1) (2021) 04020147, https://doi.org/10.1061/(ASCE)CO.1943-
+     arXiv.1911.10422 arXiv:1911.10422.                                                                 7862.0001953.
+[25] F. Holzschuher, R. Peinl, Performance of graph query languages: comparison of                 [49] S. Moon, G. Lee, S. Chi, Automated system for construction specification review
+     cypher, gremlin and native access in neo4j, in: Proceedings of the Joint EDBT/ICDT                 using natural language processing, Adv. Eng. Inform. 51 (2022), 101495, https://
+     2013 Workshops, 2013, pp. 195–204, https://doi.org/10.1145/2457317.2457351.                        doi.org/10.1016/j.aei.2021.101495.
+[26] O. İrsoy, A. Benton, K. Stratos, Corrected CBOW Performs as well as Skip-gram,               [50] N.D. Nath, A.H. Behzadan, S.G. Paal, Deep learning for site safety: real-time
+     arXiv preprint (2020), https://doi.org/10.48550/arXiv.2012.15332                                   detection of personal protective equipment, Autom. Constr. 112 (2020), 103085,
+     arXiv:2012.15332.                                                                                  https://doi.org/10.1016/j.autcon.2020.103085.
+[27] H. Jebelli, M.M. Khalili, S. Hwang, S. Lee, A supervised learning-based construction          [51] T.H. Nguyen, R. Grishman, Relation extraction: perspective from convolutional
+     workers’ stress recognition using a wearable electroencephalography (EEG) device,                  neural networks, in: Proceedings of the 1st Workshop on Vector Space Modeling for
+     in: Construction Research Congress Vol. 2018, 2018, January, pp. 43–53, https://                   Natural Language Processing, 2015, pp. 39–48, https://doi.org/10.3115/v1/W15-
+     doi.org/10.1061/9780784481288.005.                                                                 1506.
+[28] S. Ji, S. Pan, E. Cambria, P. Marttinen, S.Y. Philip, A survey on knowledge graphs:           [52] OSHA, U, Construction Industry: OSHA Safety and Health Standards (29 CFR
+     representation, acquisition, and applications, IEEE Transact. Neural Networks                      1926/1910), US Department of Labor, Occupational Safety and Health
+     Learn. Syst. 33 (2) (2021) 494–514, https://doi.org/10.1109/                                       Administration, Washington, DC, 2020. https://www.osha.gov/laws-regs/regulat
+     TNNLS.2021.3070843.                                                                                ions/standardnumber/1926 (June 20, 2022).
+[29] H. Jiang, Q. Bao, Q. Cheng, D. Yang, L. Wang, Y. Xiao, Complex relation extraction:           [53] C.S. Park, H.J. Kim, A framework for construction safety management and
+     challenges and opportunities, arXiv preprint (2020), https://doi.org/10.48550/                     visualization system, Autom. Constr. 33 (2013) 95–103, https://doi.org/10.1016/
+     arXiv.2012.04821 arXiv:2012.04821.                                                                 j.autcon.2012.09.012.
+
+
+                                                                                              15
+X. Wang and N. El-Gohary                                                                                                                  Automation in Construction 147 (2023) 104696
+
+[54] J. Pennington, R. Socher, C. Manning, Glove: Global vectors for word                            Computing in Civil and Construction Engineering, Springer, Cham, 2019,
+     representation, in: Proceedings of the 2014 Conference on Empirical Methods in                  pp. 223–230, https://doi.org/10.1007/978-3-030-00220-6_27.
+     Natural Language Processing, 2014, pp. 1532–1543, https://doi.org/10.3115/v1/              [76] I. Yamada, A. Asai, H. Shindo, H. Takeda, Y. Matsumoto, LUKE: deep
+     D14-1162.                                                                                       contextualized entity representations with entity-aware self-attention, arXiv
+[55] H. Ren, J. Leskovec, Beta embeddings for multi-hop logical reasoning in knowledge               preprint (2020), https://doi.org/10.48550/arXiv.2010.01057 arXiv:2010.01057.
+     graphs, Neural Inform. Proc. Syst. 33 (2020) 19716–19726, https://doi.org/                 [77] B. Yu, X. Mengge, Z. Zhang, T. Liu, W. Yubin, B. Wang, Learning to prune
+     10.48550/arXiv.2010.11465.                                                                      dependency trees with rethinking for neural relation extraction, in: Proceedings of
+[56] H. Ren, W. Hu, J. Leskovec, Query2box: reasoning over knowledge graphs in vector                the 28th International Conference on Computational Linguistics, 2020,
+     space using box embeddings, arXiv preprint (2020), https://doi.org/10.48550/                    pp. 3842–3852, https://doi.org/10.18653/v1/2020.coling-main.341.
+     arXiv.2002.05969 arXiv:2002.05969.                                                         [78] D. Yu, Y. Yang, Improving hyper-relational knowledge graph completion, arXiv
+[57] R. Ren, J. Zhang, Semantic rule-based construction procedural information                       preprint (2021), https://doi.org/10.48550/arXiv.2104.08167 arXiv:2104.08167.
+     extraction to guide jobsite sensing and monitoring, J. Comput. Civ. Eng. 35 (6)            [79] C. Zhang, X. Zhang, W. Jiang, Q. Shen, S. Zhang, Rule-based extraction of spatial
+     (2021) 04021026, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000971.                            relations in natural language text, in: In 2009 International Conference on
+[58] S. Riedel, L. Yao, A. McCallum, Modeling relations and their mentions without                   Computational Intelligence and Software Engineering, IEEE, 2009, pp. 1–4,
+     labeled text, in: Joint European Conference on Machine Learning and Knowledge                   https://doi.org/10.1109/CISE.2009.5363900.
+     Discovery in Databases, 2010, pp. 148–163, https://doi.org/10.1007/978-3-642-              [80] J. Zhang, N.M. El-Gohary, Semantic NLP-based information extraction from
+     15939-8_10.                                                                                     construction regulatory documents for automated compliance checking,
+[59] D. Roberts, W. Torres Calderon, S. Tang, M. Golparvar-Fard, Vision-based                        J. Comput. Civ. Eng. 30 (2) (2013) 04015014, https://doi.org/10.1061/(ASCE)
+     construction worker activity analysis informed by body posture, J. Comput. Civ.                 CP.1943-5487.0000346.
+     Eng. 34 (4) (2020) 04020017, https://doi.org/10.1061/(ASCE)CP.1943-                        [81] J. Zhang, N.M. El-Gohary, Automated information transformation for automated
+     5487.0000898.                                                                                   regulatory compliance checking in construction, J. Comput. Civ. Eng. 29 (4) (2015)
+[60] N.K.A.H. Rupasinghe, K. Panuwatwanich, Understanding construction site safety                   B4015001, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000427.
+     hazards through open data: text mining approach, ASEAN Eng. J. 11 (4) (2021)               [82] M. Zhang, T. Cao, X. Zhao, Applying sensor-based technology to improve
+     160–178, https://doi.org/10.11113/aej.v11.17871.                                                construction safety management, Sensors 17 (8) (2017) 1841, https://doi.org/
+[61] P. Schönfelder, M. König, Deep learning-based entity recognition in construction              10.3390/s17081841.
+     regulatory documents, in: Proceedings of the International Symposium on                    [83] R. Zhang, N. El-Gohary, A deep neural network-based method for deep information
+     Automation and Robotics in Construction, IAARC Publications, 2021, pp. 387–394,                 extraction using transfer learning strategies to support automated compliance
+     https://doi.org/10.22260/ISARC2021/0054.                                                        checking, Autom. Constr. 132 (2021), 103834, https://doi.org/10.1016/j.
+[62] Y. Shen, X.J. Huang, Attention-based convolutional neural network for semantic                  autcon.2021.103834.
+     relation extraction, in: Proceedings of COLING 2016, the 26th International                [84] R. Zhang, N. El-Gohary, Hierarchical representation and deep learning-based
+     Conference on Computational Linguistics, 2016, pp. 2526–2536. https://aclanth                   method for automatically transforming textual building codes into semantic
+     ology.org/C16-1238 (June 20, 2022).                                                             computable requirements, J. Comput. Civ. Eng. 36 (5) (2021) 04022022, https://
+[63] Solibri, Solibri Model Checker. https://www.solibri.com/products/solibri-model                  doi.org/10.1061/(ASCE)CP.1943-5487.0001014.
+     -checker, 2021 (May 15, 2021).                                                             [85] S. Zhang, F. Boukamp, J. Teizer, Ontology-based semantic modeling of
+[64] J. Song, J. Kim, J.K. Lee, NLP and deep learning-based analysis of building                     construction safety knowledge: towards automated safety planning for job hazard
+     regulations to support automated rule checking system, in: Proceedings of the                   analysis (JHA), Autom. Constr. 52 (2015) 29–41, https://doi.org/10.1016/j.
+     International Symposium on Automation and Robotics in Construction, IAARC                       autcon.2015.02.005.
+     Publications, 2018, pp. 1–7, https://doi.org/10.22260/ISARC2018/0080.                      [86] X. Zheng, B. Wang, Y. Zhao, S. Mao, Y. Tang, A knowledge graph method for
+[65] S. Tang, M. Golparvar-Fard, M. Naphade, M.M. Gopalakrishna, Video-based                         hazardous chemical management: ontology design and entity identification,
+     activity forecasting for construction safety monitoring use cases, in: ASCE                     Neurocomputing 430 (2021) 104–111, https://doi.org/10.1016/j.
+     International Conference on Computing in Civil Engineering 2019, 2019,                          neucom.2020.10.095.
+     pp. 204–210, https://doi.org/10.1061/9780784482445.026.                                    [87] B. Zhong, W. He, Z. Huang, P.E. Love, J. Tang, H. Luo, A building regulation
+[66] S. Tang, D. Roberts, M. Golparvar-Fard, Human-object interaction recognition for                question answering system: a deep learning methodology, Adv. Eng. Inform. 46
+     automatic construction site safety inspection, Autom. Constr. 120 (2020), 103356,               (2020), 101195, https://doi.org/10.1016/j.aei.2020.101195.
+     https://doi.org/10.1016/j.autcon.2020.103356.                                              [88] B. Zhong, H. Li, H. Luo, J. Zhou, W. Fang, X. Xing, Ontology-based semantic
+[67] E.C.T. Team, SMARTVID. IO. https://docs.lib.purdue.edu/ectfs/229/, 2021.                        modeling of knowledge in construction: classification and identification of hazards
+[68] F. ul Hassan, T. Le, D.H. Tran, Multi-class categorization of design-build contract             implied in images, J. Constr. Eng. Manag. 146 (4) (2020) 04020013, https://doi.
+     requirements using text mining and natural language processing techniques,                      org/10.1061/(ASCE)CO.1943-7862.0001767.
+     Construct. Res. Congr. (2020) 1266–1274, https://doi.org/10.1061/                          [89] B. Zhong, X. Pan, P.E. Love, J. Sun, C. Tao, Hazard analysis: a deep learning and
+     9780784482889.135.                                                                              text mining framework for accident prevention, Adv. Eng. Inform. 46 (2020),
+[69] C. Walker, S. Strassel, J. Medero, K. Maeda, ACE 2005 multilingual training corpus,             101152, https://doi.org/10.1016/j.aei.2020.101152.
+     Linguis. Data Consort. (2006), https://doi.org/10.35111/mwxc-vh88.                         [90] B. Zhong, X. Xing, H. Luo, Q. Zhou, H. Li, T. Rose, W. Fang, Deep learning-based
+[70] C. Wang, A. Kalyanpur, J. Fan, B.K. Boguraev, D.C. Gondek, Relation extraction                  extraction of construction procedural constraints from construction regulations,
+     and scoring in DeepQA, IBM J. Res. Dev. 56 (3.4) (2012), https://doi.org/10.1147/               Adv. Eng. Inform. 43 (2020), 101003, https://doi.org/10.1016/j.aei.2019.101003.
+     JRD.2012.2187239, 9–1.                                                                     [91] B. Zhong, H. Wu, R. Xiang, J. Guo, Automatic information extraction from
+[71] X. Wang, N. El-Gohary, Deep learning-based named entity recognition and                         construction quality inspection regulations: a knowledge pattern–based ontological
+     resolution of referential ambiguities for enhanced information extraction from                  method, J. Constr. Eng. Manag. 148 (3) (2022) 04021207, https://doi.org/
+     construction safety regulations, J. Comput. Civ. Eng. (2022) in press.                          10.1061/(ASCE)CO.1943-7862.0002240.
+[72] L.T. Wu, J.R. Lin, S. Leng, J.L. Li, Z.Z. Hu, Rule-based information extraction for        [92] P. Zhou, N. El-Gohary, Ontology-based automated information extraction from
+     mechanical-electrical-plumbing-specific semantic web, Autom. Constr. 135 (2022),                building energy conservation codes, Autom. Constr. 74 (2017) 103–117, https://
+     104108, https://doi.org/10.1016/j.autcon.2021.104108.                                           doi.org/10.1016/j.autcon.2016.09.004.
+[73] X. Xing, B. Zhong, H. Luo, H. Li, H. Wu, Ontology for safety risk identification in        [93] Z. Zhu, Z. Zhang, L.P. Xhonneux, J. Tang, Neural bellman-ford networks: a general
+     metro construction, Comput. Ind. 109 (2019) 14–30, https://doi.org/10.1016/j.                   graph neural network framework for link prediction, Adv. Neural Inf. Proces. Syst.
+     compind.2019.04.001.                                                                            34 (2021) 29476–29490, https://doi.org/10.48550/arXiv.2106.06935.
+[74] P. Xu, D. Barbosa, Connecting language and knowledge with heterogeneous                    [94] Z. Zhu, M. Galkin, Z. Zhang, J. Tang, Neural-symbolic models for logical queries on
+     representations for neural relation extraction, arXiv preprint (2019), https://doi.             knowledge graphs, arXiv preprint (2022), https://doi.org/10.48550/
+     org/10.48550/arXiv.1903.10126 arXiv:1903.10126.                                                 arXiv.2205.10128 arXiv:2205.10128.
+[75] X. Xu, H. Cai, Semantic frame-based information extraction from utility regulatory         [95] P.X. Zou, P. Lun, D. Cipolla, S. Mohamed, Cloud-based safety information and
+     documents to support compliance checking, in: Advances in Informatics and                       communication system in infrastructure construction, Saf. Sci. 98 (2017) 50–69,
+                                                                                                     https://doi.org/10.1016/j.ssci.2017.05.006.
+
+
+
+
+                                                                                           16
+

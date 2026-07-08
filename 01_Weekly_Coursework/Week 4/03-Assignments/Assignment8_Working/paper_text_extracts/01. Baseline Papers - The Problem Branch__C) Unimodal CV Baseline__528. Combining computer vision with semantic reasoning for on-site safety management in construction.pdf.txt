@@ -1,0 +1,809 @@
+                                                                Journal of Building Engineering 42 (2021) 103036
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                          Journal of Building Engineering
+                                                            journal homepage: www.elsevier.com/locate/jobe
+
+
+
+
+Combining computer vision with semantic reasoning for on-site safety
+management in construction
+Haitao Wu a, Botao Zhong b, *, Heng Li a, Peter Love c, Xing Pan b, Neng Zhao b
+a
+  Department of Building and Real Estate, The Hong Kong Polytechnic University, Hong Kong
+b
+  School of Civil and Hydraulic Engineering, Huazhong University of Science and Technology, 430074, Hubei, China
+c
+  School of Civil and Mechanical Engineering, Curtin University, GPO Box U1987, Perth, Western Australia, Australia
+
+
+
+
+A R T I C L E I N F O                                      A B S T R A C T
+
+Keywords:                                                  Computer vision has been utilized to extract safety-related information from images with the advancement of
+Computer vision                                            video monitoring systems and deep learning algorithms. However, construction safety management is a
+Ontology                                                   knowledge-intensive task; for instance, safety managers rely on safety regulations and their prior knowledge
+Semantic reasoning
+                                                           during a jobsite safety inspection. This paper presents a conceptual framework that combines computer vision
+Hazard identification
+Construction safety management
+                                                           and ontology techniques to facilitate the management of safety by semantically reasoning hazards and corre­
+                                                           sponding mitigations. Specifically, computer vision is used to detect visual information from on-site photos while
+                                                           the safety regulatory knowledge is formally represented by ontology and semantic web rule language (SWRL)
+                                                           rules. Hazards and corresponding mitigations can be inferred by comparing extracted visual information from
+                                                           construction images with pre-defined SWRL rules. Finally, the example of falls from height is selected to validate
+                                                           the theoretical and technical feasibility of the developed conceptual framework. Results show that the proposed
+                                                           framework operates similar to the thinking model of safety managers and can facilitate on-site hazard identi­
+                                                           fication and prevention by semantically reasoning hazards from images and listing corresponding mitigations.
+
+
+
+
+1. Introduction                                                                                  and analyzing visual imagery [12]; however, as a kind of end-to-end
+                                                                                                 learning, computer vision approaches are limited in some areas
+    People working in construction are globally recognized to be highly                          requiring knowledge reasoning [13]. However, construction safety
+prone to experiencing injuries, accidents, and even fatalities [1–3]. The                        management is a type of knowledge-intensive job [14]. As shown in
+continued introduction and modification of statutory regulations and                             Fig. 1 (a), site managers and engineers must extract visual information
+the implementation of management practices to redress safety, acci­                              using their perceptual capability when performing a jobsite safety in­
+dents, and fatalities remain a pervasive problem despite the consider­                           spection; this information is then reasoned to identify potential hazards
+able amount of research that has been undertaken. For instance, the                              and corresponding mitigation measurements based on existing safety
+Bureau of Labor Statistics (BLS) in the United States reported that more                         rules in regulations and their experiences [8].
+than 970 construction fatalities were reported in 2017 [4]. Approxi­                                 Computer vision can automate visual tasks as human visual systems
+mately 35 serious claims are reported each day in the construction in­                           (detecting the two workers, concrete supports, ropes form Fig. 1(b)).
+dustry of Australia [5]. A total of 734 accidents were recorded in China                         However, inferring that workers are prone to experience falling from
+in 2018, thereby leading to 840 death [2].                                                       height and tripping hazards based on safety regulations is difficult for
+    Computer vision has recently attracted increasing attention because                          computer vision. Additionally, compared with safety inspectors, com­
+of its potentials to overcome the drawbacks of manual observation of on-                         puter vision cannot give suggestions to mitigate potential hazards. This
+site hazards. Several computer vision approaches were proposed to                                condition can be summarized as a “semantic gap,” which indicates the
+detect unsafety behaviors or dangerous working conditions by extract­                            limitation of computer vision systems in extracting the visual data of
+ing visual information automatically and continuously from on-site                               what the cameras “see” and the substantial enhancement of the meaning
+images or videos [6–11]. The development of deep learning algo­                                  of what they observe by considering the domain knowledge [15–17].
+rithms further enhances the capability of computer vision on processing                              Ontology, a semantic technique, is used to provide safety domain
+
+
+    * Corresponding author.
+      E-mail address: dadizhong@hust.edu.cn (B. Zhong).
+
+https://doi.org/10.1016/j.jobe.2021.103036
+Received 29 October 2020; Received in revised form 10 March 2021; Accepted 26 July 2021
+Available online 29 July 2021
+2352-7102/© 2021 Elsevier Ltd. All rights reserved.
+H. Wu et al.                                                                                                        Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                         Fig. 1. Process of manual construction safety management and an example.
+
+
+knowledge, which includes explicit and rich semantics, to support effi­           2. Related works
+cient knowledge management and reasoning on safety issues [14]. An
+ontology can provide a formal conceptualization of knowledge for a                2.1. Computer vision for construction safety management
+given domain [18]. The ontology technique provides a method for
+converting textual regulation knowledge of a specific domain into a                   As previously mentioned, computer vision has been receiving
+specific and understandable format. Ontology has been widely used in              widespread attention in construction and has been specifically used to
+construction safety management due to its benefits on knowledge rep­              examine hazards in construction, such as progress monitoring [29],
+resentation and reasoning [19–22]. These studies show the potential of            productivity analysis [30], and health and safety monitoring [31–34].
+ontology technology on knowledge-based safety management, which                   Performing safety inspections is traditionally a time-consuming and
+may solve the “semantic gap” in current computer vision approaches                labor-intensive process, requiring site managers and engineers to walk
+[12,23]. [24] and Fang et al. [25] revealed evidence showing the ne­              around the job site to determine hazards. Computer vision is regarded as
+cessity of knowledge and computer vision in construction safety man­              a robust method to identify hazards from images automatically due to
+agement. Nevertheless, the combination of ontology and computer                   the inefficient and ineffective process of manual safety inspection [10,
+vision is still scarce in the construction industry. Additionally, previous       11,35–37]; d; [33].
+studies lack detailed discussions on ontology development, which is                   Numerous algorithms were proposed for computer vision-based
+important for construction safety management regarded as a                        construction safety management, which can be classified as follows
+knowledge-intensive task [14].                                                    [37,38]: (1) shallow learning methods, such as support vector machine
+    A framework that combines computer vision algorithms and a formal             and histogram of oriented gradients; and (2) deep learning methods,
+ontology model for construction safety management is developed in this            such as the convolutional neural network (CNN) and recurrent neural
+paper. Computer vision algorithms are used in the proposed framework              network. Shallow learning methods are reliant on handcrafted features,
+to capture visual information (e.g., objects and their spatial relation­          which must be manually produced, thus adversely affecting the accuracy
+ships) from onsite images, and an ontology model is established to                of their detection [39]. Compared with shallow learning approaches,
+represent the domain knowledge formally according to the five steps in            deep learning can automatically extract sophisticated features from data
+Noy and McGuinness [26]. The visual information acquired by the                   with multiple levels of end-to-end representations [40,41]. In particular,
+computer vision would be transferred into instances in the developed              CNN is the most commonly used to support computer vision due to its
+ontology model for hazard inference. Specifically, potential hazards and          capability to detect objects accurately and reliably [42]. Various algo­
+their mitigation measurements would be inferred in a knowledge                    rithms, such as the Single Shot Multibox Detector (SSD) [43], You Only
+reasoner based on pre-defined Semantic Web Rule Language (SWRL)                   Look Once [44], faster region-based CNN (Faster R–CNN) [44], and
+rules in the ontology model. Notably, this paper aims to illustrate the           mask region-based CNN (Mask R–CNN) [45], have been developed to
+importance of ontology in helping computer vision function similarly to           support the CNNs for object detection. Deep learning algorithms have
+the human thinking model in construction safety management. Partic­               considerably promoted computer vision-based applications, such as
+ularly, this paper focuses on hazards associated with falls from height           unsafe behavior detection [33,36,46], activity recognition [47,48], and
+(FFH) because they are the most common safety issues that arise during            object detection [11,49]. For example, Fang et al. [11] used faster
+construction [2,3,27,28]. The developed framework is validated using              R–CNN to detect non-hardhat-use behavior from surveillance videos.
+data derived from construction projects, which form part of the Wuhan             Ding et al. [36] demonstrated that a hybrid deep learning model can
+Rail Transit System (China).                                                      accurately identify unsafe actions during construction by integrating
+    The rest of this paper proceeds as follows. Section 2 reviews related         CNN and long short-term memory. Similarly, Fang et al. [33] created a
+works and summarizes the research gap. Section 3 comprehensively                  Mask R–CNN algorithm to identify the unsafe behavior of people
+describes the entire framework integrating computer vision and                    traversing structural supports. Luo et al. [48] proposed a discriminative
+ontology. Section 4 conducts a case study of FFH, while section 5 dis­            model combining deep activity features and contextual information to
+cusses the finding and limitations. Section 6 concludes with implications         recognize the activities of on-foot workers from on-site videos.
+for construction safety management.                                                   Semantic knowledge is absent in computer vision-based construction
+                                                                                  safety management despite the ability of site managers and engineers to
+                                                                                  detect objects automatically using deep learning due to previous
+                                                                                  research [50]. Neural network models enable the computer vision sys­
+                                                                                  tem to achieve advanced performance on AI tasks [41], such as detecting
+                                                                                  objects from images or videos, due to their good representation and
+
+
+                                                                              2
+H. Wu et al.                                                                                                      Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                                       Fig. 2. Framework of the proposed method.
+
+
+learning capabilities. However, construction safety management is a              framework to understand and detect semantic roles of activities
+knowledge-intensive task [14]. The computer vision system cannot                 mentioned in safety rules. Xiong et al. [24] initially attempted to apply
+understand the hazard meaning behind the visual information without              safety knowledge to computer vision systems and created an automated
+the semantic representation of safety knowledge. For instance, safety            hazard identification system for hazard identification based on the
+managers can use their prior knowledge to identify potential hazards             aforementioned work. Safety guidelines from textual regulations were
+and provide some mitigation measurements to prevent hazards in the               represented in this system by scene graphs in a three-tuple format to
+workplace. Zhong et al. [51] also highlighted the semantic gap between           evaluate the operation descriptions generated from site videos. How­
+high-level knowledge and low-level visual features obtained by com­              ever, this approach lacks discussions on ontology-based knowledge
+puter vision systems. The upshot is an inability to judge hazards in             modeling, and the developed ontology model is simple. The literature
+complex scenes and accordingly set up mitigation strategies. Hence,              review of computer vision by Zhong et al. [12] and Fang et al. [23]
+safety domain knowledge is necessary in the design of computer                   indicated the importance of ontology to computer vision. For instance,
+vision-based construction safety management.                                     Fang et al. [23] suggested that the computer-oriented and logic-based
+                                                                                 features embedded within ontology can provide access to regulation
+2.2. Ontology for representing construction safety knowledge                     knowledge for computer vision systems. Meanwhile, Zhong et al. [51]
+                                                                                 developed an ontology model to describe contents from images for
+    Compared with a database schema, an ontology can represent                   following semantically retrieval; however, the hazard in images is
+knowledge with explicit and rich semantics, which can enable knowl­              manually identified, which is a time-consuming task. Similarly, Fang
+edge reasoning [18]. The concept of ontology within construction has             et al. [25] used the Neo4j database to visualize and store the visual in­
+been widely applied, and the benefits of knowledge representation and            formation detected by the computer vision algorithm for hazard iden­
+reasoning have been adopted in areas, such as risk and knowledge                 tification. The knowledge graph structure of Neo4j can support semantic
+management [52]. For instance, Tserng et al. [53] developed an                   query; however, this structure lacks a reasoning capability, which is
+ontology-based framework to enhance safety management performance                important for knowledge-intensive safety management [14].
+throughout the lifecycle of a project. In stark contrast, Wang and Bou­              Overall, supplementing ontological safety knowledge can give
+kamp [54] used ontology to represent the knowledge ingrained in ac­              meaning to these visual elements obtained by computer vision; for
+tivities, job steps, and hazards to improve the ability to query and share       instance, reasoning hazards and listing mitigation suggestions, which
+job hazard analysis (JHA) knowledge. This approach enabled Wang and              are performed by safety managers. The ontology model should be
+Boukamp [54] to develop an ontological mechanism for reasoning safety            properly developed to ensure its capability to represent knowledge in
+rules for activities.                                                            the domain of construction safety management formally. Additionally,
+    With the ontology, domain knowledge can be converted into a                  the visual information acquired by computer vision algorithms should
+machine-processable format, which can support the development of                 be linked with the instances in the ontology model. Developing an
+intelligent applications for hazard identification and safety manage­            explicit, extendable, and accessible knowledge base for computer vision
+ment. For example, Lu et al. [20] established a construction safety              for construction safety management remains unclear despite insightful
+checking ontology, in which safety checking constraints were encoded             findings from previous works.
+into semantic rules for safety checking based on semantic rule lan­
+guages. Zhang et al. [21] developed a JHA ontology model to store and            3. Research approach
+re-use construction safety-related knowledge. Xing et al. [14] proposed a
+domain ontology (SRI-Onto) to formalize safety knowledge considering                 A conceptual framework, which can combine ontology-based regu­
+that     hazard      identification  of    metro    construction    is   a       lation knowledge with visual information extracted from images by
+knowledge-intensive process. Wu et al. [22] used ontology to represent           computer vision algorithms, is developed in this paper based on our
+metro accidents to facilitate efficient knowledge retrieval and reasoning.       previous efforts [33]. The proposed framework comprises three modules
+Overall, these studies indicated that ontology provides a way to repre­          (Fig. 2).
+sent safety knowledge explicitly and formally to further develop infor­
+mation system processes, such as knowledge retrieval and inference.              1. Computer vision module: Detects visual information, including objects
+                                                                                    and their spatial relationships from images collected from con­
+2.3. Summary                                                                        struction sites, which are then converted into instances in the
+                                                                                    ontology models for knowledge reasoning.
+    Studies combining ontology and computer vision techniques to                 2. Ontology module: Formalizes the domain knowledge of construction
+facilitate safety management in construction are limited. Tang and                  safety management to provide extracted visual information with
+Golparvar-Fard [50] developed a design of a language–image                          semantic concepts, which contain definitions of taxonomies and
+
+                                                                             3
+H. Wu et al.                                                                                                        Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                                    Fig. 3. Mask R–CNN based visual information detection.
+
+
+                                                                                  images, which is regarded as inputs for ontology-based hazard inference.
+                                                                                  From the perspective of hazard identification, the following visual in­
+                                                                                  formation should be extracted from on-site images: objects (e.g., people,
+                                                                                  equipment, materials, and environment elements) and their spatial
+                                                                                  relationships.
+                                                                                      Various deep learning algorithms, such as SSD [43], faster R–CNN
+                                                                                  [44], and Mask R–CNN [45], have been developed for a variety of
+                                                                                  different purposes in construction. Among these algorithms, the Mask
+                                                                                  R–CNN can detect multiple objects with higher levels of accuracy than
+                                                                                  other deep-learning algorithms because it extends Faster R–CNN by
+                                                                                  adding a branch for predicting segmentation masks on each Region of
+                                                                                  Interest (RoI) [45]. The Mask R–CNN has good performance on instance
+                                                                                  segmentation and can recognize overlapped objects, which has been
+                                                                                  evaluated in our previous study [33]. Therefore, Mask R–CNN is selected
+                                                                                  to detect objects from images.
+                                                                                      Fig. 3 shows the entire workflow of Mask R–CNN–based visual in­
+                                                                                  formation detection. The network architecture of Mask R–CNN, which
+                                                                                  contains two steps [45]: (1) to extract feature maps of an entire image
+                                                                                  from the residual and the feature pyramid networks as inputs. A region
+                                                                                  proposal network is then used to define regions of interest (ROIs); (2) a
+                                                                                  RoIAlign layer is adopted to extract spatial locations from each candi­
+                                                                                  date box and perform classification, bounding box regression, and mask
+                                                                                  generation. Parameters used in this research are similar to those of He
+                                                                                  et al. [45]. The RoIAlign, which uses bilinear interpolation, can generate
+                                                                                  exact spatial locations to compute the exact values of the input features
+                                                                                  and avoid any quantization of its boundaries or bins.
+                                                                                      In addition to objects detection, spatial relationships between objects
+                                                                                  are needed for hazard reasoning. In this paper, three types of spatial
+                                                                                  relationships are considered by calculating Intersection over Union
+                                                                                  (IoU) with Eq. (1): (1) on; (2) overlap; and (3) away. Specifically, the
+                                                                                  overlapping areas between objects are used to determine the spatial
+                                                                                  relationships. For example, when the value of IoU (A, B) belongs to (0,
+                                                                                  1), the spatial relationship of object A and object B is overlapped as
+                                                                                  shown in Fig. 3. Notably, the authors of this paper used the previous
+                                                                                  study [33] in which the Mask R–CNN method is used to detect workers
+               Fig. 4. Development method of the ontology model.                  traveling the structural supports. Therefore, only three spatial re­
+                                                                                  lationships are taken into considerations. We admit that there would be
+   properties. Inference rules representing regulatory knowledge are              optimal algorithms for detecting visual information from images and
+   needed for complex hazard identification because construction                  more spatial relationships should be considered for reasoning different
+   safety management is a knowledge-intensive process [14,52]. The                types of hazards on construction sites. However, rather than presenting a
+   SWRL rules for knowledge inference are encoded in the reasoning                novel method to identify all objects and spatial relationships, this paper
+   engine.                                                                        aims to propose a conceptual framework, which introduces a formal
+3. Knowledge reasoning module: Potential hazards from images and                  ontology for computer vision systems, to close the semantic gap between
+   mitigation measures are inferred by performing rule checking on the            low-level visual features and high-level knowledge needed in construc­
+   visual inputs detected by the computer vision module. Additionally,            tion safety management.
+   the inferred information would be attached to the images for further                                                 ⎧
+                                                                                                                        ⎨ 1, on
+   efficient image retrieval or processing.                                                      area (A) ∩ area (B)
+                                                                                  IoU(A, B) =                        = (0, 1), overlap                    (1)
+                                                                                                min{area(A), area(B) ⎩
+                                                                                                                          0, away
+
+3.1. Computer vision-based visual information identification                      3.2. Ontology model for safety management
+
+   The computer vision module, acting as “human eyes” in the inte­                   Safety knowledge and the experience of experts must be presented in
+grated framework, aims to identify visual information from on-site                an understandable format by a computer. Thus, the developed ontology
+
+                                                                              4
+H. Wu et al.                                                                                                       Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+               Fig. 5. Top-level classes in the meta-ontology model.
+
+
+model enables the computable representation of safety regulation
+knowledge.
+
+3.2.1. Ontology development for safety Hazard identification and
+mitigation
+    Ontology is used to standardize the description of safety knowledge
+and facilitate the reasoning of hazards. Safety knowledge is modeled and
+represented using the following five steps (Fig. 4) [26].
+
+1. Define the purpose and scope of the hazard ontology model.
+2. Review existing ontologies.                                                          Fig. 6. Part of the taxonomy of construction safety knowledge.
+3. Enumerate important terms.
+4. Define classes, properties, and relations.                                     Notably, no perfect ontology and optimum concept hierarchy are
+5. Create instances based on the output of the computer vision module.            available [55]. Thus, the proposed ontology does not completely cover a
+                                                                                  domain of interest. Consequently, the taxonomy of ontologies can be
+    Guided by the aforementioned steps, a meta-ontology model can be              developed for different applications.
+developed to standardize the description of construction safety                       The Products Model, which accommodates building elements, relates
+knowledge.                                                                        to its components (e.g., beam, column, door, and wall that are aligned
+    After reviewing existing ontologies [14,21,28], the JHA ontology              with the IFC schema) and safety (e.g., temporary facilities and support
+introduced by Zhang et al. [21] is used to develop the meta-ontology              structures). The Process Model contains activities and the necessary
+model, which comprises the following: (1) products, (2) process, and              building resources. The taxonomy of activity is based on the regulation
+(2) safety. Six top-level classes are used to represent safety knowledge on       of the “Unified Regulation for Construction Quality Acceptance of
+construction sites. These classes include Building Elements, Activity,            Construction Engineering (gb50300-2017)” and the “Building Engi­
+Resource, Precursor, Potential Hazard, and Mitigation Measurement. The            neering Measurement Regulations.” The resource is classified into labor,
+meta-ontology and relations between these classes are presented in                equipment, and material, which provide the connection between se­
+Fig. 5.                                                                           mantic concepts and objects extracted from images.
+                                                                                      The Safety Model includes the potential hazards on construction sites
+3.2.2. Ontology definition of safety Hazard knowledge                             and the corresponding precursors and mitigation measurements. The
+    Engineering regulations and manuals in construction form a source             taxonomy of this model is based on safety regulations, such as the
+of domain knowledge, which can be utilized for hazard identification              “Occupational Injury and Illness Classification Manual” and the
+and safety management (Fang et al., 2020). Therefore, the class taxon­            “Building Construction Safety Inspection Regulation.” For example, the
+omies were identified based on the selected knowledge sources,                    regulation of the “Quality and Safety Inspection Guide of Urban Rail
+including “Unified Regulation for Construction Quality Acceptance of              Transit Engineering” can be used as a reference to examine hazardous
+Construction Engineering (gb50300-2017),” “Building Engineering                   events of the construction procedures in China. The potential hazards
+Measurement Regulations,” “Industry Foundation Classes (IFC) stan­                relating to tasks performed during construction and techniques
+dards,” “Occupational Injury and Illness Classification Manual,” and              employed can be classified into 21 inspection categories, such as safety
+“Building Construction Safety Inspection Regulation.” A part of the               management, fastener-type scaffolding, full-style scaffolding, founda­
+taxonomy of the developed ontology is presented as shown in Fig. 6.               tion pit support engineering, template engineering, and hoisting.
+
+
+                                                                              5
+H. Wu et al.                                                                                                                     Journal of Building Engineering 42 (2021) 103036
+
+
+Table 1                                                                                        characteristics that describe each of the classes [55]. Two types of
+Part of the object properties.                                                                 properties are identified in this paper: (1) object property reflecting
+  Object Property       Domain            Range                        Characteristic          relations between two classes and (2) data property reflecting relations
+                                                                                               between classes and values. For example, some essential object and data
+  producedBy            Building          Activity                     Inverse
+                        element                                        functional              properties between the concepts defined in the meta-ontology respec­
+  Produce               Activity          Building element             Functional              tively presented in Tables 1 and 2 are listed.
+  needResource          Activity          Resource                     Inverse
+                                                                       functional
+  needLabor             Activity          Labor                        Inverse                 3.3. Knowledge reasoning for Hazard identification and mitigation
+                                                                       functional
+  beUsedIn              Resource          Activity                     Functional
+  hasPrecursor          Activity          Precursor                    Inverse                    Hazards and the corresponding mitigation measures are inferred by
+                                                                       functional              comparing the visual information detected by the computer vision
+  causeHazard           Precursor         Potential hazard             Inverse                 module with the safety rules defined in the ontology model. Herein, the
+                                                                       functional
+                                                                                               visual information must be mapped with the defined instance in the
+  controlledBy          Potential         Mitigation                   Inverse
+                        hazard            Recommendation               functional              developed ontology model. Additionally, safety knowledge should be
+  hasUnsafeBehavior     Labor             Unsafe behavior              Functional              encoded into rules based on the relevant regulations.
+  hasUnsafeStatus       Element           Unsafe status                Functional
+  isPartOf              –                 –                            Functional              3.3.1. Information mapping from visual information to ontology instances
+                                                                                                   Visual information obtained from images, including objects and their
+                                                                                               spatial relationships, is identified and extracted as the input for creating
+Table 2                                                                                        instances in the ontology model for knowledge reasoning. The identified
+Part of the data properties.                                                                   objects in the computer vision-based module and their relationships are
+  Object Property                Domain                   Value           Characteristic       outputted in the eXtensible Markup Language (XML), while the safety
+  hasE_ID                        Building element         int             Functional
+                                                                                               knowledge in the ontology model is described in the Ontology Web
+  hasE_Location                  Building element         string          Functional           Language (OWL). OWL is a W3C recommended language for ontology
+  hasDimension                   Building element         decimal         Functional           representation on the semantic web, which enables the users to describe
+  hasRelativeRelationship        Building element         string          Functional           the information in separate scopes and different schemas [56]. The
+  hasFrequency                   Activity                 int             Functional
+                                                                                               XS2OWL is used as the conversion method between XML and OWL. The
+  hasTime                        Activity                 dateTime        Functional
+  isOccupationOf                 Labor                    string          Functional           mapping relations of XS2OWL are listed in Table 3. The classification
+  hasSpatialRelationship         Labor                    string          Functional           label in XML is converted into “owl:class” in OWL using the XS2OWL.
+  hasBodilyReaction              Labor                    string          Functional           The spatial relationships are transformed into “owl: dataProperty” in
+  hasL_ID                        Labor                    int             Functional           OWL. Therefore, the visual information detected by a specific computer
+  hasSeverity                    Potential hazard         string          Functional
+  hasLikelihood                  Potential hazard         string          Functional
+                                                                                               vision algorithm can be stored in the ontology model for safety hazard
+  hasMaxArrestForce              Safeguard                decimal         Functional           knowledge reasoning.
+  hasS_ID                        Safeguard                int             Functional
+                                                                                               3.3.2. Encoding safety knowledge into rules
+                                                                                                   Safety hazard identification is a knowledge-intensive process that
+ Table 3                                                                                       adheres to rules [52], which can be formatted into a specific represen­
+ Mapping relations between XML and OWL.                                                        tation language, such as N3Logic, Rule Interchange Format, and SWRL.
+   XML Schema                                       OWL Schema
+                                                                                               The SWRL is used to represent rules for safety knowledge reasoning
+                                                                                               because this rule language is tightly integrated with ontology [57].
+   Complex Type                                     Class
+                                                                                               Moreover, the SWRL offers powerful deductive reasoning abilities by
+   Simple Datatype                                  Datatype Declaration
+   Element                                          Datatype Property; Object Property         allowing users to write Horn-like rules based on OWL concepts. The
+   Attribute                                        Datatype Property                          context-driven hazard identification can be implemented because the
+   Sequence                                         Unnamed Class-Intersection                 SWRL rule is expressed in terms of ontology concepts (classes, proper­
+   Choice                                           Unnamed Class-Union
+                                                                                               ties, and instances). Each SWRL rule contains an antecedent and
+   Annotation                                       Comment
+                                                                                               consequent part. Both parts comprise positive conjunctions of atoms; for
+                                                                                               example, the typical SWRL rule is shown as follows:
+
+                                                                                               C(x) ^ P(x,y) ^ SameAs(y,z) → M(x,z),
+
+                                                                                               where C(x) is an atom, “C” and “M” are classes in OWL ontology, “x” is
+                                                                                               the instance of class “C,” “P” represents data or object properties, “y” can
+                                                                                               be a value or instance, and “SameAs” is used to describe equal re­
+                                                                                               lationships. The following SWRL rule can be written based on these
+                                                                                               atoms to define the constraint for representing construction safety
+                                                                                               knowledge. The rule is triggered to execute knowledge inference once
+                                                                                               the antecedents of a rule are satisfied. The new facts are deduced and
+                                                                                               stored after executing the rule.
+                                                                                                   Specific safety regulations and the experience of experts are coded
+                 Fig. 7. Property rules between top-level classes.
+                                                                                               using the SWRL rule formats, which are compatible with ontology
+                                                                                               classes and relationships. For example, Fig. 7 shows some hidden
+   Each precursor is associated with multiple potential hazards through                        property rules between the top-level classes in the meta-ontology model
+the “cause hazards” property. Each potential hazard is controlled by                           (i.e., “Building Elements,” “Activity,” “Resource,” “Precursor,” “Poten­
+some mitigation recommendation to eliminate or reduce the hazard.                              tial Hazard,” and “Mitigation Measurement”), which can be represented
+   The class taxonomies cannot provide sufficient information to                               in the SWRL rules as follows.
+describe the overall safety hazard. The properties refer to the                                    SWRL Rule1:
+
+                                                                                           6
+H. Wu et al.                                                                                                       Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                                     Fig. 8. Structural support for deep foundation pits.
+
+
+                                                                                      Building_Element(?x) ^ Activity(?y) ^ Resource(?z) ^ Precursor(?a) ^
+                                                                                  Potential_Hazard(?b) ^ Mitigation_Recommendation(?c) ^ producedBy(?
+                                                                                  x, ?y) ^ needResource(?y, ?z) ^ hasPrecursor(?y, ?a) ^ causeHazard(?a, ?
+                                                                                  b) ^ controlledBy(?b, ?c) → controlledBy(?x, ?c).
+                                                                                      If X belongs to the “Building Elements,” X is generated by “Activity”
+                                                                                  Y, Y requires “Resource” Z, Y has “Resource” A, A may generate “Po­
+                                                                                  tential Hazard” B, and B is controlled by “Mitigation Measurement” C,
+                                                                                  then X should also be controlled by preventive measures C.
+                                                                                      Overall, the visual information extracted from the construction site
+                                                                                  using the computer vision module can be converted into the instances in
+                                                                                  the ontology model. The SWRL rules can then be executed in an infer­
+                                                                                  ence engine to recognize hazards and justify the mitigation measures.
+
+Fig. 9. Examples of visual information detection in computer vision module.
+
+
+
+
+                                                     Fig. 10. Developed prototype ontology in Protégé.
+
+                                                                              7
+H. Wu et al.                                                                                                        Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                                    Fig. 11. Ontology checking consistent error in Pellet.
+
+
+4. Case study                                                                      more than 330 k images is adopted to train the Mask R–CNN to avoid
+                                                                                   bias. The pre-trained model would be fine-tuned by extracting features
+    Deep foundation pits are the major activity that must be performed             from annotated 1461 training images, and then a set of 450 testing
+for the underground construction of a metro-system. The construction of            images is used to test the Mask R–CNN model.
+the pits invariably requires the deployment of concrete and steel sup­
+ports to stabilize soil and transfer loads. People in China tend to traverse       4.1.2. Results performance of visual information detection
+the structural supports over deep foundation pits (Fig. 8). Therefore, site             The Mask R–CNN modular is conducted on a server equipped with a
+management and engineers must regularly police this unsafe behavior,               2.5 GHz Intel® Xeon® E5-2680 CPU, an NVIDIA(R) Tesla (TM) K80GPU,
+particularly because this behavior is prone to not wearing a safety                and 64 RAM. The learning rate is 0.001, which is decreased by 10 after
+harness even when required to work at heights [58]. Therefore, FFH                 all layers are fined tuned. The weight decay regularization is 0.0001 and
+hazards are selected to test the validity of the proposed framework.               the momentum is 0.9. The RPN network adopts five scales (32 × 32, 64
+                                                                                   × 64, 128 × 128, 256 × 256, and 512 × 512 pixels) and three aspect
+                                                                                   ratios (1:1, 1:2, and 2:1) while the stride of anchors is 1. The precision
+4.1. Site visual information detection                                             rates on detecting workers, steel supports, and cement supports are
+                                                                                   100%, 100%, and 99%, while the recall rates are 84%, 74%, and 81%,
+   In line with previous research [33], Mask R–CNN is used to detect               respectively. The precision and recall rates on spatial relationship
+various entities and their spatial relationships from images between               detection are 75% and 90%, respectively. For example, Fig. 8 shows that
+people traversing structural supports over deep foundation pits.                   objects (i.e., person and the bounding box) and their spatial relation­
+                                                                                   ships are detected using the Mask R–CNN algorithm. The left side of
+4.1.1. Dataset establishment and model training                                    Fig. 9 indicates the mask for semantic segmentation. The different
+    Working in close collaboration with the main contractor of the                 colored bounding boxes in Fig. 9 indicate the location of targets. The
+Wuhan Metro Project, monocular cameras were deployed across several                upper left corner of the bounding box indicates the target category label
+construction sites. A database containing 2018 images of individuals               (such as the concrete support) and confidence (0.999). The three types
+walking and not walking on structural supports over deep foundation-               of information form the input into the overlap detection for attribute
+pits was also constructed. The database is randomly divided into two               extraction, and the spatial relationship between the “labor” and the
+parts: (1) training and (2) testing. The images for training and testing           “concrete support” is “on.” The extracted visual information is converted
+respectively contain objects of individuals and structural supports. A             into the OWL format to create instances in the ontology model for safety
+total of 1461 and 450 images are respectively used for training and                knowledge reasoning. Numerous advanced algorithms extracting visual
+validating. The other 107 images containing individuals walking on                 information are available. However, the experiment aims to validate the
+concrete/steel supports are used to test the trained Mask R–CNN model.             proposed conceptual framework rather than examine the performance
+    Training images would be initially annotated manually based on the             of Mask R–CNN with other deep learning algorithms. Built on our pre­
+Labeling Tool example Flask App developed by Python. Furthermore,                  vious study of Fang et al. [33] who used the Mask R–CNN approach to
+Microsoft’s Common Objects in Context (MS COCO) database containing
+
+                                                                               8
+H. Wu et al.                                                                                                        Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                                       Fig. 12. Developed SWRL rules in the Protégé.
+
+
+detect workers traveling structural supports, this paper proposed a               safety of working at the height of building construction (JGJ 80–2016)”
+conceptual framework to help computer vision function similarly to the            explicitly stipulates that people are not allowed to traverse the structural
+human thinking model in construction safety management by inte­                   supports over a deep foundation on supports because this action easily
+grating a formal ontology model. Specific details of the Mask R–CNN               leads to FFH hazards. Additionally, some mitigation measurements of
+algorithm are presented in our previous study [33].                               FFH, such as wearing appropriate personal protective equipment and
+                                                                                  setting reminders or the protective railing shall at the edge, are available
+4.2. Ontology-based knowledge modeling for FFH safety                             in the “Technical code for the safety of working at the height of building
+                                                                                  construction (JGJ 80–2016).” The regulatory knowledge can be formally
+4.2.1. Definition of FFH ontology                                                 represented by the SWRL rules as follows.
+    A prototype FFH ontology model was developed in Protégé 5.0 to                  Rule 1:
+represent the domain knowledge for FFH safety. Fig. 10 presents the                   Concrete_Support(?x) ^ hasRelativeRelationship(?x, “on”) ^ Labor(?
+class hierarchy of the ontology model.                                            y) ^ hasSpatialRelationship(?y, ?z) ^ swrlb:stringEqualIgnoreCase(?z,
+    The consistency of the developed ontology model in Protégé is               “on”) → hasPrecursor(?y, Walking_On_Supports) ^ causeHazard
+checked using the Pellet reasoner [59]. The consistency criterion de­             (Fall_From_Building_Structures).
+termines whether the developed ontology includes any contradictory                    Rule 2:
+facts. This criterion also ensures that the conclusions are inferential and           Walking_On_Supports(?a) ^ Fall_From_Building_Structures(?b) ^ cau­
+semantically consistent. Pellet, as a logic reasoner, not only detects            seHazard(?a, ?b) → controlledBy(?b, Protective_Space) ^ controlledBy(?
+inconsistent ontology concepts but also supports the diagnosis and res­           b, Safeguard).
+olution of errors. Fig. 11 shows the result of consistent checking using              With the ontology model and SWRL rules, FFH safety knowledge
+Protégé. The value of “hasBodyReaction” data property should be                 from textual regulations can be formally represented to allow computer
+“string” rather than the “int.”                                                   access. The developed ontology model provides a knowledge base for
+                                                                                  the visual information extracted by computer vision algorithms and
+4.2.1. Development of FFH rules                                                   helps the computer vision system understand the meaning behind the
+   The SWRL rules were used to reason hazards and their corresponding             objects. Considering construction safety management, the ontological
+mitigations, which have been encoded in the SWRLTab plug-in in                    knowledge base can infer potential FFH hazards and list corresponding
+Protégé 5.0. The SWRLTab plug-in allows users to add or modify SWRL             mitigation measures based on the visual inputs obtained by the com­
+rules in Protégé. Fig. 12 shows the SWRL rules. The FFH safety knowl­           puter vision module.
+edge sources of these rules include “Technical code for the safety of
+working at the height of building construction (JGJ 80–2016)” and                 4.3. Mapping of visual information and ontology instances
+“Technical code for the safety of deep building foundation excavations
+(JGJ 311–2013).” For example, the regulation “Technical code for the                 The visual information extracted by the computer vision module was
+
+                                                                              9
+H. Wu et al.                                                                                                         Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                              Fig. 13. Mapping visual information with instances in the ontology.
+
+
+
+connected with the developed ontology model by creating an automated               instances in the ontology model (Fig. 14).
+instance. Fig. 13 shows the information mapping process. Fig. 13(a)                    Knowledge reasoning is conducted in the Drools rule engine, in
+shows that the objects (i.e., concrete supports, steel supports, and la­           which the general structure is “When A, Then B” [60]. The basic
+bors) and their spatial relationship (i.e., the labor is on the concrete           framework of the Drools rules engine comprises a fact base, a rule base,
+support) are detected in the computer vision module using the Mask                 and an execution engine. Hazards and corresponding mitigations can be
+R–CNN. The visual information is outputted into an XML format and                  inferred using the Drools reasoning engine. As shown in Fig. 15, the
+then converted into the OWL format using the XS2OWL as shown in                    hazard scene in the image of Fig. 9 was inferred on the basis of devel­
+Fig. 13(b). The classification label of detected objects in XML is con­            oped SWRL rules and created instances. The reasoning results are
+verted into “owl:class” in OWL, while spatial relationships are trans­             regarded as new knowledge, which can be stored in the fact base.
+formed into “owl: dataProperty” in OWL. As shown in Fig. 13(c), the                    Fig. 16 presents the reasoning results in the scene of Fig. 9. Person_1
+extracted visual information is finally mapped into instances in Protégé         has the precursor named “walking on supports,” which would cause the
+for following knowledge reasoning.                                                 hazard “Falling_From_Building_Structures.” Visual information captured
+                                                                                   by the computer vision system can be endowed with safety meanings by
+                                                                                   knowledge reasoning using the developed ontology model (known as the
+4.4. Safety knowledge reasoning from images
+                                                                                   fact base) and the SWRL rules (known as the rule base). Specifically,
+                                                                                   potential hazards in the image can be identified, and the corresponding
+   Knowledge reasoning can be implemented in Protégé by using the
+                                                                                   mitigations preventing these hazards can also be reasoned similarly to
+rule engine named Drools after mapping the visual information into
+                                                                                   humans. Different from traditional computer vision approaches, the FFH
+                                                                                   hazard in this scene was detected on the basis of rules. Moreover, the
+                                                                                   mitigations (e.g., wearing safeguards and setting protective space) can
+                                                                                   be inferred for safety managers, which can prevent potential hazards.
+                                                                                       The reasoning results demonstrate the theoretical and technical
+                                                                                   feasibility of the proposed conceptual framework. The safety knowledge
+                                                                                   can be explicitly represented and combined with the visual information
+                                                                                   extracted by computer vision algorithms through the integration of
+                                                                                   ontology techniques. The FFH hazard and its mitigation measures can
+                                                                                   then be reasoned by performing rule checking on the site visual infor­
+                                                                                   mation extracted by Mask R–CNN. The ontology model with SWRL rules
+                                                                                   provides a formal and explicit safety knowledge base to computer vision
+                                                                                   systems, which can help computer vision operate similarly to a human
+      Fig. 14. Implementing soft environment for knowledge in Protégé.           thinking model in construction safety management. Therefore, the
+
+                                                                              10
+H. Wu et al.                                                                                                           Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                         Fig. 15. Inference process of the scene presented in Fig. 11 (a person is traversing the concrete support).
+
+
+
+
+                                       Fig. 16. Reasoning results of hazards and mitigations in the scene of Fig. 9.
+
+
+proposed framework can facilitate safety management by automatically              visual information (low-level features) and semantic hazard information
+reasoning the hazards and corresponding mitigation measures for safety            (high-level knowledge) to initial images, which can facilitate the image
+managers.                                                                         annotation and semantic retrieval [61]. The extracted objects can be
+   Furthermore, the proposed framework can attach the extracted                   linked with semantic concepts through the developed ontology model,
+
+
+                                                                             11
+H. Wu et al.                                                                                                      Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                                 Fig. 17. Information annotation in the ontology model.
+
+
+
+
+and the hazard information can enrich the description of images. For             identification. Additionally, the developed conceptual framework has
+example, Fig. 17 shows the extracted information (e.g., labor_1, concrete        the potential to reason different types of hazards for safety managers if
+supports, and steel support) and reasoned hazard information (e.g.,              the computer vision algorithm can accurately detect visual information
+Fall_From_Building_Structures) of the image (Fig. 9). The obtained images        from images and the ontology model is enriched with various SWRL
+from the site can be re-used considering this semantic annotation. The           rules. Examples are shown in Fig. 18. Computer vision algorithms can be
+explicit semantic may facilitate further image index and retrieval in a          used to extract visual information from images; for example, detecting
+vast collection of images.                                                       workers who travel the structural supports [33] and don’t wear the
+                                                                                 hardhat [11]. The extracted visual information is used as the input for
+5. Discussion and limitations                                                    rule-based hazard reasoning. With the extracted visual information and
+                                                                                 pre-defined rules, different types of hazards can be inferred. For
+    The computer vision system is currently limited in linking the low-          instance, there are two types of hazards in Fig. 18 (a) and (b), namely,
+level visual information with high-level semantic meaning considering            falling from height and head injuries. In this paper, we built on our
+construction safety management, which is a knowledge-intensive task. A           previous study [33], and only a simple but common FFH hazard scene is
+conceptual framework is proposed in this paper to imitate the human-             used to show the theoretical feasibility of the proposed conceptual
+based safety inspections, which depend on their prior knowledge to               framework. Substantially complex scenes involving different types of
+detect hazards in the workplace and organize corresponding measure­              hazards should be used for further validation of the framework in future
+ments to prevent these hazards. In the developed framework, the com­             studies. Moreover, prototype systems should be developed for further
+puter vision acts as “human eyes,” which is responsible for extracting           validation on the effectiveness of the proposed framework in construc­
+objects and their spatial relationships. The obtained visual information         tion practices.
+is regarded as inputs and is mapped to instances in the ontology model               Second, the capability of the computer vision module on capturing
+acting as the “human brain” to facilitate hazard inference. The result           visual information is important for knowledge reasoning in the proposed
+shows the developed framework is successful in knowledge-intensive               framework. Specifically, acting as “human eyes,” accurate visual infor­
+construction safety management by semantically reasoning hazards                 mation detection from images is important because it is the input in
+and listing corresponding mitigations from on-site images.                       following hazard inference. The ontological knowledge base is ineffec­
+    However, some limitations still exist in current research. First, a          tive without accurate inputs. Therefore, the accuracy and reliability of
+simple but common FFH hazard scene in China is used to test the                  the computer vision module are essential. However, the computer vision
+theoretical feasibility of combining computer vision and ontology for            is still slightly weak for practical implementation in the construction
+knowledge-intensive hazard identification and mitigation, in which only          domain. On the one hand, the lack of sized construction image databases
+three types of spatial relationship (on, overlap, and away) are examined.        could affect its performance of deep learning algorithms [8]. On the
+However, other spatial relationships, such as “left,” “right,” “above,”          other hand, occlusions also hinder this capability because construction
+“blow,” and “aligned” must be detected for different types of hazard             sites are usually congested with materials, equipment, and structures of
+
+
+                                                                            12
+H. Wu et al.                                                                                                      Journal of Building Engineering 42 (2021) 103036
+
+
+
+
+                                                  Fig. 18. Process of detecting various types of hazards.
+
+
+different heights and shapes, thus leading to massive blind spots for the         the enrichment of SWRL rules is important to its effectiveness. However,
+cameras. Additionally, the camera cannot be installed if construction             encoding knowledge of numerous safety regulations into SWRL rules is
+workers do not agree due to privacy concerns [12]. The Mask R–CNN is              time-consuming, which may hinder the practical application of the
+used in this paper due to its high performance in object detection and            developed framework.
+instance segmentation [45]. An array of robust vision-based algorithms
+are available; however, improving the accuracy of computer vision al­             6. Conclusion
+gorithms or finding the optimal algorithm is not the aim of this paper.
+    Third, a finite set of rules are encoded in this paper to validate the            This paper introduces a conceptual framework integrating computer
+theoretical feasibility of the proposed framework. More SWRL rules for            vision and ontology for construction safety management. The ontology-
+different types of hazards should be encoded in the future, aiming to             based representation of safety knowledge gives meaning to the acquired
+satisfy the requirement of construction safety management in different            inputs of computer vision algorithms. Similar to humans, these algo­
+hazardous scenes. Essentially, the ontology model and SWRL rules act as           rithms can support safety inspection by automatically reasoning hazards
+‘human brain’ in the proposed framework, which aim to provide safety              from on-site photos and listing corresponding mitigation suggestions. In
+regulatory knowledge for hazard identification and prevention. Hence,             particular, a Mask R–CNN is used to recognize objects and spatial
+
+                                                                             13
+H. Wu et al.                                                                                                               Journal of Building Engineering 42 (2021) 103036
+
+
+relationships because it can accurately detect multiple objects from               Declaration of competing interest
+images. The extracted visual information is connected with the ontology
+concepts by creating instances using XS2OWL. Hazards from images and                   The authors declare that they have no known competing financial
+their corresponding mitigations are then inferred using a reasoning                interests or personal relationships that could have appeared to influence
+engine based on the encoded SWRL rules. Finally, an FFH example is                 the work reported in this paper.
+used to validate the feasibility of the proposed framework and demon­
+strate its capability to infer hazards by combining regulation knowledge           Acknowledgments
+automatically.
+    Overall, the developed theoretical framework can help computer                    This research is partly supported by the “National Natural Science
+vision function similarly to the human thinking model in construction              Foundation of China” (No.71732001, No. 51878311).
+safety management. The framework also provides site managers and
+engineers with a creative method to complement the cadre of hazard
+                                                                                   References
+management approaches used to manage safety in construction. The
+accuracy of detecting objects and spatial relationships from images or              [1] OSHA, Commonly used Statistics. https://www.osha.gov/oshstats/commonstats.
+videos can be markedly enhanced with the advancement of deep                            html2014. (Accessed 17 January 2015).
+learning algorithms. For example, more than 1000 projects have used                 [2] MOHURD (Ministry of Housing and Urban-Rural Development of the People’s
+                                                                                        Republic of China), Bulletin on the Safety Accidents of Housing Municipal
+the commercial product named SmartVid’s AI engine for detecting hard                    Engineering, Retrieved from, http://www.mohurd.gov.cn/wjfb/201903/t2019032
+hats, gloves, and safety vests of workers [62]. Today, hundreds to                      6_239913.html, 2018.
+thousands of images were acquired in construction sites on a daily basis            [3] P.E.D. Love, P. Teo, J. Smith, F. Ackermann, Y. Zhou, The nature and severity of
+                                                                                        workplace injuries in construction: engendering operational benchmarking,
+[63], and daily construction activities can be recorded by the deployed                 Ergonomics 62 (10) (2019) 1273–1288, https://doi.org/10.1080/
+cameras. The visual data can be used as the foundation for safety                       00140139.2019.1644379.
+management. Hazards or near-misses in daily construction tasks and                  [4] Bureau of Labor Statistics (BLS), 2017 Census of Fatal Occupational Injuries (Final
+                                                                                        Data)– Industry by Event or Exposure. https://www.bls.gov/iif/oshwc/cfoi/cfch
+corresponding suggestions can be reasoned automatically during the
+                                                                                        0016.pdf, 2018.
+application of the proposed framework to construction projects. The                 [5] Safe Work Australia (SWA), Construction Industry Profile. https://www.safeworka
+inference information can be sent to safety managers for review and                     ustralia.gov.au/doc/construction-industry-profile, 2015.
+                                                                                    [6] M.-W. Park, I. Brilakis, Construction worker detection in video frames for
+further processing. Therefore, this information provides a means of
+                                                                                        initializing vision trackers, Autom. ConStruct. 28 (2012) 15–25, https://doi.org/
+frequent safety inspection and can reduce the workloads of safety                       10.1016/j.autcon.2012.06.001.
+managers. Moreover, the framework offers a probability for the con­                 [7] J. Teizer, Status quo and open challenges in vision-based sensing and tracking of
+struction company to conduct large-scale and frequent safety in­                        temporary resources on infrastructure construction sites, Adv. Eng. Inf. 29 (2)
+                                                                                        (2015) 225–238, https://doi.org/10.1016/j.aei.2015.03.006.
+spections. Relying on the advanced computer vision algorithms and the               [8] J. Seo, S. Han, S. Lee, H. Kim, Computer vision techniques for construction safety
+complete ontological knowledge base, different projects can statistically               and health monitoring, Adv. Eng. Inf. 29 (2015) 239–251, https://doi.org/
+near-miss with high frequency and low severity and build their haz­                     10.1016/j.aei.2015.02.001.
+                                                                                    [9] C. Lu, R. Krishna, M. Bernstein, F. Li, Visual relationship detection with language
+ardous patterns for further proactive prevention. Hazardous patterns                    priors, European Conference on Computer Vision (2016) 852–869, https://doi.org/
+may differ from projects and construction companies. For instance,                      10.1007/978-3-319-46448-0_51.
+Raviv et al. [64] quantitatively analyzed tower crane-related accidents            [10] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, C. Li, Computer vision aided inspection on
+                                                                                        falling prevention measures for steeplejacks in an aerial environment, Autom.
+from two construction companies in Israel. They found that one suffered                 ConStruct. 93 (2018) 148–163, https://doi.org/10.1016/j.autcon.2018.05.022.
+from technical failure, while the other suffered from rigging and                  [11] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-
+signaling failures. Additionally, the raw data would be annotated with                  use by a deep learning method from far-field surveillance videos, Autom.
+                                                                                        ConStruct. 85 (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.
+inferred information, which helps improve the completeness and accu­
+                                                                                   [12] B. Zhong, H. Wu, L. Ding, L. Peter, H. Li, H. Luo, L. Jiao, Mapping computer vision
+racy of data for future machine learning training and development                       research in construction: developments, knowledge gaps and implications for
+purposes. Real-time identification of unsafe acts during construction                   research, Autom. ConStruct. 107 (2019) 102919, https://doi.org/10.1016/j.
+                                                                                        autcon.2019.1029.
+may lead to perfunctory intervention by management, which can result
+                                                                                   [13] X. Sun, Y. Zhang, J. Chen, RTPO: a domain knowledge base for robot task planning,
+in immediate behavior modification. In addition, the acquired video can                 Electronics 8 (10) (2019) 1105, https://doi.org/10.3390/electronics8101105.
+be used to provide people with direct visual feedback and be used as a             [14] X. Xing, B. Zhong, H. Luo, H. Li, H. Wu, Ontology for safety risk identification in
+tool for safety education.                                                              metro construction, Comput. Ind. 109 (2019) 14–30, https://doi.org/10.1016/j.
+                                                                                        compind.2019.04.001.
+    The scientific contributions of the paper lie in the following: (1) the        [15] R. Marroquin, J. Dubois, C. Nicolle, Know beyond seeing: combining computer
+integrated framework combining advantages of computer vision (acting                    vision with semantic reasoning, in: 2018 IEEE 12th International Conference on
+as the human eyes) and ontology (acting as the human brain), producing                  Semantic Computing (ICSC), IEEE, 2018, pp. 310–311, https://doi.org/10.1109/
+                                                                                        ICSC.2018.00061.
+intelligent construction safety management; (2) the developed onto­                [16] D. Conigliaro, R. Ferrario, C. Hudelot, D. Porello, Integrating computer vision
+logical model, a formal way to represent safety domain knowledge with                   algorithms and ontologies for spectator crowd behavior analysis, Group and Crowd
+SWRL rules, can be easily extended to the future hazardous scene.                       Behavior for Computer Vision (2017) 297–319, https://doi.org/10.1016/B978-0-
+                                                                                        12-809276-7.00016-3.
+Relying on advanced computer vision algorithms and enriched ontology               [17] H. Bannour, C. Hudelot, Building and using fuzzy multimedia ontologies for
+models, different hazards and these mitigations from images or videos                   semantic image annotation, Multimed. Tool. Appl. 72 (3) (2014) 2107–2141,
+can be automatically identified for safety inspectors on basis of the                   https://doi.org/10.1007/s11042-013-1491-z.
+                                                                                   [18] C.J. Anumba, R.R.A. Issa, J. Pan, I. Mutis, Ontology-based information and
+proposed framework.
+                                                                                        knowledge management in construction, Construct. Innovat. 8 (2008) 218–239,
+                                                                                        https://doi.org/10.5220/0003053903310334.
+Author statement                                                                   [19] B. Zhong, H. Wu, H. Li, S. Semad, H. Luo, L. He, A scientometric analysis and
+                                                                                        critical review of construction related ontology, Autom. ConStruct. 101 (2019)
+                                                                                        17–31, https://doi.org/10.1016/j.autcon.2018.12.013.
+    Haitao Wu: Writing-original draft, Review & editing, Formal anal­              [20] Y. Lu, Q. Li, Z. Zhou, Y. Deng, Ontology-based knowledge modeling for automated
+ysis, Software.                                                                         construction safety checking, Saf. Sci. 79 (2015) 11–18, https://doi.org/10.1016/j.
+    Botao Zhong: Funding acquisition, Review& editing.                                  ssci.2015.05.008.
+                                                                                   [21] S.J. Zhang, F. Boukamp, J. Teize, Ontology-based semantic modeling of
+    Heng Li: Writing, Review & editing.                                                 construction safety knowledge: towards automated safety planning for job hazard
+    Peter Love: Writing, Review & editing.                                              analysis (JHA), Autom. ConStruct. 52 (2015) 29–41, https://doi.org/10.1016/j.
+    Xing Pan: Formal analysis, Software.                                                autcon.2015.02.005.
+                                                                                   [22] H. Wu, B. Zhong, B. Medjdoub, X. Xing, L. Jiao, An ontological metro accident case
+    Neng Zhao:Formal analysis, Software.                                                retrieval using CBR and NLP, Appl. Sci. 10 (15) (2020) 5298, https://doi.org/
+                                                                                        10.3390/app10155298.
+
+
+                                                                              14
+H. Wu et al.                                                                                                                               Journal of Building Engineering 42 (2021) 103036
+
+[23] W. Fang, L. Ding, E. Peter, H. Luo, H. Li, F. Pena-Mora, B. Zhong, C. Zhou,                   [44] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: towards real-time object detection
+     Computer vision applications in construction safety assurance, Autom. ConStruct.                   with region proposal networks, IEEE Trans. Pattern Anal. Mach. Intell. (2016)
+     110 (2020) 103013, https://doi.org/10.1016/j.autcon.2019.103013.                                   91–99, https://doi.org/10.1109/tpami.2016.2577031.
+[24] R. Xiong, Y. Song, H. Li, Y. Wang, Onsite video mining for construction hazards               [45] K. He, G. Gkioxari, P. Dollár, R. Girshick, Mask R-CNN.” the IEEE International
+     identification with visual relationships, Adv. Eng. Inf. 42 (2019) 100966, https://                Conference On Computer Vision (ICCV). http://openaccess.thecvf.com/content_
+     doi.org/10.1016/j.aei.2019.100966.                                                                 iccv_2017/html/He_Mask_R-CNN_ICCV_2017_paper.html, 2017, 2961-2969.
+[25] W. Fang, L. Ma, E. Peter, H. Luo, L. Ding, A. Zhou, Knowledge graph for identifying           [46] Y. Yu, H. Guo, Q. Ding, H. Li, M. Skitmore, “An experimental study of real-time
+     hazards on construction sites: integrating computer vision with ontology, Autom.                   identification of construction workers’ unsafe behaviors, Autom. ConStruct. 82
+     ConStruct. 119 (2020) 103310, https://doi.org/10.1016/j.autcon.2020.103310.                        (2017) 193–206.
+[26] N.F. Noy, D.L. McGuinness, Ontology development 101: a guide to creating your                 [47] X. Luo, H. Li, D. Cao, Y. Yu, X. Yang, T. Huang, Towards efficient and objective
+     first ontology. http://www.corais.org/sites/default/files/ontology_development                     work sampling: recognizing workers’ activities in site surveillance videos with two-
+     _101_aguide_to_creating_your_first_ontology.pdf, 2001.                                             stream convolutional networks, Autom. ConStruct. 94 (2018) 360–370, https://
+[27] L. Orlando, Detecting steel rods and micro-piles: a case history in a civil                        doi.org/10.1016/j.autcon.2018.07.011.
+     engineering application, J. Appl. Geophys. 81 (2012) 130–138, https://doi.org/                [48] X. Luo, H. Li, Y. Yu, C. Zhou, D. Cao, Combining deep features and activity context
+     10.1016/j.jappgeo.2012.01.009.                                                                     to improve recognition of activities of workers in groups, Comput. Aided Civ.
+[28] B.H.W. Guo, Y.M. Goh, Ontology for the design of active fall protection systems,                   Infrastruct. Eng. (2020), https://doi.org/10.1111/mice.12538.
+     Autom. ConStruct. 82 (2017) 138–153, https://doi.org/10.1016/j.                               [49] H. Kim, K. Kim, H. Kim, Vision-based object-centric safety assessment using fuzzy
+     autcon.2017.02.009.                                                                                inference: monitoring struck-by accidents with moving objects, J. Comput. Civ.
+[29] K.K. Han, M. Golparvar-Fard, Appearance-based material classification for                          Eng. 30 (2016), https://doi.org/10.1061/(ASCE)CP.1943-5487.0000562,
+     monitoring of operation-level construction progress using 4D BIM and site                          04015075.
+     photologs, Autom. ConStruct. 53 (2015) 44–57, https://doi.org/10.1016/j.                      [50] S. Tang, M. Golparvar-Fard, Joint reasoning of visual and text data for safety
+     autcon.2015.02.007.                                                                                hazard recognition, J. Comput. Civ. Eng. (2017) 450–457, https://doi.org/
+[30] J. Gong, C.H. Caldas, Computer vision-based video interpretation model for                         10.1061/9780784480847.056.
+     automated productivity analysis of construction operations, J. Comput. Civ. Eng.              [51] B. Zhong, H. Li, H. Luo, J. Zhou, W. Fang, X. Xing, Ontology-based semantic
+     24 (2010) 252–263, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000027.                             modeling of knowledge in construction: classification and identification of hazards
+[31] M. Golparvar-Fard, A. Heydarian, J.C. Niebles, Vision-based action recognition of                  implied in images, J. Construct. Eng. Manag. 146 (4) (2020), 04020013, https://
+     earthmoving equipment using spatio-temporal features and support vector                            doi.org/10.1061/(ASCE)CO.1943-7862, 0001767.
+     machine classifiers, Adv. Eng. Inf. 27 (4) (2013) 652–663, https://doi.org/                   [52] L.Y. Ding, B.T. Zhong, S. Wu, H.B. Luo, Construction risk knowledge management
+     10.1016/j.aei.2013.09.001.                                                                         in BIM using ontology and semantic web technology, Saf. Sci. 87 (2016) 202–213,
+[32] M.-W. Park, I. Brilakis, Continuous localization of construction workers via                       https://doi.org/10.1016/j.ssci.2016.04.008.
+     integration of detection and tracking, Autom. ConStruct. 72 (2016) 129–142,                   [53] H.P. Tserng, S.Y. Yin, R. Dzeng, B. Wou, M. Tsai, W. Chen, A study of ontology-
+     https://doi.org/10.1016/j.autcon.2016.08.039.                                                      based risk management framework of construction projects through project life
+[33] W. Fang, B. Zhong, N. Zhao, P.E. Love, H. Luo, J. Xue, S.J. Xu, A deep learning-                   cycle, Autom. ConStruct. 18 (7) (2009) 994–1008, https://doi.org/10.1016/j.
+     based approach for mitigating falls from height with computer vision:                              autcon.2009.05.005.
+     convolutional neural network, Adv. Eng. Inf. 39 (2019) 170–177, https://doi.org/              [54] H.-H. Wang, F. Boukamp, Ontology-based representation and reasoning framework
+     10.1016/j.aei.2018.12.005.                                                                         for supporting job hazard analysis, J. Comput. Civ. Eng. 25 (6) (2011) 442–456,
+[34] X. Yang, H. Li, Y. Yu, X. Luo, T. Huang, X. Yang, “Automatic pixel-level crack                     https://doi.org/10.1061/(asce)cp.1943-5487, 0000125.
+     detection and measurement using fully convolutional network, Comput. Aided Civ.               [55] N.M. El-Gohary, T.E. El-Diraby, Domain ontology for processes in infrastructure
+     Infrastruct. Eng. 33 (12) (2018) 1090–1109, https://doi.org/10.1111/mice.12412,                    and construction, J. Construct. Eng. Manag. 136 (7) (2010) 730–744, https://doi.
+     10.1016/j.autcon.2017.05.002.                                                                      org/10.1061/(asce)co.1943-7862.0000178.
+[35] I. Brilakis, M.W. Park, G. Jog, Automated vision tracking of project related entities,        [56] P. Pauwels, D. Van Deursen, R. Verstraeten, J. De Roo, R. De Meyer, “A Semantic
+     Adv. Eng. Inf. 25 (4) (2011) 713–724, https://doi.org/10.1016/j.aei.2011.01.003.                   Rule Checking Environment for Building Performance Checking” Automation in
+[36] L. Ding, W. Fang, H. Luo, P.E.D. Love, B. Zhong, X. Ouyang, A deep hybrid learning                 Construction, 2009, pp. 1–13.
+     model to detect unsafe behavior: integrating convolution neural networks and long             [57] I. Horrocks, P.F. Patel-Schneider, H. Boley, S. Tabet, B. Grosof, M. Dean, SWRL: a
+     short-term memory, Autom. ConStruct. 86 (2018) 118–124, https://doi.org/                           semantic web rule language combining OWL and RuleML, 21, 2004, pp. 1–31, 79.
+     10.1016/j.autcon.2017.11.002.                                                                 [58] M. Zhang, D. Fang, A cognitive analysis of why Chinese scaffolders do not use
+[37] Q. Fang, H. Li, X.C. Luo, L.Y. Ding, T.M. Rose, W.P. An, Y.T. Yu, A deep learning-                 safety harnesses in construction, Construct. Manag. Econ. 31 (3) (2013) 207–222,
+     based method for detecting non-certified work on construction sites, Adv. Eng. Inf.                https://doi.org/10.1080/01446193.2013.764000.
+     35 (2018) 56–68, https://doi.org/10.1016/j.aei.2018.01.001.                                   [59] E. Sirin, B. Parsia, B.C. Grau, A. Kalyanpur, Y. Kata, Pellet: a practical OWL-DL
+[38] Z. Zhu, X. Ren, Z. Chen, Integrated detection and tracking of workforce and                        reasoner, Web Semant. Sci. Serv. Agents World Wide Web 5 (2) (2007) 51–53,
+     equipment from construction job site videos, Autom. ConStruct. 81 (2017)                           https://doi.org/10.2139/ssrn.3199351.
+     161–171, https://doi.org/10.1016/j.autcon.2017.05.005.                                        [60] K. Schwabe, J. Teizer, M. König, Applying rule-based model-checking to
+[39] L. Nanni, S. Ghidoni, S. Brahnam, Handcrafted vs. non-handcrafted features for                     construction site layout planning tasks, Autom. ConStruct. 97 (2019) 205–219,
+     computer vision classification, Pattern Recogn. 71 (2017) 158–172, https://doi.                    https://doi.org/10.1016/j.autcon.2018.10.012.
+     org/10.1016/j.patcog.2017.05.025.                                                             [61] N. Magesh, P. Thangaraj, Semantic image retrieval based on ontology and SPARQL
+[40] Y. LeCun, Y. Bengio, G. Hinton, Deep learning, Nature 521 (2015) 436–444,                          query, in: International Conference on Advanced Computer Technology, 2011. http
+     https://doi.org/10.1038/nature14539.                                                               s://pdfs.semanticscholar.org/8d08/e0f95f7c8dda24ebefd88da583e7d26425e6.pd
+[41] N. Duan, D. Tang, M. Zhou, November). “Machine reasoning: technology, dilemma                      f.
+     and future, in: Proceedings of the 2020 Conference on Empirical Methods in                    [62] S. Tang, D. Roberts, M. Golparvar-Fard, Human-object interaction recognition for
+     Natural Language Processing: Tutorial Abstracts, 2020, pp. 1–6, https://doi.org/                   automatic construction site safety inspection, Autom. ConStruct. 120 (2020)
+     10.18653/v1/2020.emnlp-tutorials.1.                                                                103356, https://doi.org/10.1016/j.autcon.2020.103356.
+[42] A. Krizhevsky, I. Sutskever, G.E. Hinton, Imagenet classification with deep                   [63] K.K. Han, M. Golparvar-Fard, Potential of big visual data and building information
+     convolutional neural networks, Proc., Communications of the ACM 60 (6) (2012)                      modeling for construction performance analytics: an exploratory study, Autom.
+     84–90, https://doi.org/10.1145/3065386.                                                            ConStruct. 73 (2017) 184–198, https://doi.org/10.1016/j.autcon.2016.11.004.
+[43] W. Liu, D. Anguelov, D. Erhan, C. Szegedy, S. Reed, C.-Y. Fu, A.C. Berg, Ssd: Single          [64] G. Raviv, B. Fishbain, A. Shapira, Analyzing risk factors in crane-related near-miss
+     shot multibox detector, European Conference on Computer Vision (2016) 21–37,                       and accident reports, Saf. Sci. 91 (2017) 192–205, https://doi.org/10.1016/j.
+     https://doi.org/10.1007/978-3-319-46448-0_2.                                                       ssci.2016.08.022.
+
+
+
+
+                                                                                              15
+

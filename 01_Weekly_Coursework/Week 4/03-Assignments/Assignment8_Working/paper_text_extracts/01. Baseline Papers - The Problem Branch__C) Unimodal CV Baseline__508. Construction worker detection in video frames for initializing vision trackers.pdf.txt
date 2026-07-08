@@ -1,0 +1,733 @@
+                                                                      Automation in Construction 28 (2012) 15–25
+
+
+
+                                                              Contents lists available at SciVerse ScienceDirect
+
+
+                                                              Automation in Construction
+                                                    journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Construction worker detection in video frames for initializing vision trackers
+Man-Woo Park a,⁎, Ioannis Brilakis b
+a
+    School of Civil and Environmental Engineering, Georgia Institute of Technology, 220 Sustainable Education Building, 788 Atlantic Dr. NW, Atlanta, GA 30332, USA
+b
+    School of Civil and Environmental Engineering, Georgia Institute of Technology, 328 Sustainable Education Building, 788 Atlantic Dr. NW, Atlanta, GA 30332, USA
+
+
+
+
+a r t i c l e            i n f o                           a b s t r a c t
+
+Article history:                                           Monitoring the location of resources on large scale, congested, outdoor sites can be performed more efﬁcient-
+Accepted 7 June 2012                                       ly with vision tracking, as this approach does not require any pre-tagging of resources. However, the greatest
+Available online 28 July 2012                              impediment to the use of vision tracking in this case is the lack of detection methods that are needed to au-
+                                                           tomatically mark the resources of interest and initiate the tracking. This paper presents such a novel method
+Keywords:
+                                                           for construction worker detection that localizes construction workers in video frames. The proposed method
+Pattern recognition
+Construction worker
+                                                           exploits motion, shape, and color cues to narrow down the detection regions to moving objects, people, and
+Detection                                                  ﬁnally construction workers, respectively. The three cues are characterized by using background subtraction,
+Tracking                                                   the histogram of oriented gradients (HOG), and the HSV color histogram. The method has been tested on
+Remote sensing                                             videos taken in various environments. The results demonstrate its suitability for automatic initialization of
+Image processing                                           vision trackers.
+Computer vision                                                                                                                                 Published by Elsevier B.V.
+
+
+
+
+1. Introduction                                                                                 frequency technologies can also be a feasible option in which the
+                                                                                                strength of each technology can compensate each other's weakness.
+    Tracking data is useful for site monitoring tasks including productiv-                      For example, while RFID or UWB is obviously the best to use for track-
+ity measurement, activity sequence analysis, and safety management.                             ing in indoor environments, vision based tracking system can be a
+Radio frequency technologies, such as Radio Frequency Identiﬁcation                             potential option for outdoor environments especially in early periods
+(RFID), Global Positioning Systems (GPS) and Ultra Wideband (UWB)                               of a project when the site is usually a widely open area with a large
+have been used to generate real-time data on the location of construc-                          number of entities moving around. Also, vision based tracking can
+tion entities across time. The tests and applications of these technolo-                        provide the data that RFID or GPS has missed because of the limited
+gies proved their excellent performance and suitability to construction                         number of tags or sensors.
+sites. Constant efforts on the practical use of these technologies for                              Past research efforts showed the potential of vision based systems
+site monitoring resulted in their actual applications on the construction                       in tracking construction entities such as workers and concrete
+sites such as tracking of heavy equipment [1–3] and precast concrete                            buckets. However, the results were limited to 2D pixel coordinates
+elements [4]. However, it is necessary to install a sensor on each entity                       which are generally not sufﬁcient for monitoring construction sites.
+to track when using these technologies. This requirement hinders their                          Recently, a 3D vision-based tracking method was proposed, which
+application in large scale, congested construction sites where a large                          provides 3D coordinates of construction resources by using two or
+number of entities need to be tagged.                                                           more ﬁxed cameras [5]. The framework involves several processes:
+    As an alternative to these technologies, vision-based tracking has                          detecting construction entities, 2D tracking, and calculating 3D coor-
+been investigated. It can track multiple entities as long as they are                           dinates. It detects construction entities in each view, and tracks the
+present in camera views. Since the technology works on the basis of                             detected entities using 2D vision trackers which provide 2D pixel
+video data, it fails to track entities when information in the video                            coordinates across frames. The 2D pixel coordinates from multiple
+data is not sufﬁcient. For example, it does not provide the position                            camera views are correlated to calculate its 3D coordinates. The au-
+of occluded entities (no information) and is not suitable for tracking                          thors have proposed and validated methods for 2D tracking and the
+at night time (limited information). However, it still have the advan-                          calculation of 3D coordinates in the past. However, automatic detec-
+tage that it can track a large number of entities without the need for                          tion of construction entities was not achieved.
+tags, which is beneﬁcial for tracking in large scale, congested sites.                              In order to initiate a vision tracker, it is necessary to ﬁrst deter-
+Hybrid systems combining vision based tracking with other radio                                 mine which entities to track. All entities that enter the camera
+                                                                                                views have to be captured and marked to trigger a vision tracker.
+  ⁎ Corresponding author. Tel.: + 1 404 385 1276; fax: + 1 404 894 1641.
+                                                                                                Moreover, a vision tracker generally fails to track an entity when it
+     E-mail addresses: mw.park@gatech.edu (M.-W. Park), brilakis@gatech.edu                     is fully occluded. Therefore, when the entity gets free from the occlu-
+(I. Brilakis).                                                                                  sion, it has to be initialized again. Given a pixel region corresponding
+
+0926-5805/$ – see front matter. Published by Elsevier B.V.
+doi:10.1016/j.autcon.2012.06.001
+16                                               M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25
+
+
+to each entity, a vision tracker extracts the visual patterns from the                   RFID-based systems are also widely used in construction projects.
+region and starts tracking on the basis of the patterns. However, it is              The systems consist of RFID tags, a reader, and a data management sys-
+time consuming and error prone to manually mark all construction                     tem. When a reader requests, each tag sends its own ID so that the read-
+entities in multiple views, due to the large amount of entities to                   er can identify the unique object. It is generally used to access and track
+track in construction sites. Therefore, an automated way of identify-                construction materials or workers. When a critical piece of material ar-
+ing and localizing the entities is required. Several approaches have re-             rives on site or it is placed in the structure, a tag attached to or embed-
+cently been employed to detect construction entities in images [6–8].                ded in the piece is read to register the event with its ID and timestamp
+However, it is not proven whether the methods can differentiate be-                  of accomplishment [17]. It has been applied to quality management
+tween construction entities and non-construction entities.                           [18], prevention of collision accident [19], and automatic identiﬁcation
+    This paper presents a novel method that detects and marks construc-              of construction concepts [20]. Recently, Ko [21] proposed a methodolo-
+tion workers in video frames for the purpose of initializing a vision                gy of 3D sensing with RFID which locates the positions of various con-
+tracker. The method utilizes three features: motion, shape, and color.               struction entities. However, the near-sighted effect prohibits its use in
+These features are used in a sequence of separate steps, narrowing can-              tracking applications. There have also been efforts to integrate RFID
+didate regions down to the regions of moving objects, people, and                    and GPS technology. Ergen et al. [22] applied this combination to track
+workers one after another. First, the method recognizes the foreground               precast pieces in a storage yard. These research efforts led to the practi-
+blobs that represent moving objects. Since the camera positions are                  cal use of RFID technologies in a construction project. Engineering
+ﬁxed, the static background pixel areas are ﬁltered out using background             News-Record reported about a notable case in which Skanska made
+subtraction leaving behind only moving object areas (foreground blobs).              use of RFID technologies to track pre-cast structural elements from
+Second, human body shapes are modeled through the training of HOG                    casting to assembly in a football stadium construction [4]. In the project,
+(Histogram of Oriented Gradients) features and searched on the fore-                 RFID tagging was integrated with BIM (Building Information Modeling).
+ground blobs. Third, once human body shapes are detected, they are                   Also, an RFID-based system that combines tags on ID cards with a digital
+further processed to be classiﬁed into construction workers and non-                 camera in the reader to verify identities was reported to be used in more
+workers. In this classiﬁcation process, color histograms which are con-              than 400 projects around the world [17,23].
+structed on the HSV (Hue, Saturation, and Value) color space, are used.                  Remote-controlled web-based cameras are currently available and
+The proposed method is tested on videos recorded with people wearing                 used for remote monitoring of construction sites [24–26]. The cameras
+various combinations of safety gear. It is worthwhile to clarify that the            are controlled remotely through pan/tilt/zoom functions, and transmit
+proposed method aims to detect construction workers only as soon as                  video frames wirelessly to the central system. The wireless communica-
+they newly appear in the camera view. Therefore, performance is mea-                 tion system enables one person to monitor an entire site, which sub-
+sured by precision and the lapse between the ﬁrst presence of an entity              stantially reduces security cost [24].
+and its detection. The minimum precision rate higher than 99% and the
+maximum lapse less than 1 s, validate the suitability and effectiveness              2.2. State of research in vision tracking
+of the method for initializing the tracking of construction workers.
+                                                                                         Both GPS-based and RFID-based systems are based on radio technol-
+2. Background                                                                        ogies. These radio technologies require the installation of tags on the
+                                                                                     entities to track, which makes them disadvantageous to tracking in
+2.1. State of practice in monitoring resources                                       large scale, congested sites [5]. This leads to the increasing interest for
+                                                                                     vision technologies in construction. The growing number of cameras
+    In recent years, state-of-the-art technologies are employed in                   available in construction sites adds the value and potential of vision
+practice for monitoring construction resources. GPS is the most fa-                  technologies. Aiming to achieve tracking on demand with minimum
+mous technology which is generally used to track a ﬂeet of heavy                     cost and human interaction, vision-based tracking methods are investi-
+equipment. It has become a well-established monitoring system in                     gated and introduced to construction. These methods track entities in a
+construction sites. The system consists of a constellation of satellites,            sequence of video frames and do not require installing any sensors or
+GPS sensors mounted on each equipment asset, and a central module                    tags on the entities [27]. They are capable of tracking a large number
+that communicates with the sensors. Each sensor captures the asset's                 of entities with a high level of accuracy [28]. Also, they can help prevent
+location and transmits the data to the central module over the mobile                the controversial issues associated with construction workers who may
+network, which makes it possible to visualize the location of all                    be uncomfortable being tagged with sensors.
+equipment on a single map in real time [9,10]. GPS has usually been                      Teizer et al. [29] investigated vision trackers for construction worker
+applied to outdoor construction practices like positioning of construc-              tracking, and Yang et al. [30] proposed a vision tracker that can track
+tion equipment [11] and vehicles [12]. However, the maximum error                    multiple construction workers. Gong and Caldas [31] validated that vi-
+of general GPS is about 10 m, and it can be reduced to 1 cm by using                 sion tracking can be applied to automate productivity analysis. However,
+kinematic GPS with trade off in increased costs [13]. Indoor GPS has                 in these works, the tracking data was limited to 2D pixel coordinates and
+also been introduced to tracking in indoor construction environments                 the entities to be tracked were manually selected and marked. Extending
+[14]. The system replaces satellites with four or more indoor trans-                 the general 2D vision trackers, a framework of 3D vision tracking has re-
+mitters. Numerous products of the GPS system have been emerged                       cently been presented [5]. It provides 3D coordinates using multiple
+for tracking and monitoring construction equipment [1–3]. Equip-                     onsite cameras. It consists of three main steps: 1) automatic initialization
+ment manufacturers are adopting the products to provide for their                    of object regions, 2) 2D tracking in each camera, and 3) correlating two
+customers [15]. The GPS sensors are capable of reporting locations                   camera views to calculate 3D coordinates. Regarding step 2), Park et al.
+as well as idle and work time, and odometer readings. Analyzing the                  [27] performed a comparative study to ﬁnd the best tracker for construc-
+reported data can bring about signiﬁcant beneﬁts for contractors                     tion. Also, the promising performance of step 3) is fully evaluated and
+such as reduced fuel budget, better equipment utilization, and timely                validated [28]. For the ﬁrst step, the detailed investigation on the auto-
+maintenance, etc. [9]. Despite its high accuracy, signiﬁcant time and                mated detection of construction entities is needed.
+effort to deploy the system and expensive cost limit the application.
+Also, a recent report states that construction business in the United                2.3. Vision-based object detection
+States will face serious disruption to their GPS-involved operations
+because of 4G-LTE open wireless broadband network that incorpo-                          The purpose of object detection is to recognize and localize an ob-
+rates nationwide satellite coverage [16].                                            ject category (e.g. face, vehicle, and animal) by image features which
+                                                  M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25                                      17
+
+
+are common to all objects of the type. The challenge of object detec-                 for detection of wheel loaders and trucks, respectively. They used
+tion is to construct a feature template compatible to various appear-                 the Semantic Texton Forests approach [48], which detects objects
+ances of the object category. Shape, color, and motion features are                   through segmentation and classiﬁcation. Chi and Caldas [8] proposed
+generally used for object detection.                                                  a method that detects and classiﬁes construction entities including
+    Haar-like features [32,33] and HOG [34,35] are well-known shape                   construction equipment and workers. Several characteristics of fore-
+features. Both features are on the basis of gradient values, but utilize              ground blobs which result from background subtraction are trained
+them in different ways. Haar-like features are vectors of image gradi-                for the classiﬁcation.
+ents which are differences of intensities between adjacent regions. In
+order to detect various appearances of an object type, the features are               3. Problem statement and objectives
+trained through a machine learning process: Haar-like features of var-
+ious appearances are extracted from abundant training images and                          As described earlier, vision-based tracking has great potential in
+the features are trained with machine learning algorithms. For exam-                  monitoring large scale, congested sites. However, detection of con-
+ple, Viola and Jones [32] used vertical and horizontal Haar-like fea-                 struction entities is required to automate its initialization process
+tures with an AdaBoost (Adaptive Boosting) algorithm [36] for                         that locates and marks the entities to track. Even though Chi and
+human face detection. Lienhart and Maydt introduced additional 45°                    Caldas [8] proposed a method of detecting construction entities in-
+Haar-like features to account for diagonal edges and enhance the de-                  cluding workers, their work lacks information regarding how to
+tection [33]. Even though training with AdaBoost takes several days                   differentiate a worker from a pedestrian. This distinction is vital in
+depending on the processor speciﬁcations, the method allows for                       construction sites located in residential areas. Moreover, their meth-
+real time detection once the training is completed. The HOG feature                   od is sensitive to illumination changes since it relies only on the fore-
+is a collection of local histograms of gradient directions. It divides                ground blob features. Therefore, the overall objective of this research
+an image based on a grid of uniformly spaced blocks. For each block,                  is to automate the detection of construction workers. Speciﬁcally this
+a histogram is calculated by counting the occurrence of gradient ori-                 research aims to 1) investigate image features that effectively charac-
+entations. Similar to Haar-like features, HOG features also need train-               terize the appearance of ‘construction worker’, 2) determine appro-
+ing with a large number of images. Dalal and Triggs [34] applied HOG                  priate measures to evaluate the method regarding that this research
+features trained with SVM (Support Vector Machine) [37] for human                     is aiming strictly for accurate initialization of vision trackers, and 3)
+detection. They showed the superiority of HOG features over Haar-                     test the method for detecting multiple workers in various illumina-
+like features in human detection. Zhu et al. [35] sped up the human                   tion conditions.
+detection by using AdaBoost while retaining the equivalent accuracy.
+    Color is also a useful and intuitive feature for recognizing an object            4. Methodology
+type. A color histogram [38] is one of the typical color features. Simple cal-
+culation and invariance to rotation and translation are its useful qualities              In response to the objective stated above, this paper presents a
+for object detection. It is suitable for detecting an object in distinctive           method and its validation for recognizing and locating construction
+colors. However, the sensitivity to illumination and the lack of spatial in-          workers in video frames. In this paper, ‘construction worker’ is con-
+formation limits its applications. The color histogram has been broadly               sidered as a person wearing safety gear such as safety vests and
+used for image segmentation and content-based image retrieval in                      hard hats. The proposed method takes advantage of three types of
+which spatial information is not critical [39,40]. It has also been employed          image features to describe construction workers: motion, shape and
+in tracking applications. In tracking processes, color histograms combined            color. These features are separately implemented in sequential
+with HOG features were used as observation models of pedestrians [41],                steps. First, it detects foreground blobs where objects in motion are
+hockey players [42], etc. However, color histograms are not appropriate               expected to exist. Given the ﬁxed camera views, the difference of
+for the detection of pedestrians or hockey players since their colors widely          pixel values between a background model and the incoming frames
+vary from person to person according to their clothing. In Lu et al.'s work           is the main cue to recognize motions. Second, it identiﬁes the regions
+[42], Haar-like features are used for detection, and the color histogram is           corresponding to human bodies from the foreground blobs based on
+used exclusively for tracking the detected entities.                                  their patterns of HOG features. Third, the detection regions that result
+    Background subtraction [43–45] detects moving objects on the                      from the second step are classiﬁed into construction workers and
+basis of their motion cues. This method can be applied only to ﬁxed                   non-workers. It uses color histograms and a k-NN (k-Nearest Neigh-
+camera views. The static background scene is modeled by taking a                      bors) [50] classiﬁer to characterize ﬂuorescent colors of safety gear.
+dominant value for each pixel across a certain number of frames.                      Fig. 1 illustrates the described framework. In short, the ﬁrst and sec-
+The model has to be updated throughout the frames in order to reﬂect                  ond steps detect people including workers based on their motion
+changes of illumination. Mcfarlane and Schoﬁeld [43] presented an                     and shape features, then the third step sort out workers from the
+approximated median ﬁlter which estimates the background with a                       detected people by analyzing their color features.
+simple update process. It increases/decreases the background esti-                        Background subtraction, in the proposed method, reduces the can-
+mate if the pixel value of the new video frame is larger/smaller than                 didate regions for worker detection. It is used to achieve higher com-
+the estimate. The MoG (Mixture of Gaussians) method [44] is one of                    putational efﬁciency and lower false alarm rates. The second step,
+the most popular background modeling methods. It models the back-                     which is the detection of people with HOG, is computationally far
+ground pixel values as a mixture of multiple Gaussian distributions.                  more expensive than the background subtraction. Background sub-
+Moving objects are detected by thresholding the difference of pixel                   traction restricts the search areas of the second step. It allows the
+values between the current frame and the background. Li et al. [45]                   step to scan only foreground blobs and prevents from unnecessarily
+screened out moving background objects such as wavering trees                         scanning irrelevant areas. In addition, it prevents the detection of
+and shadows by modeling them with the color co-occurrence feature.                    non-people objects in the background scene (i.e. a static area which
+Background subtraction is computationally efﬁcient since it can de-                   has a similar shape to people) in the following step. It eventually
+tect all moving objects simultaneously regardless of their appear-                    leads to higher precision. Once foreground blobs are obtained, they
+ances or types. However, motion features are not suitable to identify                 are post-processed to remove small blobs and to merge adjacent
+object types. Furthermore, background subtraction may recognize                       blobs. For each foreground blob, the smallest rectangle that encloses
+multiple objects that partially overlap each other as a single object.                the blob is found. Finally, each rectangle is inﬂated to allow for
+    Recently, several approaches for detecting construction entities                  some margin around a moving object, which is necessary to calculate
+have been proposed. Park et al. [6] and Jog et al. [7] presented methods              HOG shape features in the next step. Various methods of background
+18                                                 M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25
+
+
+                                                                                           The RGB color space, which is an additive color model, is not effec-
+                                                                                       tive for modeling the safety gear colors because of its sensitivity to
+                                                                                       illumination conditions. This fact is illustrated in Figs. 4 and 5 which
+                                                                                       show the RGB color histograms (32 bins) of yellow-green and
+                                                                                       orange-red safety vests, respectively. In each ﬁgure, the two safety
+                                                                                       vests are the same type, but with different illumination conditions—
+                                                                                       one in a bright condition (1st row), and the other in a dark condition
+                                                                                       (2nd row). It is observed that signiﬁcant disparity between the color
+                                                                                       histograms in the 1st and 2nd rows is caused by the slight change in
+                                                                                       illumination. Compared to the RGB color space, the HSV color space is
+                                                                                       in better accordance with the conceptualization of human eyes, thus,
+                                                                                       is more appropriate in categorizing objects by colors. The three com-
+                                                                                       ponents of hue, saturation, and value measure the actual color, purity,
+                                                                                       and intensity (brightness), respectively. Figs. 6 and 7 show the HSV
+                                                                                       color histograms (32 bins) of the safety vests as in Figs. 4 and 5.
+                                                                                       Hue and saturation histograms in the 1st and 2nd rows exhibit similar
+                                                                                       patterns in spite of the illumination change which is reﬂected in the
+                                                                                       value histogram. In addition, hue and saturation histograms in
+                                                                                       Figs. 6 and 7 are distinct from those of ordinary vests on pedestrians
+                                                                                       in Fig. 8. Fig. 9 shows saturation images of a pedestrian and construc-
+                                                                                       tion workers. Unlike in the pedestrian image, the safety vest regions
+                                                                                       in construction worker images are highlighted by the saturation com-
+                                                                                       ponents regardless of their colors. These illustrations signify that the
+                                                                                       distinct characteristics of safety vests can be effectively modeled
+                                                                                       with hue and saturation histograms. Accordingly, the third step ex-
+                                                                                       ploits hue and saturation histograms for characterizing the patterns
+                                                                                       of the safety gear.
+                                                                                           As in the second step, this step also needs to go through a training
+                 Fig. 1. The framework of the proposed method.
+                                                                                       process. Positive and negative data, in this step, are the images of con-
+                                                                                       struction workers and ordinary people, respectively. Focusing exclu-
+modeling have been presented: approximate median ﬁlter [43], MoG                       sively on safety vests and hard hats, this step takes into account
+[44], color co-occurrence [45], etc. In this research, the median ﬁlter                only the upper half of the human body to construct color histograms.
+method is employed since it is computationally the most efﬁcient.                      The obtained color histogram is normalized to minimize the effect of
+Fig. 2 exhibits the foreground blobs extracted with the three methods                  the image window sizes. Negative images contain a few images of
+and the rectangular foreground regions after post processing. Even                     people wearing jackets of which the colors are similar to safety
+with the simplest process, the median ﬁlter method provides compa-                     vests. These images prevent SVM from constructing clear boundaries
+rable results to the other methods.                                                    between the color histogram vectors of worker and non-worker. The
+    Wearing hard hats or safety vests does not induce signiﬁcant                       k-NN is more suitable to this case because it performs classiﬁcation
+changes in human shapes. Fig. 3 shows two gradient images obtained                     simply based on a majority vote of its k neighbor. Even though the
+by averaging a number of gradient images of ordinary people and                        main role of this third step is classifying a person into a worker or a
+construction workers. Human can be intuitively inferred from both                      non-worker, it also acts as a ﬁlter that eliminates false positive results
+gradient images. Therefore, as a step to narrow down candidate re-                     of the second step (non-people regions).
+gions to people, the second step employs HOG features which have
+proven to be robust in detecting human bodies. Detection of people                     5. Implementation, experiments and results
+in test images works by sliding a search window across the fore-
+ground blob regions. The HOG feature is calculated from each window                        The whole framework as a single package is implemented using
+and classiﬁed into either people or non-people. In order to embed                      Microsoft Visual C# in NET Framework 4.0 environment. The size of
+various appearances of people into the HOG feature template, train-                    the HOG template used for people detection is 64 × 128. In order to
+ing of a classiﬁer is necessary. The SVM is chosen for the training as                 detect people smaller than the template size, the foreground regions
+in Dalal and Triggs' work [34]. On the basis of HOG features extracted                 are scaled up. The HOG feature is calculated on the basis of two spatial
+from a large number of positive (images of people) and negative (im-                   layers (cells and blocks). The ﬁrst layer is comprised of a grid of cells
+ages without any people) images, an SVM classiﬁer learns to recog-                     (8 × 8 pixels) where a local HOG is obtained. The second layer is com-
+nize the patterns of HOG features and to distinguish people from                       prised of a grid of blocks. A block is a collection of 2 × 2 cells. Four local
+others. Training images have to be in the same size so that all their                  HOG's of 2 × 2 cells in a block are aggregated and normalized together.
+HOG features have the same vector size.                                                The normalization allows for invariance to illumination changes. The
+    The results of the second step are the rectangular regions determined              histogram is constructed based on the angle and magnitude of gradi-
+to include a person inside. These rectangles are further processed by an-              ents. It consists of 9 bins which represent evenly distributed angles
+other classiﬁer which determines whether they are workers or not. In                   ranging from 0 to 180°. A gradient magnitude at each pixel is added
+other words, this step ﬁlters out the non-workers out of the people re-                to the corresponding bin which the angle falls into. A sequence of
+gions. The HSV color histogram is selected for this purpose. ANSI (Amer-               HOG features that are spatially distributed in a grid manner structures
+ican National Standards Institute) stipulates that construction workers                a ﬁnal descriptor of the input image.
+must use high-visibility safety apparel since they are regularly exposed                   The k-NN classiﬁers associated with color histograms are trained
+to the hazards of low visibility. It speciﬁes three colors for the high-               with images of upper half bodies wearing both hard hats and safety
+visibility apparel: ﬂuorescent yellow-green, ﬂuorescent orange-red,                    vests. A majority vote of ‘k’ nearest neighbors determines the classiﬁ-
+and ﬂuorescent red [51]. Since the colors are limited and all ﬂuorescent               cation. Parameter studies are performed to determine the optimal
+colors, it is viable to characterize the patterns of the safety gear colors.           number of histogram bins as well as the optimal number of nearest
+                                                     M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25                                                     19
+
+
+
+
+       Fig. 2. The foreground regions which result from the approximate median ﬁlter (1st row), the MoG (2nd row), and the color co-occurrence (3rd row) methods.
+
+
+
+neighbors (k). The results of the studies are presented in Section 5.3.                  the detection results. All the videos have different backgrounds and
+In all performed tests, 500 positive images (upper half body with                        various illumination conditions.
+safety gear), including yellow-green, orange-red, and red safety
+vests, are collected and used for the training of color histograms.                      5.1. Metrics for performance evaluation
+   To validate the implemented method, the method is tested on ten
+high-deﬁnition (HD) videos taken with a HD camcorder (Canon                                  Two metrics are chosen to measure the performance of the meth-
+VISXIA HF S100). However, the videos are resized to 768 × 432 for                        od. The metrics are selected from the perspective that the main pur-
+the sake of fast processes with similar level of performance. 5 frames                   pose of the method is initializing a vision tracker. The ﬁrst metric is
+per second are processed in near real time. The videos are taken of                      precision which is popular in evaluating pattern recognition. To clar-
+4–5 people wearing different combinations of safety gear (hard hats                      ify the meaning of precision, let us deﬁne the number of correctly
+and safety vests) to investigate the effect of the combinations on                       detected workers as TP (true positive), the number of the detections
+
+
+
+
+                (a)                (b)                (c)                 (d)                 (e)                 (f)               (g)                (h)
+  Fig. 3. (a)–(c): examples of people images, (d): average gradients of 200 people images, (e)-(g): examples of worker images, (h): average gradients of 200 worker images.
+20                                                 M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25
+
+                           400                                                                                            200
+                                                                          600
+                           300                 Red                                            Green                                                  Blue
+                                                                          400
+                           200                                                                                            100
+
+                           100                                            200
+
+                             0                                              0                                               0
+                                 0    50     100     150     200    250         0    50      100    150   200     250           0   50   100   150   200    250
+                           400                                                                                            200
+                                                                          600
+                           300                 Red                                            Green                                                  Blue
+                                                                          400
+                           200                                                                                            100
+
+                           100                                            200
+
+                             0                                              0                                               0
+                                 0    50     100     150     200    250         0    50      100    150   200     250           0   50   100   150   200    250
+
+                       Fig. 4. RGB color histograms of yellow-green safety vests in bright (1st row) and dark (2nd row) illumination conditions.
+
+
+
+
+                           300                                                                                            500
+                                               Red                        300                 Green                       400              Blue
+                           200
+                                                                          200                                             300
+                                                                                                                          200
+                           100                                            100
+                                                                                                                          100
+                             0                                              0                                               0
+                                 0    50    100      150    200     250         0    50      100    150   200    250            0   50   100   150   200    250
+                           300                                                                                            500
+                                               Red                        300
+                                                                                              Green                       400             Blue
+                           200
+                                                                          200                                             300
+                                                                                                                          200
+                           100                                            100
+                                                                                                                          100
+                             0                                              0                                               0
+                                 0    50    100      150    200     250         0    50      100    150   200    250            0   50   100   150   200    250
+
+                        Fig. 5. RGB color histograms of orange-red safety vests in bright (1st row) and dark (2nd row) illumination conditions.
+
+
+
+
+which is not relevant to a worker as FP (false positive), and the num-                     on every other frame resulting in just 50% recall (low recall) could
+ber of missed workers (i.e. not detected) as FN (false negative). Preci-                   perform well for initializing a tracker as long as it detects no other
+sion is deﬁned as a ratio of TP to TP + FP and measures the reliability                    type than a worker (high precision).
+of the detection. The second metric is the time delay of detection. It
+measures how instantly it detects a worker after one enters the                            5.2. The deﬁnition of ‘construction worker’
+scene or gets out of an occlusion case. It is worthwhile to note that
+the recall is not an appropriate measure of a method for vision tracker                        Although recall is not an appropriate metric overall, it is calculated
+initialization. The recall is the ratio of TP to TP + FN. The proposed                     for the analysis of the effect of safety gear combinations. Table 1 illus-
+method is not designed to detect a worker in every frame, for which                        trates the combinations involved in three of the videos. Since the
+a tracker is responsible. For instance, a method that detects a worker                     method is devised to detect workers that appear in the view,
+
+
+
+                                                                          200                                             800
+                           600
+                                               Hue                                                  Saturation            600             Value
+                           400
+                                                                          100                                             400
+                           200                                                                                            200
+
+                              0                                             0                                               0
+                                  0   50     100     150    200     250         0     50      100   150    200    250           0   50   100   150   200    250
+                                                                          200                                             800
+                           600
+                                               Hue                                  Saturation                            600             Value
+                           400
+                                                                          100                                             400
+                           200                                                                                            200
+
+                              0                                             0                                               0
+                                  0   50     100     150    200     250         0     50      100   150    200    250           0   50   100   150   200    250
+
+                       Fig. 6. HSV color histograms of yellow-green safety vests in bright (1st row) and dark (2nd row) illumination conditions.
+                                                       M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25                                          21
+
+
+                          800                                                  400                                            400
+
+                          600                     Hue                          300             Saturation                     300            Value
+                          400                                                  200                                            200
+
+                          200                                                  100                                            100
+
+                             0                                                   0                                              0
+                                 0       50    100      150    200     250           0   50      100    150    200    250           0   50   100   150   200   250
+                          800                                                  400                                            400
+
+                          600                     Hue                          300             Saturation                     300            Value
+                          400                                                  200                                            200
+
+                          200                                                  100                                            100
+
+                             0                                                  0                                               0
+                                 0       50    100      150    200     250           0   50      100    150    200    250           0   50   100   150   200   250
+
+                        Fig. 7. HSV color histograms of orange-red safety vests in bright (1st row) and dark (2nd row) illumination conditions.
+
+
+
+
+                            400                                                300
+                                                                                                                              300
+                            300                      Hue                                        Saturation                                    Value
+                                                                               200
+                                                                                                                              200
+                            200
+                                                                               100                                            100
+                            100
+
+                                 0                                               0                                              0
+                                     0    50     100     150     200     250         0   50       100   150    200    250           0   50   100   150   200   250
+                            400                                                300
+                                                                                                                              300
+                            300                      Hue                                        Saturation                                   Value
+                                                                               200
+                                                                                                                              200
+                            200
+                                                                               100                                            100
+                            100
+
+                                 0                                               0                                              0
+                                     0    50     100     150     200     250         0    50      100    150    200    250          0   50   100   150   200   250
+
+                                                         Fig. 8. HSV color histograms of ordinary vests on pedestrians.
+
+
+
+occluded workers are not the target of the method. Hence, an occlud-                           both workers and non-workers and classify them. Fig. 10 exhibits
+ed person is not counted in this experiment. Table 2 summarizes the                            two result frames from each video. Whereas the left images contain
+recall of ﬁve people in three videos. There is clear distinction between                       only correct detections, the right ones contain false results as well.
+Persons 1–2 and Persons 3–5. Persons 1 and 2 who did not wear safe-                            Persons 4 and 3 are classiﬁed as non-worker in Videos 1 and 3, re-
+ty vests are barely detected. Person 3 who only wore a safety vest is                          spectively (FN). Person 2 is classiﬁed as construction worker in
+detected far more frequently than Persons 1–2, and its detection                               Videos 2 (FP). The third step which plays a core role in classifying
+rate is comparable to Persons 4–5's. It can be inferred from this fact                         construction worker and non-worker takes only 14 ms in average
+that the safety vest has a more decisive effect on color histograms                            for each frame which is about 9% of the total processing time. This
+than the hard hat. As ANSI/ISEA [51] stipulates, safety vests have a                           classiﬁcation will be useful to warn people who are not wearing safe-
+more limited number of colors, which contributes to the effective de-                          ty vests on a construction site for safety issues.
+tection. According to these observations, a ‘construction worker’ is
+deﬁned in this paper as a person wearing at least a safety vest.                               5.3. Results—precision and time delay
+Hence, Persons 3, 4 and 5 are deﬁned as construction worker in the
+following experiments. Since the proposed method ﬁrst detects peo-                               Precision is calculated according to the deﬁnition of ‘construction
+ple and then sort out construction workers, it can eventually detect                           worker’, and time delay is also measured for all ten videos. It should
+
+
+
+
+                                               Fig. 9. Saturation images of a pedestrian (a) and construction workers (b and c).
+22                                                        M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25
+
+
+Table 1                                                                                       of bins in saturation histograms is determined to be ‘8’ because of its
+The combinations of safety gears.                                                             highest precision and the delay less than 1 s (Fig. 11). ‘64’ is selected
+  Person          Video 1                               Videos 2, 3                           for hue histograms since it exhibits the minimal delay and compara-
+                                                                                              ble precision with other sizes (Fig. 12). Accordingly, the total size of
+                  Safety vest             Hard hat      Safety vest           Hard hat
+                                                                                              the color histogram is 72 (=64 + 8). Regarding the value of ‘k’ in
+  1               X                       X             X                     White
+                                                                                              the k-NN learning process, ‘11’ is found the best (the least delay in
+  2               X                       White         X                     White
+  3               N/A                                   Orange-red            X               Fig. 13).
+  4               Yellow-green            White         Yellow-green          White               Using the selected parameters, four tests are conducted for each
+  5               Orange-red              Yellow        Orange-red            Yellow          video through the training of color histograms with 550, 1100, 1650,
+X: not wearing.                                                                               and 2200 negative images. The results are summarized in Tables 3
+                                                                                              and 4. Results of step 1 (background subtraction) and 2 (people detec-
+                                                                                              tion based on HOG) remain the same in all four tests. In Table 3, preci-
+Table 2                                                                                       sion increases as more negative images are used. It indicates that the
+The detection rate (recall) of 5 people.                                                      use of more negative images helps reduce FP's. However, on the con-
+  Recall (%)                    Video 1                Video 2                 Video 3        trary, recall works inversely to the number of negative images, which
+  Person 1                      0.0                     0.0                     0.0
+                                                                                              means TP's are also reduced by using more negative images. Fig. 14
+  Person 2                      0.0                     1.8                     6.3           shows examples of these effects. The ﬁrst and second rows illustrate
+  Person 3                      –                      77.6                    71.1           the removal of FP's (non-person and Person 2) while the third row
+  Person 4                      88.7                   96.9                    80.9           shows a missed TP (Person 5). Based on precision results which is se-
+  Person 5                      88.3                   74.6                    76.8
+                                                                                              lected as a critical metric (Section 5.1), the proposed method achieved
+                                                                                              the best performance when 2200 negative images are used in training
+                                                                                              the color histograms of upper half body. As explained in the previous
+be noted that several videos include both shade and light where                               section, time delays are considered to better reﬂect the performance
+abrupt changes in illumination occur as workers cross the border be-                          of the initialization method. In total, 73 cases are observed in which a
+tween them (e.g. Videos 2 and 3 in Fig. 10). Figs. 11–13 show the re-                         worker enters a view or gets free from occlusion. In Table 4, the use of
+sults of parameter studies on the number of bins in saturation and                            2200 negative images results in a maximum of 0.67 s delay which is
+hue histograms, and the number of nearest neighbor (k). The number                            only 0.11 s longer than using 550 negative images. The maximum is
+
+
+
+
+                                                                                 2                          4           2
+                                                   4          5                                1                                     5
+                                   1
+
+
+
+
+                                 3        2 1                         4          5                                  1            2          3
+
+
+
+
+                                                   5                              2                                  5 2                      3
+                                                        4         1
+
+                      Fig. 10. Detection of people who are wearing safety vests (red) and not wearing safety vests (green) (Videos 1–3 from top to bottom).
+                                                        M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25                                           23
+
+               1                                                                            Table 3
+                                                                                            The precision of detection results.
+             0.9
+                                                                                               # of negative training images      550     1100         1650      2200
+             0.8
+                                                                                               Precision (%)                       90.1     97.2         97.7      99.0
+             0.7                                                                               Recall (%)                          87.1     83.6         82.4      81.4
+
+             0.6
+
+             0.5
+                                                                                            analyzed (Table 5). The FN cases are classiﬁed into the three steps
+             0.4                                                                            which cause them. Overall, the third step is discovered as a main
+                                                                                            step that ﬁlters out FN's. In detail, it is also observed that Persons 3
+             0.3
+                                          Precision                                         and 5, who wear orange-red vests, are mainly discarded by the
+             0.2                          Delay (sec)                                       third step while Person 4, who wears a yellow-green vest and a
+             0.1                                                                            white hard hat, is discarded in the second step. The former is attribut-
+                                                                                            ed to the negative images of people with orange-red shirts. In fact,
+               0
+                       0            8            16             32                          negative images of upper half body contain a considerable number
+                            # of saturation histogram bins                                  of images with orange or red shirts which could be confused with
+                                                                                            orange-red safety vests. In addition, white is a dominant color of
+Fig. 11. The performance variation of the method depending on the number of bins in a       hard hats in the positive images which force to eliminate Person 3
+saturation histogram.
+                                                                                            (brown hair) and Person 5 (yellow hard hat). On the contrary, it is
+                                                                                            inferred that the latter results from the similar background color to
+                                                                                            Person 4. Similar colors of background make it difﬁcult to extract a
+             2.0
+                                                                                            human body shape.
+             1.8                                      Precision
+                                                      Delay (sec)                           6. Conclusions
+             1.6
+
+             1.4                                                                                Onsite tracking provides the trajectories of construction entities
+             1.2                                                                            which are useful for productivity measurements, activity sequence
+                                                                                            analysis, and site safety management. Popular tracking solutions
+             1.0
+                                                                                            such as GPS and RFID are mainly based on Radio Frequency technolo-
+             0.8                                                                            gies. They have an established record of tracking resources for various
+             0.6                                                                            construction scenarios. However, the requirement for a separate sen-
+                                                                                            sor on each entity to be tracked limits their applicability in large scale,
+             0.4                                                                            congested construction sites. For such cases, vision tracking has re-
+             0.2                                                                            cently been proposed as an alternative solution. It has the potential
+                                                                                            to track a large number of construction entities only with a small
+               0
+                      16            32           64            128                          number of cameras. The major hindrance to the use of vision tracking
+                               # of hue histogram bins                                      is the lack of detection methods that are needed to automatically ini-
+                                                                                            tiate the tracking. Even though several methods of detecting con-
+Fig. 12. The performance variation of the method depending on the number of bins in a       struction entities were proposed, no approach has been made to
+hue histogram.
+                                                                                            differentiate construction workers from pedestrians. Also, a robust
+                                                                                            method against illumination changes is missing. This paper presents a
+calculated with a 95% conﬁdence interval for the standard normal distri-                    novel method for automating the detection of construction workers in
+bution. The 99.0% precision and the 0.67 s delay signify the potential of                   the video frames. The method exploit background subtraction, HOG
+the proposed method for initializing a vision tracker.                                      shaper features, and color histograms one after another. Background
+    Additionally, since the proposed method is composed of three se-                        subtraction recognizes the foreground blobs of moving objects, and
+quential steps, the performance of each step is further investigated.                       HOG features are used to detect people from the recognized blobs.
+For this purpose, the critical cause of the missed workers (FN) is                          The detected people are classiﬁed into workers and non-workers on
+                                                                                            the basis of their color histograms. Two metrics are selected to evaluate
+               1                                                                            its performance. The ﬁrst is precision, and the second is the time delay
+             0.9                                                                            of initialization. The proposed method aims to maximize precision
+
+             0.8
+
+             0.7                                                                            Table 4
+                                                                                            The delay of detection.
+             0.6
+                                                                                               # of negative training images                  Frames            Seconds
+             0.5
+                                                                                               550                Average                     1.5               0.30
+             0.4                                                                                                  Standard Deviation          0.8               0.16
+                                                                                                                  Maximum                     2.8               0.56
+             0.3                                                                               1100               Average                     1.6               0.31
+                                         Precision
+             0.2                                                                                                  Standard Deviation          1.0               0.20
+                                         Delay (sec)                                                              Maximum                     3.2               0.64
+             0.1                                                                               1650               Average                     1.6               0.33
+                                                                                                                  Standard Deviation          1.1               0.21
+               0                                                                                                  Maximum                     3.4               0.68
+                       7            9            11             13
+                                                                                               2200               Average                     1.6               0.32
+                                           K
+                                                                                                                  Standard Deviation          1.1               0.21
+                                                                                                                  Maximum                     3.4               0.67
+    Fig. 13. The performance variation of the method depending on the ‘k’ value.
+24                                                      M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25
+
+
+
+
+                                                    5            1
+                                             4             2
+
+
+
+
+                           3
+                                             1
+                                                            2         4
+
+
+
+
+                               3       5                                           2
+                    4
+
+                                           Fig. 14. Detection of construction workers using 1100 (left) and 2200 (right) negative images.
+
+
+
+Table 5                                                                                     References
+The reason for the missed detection.                                                         [1] L. Cable, Construction equipment monitoring system, Government Product News,
+                                                                                                 Penton Media, December 2010 (http://govpro.com/products/ﬂeets/management/
+  Step               Background               HOG shape              Color histogram
+                                                                                                 construction-equipment-monitoring-201012/).
+                     Subtraction              detection              classiﬁcation
+                                                                                             [2] Engineering News-Record, Equipment Monitor: Wireless Locator, The MacGraw-Hill
+  Person 3            9.2%                    26.5%                  64.3%                       Companies, July 2008 (http://enr.construction.com/products/newProducts/archives/
+  Person 4            0.9%                    72.7%                  26.4%                       080723.asp).
+  Person 5           17.2%                    13.2%                  69.5%                   [3] Engineering News-Record, Equipment Tracking: Wireless Monitoring, The
+                                                                                                 MacGraw-Hill Companies, December 2008 (http://enr.construction.com/products/
+  Total              10.5%                    33.8%                  55.8%
+                                                                                                 product_snapshot/2008/1203-productsnapshot.asp).
+                                                                                             [4] T. Sawyer, $1-billion Jigsaw Puzzle Has Builder Modeling Supply Chains, Engineering
+                                                                                                 News-Record, The MacGraw-Hill Companies, April 2008 (http://enr.construction.
+                                                                                                 com/features/technologyEconst/archives/080423-1.asp).
+and minimize the time delay. The proposed method is preliminarily                            [5] I. Brilakis, M.W. Park, G. Jog, Automated vision tracking of project related entities,
+tested for detecting ﬁve people wearing different combinations of safety                         Journal of Advanced Engineering Informatics 25 (4) (2011) 713–724.
+                                                                                             [6] M.W. Park, G. Jog, I. Brilakis, Initializing vision based trackers using semantic tex-
+gear. Based on the preliminary tests, ‘construction worker’ is deﬁned as
+                                                                                                 ton forests, The 28th International Symposium on Automation and Robotics in
+a person wearing a safety vest. Experiments are conducted on ten                                 Construction, Seoul, Korea, Proceedings, 2011.
+videos with different backgrounds. According to the deﬁnition of ‘con-                       [7] G. Jog, M.W. Park, I. Brilakis, Truck face recognition using semantic texton forests,
+struction worker’, the experiments resulted in 99.0% precision and                               The ASCE Construction Research Congress, Ontario, Canada, Proceedings, 2011.
+                                                                                             [8] S. Chi, C.H. Caldas, Automated object identiﬁcation using optical video cameras on
+0.67 s time lapse. These results signify that the proposed method can ef-                        construction sites, Computer-Aided Civil and Infrastructure Engineering 26 (5)
+fectively initialize the tracking of construction workers.                                       (2011) 368–380.
+                                                                                             [9] R. Eecke, Greening (and saving) with GPS ﬂeet tracking, Construction News
+                                                                                                 Tracker, Cygnus Business Media, 2010 (http://www.forconstructionpros.com/
+                                                                                                 article/10288916/greening-and-saving-with-gps-ﬂeet-tracking).
+Acknowledgments                                                                             [10] H. Henderson, Beneﬁts of machine control, Construction Contractor, December 2008.
+                                                                                            [11] A.A. Oloufa, M. Ikeda, H. Oda, Situational awareness of construction equipment
+    This material is based upon work supported by the National Sci-                              using GPS, wireless and web technologies, Automation in Construction 12 (6)
+                                                                                                 (2003) 737–748.
+ence Foundation under Grants nos. 0933931 and 0904109. Any opin-
+                                                                                            [12] M. Lu, W. Chen, X.S. Shen, H.C. Lam, J.Y. Liu, Positioning and tracking construction
+ions, ﬁndings, and conclusions or recommendations expressed in this                              vehicles in highly dense urban areas and building construction sites, Automation
+material are those of the authors and do not necessarily reﬂect the                              in Construction 16 (5) (2007) 647–656.
+views of the National Science Foundation. The authors would also                            [13] C.H. Caldas, D.G. Torrent, C.T. Haas, Integration of automated data collection
+                                                                                                 technologies for real-time ﬁeld materials management, The 21st International
+like to thank Evangelos Palinginis and Keitaro Kamiya for their help                             Symposium on Automation and Robotics in Construction, Jeju, Korea, Proceed-
+in collecting data for the experiments.                                                          ings, 2004.
+                                                            M.-W. Park, I. Brilakis / Automation in Construction 28 (2012) 15–25                                                      25
+
+[14] H.M. Khoury, V.R. Kamat, Evaluation of position tracking technologies for user             [32] P. Viola, M. Jones, Rapid object detection using a boosted cascade of simple fea-
+     localization in indoor construction environments, Automation in Construction                    tures, 2001 IEEE Computer Society Conference on Computer Vision and Pattern
+     18 (4) (2009) 444–457.                                                                          Recognition, Vol. 1, Proceedings, 2001, pp. 511–518.
+[15] Construction Equipment, DPL America, Hyundai selects DPL's asset monitoring solu-          [33] R. Lienhart, J. Maydt, An extended set of Haar-like features for rapid object detec-
+     tion, Construction Equipment, December 2010 (http://www.constructionequipment.                  tion, 2002 International Conference on Image Processing, Vol. 1, Proceedings,
+     com/hyundai-selects-dpl%E2%80%99s-asset-monitoring-solution).                                   2002, pp. 900–903.
+[16] ForConstructionPros.Com, Study shows interference with GPS poses $96 billion threat        [34] N. Dalal, B. Triggs, Histograms of oriented gradients for human detection, 2005
+     to US economy, Cygnus Business Media, June 2011 (http://www.forconstructionpros.                IEEE Computer Society Conference on Computer Vision and Pattern Recognition,
+     com/press_release/10366178/study-shows-interference-with-gps-poses-96-billion-                  Vol. 1, Proceedings, 2005, pp. 886–893.
+     threat-to-us-economy).                                                                     [35] A. Zhu, M.C. Yeh, K.T. Cheng, S. Avidan, Fast human detection using a cascade of
+[17] Engineering News-Record, Behind a Murky Name Lurks an Amazing Little Tag,                       histograms of oriented gradients, IEEE Computer Society Conference on Comput-
+     The MacGraw-Hill Companies, April 2008 (http://enr.construction.com/opinions/                   er Vision and Pattern Recognition, Proceedings, 2006, pp. 1491–1498.
+     editorials/archives/080423.asp).                                                           [36] Y. Freund, R.E. Schapire, A decision-theoretic generalization of on-line learning
+[18] L.C. Wang, Enhancing construction quality inspection and management using                       and an application to boosting, Journal of Computer and System Sciences 55 (1)
+     RFID technology, Automation in Construction 17 (4) (2008) 467–479.                              (1997) 119–139.
+[19] T. Elghamrawy, F. Boukamp, Managing construction information using RFID-based              [37] T. Joachims, Making large-scale SVM learning practical, Advances in Kernel
+     semantic contexts, Automation in Construction 19 (8) (2010) 1056–1066.                          Methods—Support Vector Learning, MIT Press, Cambridge, MA, USA, 1999,
+[20] S. Chae, T. Yoshida, Application of RFID technology to prevention of collision acci-            pp. 169–184.
+     dent with heavy equipment, Automation in Construction 19 (3) (2010) 368–374.               [38] M.J. Swain, D.H. Ballard, Color indexing, International Journal of Computer Vision
+[21] C.H. Ko, RFID 3D location sensing algorithms, Automation in Construction 19 (5)                 7 (1) (1991) 11–32.
+     (2010) 588–595.                                                                            [39] Z.H. Zhang, W.H. Li, B. Li, An improving technique of color histogram in
+[22] E. Ergen, B. Akinci, R. Sacks, Tracking and locating components in a precast stor-              segmentation-based image retrieval, Fifth International Conference on Informa-
+     age yard utilizing radio frequency identiﬁcation technology and GPS, Automation                 tion Assurance and Security, Vol. 2, Proceedings, 2009, pp. 381–384.
+     in Construction 16 (3) (2007) 354–367.                                                     [40] C.B. Huang, S.S. Yu, J.L. Zhou, H.W. Lu, Image retrieval using both color and local
+[23] T. Sawyer, South Korean research in electronic tagging is forging ahead, Engineering            spatial feature histograms, 2004 International Conference on Communication,
+     News-Record, The MacGraw-Hill Companies, April 2008 (http://enr.construction.                   Circuits, and Systems, Vols. 1 and 2, 2004, pp. 927–931.
+     com/features/technologyEconst/archives/080423a.asp).                                       [41] H. Sugano, R. Miyamoto, Parallel implementation of pedestrian tracking using
+[24] K. Gomez, Mobile security + remote monitoring, Construction Contractor,                         multiple cues on GPGPU, 2009 IEEE 12th International Conference on Computer
+     November 2008.                                                                                  Vision Workshops, Proceedings, 2009, pp. 900–906.
+[25] Engineering News-Record, Solor-powered Webcam: Remotely Monitor Job Sites,                 [42] W.L. Lu, K. Okuma, J.J. Little, Tracking and recognizing actions of multiple hockey
+     The MacGraw-Hill Companies, 2008 (http://enr.construction.com/products/                         players using the boosted particle ﬁlter, Image and Vision Computing 27 (1–2)
+     newProducts/archives/080730.asp).                                                               (2009) 189–205.
+[26] Engineering News-Record, Jobsite Monitoring: Remote Camera Keeps an Eye on                 [43] N.J.B. Mcfarlane, C.P. Schoﬁeld, Segmentation and tracking of piglets in images,
+     Projects, The MacGraw-Hill Companies, 2008 (http://enr.construction.com/                        Machine Vision and Applications 8 (3) (1995) 187–193.
+     equipment/features/archives/080301-26-2.asp).                                              [44] C. Stauffer, W.E.L. Grimson, Learning patterns of activity using real-time tracking,
+[27] M.W. Park, A. Makhmalbaf, I. Brilakis, Comparative study of vision tracking                     IEEE Transactions on Pattern Analysis and Machine Intelligence 22 (8) (2000)
+     methods for tracking of construction site resources, Automation in Construction                 747–757.
+     20 (7) (2011) 905–915.                                                                     [45] L.Y. Li, W.M. Huang, I.Y.H. Gu, Q. Tian, Foreground object detection in changing
+[28] M.W. Park, C. Koch, I. Brilakis, 3D tracking of construction resources using                    background based on color co-occurrence statistics, Sixth IEEE Workshop on
+     an on-site camera system, Journal of Computing in Civil Engineering-ASCE 26                     Applications of Computer Vision, Proceedings, 2002, pp. 269–274.
+     (4) (2012) 541–549.                                                                        [48] J. Shotton, M. Johnson, R. Cipolla, Semantic texton forests for image categorization
+[29] J. Teizer, P.A. Vela, Personnel tracking on construction sites using video cameras,             and segmentation, 2008 IEEE Conference on Computer Vision and Pattern Recog-
+     Advanced Engineering Informatics 23 (4) (2009) 452–462.                                         nition, Proceedings, 2008, pp. 1–8.
+[30] J. Yang, O. Arif, P.A. Vela, J. Teizer, Z.K. Shi, Tracking multiple workers on construc-   [50] T. Cover, P. Hart, Nearest neighbor pattern classiﬁcation, IEEE Transactions on
+     tion sites using video cameras, Advanced Engineering Informatics 24 (4) (2010)                  Information Theory 13 (1) (1967) 21–27.
+     428–434.                                                                                   [51] ANSI/ISEA, ANSI/ISEA 107–2010: American national standard for high-visibility
+[31] J. Gong, C.H. Caldas, Computer vision-based video interpretation model for auto-                safety apparel and headwear, International Safety Equipment Association
+     mated productivity analysis of construction operations, Journal of Computing in                 (ISEA), 2010.
+     Civil Engineering 24 (3) (2010) 252–263.
+

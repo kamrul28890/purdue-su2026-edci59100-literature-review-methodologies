@@ -1,0 +1,868 @@
+                                                                    Automation in Construction 157 (2024) 105158
+
+
+                                                                       Contents lists available at ScienceDirect
+
+
+                                                                 Automation in Construction
+                                                             journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Augmented reality, deep learning and vision-language query system for
+construction worker safety
+Haosen Chen a, Lei Hou a, *, Shaoze Wu a, Guomin Zhang (Kevin)a, Yang Zou b, Sungkon Moon c,
+Muhammed Bhuiyan a
+a
+    School of Engineering, RMIT University, Melbourne, 3000, Victoria, Australia
+b
+    Faculty of Engineering, University of Auckland, Auckland 1023, New Zealand
+c
+    College of Engineering, Ajou University, Suwon 16499, Republic of Korea
+
+
+
+
+A R T I C L E I N F O                                        A B S T R A C T
+
+Keywords:                                                    Low situational awareness contributes to safety incidents in construction. Existing Deep Learning (DL)-based
+Construction safety                                          applications lack the capability to provide context-specific and interactive feedback that is essential for workers
+Deep learning                                                to fully understand their surrounding environments. This paper proposes the Visual Construction Safety Query
+Vision-language models
+                                                             (VCSQ) system. The system encompasses real-time Image Captioning (IC), safety-centric Visual Question
+Augmented reality
+                                                             Answering (VQA), and keyword-based Image-Text Retrieval (ITR), integrated with head-mounted Augmented
+                                                             Reality (AR) devices. System validation includes benchmarks and real-world images. The ITR module posted high
+                                                             recall rates of 0.801 and 0.835 for Recall@5 and @10. The VQA module achieved an 89.7% accuracy rate, and
+                                                             the IC module had a SPICE score of 0.449. Feasibility tests and surveys confirmed the system's practical ad­
+                                                             vantages in different construction scenarios. This study establishes an integration roadmap adaptable to future
+                                                             advancements in interactive DL and immersive AR.
+
+
+
+
+1. Introduction                                                                                   Active learning approaches involving critical thinking, exploration,
+                                                                                              and conversation about safety regulations have been introduced to
+    Ensuring worker safety is an essential aspect of construction man­                        improve construction safety [35,42]. Active learning can also be facili­
+agement. Despite the provision of safety measures, statistics reveal that                     tated by innovative visualisation methods such as Virtual Reality (VR)
+unsafe practices persist [27]. For instance, the Australian construction                      [20,22,46], Augmented Reality (AR) [5,8], expert enquiry systems that
+sector reported 183 fatal injuries from 2017 to 2021, which highlights                        enable workers to seek clarification on safety concerns [39,50]. Pre-
+the severity of the issue [2]. In developing countries, the situation is                      defined AR/VR scenarios can aid workers in comprehending safety
+even worse. Between 2009 and 2019, China recorded an average of 2851                          regulations through step-by-step guidance, alerts, and reminders.
+fatalities per annum due to non-compliance with safety regulations [1].                       However, introducing real-life experiences into active learning through
+To mitigate the safety risks, construction workforce needs thorough                           these digital approaches has never been an easy undertaking. Expert
+upskilling and re-skilling. Nevertheless, traditional construction safety                     query systems allow workers to communicate with Artificial Intelligence
+methods might rely too much on passive approaches, such as signage,                           (AI) via natural language and to quickly access critical safety informa­
+periodic safety inspections, and verbal briefings. While these methods                        tion and guidelines [39]. Although text-based expert query systems can
+can be useful for conveying safety information, they may not be effective                     offer valuable information to onsite workers, the generated textual
+in promoting long-term retention of safety knowledge and reinforcing                          content can be compromised due to the subjective and incomprehensive
+situational awareness [2]. In addition, these approaches lack the                             inputs provided by workers. For example, a worker might provide a
+necessary interaction between safety instructors and workers, which can                       description of their proximity to a machine, but fail to mention other
+help to clarify any confusion and answer specific safety-related                              important factors, such as the machine statuses or the worker's PPE. This
+questions.                                                                                    can result in the system failing to identify potential safety hazards or
+
+
+
+ * Corresponding author.
+    E-mail addresses: haosen.chen@student.rmit.edu.au (H. Chen), lei.hou@rmit.edu.au (L. Hou), shaoze.wu@student.rmit.edu.au (S. Wu), kevin.zhang@rmit.edu.au
+(G. Zhang), yang.zou@auckland.ac.nz (Y. Zou), sungkon.moon@gmail.com (S. Moon), muhammed.bhuiyan@rmit.edu.au (M. Bhuiyan).
+
+https://doi.org/10.1016/j.autcon.2023.105158
+Received 9 April 2023; Received in revised form 19 October 2023; Accepted 26 October 2023
+Available online 31 October 2023
+0926-5805/© 2023 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+H. Chen et al.                                                                                                       Automation in Construction 157 (2024) 105158
+
+
+providing inaccurate safety information.                                          worker statuses, and construction elements, which is important to have a
+    Several researchers have concentrated on Deep Learning (DL)-based             comprehensive understanding of potential hazards. Benefiting from
+vision-language models that incorporate image inputs to complement                recent advances in DL, vision-language models open up a new avenue
+and enhance the understanding of construction site [16,49]. These                 for construction scene understanding. Vision-language models, which
+models typically involve an encoder to process visual information, a              integrate visual and textual information, are designed to process and
+decoder to generate textual descriptions, and appropriate loss functions          interpret multi-modal data. As a result, they can effectively analyse
+to optimise the learning process. Bang and Kim [4] introduced a dense             images and generate natural language outputs, which allows for a more
+captioning method to generate explanatory texts, encompassing infor­              accurate representation of the complex relationships between dynamic
+mation on the position, status, movement, colour, and quantity of con­            objects in construction environments. A typical vision-language appli­
+struction resources in drone-captured images. Liu et al. [28] proposed a          cation is IC, which is used to provide the comprehensive explanatory
+DL-based algorithm for efficiently manifesting the activity scenes of             text of construction images. Liu et al. [28] adopted IC to depict con­
+construction site images with complete sentences. Kim and Chi [23]                struction worker activity scenes and proposed a linguistic schema for
+utilised a novel graph neural network for detecting visual relationships          annotating construction images. Bang and Kim [4] applied IC to drone-
+among construction resources. Their study enhanced construction scene             acquired images for vision-based monitoring of construction sites,
+understanding by considering the propagation effects of various object            achieving a Mean Average Recall (mAP) of 45.52%. Xiao et al. [45]
+interactions. Current vision-language models in construction can effec­           conducted a feasibility study of IC in construction, in which they
+tively extract high-level visual cues and provide workers with infor­             compared and analysed six IC-based models. However, the use of
+mative captions regarding construction activity states. However, they             generic image captions may not significantly contribute to construction
+may not always be able to address the specific safety concerns or                 safety. To better address the specific needs of the construction safety
+respond to in-depth inquiries based on pictures. This limits the ability of       domain, Li et al. [27] developed a visual relationship detection model
+workers to receive tailored and accurate safety guidance in real-time.            for onsite hazard identification based on ontology. Chen et al. [10]
+    To bridge the gaps mentioned above, this study introduces an                  presented a scene graph structure that identify improper PPE wearing
+interactive AR/DL-based query system, named Visual Construction                   based on spatial relationship of PPE and workers. Pan et al. [32] utilised
+Safety Query (VCSQ), for providing on-demand safety information by                a knowledge graph-based DL model to interpret construction images
+processing on-site images. Our contributions include:                             based on specific safety rules. Fang et al. [16] integrated a knowledge
+                                                                                  graph for hazard identification. Their development can identify fall-
+1. Proposing a unified bidirectional image-text processing approach,              from-height hazards. Although these vision and language-based appli­
+   which incorporates natural language instructions and leverages a               cations can generate descriptive captions to identify unsafe behaviours,
+   pre-trained multimodal mixture of encoder-decoder (MED) model.                 their interactivity with workers has been limited. Without the ability to
+   The model includes three key functionalities: Image Captioning (IC)            ask specific questions or receive personalised guidance, workers may
+   for comprehensive scene descriptions; Visual Question Answering                struggle to effectively utilise safety knowledge, particularly in unique
+   (VQA) for answering queries related to image content; and Image-               situations where specific guidance is required. Thus, it is worth
+   Text Retrieval (ITR) for accurate alignment of image content with              exploring more advanced vision-language models that incorporate
+   corresponding text.                                                            interactive features, enabling workers to actively engage with the sys­
+2. Introducing an innovative prompt-tuning method that exploits the               tem, ask context-specific questions, and receive accurate, real-time
+   zero-shot capability of the pre-trained model. This approach facili­           safety information.
+   tates rapid adaptation to safety-related context, thereby increasing
+   the versatility and generalisation of the VCSQ system.                         2.2. AR-based visualisation techniques
+3. Incorporating AR experiences into an interactive interface for the
+   VCSQ system. This integration reduces the reliance on pre-defined                   The construction industry has been increasingly utilising advanced
+   scenarios and allows for more natural interactions between                     visualisation technologies to automate information displays [43]. AR
+   workers and the system.                                                        technology enables users to view and interact with holograms, which are
+                                                                                  objects made of light and sound that resemble real objects [44], while
+   The remainder of this paper is structured as follows: Section 2 ex­            still maintaining their connection to the real world [6]. An interview
+plores existing applications of DL in construction and methods of AR              made by Harikrishnan et al. [17] demonstrated that AR has the potential
+visualisation. Section 3 elaborates on the methodologies employed.                to assist in inspection and query. Chen et al. [11] utilised holograms to
+Section 4 presents the results of the experiments conducted. Section 5            visualise fire safety-related files and drawings for inspectors to ensure
+evaluates the practicality of the system. Section 6 discusses limitations         fire safety equipment is in good working condition. Chi et al. [12] in­
+and outlines directions for future research. Finally, Section 7 provides          tegrated AR and laser scanning to provide an intuitive and accurate
+the conclusions.                                                                  method to check the number, spacing, and location of rebars, simpli­
+                                                                                  fying rebar installation inspection. Numerous studies have also exam­
+2. Literature review                                                              ined the application of AR devices for upskilling and investigating the
+                                                                                  learning effects. Pilati et al. [33] found that the use of AR effectively
+    Construction scene understanding using computer vision and natural            reduced training time and enhanced worker performance in assembly
+language processing is worth investigating in the realm of construction           tasks. Wang et al. [41] and Kim et al. [24] conducted experiments to
+safety management. This section examines DL-based methodologies in                evaluate AR-based training materials, demonstrating their superiority
+construction scene understanding, their pros and cons, DL-supported AR            over text-graph-based materials for spatial skills learning. Eiris et al.
+technology knowledge, research gaps, so on so forth.                              [15] and Ogunseiju et al. [30] illustrated the benefits of AR in hazard
+                                                                                  identification training and personalised posture training, leading to
+2.1. DL-based methods for construction safety                                     improved workforce safety and health. These investigations have yiel­
+                                                                                  ded insightful findings on aspects such as learning motivation, knowl­
+   To ensure construction site safety, computer vision technology has             edge transfer, and cognitive load. DL and AR have been integrated to
+been widely used for construction safety applications, such as Personal           assist in hazard identification and precautions. Kim et al. [25] developed
+Protective Equipment (PPE) detection, proximity detection and mobile              a DL-based construction hazard avoidance system on AR goggles to
+plant tracking [7,18,29,37]. However, these applications may not fully            provide users with the directions of hazard sources through holographic
+capture the complex interdependencies among construction activities,              arrows. Wu et al. [44] integrated DL and AR to develop a visual warning
+
+                                                                              2
+H. Chen et al.                                                                                                      Automation in Construction 157 (2024) 105158
+
+
+system that can show hazard sources, highlight dangerous areas, and              hazards present on construction sites. The following subsections
+provide proximity alerts. These studies focus on visualising the hazard          describe IC, VQA, and ITR, and AR integration in detail, as well as the
+information through symbols (arrows and signs) and 3D models (virtual            implementation of prompt-tuning strategies for tailoring the model to
+vehicles and workers), which enable users to intuitively identify sur­           the construction safety domain.
+rounding hazards. DL algorithms in these studies were used to detect and
+calculate the proximity of the hazard sources and workers. The corre­            3.1. Structure of the pre-trained model
+sponding positioning signals were then transmitted to a digital replica,
+which can be displayed through AR. While these visualisations are                    Our research aims to develop new applications for construction
+valuable for hazard awareness, they often lack the provision of contex­          safety by leveraging pre-trained object detectors and Large Language
+tual information such as safety guidelines or situational advice. This gap       Models (LLMs).
+in contextual understanding limits the efficacy of AR-based solutions in             We are particularly interested in the potential of LLMs to facilitate
+fully informing workers for safer decision-making on construction sites.         visual knowledge reasoning and to enable interactive visual interfaces
+The integration of advanced image-text processing capabilities into AR           [36]. Given that LLMs predominantly focus on language and often do
+systems could significantly improve this aspect, enabling workers to             not directly process image data, integrating visual data into a feature
+understand not just what the hazards are, but also how best to approach          space comprehensible by LLMs is a challenge. While traditional encoder-
+or avoid them. To date, such an integration is scant but worth of                decoder models excel at single-task objectives, they may not be as
+investigating.                                                                   effective for multi-task applications that require the simultaneous pro­
+                                                                                 cessing of visual and textual data [19]. Unlike traditional encoder-
+2.3. Research gaps and objectives                                                decoder models, CLIP [34] is trained in a way that allows it to handle
+                                                                                 multiple types of vision-language tasks without task-specific training
+    Existing vision-language models employed within the construction             data, making it a more flexible and generalized model for multi-modal
+safety domain may not accurately deliver the precise details or context-         tasks. Bootstrapping Language-Image Pre-training (BLIP) framework
+specific insights that workers seek. This deficiency in interactive capa­        [26] advances over CLIP by being designed for unified vision-language
+bilities could constrain workers' comprehension of safety regulations in         understanding and generation, achieving state-of-the-art performance
+particular situations. Current construction safety applications that             across various vision-language tasks. BLIP is built upon a MED structure,
+integrate DL with AR do not consider the communication requirement of            designed to handle multiple vision-language tasks concurrently. MED is
+users which makes it challenging to understand the surrounding envi­             designed to simultaneously handle multiple tasks by processing both
+ronment. The interactivity and effectiveness of these applications in            visual and textual data within the same model architecture. This capa­
+promoting safe actions require further enhancement. To address the               bility makes MED and by extension, BLIP, ideally suited for our complex
+identified gaps, this research aims to develop a comprehensive, adapt­           research objectives, which encompass tasks like IC, VQA, and ITR.
+able, and interactive vision-language model integrated with AR tech­                 The BLIP framework is tailored for streamlined pre-training across
+nology for construction safety applications. The two key objectives of           various tasks and enables flexible transfer learning between different
+this study are as follows:                                                       types of data. A Vision Transformer (ViT) [14] (Fig. 1) was employed as
+                                                                                 the image encoder. ViT is a transformer-based architecture that has
+1. Developing a multi-functional safety query system that leverages              shown great potential in computer vision tasks. The architecture is
+   pre-trained vision-language models and prompt design methods,                 designed to utilise the powerful multi-head self-attention mechanism for
+   providing a tailored experience that addresses individual worker              image processing. By employing the Transformer architecture, ViT can
+   needs, enables a thorough understanding of safety regulations, and            capture both local and global information through self-attention, which
+   facilitates real-time interaction with on-site workers.                       makes it a promising alternative for computer vision tasks that require
+2. Introducing an integration of a vision-language model within AR to            processing large amounts of visual data. The input image is first resized
+   offer context-aware safety information and guidance for construction          and divided into non-overlapping patches (e.g., 16 × 16 pixels). Each
+   workers on-demand. This integration allows workers to receive                 patch is then flattened into a one-dimensional vector and linearly
+   tailored safety knowledge based on their specific location and tasks,         embedded using a fully connected layer to create a fixed-size input
+   enhancing their understanding of the potential safety issues and              vector for the Transformer. Positional information is added to each
+   promoting safer practices in real-world situations.                           patch using position embeddings since the transformer architecture is
+                                                                                 not inherently sensitive to spatial positions. These embeddings are
+3. Methodology                                                                   learnable parameters initialised randomly and are added to the corre­
+                                                                                 sponding patch embeddings. The output of the previous step is used as
+    The VCSQ system consists of three main modules: IC, VQA, and ITR,            input to a series of Transformer encoder blocks. Each block comprises
+all built upon a pre-trained vision-language model. A pre-trained model          two main sub-layers, which are multi-head self-attention and feed-
+refers to a model that has been previously trained on a large dataset            forward layers. Multi-head self-attention computes the attention scores
+containing various images and associated textual information. This en­           between every pair of patches (including the patch with itself) in the
+ables the model to understand and extract patterns from both visual and          input sequence. Feed-forward layers are the Multi-Layer Perceptron
+textual data, making it suitable for vision-language tasks. To ensure the        (MLP) layers which consist of two fully connected layers with a non-
+provision of safety-related answers, prompt-tuning strategies are                linear activation function in between. The feed-forward layers are
+incorporated to adapt the pre-trained model to the specific context of           responsible for capturing non-linear relationships within the data. Each
+construction safety regulations. Upon receiving a construction image,            sub-layer within the Transformer encoder block is surrounded by layer
+the IC module generates descriptive captions, enabling workers to                normalisation and residual connections to stabilise the learning process
+comprehend the site environment. The VQA module features a chatbot,              and facilitate deeper architectures. After passing through the series of
+allowing workers to use voice input via AR glasses to inquire about              Transformer encoder blocks, the output corresponding to the first token
+safety compliance, thereby enhancing their understanding of safety               (usually a special [CLS] token) is used to make the final prediction. A
+regulations and requirements. The ITR module is designed to help                 fully connected layer (the MLP head) followed by a SoftMax activation
+workers or managers quickly locate and assess the safety status of spe­          function generates class probabilities for the image encoding process.
+cific objects on the construction site using keyword searches. This                  The MED architecture can perform a variety of image-text generation
+comprehensive system aims to elevate the safety awareness of con­                tasks, including IC, VQA, and ITR, utilising its three encoder-decoder
+struction workers by providing nuanced insights into the specific                structures. As shown in Fig. 2, unimodal encoder is similar to
+
+                                                                             3
+H. Chen et al.                                                                                                   Automation in Construction 157 (2024) 105158
+
+
+
+
+                                                        Fig. 1. Architecture of image encoder.
+
+
+
+
+                                                           Fig. 2. Overall structure of MED.
+
+
+Bidirectional Encoder Representations from Transformers (BERT) [13],           loss function. The purpose of this function is to learn multimodal rep­
+with a [CLS] token added to the beginning of the text input to summarise       resentations that capture the precise alignment between vision and
+the sentence. The unimodal encoder was trained using an image-text             language. This encoder incorporates visual information into the text
+contrastive loss function. This loss function helps align the feature          encoder, making it ideal for VQA tasks that require understanding and
+spaces of the visual and text transformers. The resulting encoder-             reasoning over both image and text inputs.
+decoder structure can perform ITR tasks that involve comparing or                  The image-grounded text decoder employs causal self-attention
+matching image and text features separately.                                   layers instead of bidirectional self-attention layers. A [Decode] token
+    The image-grounded text encoder incorporates visual data through           is used to signal the beginning of a sequence and tell the model that it
+introducing a cross-attention layer between the feed-forward network           should start generating the text output from the decoder. The image-
+and the self-attention layer within each transformer block of the text         grounded text decoder generates textual descriptions from input im­
+encoder. The text is appended with a task-specific [Encode] token. This        ages. It utilises causal self-attention to predict tokens in an autore­
+token is used to indicate to the model that the following input sequence       gressive manner, ensuring coherent captions. The language modelling
+will be combined with image features, and the output embedding of this         loss function is optimised by minimising cross-entropy loss, which
+token serves as the combined representation of the image-text pairs. The       maximises the likelihood of the text. By conditioning text generation on
+image-grounded text encoder was trained using an image-text matching           image features, this decoder is designed for IC tasks.
+
+
+                                                                           4
+H. Chen et al.                                                                                                                     Automation in Construction 157 (2024) 105158
+
+
+3.2. Pre-training and prompt-tuning strategies                                            wearing harnesses?”, the prompt statement is created as “Some workers
+                                                                                          are wearing harnesses.”. The ITM head takes in the text embedding and
+    A significantly larger number of image-text pairs are utilised in                     visual features and predicts if they match. A high match score implies a
+recent studies, and these pairs are automatically obtained from the web                   “Yes” answer, while a low score indicates “No”. For open-ended ques­
+to pre-train extensive models [34]. Nevertheless, the image-texts                         tions, MLM is used because the answer is not limited to a pre-defined set
+frequently fail to provide an exact depiction of the visual contents                      of choices. In MLM, a certain percentage of the input text is randomly
+within the images, resulting in a noisy signal that is less than ideal for                masked, and the model is trained to predict the correct missing words.
+mastering vision-language alignment. BLIP has been pre-trained on the                     This allows the system to generate a diverse range of answers to open-
+image-text pairs collected from the web by utilising a data augmentation                  ended questions. For an open-ended question like “How many workers
+method called Captioning and Filtering [26], which can enhance the                        in the image?”, the prompt is generated as “There are [MASK] workers.”.
+quality of the text corpus. To generate captions for web images and filter                The [MASK] token is a placeholder for a word or phrase that the model is
+out noisy image-text pairs, this method initialises both the captioner and                expected to predict or fill in based on the context provided in the
+the filter from the same pre-trained vision-language model and fine-                      prompt. In this case, we identify the most appropriate answer for a given
+tunes them on the public dataset. The filtered image-text pairs, along                    question within a set of candidate answers. To accomplish this, we
+with manually annotated pairs, can be combined to create a new dataset                    search the possible answer set to identify the answer with the greatest
+that can be used to pre-train the model.                                                  probability. By using the Q2S prompt technique, we can effectively
+    As construction safety vision-language tasks often involve specialised                adapt pre-trained models to answer construction safety regulation
+terminologies and unique visual patterns, which may not be well-                          questions based on visual data, enhancing safety management and
+represented in the pre-training data. Prompt design can be used to                        compliance in the construction industry.
+adapt the models to the specific domain with a small amount of task-                          To ensure accurate and safe guidance, our VCSQ system, imple­
+specific data. Recent approaches to VQA tasks involve treating them                       mented within AR glasses, employs an approach to tackle the issue of
+as multi-label classification tasks [38,40]. However, the difficulty lies in              erroneous or made-up answers. Given that the audio system in the AR
+designing prompts for VQA tasks since the text inputs used for VQA                        glasses can misinterpret verbal input and introduce noise, we incorpo­
+(questions) and pre-training tasks (captions) differ in form. In order to                 rate an uncertainty prompt “If you are not sure about the answer, say
+address this issue, we adopted a generation approach [21] for VQA tasks                   uncertain.” Acknowledging uncertainty is critical in a construction safety
+to avoid the difficulty. In this configuration, prompts act as a form of                  context, as the repercussions of incorrect advice can be severe. This not
+guidance that direct the models towards producing answers in the                          only safeguards against potential hazards but also fosters trust with the
+desired format. In the absence of prompts, the models may produce VQA                     workers by not misleading them. To further stress-test the model's
+sentences that do not adhere to the correct format. To this end, we                       response mechanism, we include irrelevant prompts, random sentences,
+explored various input and output prompts, which are detailed in Ta­                      and noisy tokens, as detailed in Table 2. The model is trained to reply
+bles 1. The token [Q] and [A] denote the question-and-answer text,                        ‘Uncertain’ when faced with these elements, thus providing a robust
+respectively. The token <text_1 > serves as a sentinel and is included in                 response rather than incorrect or irrelevant answers.
+the input sequence to signify the beginning or end of a sequence. It is
+often used to help the model learn where a sentence or sequence begins
+and ends and is not present in the actual text. Regarding input prompts,                  3.3. Development of the AR features
+we explore three different templates, namely, “question: [Q] answer:”,
+“[Q] < text_1>”, and “question: [Q] answer: <text_1>”. Two distinct                          The architecture of the developed AR features is demonstrated in
+formats were employed for output prompts, specifically “[A]” and                          Fig. 3, where Microsoft HoloLens 2 are employed as display devices. The
+“<text_1 > [A]”.                                                                          spatial mapping function in HoloLens facilitated the creation of a
+    Construction safety VQA tasks may include two types of questions:                     convincing AR experience, enabling holograms to appear real. Unity 3D
+open-ended questions and closed-ended questions. Closed-ended ques­                       was utilised to build human-machine interfaces and network connection
+tions have a finite number of possible answer choices, while open-ended                   functions. C# scripts were developed to achieve hand tracking, voice
+questions do not. To this end, we convert questions into statements using                 input, and gaze input, providing natural interaction methods. To con­
+a technique called Question-to-Statement (Q2S) prompt [51]. When                          nect the AR components to the DL modules, a server-client architecture
+questions are converted into statements, they become more like captions                   was applied. A computer running a C# program was the server. The AR
+or descriptions of the image, which is the type of input that the model                   components, the DL modules, and a Closed-Circuit Television (CCTV)
+was pre-trained. Specifically, we apply Image-Text Matching (ITM) for                     were the clients. The server and clients were connected using Trans­
+closed-ended questions and Masked Language Model (MLM) for open-                          mission Control Protocol (TCP) sockets. Real-time information, such as
+ended questions. Specifically, closed-ended questions can be formu­                       data, texts, and images, was encoded into byte arrays and delivered
+lated as a classification task. ITM involves learning to match image                      between the server and clients through the sockets.
+features with corresponding text features, which enables the system to                       An AR User Interface (UI) was created to enable user interaction with
+determine the correct answer choice from a pre-defined set of options.                    the VCSQ system. As depicted in Fig. 4, the UI is divided into three
+When dealing with a closed-ended question such as “Are any workers
+                                                                                          Table 2
+                                                                                          Prompt categories.
+Table 1
+                                                                                           Input prompt template                                            Category
+Hand-crafted prompts.
+                                                                                           [Q] What is the date today according to the calendar?
+  Task     Input prompt            Example
+                                                                                           Fill in the missing word in this sentence: [Q]
+                                   What safety equipment is this worker wearing? <         What is your favourite movie? [Q]                                irrelevant prompts
+           [Q] < text_1 > input:
+                                   text_1 > output: <text_1 > hard hat, safety vest        [Q] noisydata
+                                   input: question: What safety equipment is this          rubbishdata appeared on the screen. [Q]
+           question: [Q]
+                                   worker wearing? answer: output: <text_1 > hard          [Q] Can you sing the alphabet backwards?                         noisy tokens
+           answer:
+  VQA                              hat, safety vest                                        [Q] A worker is wearing a hard hat and safety vest.
+                                   input: question: What safety equipment is this          [Q] A crane is lifting heavy materials at a construction site.
+           question: [Q]
+                                   worker wearing? answer: <text_1 > output:               A worker is using a jackhammer to break concrete. [Q]
+           answer: <text_1>
+                                   <text_1 > hard hat, safety vest                         A group of construction workers discussing project plans. [Q]
+                                                                                           [Q] A construction worker is operating an excavator.             random sentences
+
+
+                                                                                      5
+H. Chen et al.                                                                                                             Automation in Construction 157 (2024) 105158
+
+
+
+
+                                                            Fig. 3. Structure of the AR-based module.
+
+
+                                                                                    world construction scenarios.
+
+                                                                                    4. Implementation, experiments, and results
+
+                                                                                        As the development in this study is a proof-of-concept prototype, the
+                                                                                    range of the query system is limited to hazardous circumstances asso­
+                                                                                    ciated with 7 common construction safety considerations (Table 3).
+                                                                                    Each example question is directly linked to these safety considerations.
+                                                                                    These questions and their respective answers will later form the basis for
+                                                                                    dataset development. To broaden the scope of safety considerations
+                                                                                    beyond the initial seven categories, one effective strategy could be the
+                                                                                    use of LLMs like GPT-4 [31]. Utilising such models can assist in gener­
+                                                                                    ating a range of questions that address diverse safety issues, thereby
+                                                                                    enriching the dataset. This approach could significantly expedite the
+                                                                                    task of compiling a more comprehensive and relevant set of safety
+                                                                                    questions. The experiment is conducted on a server with a 3.40 GHz Intel
+                                                                                    Core i7-13700KF CPU and GeForce RTX 4080 GPU with 16 GB VRAM.
+                                                                                    The proposed system has been implemented with Python language. The
+                                                                                    PyTorch framework was used to perform the VCSQ system.
+
+                                                                                    4.1. Data collection and pre-processing
+
+                                                                                        Due to the absence of a publicly available construction safety VQA
+                                                                                    dataset, we have undertaken the task of creating our own dataset,
+                                                                                    focusing on construction safety scenarios. The dataset captures various
+                                                                                    aspects such as workers approaching hazardous areas, engaging in un­
+                                                                                    safe behaviours, and different environmental factors such as illumina­
+                                                                                    tion, scale, and occlusion. In total, we have gathered 578 images and
+                 Fig. 4. Interface of the AR application.
+
+                                                                                    Table 3
+sections: a photo capture panel, a message panel, and a console panel.              Safety considerations investigated in this study.
+Users have the option to show or hide these panels either by focusing
+                                                                                     ID    Safety Considerations       Related Questions
+their gaze on triggers marked by blue and orange gems or by vocalising
+specific keywords (‘photo capture’, ‘message’, and ‘console’). The photo             1     Scaffold Safety Standards
+                                                                                                                       Are there proper guardrails and toe boards on the
+capture panel allows users to take real-time photos through CCTV or                                                    scaffolding?
+                                                                                           Excavation Barrier          Are the excavation sites surrounded by clearly
+activate the photo capture function, which are then sent to the VCSQ                 2
+                                                                                           Requirement                 visible barriers or barricades?
+system for processing. Featuring a speech-to-text functionality, the                       Onsite Worker Protection    Are workers wearing safety helmets and high-vis
+                                                                                     3
+message panel lets users verbally pose questions to the query system and                   Gear                        harnesses properly?
+receive answers. These answers and activity logs are displayed on the                      Height Work Harnesses       Are workers wearing safety harnesses when
+                                                                                     4
+                                                                                           Mandatory                   working at heights?
+console panel. To reduce cognitive load and address AR occlusion issues,
+                                                                                           Clear and Obstruction-      Are emergency exits and escape routes clearly
+the AR interface includes hide/unhide buttons. These buttons allow                   5
+                                                                                           Free Exits                  marked and unobstructed?
+users to minimise text overlays and occlusion. The AR interface thus                       Adequate Site Lighting      Is the construction site equipped with adequate
+                                                                                     6
+offers an intuitive platform for users to seamlessly interact with the                     Required                    lighting?
+query system, enabling more informed decision-making in various real-                      No Smoking Permitted        Can you spot any workers smoking on the
+                                                                                     7
+                                                                                           Anywhere                    construction site?
+
+
+                                                                                6
+H. Chen et al.                                                                                                         Automation in Construction 157 (2024) 105158
+
+
+corresponding question-answer pairs for fine-tuning and testing pur­              4.3. Performance evaluation of the vision-language tasks
+poses, with some images encompassing multiple unsafe behaviours. The
+images and question-answer pairs were partitioned into training, vali­               A variety of metrics were used to validate the accuracy of the
+dation, and testing sets in an 8:1:1 ratio, according to the type of unsafe       development in various vision-language tasks. To begin with, PASCAL
+behaviour and corresponding textual description.                                  VOC metrics have been implemented to evaluate the accuracy perfor­
+    The primary source of construction images was the large-scale con­            mance of object detection, referred to as the image encoding process.
+struction image dataset, Moving Objects in Construction Sites (MOCS)              The Intersection over Union (IoU) can be computed by dividing the area
+[47]. During the data selection process, we considered various factors            where a predicted box (B) and a ground truth bounding box (Bgt) overlap
+such as illumination, size, and occlusion to mitigate potential overfitting       by the area of their combined space:
+issues. As the MOCS dataset was designed exclusively for object detec­                       (       )
+                                                                                        Area B ∩ Bgt
+tion and segmentation, additional pre-processing was required. This               IoU =      (       )                                                (1)
+included generating corresponding question-answer pairs with ample                      Area B ∪ Bgt
+information to accurately assess construction safety scenarios.                       In order to qualify as a True-Positive (TP) detection result, three
+    An example of the VQA annotation is depicted in Fig. 5. For each              conditions must be met: a confidence score above 0.7; accurate classi­
+annotated image, an .JSON file is generated, encompassing the query               fication of the predicted category; and an IoU value greater than or equal
+text (questions), correct answers, and any additional information rele­           to 0.5. If the latter two criteria are not met, the result is classified as a
+vant to the construction safety scenario. We have developed the dataset           False-Positive (FP). The PASCAL VOC metrics also make additional as­
+in a standard format to cater to different requirements and ensure                sumptions for determining TPs and FPs, such as selecting only the
+compatibility with the majority of existing VQA learning models. This             bounding box with the highest confidence score if the ground truth is
+newly created construction safety VQA dataset enables researchers and             linked to multiple boxes. Similarly, if the confidence score falls below a
+practitioners to train and evaluate models tailored to the specific domain        certain threshold, the result is considered a False-Negative (FN). Based
+of construction safety.                                                           on these criteria, Precision and Recall can be calculated using following
+                                                                                  specific formulas:
+4.2. Parameter setting                                                                            TP
+                                                                                  Precision =                                                                  (2)
+                                                                                                TP + FP
+    For the fine-tuning process of the VQA module, we first resize all the
+images into 256 × 256. Since construction images are often suffered                            TP
+                                                                                  Recall =                                                                     (3)
+from occlusions, which could lead to inaccurate detection results. To this                   TP + FN
+end, we perform an effective data augmentation method proposed in [9]
+                                                                                     Where, Precision is calculated as the proportion of TPs to the sum of
+to improve the quality of the images. During the training process, the
+                                                                                  TPs and FPs, and Recall is the proportion of TPs to the total number of
+batch size is set to 8 and Training is conducted over 100 epochs with a
+                                                                                  target objects. Table 4 demonstrates the detection performance of the
+learning rate of 0.001, halved every 10 epochs.
+
+
+
+
+                                                                 Fig. 5. VQA data format.
+
+                                                                              7
+H. Chen et al.                                                                                                                              Automation in Construction 157 (2024) 105158
+
+
+Table 4
+Results of construction entity detection.
+  Metric                Mean            Worker             Safety helmet          Scaffold               Safety harness           Guardrail             Bulldozer             Excavator
+
+  Precision             0.891           0.956              0.914                  0.895                  0.847                    0.826                 0.841                 0.962
+  Recall                0.830           0.785              0.814                  0.845                  0.784                    0.832                 0.851                 0.899
+
+
+
+ViT. The evaluation dataset for ViT was produced by [47]. The results
+                                                                                              Table 6
+are promising in common construction object detection, which are
+                                                                                              Results for VQA.
+robust enough for the semantic encoding process.
+    In the context of ITR, the goal is to find the most relevant images                                                   Total        Unanswerable         Answerable         Correct
+                                                                                                                          Questions    Questions            But Wrong          Answers
+given keywords. Therefore, the performance of ITR can be assessed by
+determining how well it retrieves the correct images. In the context of                           Number-related          55           5                    10                 40
+                                                                                                    questions
+ITR evaluation, we re-defined TPs and FPs. a TP is an instance where the
+                                                                                                  Danger type             74           11                   7                  56
+relevant image is retrieved for a given keyword, while a FP is when the                             questions
+relevant image is not retrieved. We employed multiple image-wise recall                           Recommendation          49           8                    5                  36
+metrics, namely Recall@5, Recall@10, Recall@50, and Recall@100, to                                  questions
+comprehensively assess the system performance. These metrics calculate
+the percentage of top X confident relevant predictions that are accurate
+                                                                                                 make it more difficult for the VQA module to accurately answer
+for each keyword. The evaluation involved 7 keywords linked to distinct
+                                                                                                 them.
+safety considerations. As shown in Table 5, “Scaffolding” has the best
+                                                                                              3. Complexities in the visual data: Answering danger type and recom­
+recall rates across all 4 metrics, indicating that the model is highly
+                                                                                                 mendation questions requires more abstract or context-dependent
+effective in retrieving relevant results for this keyword. Conversely, the
+                                                                                                 concepts associated with the capabilities of text-decoder.
+keyword “Smoking” demonstrates the lowest recall rates among the
+evaluated terms. This underperformance might be attributed to the
+                                                                                                  Table 7 summarises the VQA accuracy in identifying some unsafe
+image encoder. ViT may be struggled to effectively detect small objects
+                                                                                              situations on a construction site based on input images and corre­
+like cigarettes or lighters within images. These objects might not be
+                                                                                              sponding text descriptions. The module demonstrated robust perfor­
+adequately represented in the encoded patches, posing challenges for
+                                                                                              mance, particularly in detecting workers not wearing safety vests or
+the model in accurately identifying and retrieving pertinent results.
+                                                                                              high-visibility harnesses, achieving high accuracy rates of 89.8% and
+    A total of 178 questions were designed for VQA evaluation. The
+                                                                                              91.5%, respectively. It also performed well in identifying workers
+question types include number-related questions, danger type questions,
+                                                                                              working in areas with inadequate lighting, with an accuracy of 92.7%.
+and recommendation questions. Number-related questions pertain to
+                                                                                              However, the module showed a slightly lower accuracy rate of 84.6% in
+queries involving numerical values or quantifiable information, such as
+                                                                                              identifying workers not wearing safety helmets. The VQA module
+the number of workers and other construction objects on site. These
+                                                                                              demonstrated an average accuracy rate of 89.7%. It is important to note
+questions are essential in ensuring that safety standards are met and
+                                                                                              that VQA accuracy may be influenced by factors such as occlusion
+maintained throughout the construction process. Danger type questions
+                                                                                              conditions and camera angles.
+are those that address potential hazards or risks associated with the
+                                                                                                  Semantic propositional image caption evaluation (SPICE) [3] was
+construction site, equipment, or tasks. These questions are crucial for
+                                                                                              used to measure the IC performance. Rather than focusing on the indi­
+identifying and mitigating threats to the safety and well-being of con­
+                                                                                              vidual words or n-grams in the generated captions, SPICE concentrates
+struction workers and others present at the site. Recommendation
+                                                                                              on the semantic meaning conveyed by the captions. To compute the
+questions focus on seeking suggestions or advice regarding safety pro­
+                                                                                              SPICE score, the candidate caption and the reference captions are first
+cedures, equipment, or best practices. These questions play a vital role in
+                                                                                              parsed into scene graphs. Scene graphs are structured representations
+improving safety measures and reducing the likelihood of accidents or
+                                                                                              that capture objects, attributes, and relationships between objects in the
+injuries on the construction site.
+                                                                                              captions. These scene graphs are then compared, and the similarity
+    As shown in Table 6, the VQA module demonstrates a relatively
+                                                                                              between the candidate and reference scene graphs is calculated.
+strong performance in handling number-related questions, while its
+accuracy in addressing danger type and recommendation questions is
+slightly lower. This could be due to a few factors:                                           Table 7
+                                                                                              Accuracy of VQA for identifying unsafe situations.
+1. Lack of training data: The VQA module may not have been trained on
+                                                                                                  Item    Text description of unsafe situations                     Identification
+   enough question examples to accurately answer them. Increasing the                                                                                               accuracy
+   amount of training data for this type of question could help improve
+                                                                                                  1       Worker not wearing a safety vest while working on a       89.8%
+   the model performance.
+                                                                                                          scaffold.
+2. Ambiguity in the questions: Danger type and recommendation                                     2       Worker not wearing a high-vis harness while               91.5%
+   questions may be more likely to have ambiguous phrasing or require                                     working near an excavator.
+   more specific information than number-related questions. This could                            3       Worker working in an area with inadequate lighting.       92.7%
+                                                                                                  4       Worker working at a height without a safety helmet.       84.6%
+
+
+
+
+Table 5
+Recall rates for ITR.
+  Keywords                Height Work            Smoking            Scaffolding           Excavation             PPE              Site Lighting           Safety Exits               Mean
+
+  Recall@5                0.856                  0.574              0.864                 0.845                  0.821            0.832                   0.815                      0.801
+  Recall@10               0.897                  0.593              0.894                 0.854                  0.864            0.879                   0.861                      0.835
+  Recall@50               0.926                  0.611              0.916                 0.888                  0.902            0.905                   0.896                      0.863
+  Recall@100              0.942                  0.657              0.957                 0.897                  0.916            0.915                   0.909                      0.885
+
+
+                                                                                          8
+H. Chen et al.                                                                                                        Automation in Construction 157 (2024) 105158
+
+
+    The similarity is measured using F1-score, which considers both
+                                                                                              2 × Precision × Recall
+precision (how many of the elements in the candidate scene graph are             F1 Score =                          × 100%                                   (4)
+                                                                                                Precision + Recall
+present in the reference scene graph) and recall (how many of the ele­
+ments in the reference scene graph are present in the candidate scene               To implement the SPICE metric, we used its official evaluation code,
+graph). The F1-score ranges from 0 to 1, with 1 being a perfect match            which requires the Java Development Kit. The code takes the candidate
+between the candidate and reference scene graphs. F1-score is formu­             and reference captions, converts them into scene graphs, and performs
+lated as:                                                                        the comparison. This method is computationally intensive due to the
+                                                                                 complexity of the scene graph parsing and semantic evaluation
+                                                                                 involved. For the IC evaluation, we used a benchmark dataset produced
+
+
+
+
+                              Fig. 6. Qualitative illustrations of the chat log and captions for various construction images.
+
+                                                                             9
+H. Chen et al.                                                                                                         Automation in Construction 157 (2024) 105158
+
+
+by [48]. This dataset includes around 4000 images with 8000 captions,              circulating inaccurate information. While it may not surpass human
+spanning a wide array of construction activities. We manually excluded             experts in every capacity, the system provides immediate, consistent
+369 images based on the safety considerations specified for this study.            feedback to support enhanced situational awareness among construc­
+Following the evaluation, we obtained a SPICE score of 0.449. It is                tion workers. By serving as an additional information layer, the system
+essential to note that the SPICE score of 0.449 is a measure of semantic           aids workers in making more informed decisions, thereby improving
+alignment between the generated captions and reference captions,                   overall safety and efficiency on construction sites.
+rather than a straightforward accuracy metric. The SPICE score quan­
+tifies how well our model captures objects, attributes, and relationships          5. Preliminary test of the VCSQ system in construction scenarios
+in the images, making it a useful measure for assessing the model se­
+mantic understanding. Given the scale of 0 to 1, a score of 0.449 is                   To better understand the system effectiveness and user perceptual
+significant for a proof-of-concept system, indicating its potential for            capabilities, we conducted a preliminary test involved inviting ten
+effective semantic understanding in complex construction environ­                  construction practitioners who are already familiar with the three con­
+ments. This aligns our model with advanced systems in terms of its                 struction scenarios: progress monitoring, safety inspection and compli­
+ability to extract semantic information.                                           ance checking. The participants were asked to use the AR-based VCSQ
+    Fig. 6 illustrates qualitative results from different construction sce­        system to complete specific workflows related to these construction
+narios, demonstrating the system capabilities in IC and VQA. For each              scenarios. After completing these tasks, participants were then required
+depicted construction site image, corresponding image captions are                 to fill out a survey. This survey was comprehensive, incorporating both
+provided to give an overview of the scene, and a visual dialogue between           the NASA-Task Load Index (NASA-TLX) and a section for open-ended
+the system and the user is displayed. Specifically, text in yellow boxes           comments. The NASA-TLX section collected data on their experiences
+signifies generated captions, blue boxes contain user queries, and green           using both AR and non-AR methods, with the non-AR data providing a
+boxes show the system responses. The system has been designed to ex­               benchmark of their typical performance in these construction activities.
+ercise caution, resorting to an ‘uncertain’ response when it cannot pro­           The inclusion of open-ended comments further enriched our under­
+vide a confident answer. This is a safety feature that reduces the risk of         standing of the system practical applicability and highlighted potential
+
+
+
+
+                                          Fig. 7. UI of the IC module: (a) first person view; (b) third person view.
+
+                                                                              10
+H. Chen et al.                                                                                                         Automation in Construction 157 (2024) 105158
+
+
+areas for improvement.                                                            equipment within the designated area. The final question concerned PPE
+                                                                                  suitable for the environment. System recommendations were consistent
+5.1. Scenario 1: Progress monitoring                                              with identified hazards and included hard hats, safety glasses or goggles,
+                                                                                  and gloves. While the system may not supersede the acumen of seasoned
+    In an experimental setup focused on progress monitoring in real-              professionals, initial findings suggest that it acts as a valuable supple­
+world construction contexts, participants engaged with the IC module              mentary tool. Participants utilising AR headsets equipped with the VQA
+via the AR interface in time-sensitive construction environments.                 module were better equipped to validate their risk assessments, alleviate
+Captured on-site images, as demonstrated in Fig. 7, triggered the IC              uncertainties, and make well-informed, on-the-spot decisions. The
+module through a designated AR button. Initial results indicated that the         experiment showed that the module enhances situational awareness and
+module efficiently generated descriptive captions for these images. A             decision-making capabilities without intending to replace human
+notable experimental finding was the system ability for instant report            expertise.
+creation, facilitated by an integrated data aggregation algorithm. The                As shown in Fig. 10, the AR method generally outperformed the non-
+algorithm organised captured images, time stamps, and captions into a             AR method in terms of mental and physical demand, as well as time
+spreadsheet report, which was securely sent to managerial terminals               pressure. In these aspects, participants found the AR setup less taxing
+through TCP protocols for immediate evaluation.                                   and better for time management. Regarding task accomplishment and
+    The one-touch report generation was subjected to two key perfor­              effort levels, both AR and non-AR methods showed similar levels of
+mance indicators: administrative efficiency and situational awareness             effectiveness. This supports the notion that the AR technology serves
+enhancement. Preliminary data suggested that the feature streamlined              more as a supplement to human expertise rather than a replacement.
+admin tasks while providing a real-time site overview. Further, partic­           Stress levels were also slightly lower in the AR method compared to the
+ipants employed the AR voice input to append action items to captured             non-AR method, indicating that the AR interface potentially contributes
+images, enabling immediate, data-driven construction management                   to a less stressful working environment. Some participants believe that
+decisions.                                                                        while the current VQA module may not yet serve as a full replacement
+    As shown in Fig. 8, we used the NASA-TLX index to gauge workload              for seasoned professionals, its interactive question-answer format offers
+and user experience. When compared to the non-AR method, which                    a novel approach. This interactivity can help workers maintain situa­
+refers to the conventional workflow that site managers follow in con­             tional awareness, making it a valuable asset in complex and potentially
+struction settings, the AR method generally demonstrated lower mental             hazardous environments. Some Participants, however, have pointed out
+and physical demand. Time pressure and stress levels were also notably            that the text generated in the VQA module can obstruct the user view
+less in the AR setting, and there was a slight improvement in the sense of        and that the display of text within the virtual panel is not very clear. This
+task accomplishment. The reduced levels in the AR method imply that               requires users to exert additional effort to read the augmented text.
+the one-touch reporting mechanism contributes to improved time
+management. Some participants find the one-touch report generation                5.3. Scenario 3: Compliance checking
+feature extremely convenient, as it removes the need for manual on-site
+report compilation. However, they also point out that the angle at which              In an experimental setup highlighted in Fig. 11, the effectiveness of
+the AR glasses capture photos can substantially affect the accuracy of the        the ITR module was assessed for its capacity to retrieve site-specific
+IC module, leading to potential inaccuracies in the final reports.                information rapidly and accurately. The participants, mainly safety
+                                                                                  managers, were responsible for assessing compliance with “work at
+5.2. Scenario 2: Safety inspection                                                height” regulations across a large construction area. They initiated this
+                                                                                  process through a keyword search within the system. The system,
+    In the context of safety inspection, the VQA module was tested in             engineered for precise keyword matching, quickly produced relevant
+intricate and potentially hazardous construction settings, as evidenced           images from a comprehensive surveillance database. This is a deviation
+in Fig. 9. A participant was assigned the task of inspecting an outdoor           from traditional construction monitoring methods, which often involve
+gas storage area. He engaged with the VQA module for guidance. Upon               sifting through less relevant data. In this case, the keyword search
+uploading an image of the storage area into the system, he received               enabled participants to focus directly on areas featuring guardrails, thus
+comprehensive descriptions that assisted in identifying crucial elements          eliminating the need to browse irrelevant images. Additionally, the
+and related risks. For example, when the query “What is it?” was input,           system facilitated the work of safety managers by enabling them to
+the system identified a secured area with multiple warning signs. A               quickly perform targeted compliance checks for specific scenarios, such
+subsequent query from participants was, “How do I inspect this area?”             as ensuring that workers at height were wearing safety harnesses and
+The system responded with a structured inspection procedure that                  helmets. This is crucial as compliance requirements can vary depending
+included assessments of the fence, state of containers, and other                 on the construction setting. The tailored approach greatly improved the
+
+
+
+
+                                                  Fig. 8. NASA-TLX for construction progress monitoring.
+
+                                                                             11
+H. Chen et al.                                                                                                         Automation in Construction 157 (2024) 105158
+
+
+
+
+                                         Fig. 9. UI of the VQA module: (a) first person view; (b) third person view.
+
+
+
+
+                                                     Fig. 10. NASA-TLX for real-time safety inspection.
+
+
+efficiency of the compliance checks. This targeted approach generated              environments proved effective, yet the AR scenario required signifi­
+specific data that could be assessed in real time, making it more effective        cantly less effort to achieve similar results. Stress levels were compa­
+than traditional surveillance or routine inspections.                              rable in both setups, indicating that the UI itself did not introduce new
+    As shown in Fig. 12, the NASA-TLX assessment revealed some                     stress factors, despite being a novel interface.
+notable insights. The AR environment was generally less mentally and                   Several participants have indicated that the use of the ITR module in
+physically demanding than the traditional non-AR methods. Participants             an AR environment could substantially reduce the time and effort
+in the AR scenario also reported significantly less time pressure, aligning        required to retrieve construction-related images. However, they also
+well with the main findings that highlight the speed and accuracy of the           caution that the full deployment and implementation of this technology
+ITR module. In terms of task success, both the AR and non-AR                       in actual construction sites may be challenged. One major hurdle is the
+
+
+                                                                              12
+H. Chen et al.                                                                                                        Automation in Construction 157 (2024) 105158
+
+
+
+
+                                       Fig. 11. UI of the ITR module: (a) first person view; (b) third person view.
+
+
+
+
+                                                  Fig. 12. NASA-TLX for safety compliance checking.
+
+
+need for extensive camera setups to capture sufficient data, potentially        6. Discussion
+including images of workers, equipment, and sensitive areas on the site.
+This raises questions about who has access to this data and how it is               The VCSQ system is designed for construction practitioners, with the
+stored and used. Moreover, the constant surveillance capability of AR           aim of enhancing construction safety and hazard mitigation. It serves a
+technology could be perceived as invasive, affecting worker morale and          variety of functions, such as facilitating safety inspections and assisting
+potentially creating a workplace culture of mistrust. This introduces           in the generation of construction site reports. The system improves
+potential ethical and moral dilemmas related to surveillance and privacy        safety awareness by delivering real-time information on potential haz­
+that would need to be carefully addressed.                                      ards and offers up-to-date data on the status of the construction site. The
+                                                                                interactive nature of our system is also well-suited for in-field training.
+
+                                                                           13
+H. Chen et al.                                                                                                                 Automation in Construction 157 (2024) 105158
+
+
+An in-depth study that combines in-field training with transfer learning            effective utilisation.
+for real-time tasks could offer a comprehensive insight into how AR
+improves both learning and on-site safety in construction. Therefore, we
+recommend a comprehensive research agenda for the future that spans                 Declaration of Competing Interest
+several crucial areas. These include initial safety induction before tasks
+commence, ongoing assessment mechanisms to gauge workforce per­                         The authors declare that they have no known competing financial
+formance, upskilling and reskilling initiatives to ensure employees are             interests or personal relationships that could have appeared to influence
+equipped with the latest safety knowledge, and post-task reflection                 the work reported in this paper.
+sessions to evaluate what was learned and what needs improvement. For
+instance, a training scenario could be designed where trainee workers               Data availability
+wear the AR glasses and navigate a simulated construction site. As they
+move through the environment, they could receive real-time prompts for                  Data will be made available on request.
+identifying and annotating potential hazards. Each correct identification
+could trigger a contextual explanation, offering insights into best prac­           References
+tices for mitigating the identified risks. This interactive training model
+would not only enhance hazard awareness but also offer immediate,                    [1] Ministry of Housing and Urban Rural Development of China (MHURDC), Vol.
+                                                                                         2023, http://www.mohurd.gov.cn.
+experiential learning.                                                               [2] Work-related traumatic injury fatalities Australia Vol. 2023, 2021. https://www.sa
+    According to the system evaluation and participant feedback, the                     feworkaustralia.gov.au/doc/work-related-traumatic-injury-fatalities-australia
+current system has certain limitations. First, our experiment scenarios                  -2021.
+                                                                                     [3] P. Anderson, B. Fernando, M. Johnson, S. Gould, Spice: Semantic propositional
+are simulation-based. In real-world construction settings, factors like                  image caption evaluation, in: Computer Vision–ECCV 2016: 14th European
+weather condition, equipment availability, and human error can                           Conference, Amsterdam, The Netherlands, October 11-14, 2016, Proceedings, Part
+change, evolve, or alter, potentially causing unexpected issues. Second,                 V 14, Springer, 2016, pp. 382–398, https://doi.org/10.1007/978-3-319-46454-1_
+                                                                                         24.
+technological limitations are still diverse from the AR development
+                                                                                     [4] S. Bang, H. Kim, Context-based information generation for managing UAV-
+perspective. AR glasses can obstruct the user field of view and their                    acquired data using image captioning, Autom. Constr. 112 (2020), 103116,
+weight can contribute to fatigue. Moreover, the technology has the po­                   https://doi.org/10.1016/j.autcon.2020.103116.
+                                                                                     [5] A.H. Behzadan, V.R. Kamat, Enabling discovery-based learning in construction
+tential to introduce human error, as users may over-rely on the system
+                                                                                         using telepresent augmented reality, Autom. Constr. 33 (2013) 3–10, https://doi.
+and neglect their own safety assessments. The use of AR headsets can                     org/10.1016/j.autcon.2012.09.003.
+also cause physical discomfort and distractions, compromising focus on               [6] M.D.O. Carrasco, P.-H. Chen, Application of mixed reality for improving
+tasks at hand. In the short term, improvement of user-friendliness of                    architectural design comprehension effectiveness, Autom. Constr. 126 (2021),
+                                                                                         103677, https://doi.org/10.1016/j.autcon.2021.103677.
+system UIs could offer a more immediate solution. In the long term, it               [7] H. Chen, L. Hou, G. Zhang, Social distance monitoring of site workers for COVID-19
+may be worthwhile for hardware vendors to focus on refining their                        using context-guided data augmentation, deep learning, and homography
+products across the board. Third, the data set used for training our                     transformation, in: IOP Conference Series: Earth and Environmental Science vol.
+                                                                                         1101, IOP Publishing, 2022, p. 032035, https://doi.org/10.1088/1755-1315/
+system is limited in scope, therefore, a richer data set is needed for fine-             1101/3/032035.
+tuning the vision-language models. Fourth, integrating ontology with                 [8] H. Chen, L. Hou, G.K. Zhang, S. Moon, Development of BIM, IoT and AR/VR
+LLMs like GPT-4 [31] can potentially make the system more intelligent                    technologies for fire safety and upskilling, Autom. Constr. 125 (2021), 103631,
+                                                                                         https://doi.org/10.1016/j.autcon.2021.103631.
+and capable of nuanced safety assessments. The embedding of safety                   [9] H. Chen, L. Hou, G.K. Zhang, S. Wu, Using context-guided data augmentation,
+regulations through ontology can address the feasibility issues posed by                 lightweight CNN, and proximity detection techniques to improve site safety
+the absence of such standards in the existing dataset.                                   monitoring under occlusion conditions, Saf. Sci. 158 (2023), 105958, https://doi.
+                                                                                         org/10.1016/j.ssci.2022.105958.
+                                                                                    [10] S. Chen, K. Demachi, Towards on-site hazards identification of improper use of
+7. Conclusions                                                                           personal protective equipment using deep learning-based geometric relationships
+                                                                                         and hierarchical scene graph, Autom. Constr. 125 (2021), 103619, https://doi.org/
+                                                                                         10.1016/j.autcon.2021.103619.
+    This study introduces the VCSQ system, utilising a unified vision-              [11] Y.-J. Chen, Y.-S. Lai, Y.-H. Lin, BIM-based augmented reality inspection and
+language model to offer functionalities like IC, VQA, and ITR. Paired                    maintenance of fire safety equipment, Autom. Constr. 110 (2020), 103041, https://
+with AR glasses, the system provides an interactive interface tailored for               doi.org/10.1016/j.autcon.2019.103041.
+                                                                                    [12] H.-L. Chi, M.-K. Kim, K.-Z. Liu, J. Thedja, J. Seo, D.-E. Lee, Rebar inspection
+on-site workers and managers, thereby boosting safety awareness and
+                                                                                         integrating augmented reality and laser scanning, Autom. Constr. 136 (2022),
+work efficiency. Our technical contribution is the development of a                      104183, https://doi.org/10.1016/j.autcon.2022.104183.
+unique prompt-tuning strategy that refines system responses in                      [13] J. Devlin, M.-W. Chang, K. Lee, K. Toutanova, Bert: Pre-Training of Deep
+construction-specific safety contexts. This informs future integration of                Bidirectional Transformers for Language Understanding, arXiv Preprint, arXiv:181
+                                                                                         0.04805, 2018, https://doi.org/10.48550/arXiv.1810.04805.
+more advanced LLMs into construction safety. Our system, unlike                     [14] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner,
+generic LLMs, prioritises real-world applicability and customisation. The                M. Dehghani, M. Minderer, G. Heigold, S. Gelly, An Image is Worth 16x16 Words:
+tangible benefits seen in our experimental results and practical appli­                  Transformers for Image Recognition at Scale, arXiv Preprint arXiv:2010.11929,
+                                                                                         2020, https://doi.org/10.48550/arXiv.2010.11929.
+cations suggest our system as a valuable tool for improving on-site                 [15] R. Eiris, M. Gheisari, B. Esmaeili, PARS: using augmented 360-degree panoramas of
+situational awareness. This provides both researchers and practitioners                  reality for construction safety training, Int. J. Environ. Res. Public Health 15 (11)
+a reference point in terms of interactive AI, potentially leading to in­                 (2018) 2452, https://doi.org/10.3390/ijerph15112452.
+                                                                                    [16] W. Fang, L. Ma, P.E. Love, H. Luo, L. Ding, A. Zhou, Knowledge graph for
+cremental but important enhancements in current safety practices.                        identifying hazards on construction sites: integrating computer vision with
+Despite its promise, the system faces limitations, including technological               ontology, Autom. Constr. 119 (2020), 103310, https://doi.org/10.1016/j.
+constraints and the need for a richer dataset for model fine-tuning. For                 autcon.2020.103310.
+                                                                                    [17] A. Harikrishnan, A.S. Abdallah, S.K. Ayer, M. El Asmar, P. Tang, Feasibility of
+future refinements, the plan is to integrate an ontology-based framework                 augmented reality technology for communication in the construction industry,
+that maps directly to established safety regulations in the construction                 Adv. Eng. Inform. 50 (2021), 101363, https://doi.org/10.1016/j.aei.2021.101363.
+industry. This will involve encoding these regulations into a structured            [18] L. Hou, H. Chen, G. Zhang, X. Wang, Deep learning-based applications for safety
+                                                                                         management in the AEC industry: a review, Appl. Sci. 11 (2) (2021) 821, https://
+data model that can be easily interpreted by the VCSQ system, thereby
+                                                                                         doi.org/10.3390/app11020821.
+enhancing its role as a comprehensive compliance platform. Last but not             [19] L. Huang, W. Wang, J. Chen, X.-Y. Wei, Attention on attention for image
+least, research attention must extend beyond the technical realm to                      captioning, in: Proceedings of the IEEE/CVF International Conference on Computer
+encompass challenges associated with the human aspect of technology                      Vision, 2019, pp. 4634–4643, https://doi.org/10.1109/ICCV.2019.00473.
+                                                                                    [20] I. Jeelani, K. Han, A. Albert, Development of virtual reality and stereo-panoramic
+adoption. This includes investigating how well the system is received by                 environments for construction safety training, Eng. Constr. Archit. Manag. 27 (8)
+end-users and devising appropriate training modules to facilitate its                    (2020) 1853–1876, https://doi.org/10.1108/ECAM-07-2019-0391.
+
+
+                                                                               14
+H. Chen et al.                                                                                                                               Automation in Construction 157 (2024) 105158
+
+[21] W. Jin, Y. Cheng, Y. Shen, W. Chen, X. Ren, A good Prompt is Worth Millions of               [36] Y. Shen, L. Heacock, J. Elias, K.D. Hentel, B. Reig, G. Shih, L. Moy, ChatGPT and
+     Parameters? Low-Resource Prompt-Based Learning for Vision-Language Models,                        other Large Language Models are Double-Edged Swords, 2023, p. 230163, https://
+     arXiv preprint arXiv:2110.08484, 2021, https://doi.org/10.48550/                                  doi.org/10.1148/radiol.230163.
+     arXiv.2110.08484.                                                                            [37] H. Son, C. Kim, Integrated worker detection and tracking for the safe operation of
+[22] S. Joshi, M. Hamilton, R. Warren, D. Faucett, W. Tian, Y. Wang, J. Ma,                            construction machinery, Autom. Constr. 126 (2021), 103670, https://doi.org/
+     Implementing virtual reality technology for safety training in the precast/                       10.1016/j.autcon.2021.103670.
+     prestressed concrete industry, Appl. Ergon. 90 (2021), 103286, https://doi.org/              [38] R. Song, X. Chen, Z. Liu, H. An, Z. Zhang, X. Wang, H. Xu, Label Mask for Multi-
+     10.1016/j.apergo.2020.103286.                                                                     Label Text Classification, arXiv preprint arXiv:2106.10076, 2021, https://doi.org/
+[23] J. Kim, S. Chi, Graph neural network-based propagation effects modeling for                       10.48550/arXiv.2106.10076.
+     detecting visual relationships among construction resources, Autom. Constr. 141              [39] D. Tian, M. Li, Q. Ren, X. Zhang, S. Han, Y. Shen, Intelligent question answering
+     (2022), 104443, https://doi.org/10.1016/j.autcon.2022.104443.                                     method for construction safety hazard knowledge based on deep semantic mining,
+[24] J. Kim, J. Irizarry, Evaluating the use of augmented reality technology to improve                Autom. Constr. 145 (2023), 104670, https://doi.org/10.1016/j.
+     construction management student’s spatial skills, Int. J. Constr. Educ. Res. 17 (2)               autcon.2022.104670.
+     (2021) 99–116, https://doi.org/10.1080/15578771.2020.1717680.                                [40] H. Wang, C. Xu, J. McAuley, Automatic Multi-Label Prompting: Simple and
+[25] K. Kim, H. Kim, H. Kim, Image-based construction hazard avoidance system using                    Interpretable Few-Shot Classification, arXiv preprint arXiv:2204.06305, 2022,
+     augmented reality in wearable device, Autom. Constr. 83 (2017) 390–403, https://                  https://doi.org/10.48550/arXiv.2204.06305.
+     doi.org/10.1016/j.autcon.2017.06.014.                                                        [41] T.-K. Wang, J. Huang, P.-C. Liao, Y. Piao, Does augmented reality effectively foster
+[26] J. Li, D. Li, C. Xiong, S. Hoi, Blip: Bootstrapping language-image pre-training for               visual learning process in construction? An eye-tracking study in steel installation,
+     unified vision-language understanding and generation, in: International                           Adv. Civil Eng. 2018 (2018), https://doi.org/10.1155/2018/2472167.
+     Conference on Machine Learning, PMLR, 2022, pp. 12888–12900, https://doi.org/                [42] E.M. Wetzel, C.B. Farrow, Active learning in construction management education:
+     10.48550/arXiv.2201.12086.                                                                        faculty perceptions of engagement and learning, Int. J. Constr. Manag. (2021) 1–9,
+[27] Y. Li, H. Wei, Z. Han, N. Jiang, W. Wang, J. Huang, Computer vision-based hazard                  https://doi.org/10.1080/15623599.2021.1974684.
+     identification of construction site using visual relationship detection and ontology,        [43] S. Wu, L. Hou, H. Chen, G.K. Zhang, Y. Zou, Q. Tushar, Cognitive ergonomics-based
+     Buildings 12 (6) (2022) 857, https://doi.org/10.3390/buildings12060857.                           augmented reality application for construction performance, Autom. Constr. 149
+[28] H. Liu, G. Wang, T. Huang, P. He, M. Skitmore, X. Luo, Manifesting construction                   (2023), 104802, https://doi.org/10.1016/j.autcon.2023.104802.
+     activity scenes via image captioning, Autom. Constr. 119 (2020), 103334, https://            [44] S. Wu, L. Hou, G.K. Zhang, H. Chen, Real-time mixed reality-based visual warning
+     doi.org/10.1016/j.autcon.2020.103334.                                                             for construction workforce safety, Autom. Constr. 139 (2022), 104252, https://doi.
+[29] S. Moon, L. Hou, S. Han, Empirical study of an artificial neural network for a                    org/10.1016/j.autcon.2022.104252.
+     manufacturing production operation, Oper. Manag. Res. (2022) 1–13, https://doi.              [45] B. Xiao, Y. Wang, S.-C. Kang, Deep learning image captioning in construction
+     org/10.1007/s12063-022-00309-0.                                                                   management: a feasibility study, J. Constr. Eng. Manag. 148 (7) (2022) 04022049,
+[30] O.R. Ogunseiju, J. Olayiwola, A.A. Akanmu, C. Nnaji, Digital twin-driven                          https://doi.org/10.1061/(ASCE)CO.1943-7862.0002297.
+     framework for improving self-management of ergonomic risks, Smart Sustain. Built             [46] Z. Xu, N. Zheng, Incorporating virtual reality technology in safety training solution
+     Environ. 10 (3) (2021) 403–419, https://doi.org/10.1108/SASBE-03-2021-0035.                       for construction site of urban cities, Sustainability 13 (1) (2020) 243, https://doi.
+[31] OpenAI, GPT-4 Technical Report, ArXiv abs/2303.08774, 2023, https://doi.org/                      org/10.3390/su13010243.
+     10.48550/arXiv.2303.08774.                                                                   [47] A. Xuehui, Z. Li, L. Zuguang, W. Chengzhi, L. Pengfei, L. Zhiwei, Dataset and
+[32] Z. Pan, C. Su, Y. Deng, J. Cheng, Image2Triplets: a computer vision-based explicit                benchmark for detecting moving objects in construction sites, Autom. Constr. 122
+     relationship extraction framework for updating construction activity knowledge                    (2021), 103482, https://doi.org/10.1016/j.autcon.2020.103482.
+     graphs, Comput. Ind. 137 (2022), 103610, https://doi.org/10.1016/j.                          [48] P. Zhai, J. Wang, L. Zhang, Extracting worker unsafe behaviors from construction
+     compind.2022.103610.                                                                              images using image captioning with deep learning–based attention mechanism,
+[33] F. Pilati, M. Faccio, M. Gamberi, A. Regattieri, Learning manual assembly through                 J. Constr. Eng. Manag. 149 (2) (2023) 04022164, https://doi.org/10.1061/
+     real-time motion capture for operator training with augmented reality, Proc.                      JCEMD4.COENG-12096.
+     Manufact. 45 (2020) 189–195, https://doi.org/10.1016/j.promfg.2020.04.093.                   [49] B. Zhong, H. Li, H. Luo, J. Zhou, W. Fang, X. Xing, Ontology-based semantic
+[34] A. Radford, J.W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,                       modeling of knowledge in construction: classification and identification of hazards
+     A. Askell, P. Mishkin, J. Clark, Learning transferable visual models from natural                 implied in images, J. Constr. Eng. Manag. 146 (4) (2020) 04020013, https://doi.
+     language supervision, in: International Conference on Machine Learning, PMLR,                     org/10.1061/(ASCE)CO.1943-7862.0001767.
+     2021, pp. 8748–8763, https://doi.org/10.48550/arXiv.2103.00020.                              [50] B. Zhong, H. Wu, H. Li, S. Sepasgozar, H. Luo, L. He, A scientometric analysis and
+[35] F.M. Rezende-Filho, L.J.S. da Fonseca, V. Nunes-Souza, G.D.S. Guedes, L.A. Rabelo,                critical review of construction related ontology research, Autom. Constr. 101
+     A student-centered approach for developing active learning: the construction of                   (2019) 17–31, https://doi.org/10.1016/j.autcon.2018.12.013.
+     physical models as a teaching tool in medical physiology, BMC Med. Educ. 14 (1)              [51] B. Zhu, Y. Niu, S. Lee, M. Hur, H. Zhang, Debiased Fine-Tuning for Vision-language
+     (2014) 1–9, https://doi.org/10.1186/1472-6920-14-189.                                             Models by Prompt Regularization, arXiv preprint arXiv:2301.12429, 2023, https://
+                                                                                                       doi.org/10.48550/arXiv.2301.12429.
+
+
+
+
+                                                                                             15
+

@@ -1,0 +1,682 @@
+                                                                        Automation in Construction 52 (2015) 29–41
+
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                                Automation in Construction
+                                                     journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Ontology-based semantic modeling of construction safety knowledge:
+Towards automated safety planning for job hazard analysis (JHA)
+Sijie Zhang a, Frank Boukamp b, Jochen Teizer c,⁎
+a
+    Chevron Energy Technology Company, USA
+b
+    School of Property, Construction & Project Management, RMIT University, Australia
+c
+    RAPIDS Construction Safety and Technology Laboratory, Germany
+
+
+
+a r t i c l e            i n f o                             a b s t r a c t
+
+Article history:                                             Construction safety related knowledge and project speciﬁc information are scattered and fragmented. Despite
+Received 29 April 2014                                       technological advancements of information and knowledge management in the building and construction indus-
+Received in revised form 17 November 2014                    try, a link between safety management and information models is still missing. The objective of this study is to
+Accepted 22 February 2015
+                                                             investigate a new approach to organize, store and re-use construction safety knowledge. A construction safety
+Available online 12 March 2015
+                                                             ontology is proposed to formalize the safety management knowledge. It consists of three main domain ontology
+Keywords:
+                                                             models, including Construction Product Model, Construction Process Model, and Construction Safety Model. One-
+Building information modeling                                on-one expert interviews were conducted for ontology evaluation. The interaction between safety ontology and
+Design for safety                                            Building Information Modeling (BIM) is also explored. A prototype application of ontology-based job hazard
+Hazard recognition and communication                         analysis (JHA) and visualization is implemented to further illustrate the applicability and effectiveness of the
+Knowledge management                                         developed ontology. The developed construction safety ontology enables more effective inquiry of safety
+Occupational construction safety and health                  knowledge, which is the ﬁrst step towards automated safety planning for JHA using BIM.
+Ontology                                                                                                                             © 2015 Elsevier B.V. All rights reserved.
+Safety planning
+
+
+
+
+1. Introduction                                                                                [5]. Table 1 shows a sample JHA form of an activity “Dismantling Scaf-
+                                                                                               folding”. It lists general project and task information, the type and
+    About 90% of workplace injuries can be traced to unsafe work prac-                         the actions to control the hazards. The JHA form is typically read
+tices and behaviors [1]. As good safety practices and records create a                         and explained to workers in a pre-task work meeting. Each partic-
+positive, incident free, and productive work environment, planning for                         ipant is required to acknowledge its content by signing the form.
+safety at the front-end of a project is not only the ﬁrst but also a funda-                    This theoretically ensures that each worker is familiar with related
+mental step for managing construction safety and health, and establish-                        work task hazards and mitigation strategies. Beyond such advan-
+ing a good safety culture [2].                                                                 tages alerting workforce ahead of executing potentially dangerous
+    Planning for safety typically consists of the identiﬁcation of all po-                     work tasks, some project stakeholders may use the form for legal
+tential hazards, as well as the decision on choosing corresponding safety                      purposes.
+measures [3]. A job hazard analysis (JHA) is a technique that focuses on                           Because of the complexity and time-consuming nature of JHA, safety
+job tasks as a way to identify hazards before they occur. It focuses on the                    personnel need extensive time to acquire the JHA information and then
+relationship between the worker, the task, the tools, and the work envi-                       apply the knowledge to perform the analysis. Another factor contribut-
+ronment [4]. As a process of identifying potential hazards for each step                       ing to the time-consuming nature of JHAs is the one-of-a-kind character
+of an activity and proposing safety rules to prevent potential incidents                       of construction projects which makes each JHA unique every time it is
+related to these hazards, the US Occupational Safety and Health Admin-                         required. However, the entire analysis is typically structured in multiple
+istration (OSHA) recommends performing JHA for construction activi-                            stages containing a number of recurring and similar JHA. Such JHA can
+ties to highlight and react to potential hazards. The basic procedure                          be represented and stored as generic reusable patterns that can be
+(see Fig. 1) for conducting a JHA includes (1) identifying all job steps                       standardized and instantiated for many different projects.
+of a given activity; (2) identifying potential hazards related to these                            With the advancement of information technology in the building
+different job steps; and (3) proposing action procedures (e.g., safe                           and construction industry, a missing link between safety management
+procedures or precautions) to eliminate, reduce, or control each hazard                        and information models becomes apparent. The richness of design in-
+                                                                                               formation offered by Building Information Models (BIM) has helped
+                                                                                               on the delivery of better quality buildings. The ability to extract con-
+    ⁎ Corresponding author. Tel.: +49 157 5476 95 92.                                          struction speciﬁc information from a BIM is critical to support produc-
+      E-mail address: jochen@teizer.de (J. Teizer).                                            tive, safe and healthy construction workplaces and other downstream
+
+
+http://dx.doi.org/10.1016/j.autcon.2015.02.005
+0926-5805/© 2015 Elsevier B.V. All rights reserved.
+30                                                          S. Zhang et al. / Automation in Construction 52 (2015) 29–41
+
+
+                                                                                             practices as a template so they do not have to start from scratch.
+                                                                                             The uniqueness of the construction activities and their contexts
+                                                                                             can lead to problematic JHA and expose workers to uncontrolled
+                                                                                             hazards. Hence, JHA is complex, time-consuming, at times inaccu-
+                                                                                             rate, and hard to keep up-to-date with changing construction
+                            Fig. 1. Basic JHA procedures.
+                                                                                             schedules. Safety personnel must perform JHAs often weeks, some-
+                                                                                             times even months, before the activity actually is scheduled to be
+                                                                                             performed [9]. This makes it difﬁcult to quickly react to changes in
+processes [6]. In terms of construction safety, the current construction                     the construction plans and schedules while appropriately managing
+safety information and knowledge available through mandated safety                           the resulting safety concerns.
+rules and regulations, existing accident records, and personal safety en-                        On the other side, current construction safety information and
+gineering experience are mostly scattered and fragmented. It currently                       knowledge are scattered and fragmented across safety regulations,
+cannot easily be linked to or represented in project models such as a                        accident records, best practices, and safety experts' experiences. In
+BIM. Given these circumstances, this research presents the develop-                          knowledge management terms, there are two types of knowledge
+ment of a Construction Safety Ontology aiming to integrate safety                            typologies: explicit and tacit knowledge. The explicit knowledge of
+knowledge with project planning and execution to enable early hazard                         construction site safety exists in the form of accident records, and
+identiﬁcation and BIM-based visualization. Considering that there is no                      safety regulations as well as best practices. Safety hazard recognition
+“perfect” ontology and no “optimum” classiﬁcation or concept hierarchy                       is an important actualization of tacit knowledge since it mainly relies
+[7], it is important to note that the proposed Construction Safety Ontol-                    on a safety engineer's experience [10]. For this matter, design-for-
+ogy is not intended to cover a domain of interest in full detail. Rather, as                 safety toolbox software was developed by Gambatese et al. [11]. It
+a domain ontology, it intends to capture the most fundamental concepts                       contains a database of design suggestions or “best practices” that
+in the domain in a structured and extendable format [8].                                     can be implemented during the project planning and design phases.
+    This study aims to formalize construction safety knowledge and                           A way to properly document and organize such knowledge and
+connect it with BIM for automated hazard analysis and safety task                            enable quick project-speciﬁc inquiry becomes essential to fully
+scheduling. This paper is structured as follows: Section 2 reviews the                       leverage existing safety knowledge. A disadvantage of the tool is
+current safety practice and existing studies on compliance checking                          that it does not consider the speciﬁc conditions that exist on a con-
+and knowledge modeling in the Architecture, Engineering, and Con-                            struction site, for example, daily progress or changes of the job site
+struction (AEC) industry. Section 3 presents the objective and scope of                      environment. The tool only recommends mitigation strategies at a
+this study. In Section 4, the research methodology for developing the                        higher, more general level, for example, what solutions exist when
+proposed construction safety ontology is presented along with the                            fall hazards are present.
+system architecture of a proposed ontology-based hazard identiﬁcation
+application. The taxonomical structure of the Construction Safety Ontol-
+ogy is deﬁned and explained in Section 5. The ﬁrst stage of the ontology                     2.2. Information technology supported construction hazard identiﬁcation
+validation through one-on-one expert interviews is discussed in
+Section 6. The developed automated JHA in BIM application is demon-                              Information and communication technologies (ICT), such as
+strated in a case study as part of the second stage validation in                            BIM, Virtual Design and Construction technology (VDC) along with
+Section 7. A summary of the contributions and suggestions for future                         Geographic Information Systems (GIS), have become established
+research in the ﬁnal section conclude this paper.                                            tools in the AEC industry. The literature shows that VDC has poten-
+                                                                                             tials to simulate various stages of the construction process to help
+2. Background                                                                                engineers, architects, and contractors to detect, visualize, and
+                                                                                             resolve safety hazards prior to the hazardous conditions arising in
+2.1. Current construction safety planning and knowledge management                           the project. A number of research efforts focused on improving
+practice                                                                                     construction hazard identiﬁcation using ICT. Hadikusumo and
+                                                                                             Rowlinson [10] developed a design-for-safety-process (DFSP) tool
+    The complex and dynamic nature of the construction industry                              to assist a user in identifying safety hazards inherited within con-
+and its on-site work patterns are widely recognized. Safety planning                         struction components and processes. The DFSP database contains
+in construction environments is thus challenging. Traditional JHA                            object types, possible safety hazards, and accident precautions da-
+requires safety personnel to perform several important tasks, for                            tabase. Bansal [3] uses GIS based navigable 3D animation in safety
+example, learning from historical documentation to gain safety                               planning for predicting places and activities which have higher po-
+knowledge and applying it to activities on new construction                                  tential for accidents; he links the information between the CPM
+projects. Often they use their historical documentation or best                              schedule and safety recommendation database. The VTT Technical
+                                                                                             Research Centre of Finland [12] developed a job safety analysis
+                                                                                             method with the aid of virtualized construction site using CAVE TM
+Table 1                                                                                      (CAVE Automatic Virtual Environment) [13]. Guo et al. [14] devel-
+Sample JHA form.
+                                                                                             oped a conceptual framework of adopting virtual prototyping
+ Project title:         Job location:    Analyst:                    Date:                   technology to aid construction safety management. It consists of
+ Masonry Project XYZ    Third Floor      Safety Superintendent A     Feb. 17, 2014           three components: modeling and simulation, the identiﬁcation of
+ Activity name: Dismantling scaffolding                                                      unsafe factors, and safety training. Lin et al. [15] developed a 3D
+ Job step: Dismantle scaffolding components from the level above                             video game, Safety Inspector, to provide a comprehensive safety
+ Hazard type: Fall                                                                           training environment in which students assume the roles of safety
+ Hazard controls:
+                                                                                             inspectors and walk the game site to identify potential hazards.
+   1. Provide and use lifelines & harness with fall arrester
+   2. Implement buddy system among workers                                                       Although these existing studies share similar objectives with this
+   3. Display warning signs                                                                  study, none of them formalize the safety knowledge in a way that can
+   4. Cordon off affected work area                                                          support hazard identiﬁcation and visualization on the job step level.
+   5. Implement effective communication system to stop work when there is bad                Further automation of the process and better visualization methods
+   weather
+                                                                                             need to be explored.
+                                                    S. Zhang et al. / Automation in Construction 52 (2015) 29–41                                           31
+
+
+2.3. Compliance checking in construction                                             and execution can improve efﬁciency, reduce errors, and save human
+                                                                                     resources. Ontology has also been applied to establish the basis of a
+   A promising knowledge management direction in construction is                     decision-making tool for analyzing environmental, health and safety
+the use of BIM applications in the AEC industry to facilitate rule checking          risks along project planning and execution phases. Also, it supports to
+and simulations for evaluating building designs in the early phase of                deﬁne technical solution and preventive measures [32–34].
+a project [16–18]. Numerous studies have focused on developing                           Undoubtedly, these research efforts have paved the way towards
+compliance checking algorithms and applications to ensure design                     automated compliance checking and knowledge modeling in the
+quality. Along with developing rule-checking software, a domain-                     construction industry. However, from the literature review given
+speciﬁc language has been introduced as a language-driven ap-                        above, it can be concluded that most of the existing efforts have
+proach to the rule checking and architectural design analysis [19].                  focused on a domain ontology for construction concepts and model
+Zhang et al. [20] introduced the integration of construction and                     exchange. We currently still lack an ontology to both represent
+safety management based on BIMs and rule-based algorithms                            construction safety knowledge and to enable interaction between
+based on OSHA fall protection regulations. Industry Foundation                       ontology and BIM.
+Classes (IFCs)-based solutions have also been explored for fall                          In terms of knowledge preparation, Natural Language Processing
+hazards identiﬁcation and prevention in construction [21]. Solibri                   (NLP) techniques have been leveraged to extract information from
+Model Checker [22] is one of the commercially-available applica-                     regulation text. Zhang and El-Gohary [35] explored the effectiveness
+tions which provide rule checking capability against BIMs for archi-                 of utilizing syntactic and semantic features of the text to automatically
+tectural design validations. However, construction safety hazards                    extract regulatory information from building codes using automated
+identiﬁcation is currently not realized either in such program or                    Information Extraction (IE) approach. Chi et al. [36] presented an ap-
+by existing studies. More advanced and general rule-checking                         proach based on text classiﬁcation to support the automation of JHA.
+solutions for construction safety need to be explored.                               Kim et al. [37] proposed an automated information retrieval system
+                                                                                     that can search for and provide similar accident cases. The retrieval
+2.4. Ontology-based knowledge modeling in AEC industry                               system extracts BIM objects and composes a query set by combining
+                                                                                     them with a project management information system. Chi et al. [38] ap-
+    Gruber [23] deﬁned ontology as “an explicit and formal speciﬁcation              plied ontology-based text classiﬁcation (TC) to match safe approaches
+of a conceptualization.” Ideally, an ontology should (1) capture a shared            identiﬁed in existing resources with unsafe scenarios to assist JHA.
+understanding of a domain of interest and (2) provide a formal and ma-               However, knowledge extraction and preparation using NLP are beyond
+chine readable model of the domain [24]. Ontologies are now central to               the scope of this study.
+many applications such as scientiﬁc knowledge portals, information
+management and integration systems, electronic commerce and web                      3. Objective and scope
+services. Ontologies have been used in artiﬁcial intelligence to try to
+capture knowledge, and create a model of the knowledge base. There                       In this study, we propose a construction safety knowledge ontology
+exist numerous examples of general and speciﬁc ontologies, such as                   to formalize the safety management knowledge, and explore its connec-
+medical, transportation, and plant ontologies [25]. In recent years,                 tion with BIM to advance the interaction between safety management
+ontologies have been adopted in many business and scientiﬁc commu-                   and BIM. The purpose of the ontology is to allow computer applications
+nities as a way to share, reuse and process domain knowledge. The main               to easily discover, query, and share construction safety knowledge.
+areas, in which ontological modeling is applied, include communication               Though the ontology aims to be general and extensible, in order to
+and knowledge sharing, logic inference and reasoning, and knowledge                  limit the scope of demonstration and validation in this paper, masonry
+reuse.                                                                               construction was chosen as an area of focus for demonstrating the effec-
+    Development of a domain ontology in the construction industry has                tiveness of the developed ontology, as “masonry construction is one of
+been another crucial step to improve knowledge management and                        the specialty trades with high risk of work-related injuries” [39].
+workﬂow. Venugopal et al. [26] presented a formal classiﬁcation                      While the possibility to connect the ontology to BIM is explored, the
+structure for IFC implementations for the domain of Precast Concrete In-             actual semantic modeling of safety information in the form of building
+dustry to improve the interoperability of BIM applications. Lima et al.              information (e.g. using IFCs) is not investigated in this paper.
+[27] implemented the e-COGNOS platform and proved the beneﬁts of
+using semantic systems for adequate search and indexing capabilities.                4. Research methodology
+Secondly, the work they presented allows a systematic approach for for-
+mally documenting and updating organizational knowledge. Lastly,                         The reasons for using ontologies for safety knowledge modeling are
+their work enhances the customization of functions in knowledge man-                 manifold. First, they can be shared and used to link information from
+agement systems. The e-COGNOS platform presented the ﬁrst compre-                    different knowledge domains together. Second, ontologies support con-
+hensive ontology-based portal for knowledge management in the                        sistency checking and reasoning. In addition, concepts used in explicit
+construction domain. Akinci et al. [28] envisioned that semantic CAD/                safety knowledge and their semantic relationships can be represented
+GIS web services can provide a way to address the lack of interoperabil-             in the form of classes and properties of the ontology in an intuitive
+ity between CAD and GIS platform. El-Diraby and Osman [29] developed                 way [31].
+a domain ontology for construction concepts in urban infrastructure                      Automated reasoning about speciﬁcations requires the speciﬁca-
+products. Wang and Boukamp [9] presented a framework aiming to im-                   tions to be modeled in a computer-interpretable way [40]. In order to
+prove access to a company's JHA knowledge by using ontologies for                    make construction safety speciﬁcation checking an easier and more
+structuring knowledge about activities, job steps, and hazards. Zhang                efﬁcient process for safety managers or superintendents, an ontology-
+et al. [30] proposed a framework for automated, ontology-based job                   based semantic modeling of safety speciﬁcations is explored. The
+hazard analysis in building information models. An ontology-based se-                detailed research tasks are shown in Fig. 2 and explained in the follow-
+mantic modeling approach of regulation constraints based on proposed                 ing sub-sections.
+CQIEontology and construction process ontology was explored by
+Zhong et al. [31] aiming to integrate regulation knowledge with the                  4.1. Deﬁning the purpose and the scope of the safety ontology
+deﬁnition and execution of construction processes. They concluded
+that the proposed regulation-based automated construction quality                        The purpose of developing a construction safety ontology is not only
+compliance checking as a parallel activity to construction planning                  to formalize the current construction safety knowledge, but also to
+32                                                  S. Zhang et al. / Automation in Construction 52 (2015) 29–41
+
+
+
+
+                                                Fig. 2. Research tasks in construction safety ontology development.
+
+
+
+
+support safety hazard identiﬁcation and mitigation through BIM. An on-               before any work tasks start. The feedback from the application (i.e. users
+tology should therefore support the integration of the knowledge with                provide verbal or written comments on the reliability and accurateness
+building information models. Existing BIM schema, such as the IFCs,                  of the new approach) then goes back to ontology development to make
+are considered. For example, the data structure for building elements                further improvement. The Construction Safety Ontology then becomes
+in the safety ontology follows IFC's IfcBuildingElement.                             the ﬁnal output.
+                                                                                         The system architecture of our ontology-based hazard identiﬁcation
+4.2. Ontology capturing and coding                                                   application includes ontology editor, reasoner, rule engine, and BIM
+                                                                                     platform (see Fig. 3):
+    The knowledge sources considered for identifying relevant concepts
+and coding the safety ontology include the OSHA regulation 1926 [41],                1) Protégé is an open-source platform to construct domain models and
+the Occupational Injury and Illness Classiﬁcation Manual [42], and Con-                 knowledge-based applications with ontologies [45]. The OWL-based
+struction Solutions Database [43]. These include construction safety reg-               safety ontology is ﬁrst modeled and edited using Protégé to deﬁne its
+ulations and industry safety best practice reports. In order to design and              classes, relationships and axioms.
+maintain a meaningful, correct, and minimally redundant ontology, the                2) Pellet is an OWL 2 reasoner providing OWL DL reasoning services for
+consistency of the ontology is checked and veriﬁed using an automated                   OWL ontologies. It is used to check the consistency of the developed
+reasoner. A Description Logic (DL) reasoner is able to perform various                  Construction Safety Ontology.
+automated inferencing services on the developed OWL-based ontology,                  3) Based on the Construction Safety Ontology, SWRL rules are then
+such as determining whether or not the ontology includes inconsistent                   developed to represent OSHA regulations. Also, the rule set can be
+classes. Automated consistency checking is crucial as manual checking                   customized and rules can be added by subject matter experts
+would be highly time-intensive. It helps in assessing the overall consis-               according to their speciﬁc requirements.
+tency of the ontology. In addition, interviews with domain experts were              4) After connecting the ontology with Tekla, a commercial BIM soft-
+conducted to further evaluate the ontology content.                                     ware platform, individuals/instances of the safety concepts deﬁned
+                                                                                        in the ontology are generated using BIM project information. Proper-
+4.3. Semantic Web Rule Language (SWRL) rule development                                 ties of each individual, such as geometry information, are obtained
+                                                                                        through BIM.
+    The Semantic Web Rule Language (SWRL) is a language that can be                  5) Facts including the knowledge base and individuals generated from
+used to express rules as well as logic, combining OWL DL or OWL Lite                    BIM are passed to the Jess rule engine to be checked against SWRL
+with a subset of the Rule Markup Language [44]. Selected OSHA regula-                   rules deﬁned earlier by a safety manager.
+tions and industry safety best practices are coded in SWRL rule formats,             6) Once new knowledge has been inferred by the rule-checking
+compatible with ontology classes and relationship. This enables auto-                   process, Jess updates the ontology.
+mated reasoning to test the applicability of safety rules and regulations            7) The updated OWL ontology is then linked with the BIM platform to
+for different projects. An additional objective was to have rules that can              visualize inferred knowledge, such as required safety protective
+be conﬁgured and adjusted by a user. As the rules will likely be applied                systems and protective safety zones.
+to projects with unique circumstances, user-friendliness to reﬂect ad-               8) Finally, project speciﬁc JHA along with a 4D building model visualiz-
+vantages of competing construction methods and other accepted best                      ing safety information are generated to support site level project
+safety practices as well as human involvement are key concerns in the                   safety planning and inspection.
+traditionally risk-averse construction industry. It is therefore possible
+to have industry subject experts to adjust existing SWRL rules or to                 5. Taxonomical structure of the construction safety ontology
+create new rules in Protégé; however, it may require some additional
+training if Protégé is new to them.                                                      The goal and intention of this research are to formalize construction
+                                                                                     safety planning knowledge by developing a Construction Safety Ontolo-
+4.4. Ontology validation and improvement                                             gy. As shown in Fig. 4, our Construction Safety Ontology consists of three
+                                                                                     main domain ontology models including: Construction Product Model,
+   A BIM-based JHA application is developed to automatically identify                Construction Process Model, and Construction Safety Model.
+work activity related safety hazards, suggest mitigation methods, and                    The Construction Product Model contains building element informa-
+visualize relevant safety information, such as hazard zones. All support             tion such as column, slab, and wall information, and provides the
+safety management in advancing decision making at the front-end,                     main interface for connecting the ontology and a BIM platform. It
+                                                      S. Zhang et al. / Automation in Construction 52 (2015) 29–41                                            33
+
+
+
+
+                                       Fig. 3. System architecture of the ontology-based hazard identiﬁcation application in BIM.
+
+
+
+follows the structure of the IFC schema and mainly includes sub-                       (4) Protective_Space, for instance a limited access zone for masonry
+types of IfcBuildingElement. This building element includes major                      wall construction to avoid unneeded personnel entering a danger-
+functional parts of a building; examples are foundation, ﬂoor, roof,                   ous area, and (5) Inspection, if the job activity needs to be inspected
+and wall [46].                                                                         by safety personnel.
+    The Construction Process Model includes the construction plan of the                   The resulting construction safety ontology allows for the integration
+project along with construction resources, such as equipment, material                 of safety planning and construction execution planning by linking safety
+and labor. The model used in this study was based on several existing                  knowledge to construction processes and products.
+studies on construction process modeling. Speciﬁcally, it leveraged
+models proposed by Benevolenskiy et al. [47] and Wang and Boukamp
+[9] and modiﬁed these to ﬁt to the construction safety domain. Task,                   6. Construction safety ontology evaluation
+Activity, and Job_Step represent the hierarchical breakdown of the
+construction process. Task is related to Building Component through                        Generally, ontology evaluation is roughly classiﬁed into two kinds:
+the “produce” property. For instance, Task_Masonry_Wall produces                       form-based (syntax) evaluation and content-based (semantic) evalua-
+Masonry_Wall. Each of the tasks consists of a set of activities, and each              tion. The developed ontology has been checked to ensure its consistency
+activity consists of different job steps. The construction method is asso-             using the Pellet reasoner. Such a form-based evaluation as to whether
+ciated with the activity and construction resources are related to each of             the ontology being constructed is written properly in terms of its
+the activity's job steps.                                                              form/syntax is required to enable automatic reasoning. However,
+    The Construction Safety Model contains construction safety related                 content-based evaluation is needed to evaluate whether the ontology
+knowledge, such as potential hazard, speciﬁcation from regulations,                    properly represents the target domain [48].
+mitigation recommendation, and safety resource. Each Job_Step is                           Two types of content-based evaluation methods were considered in
+associated with multiple Potential_Hazard instances through the                        this study: agreement-based and task-based. Agreement-based evalua-
+“hasHazards” property. Then, each Potential_Hazard is controlled by                    tion is measured through the proportion of agreement that experts have
+some Mitigation_Recommendation to eliminate or reduce the safety                       with respect to ontology elements and structure. Task-based evaluation
+risk. Some of the Mitigation_Recommendation requires additional                        assesses what domain tasks have to be supported by an ontology and
+Resource instances such as safety protective systems or equipment.                     how well that ontology supports these tasks [49]. It measures an ontol-
+“hasHazards” and “needResoruces” are determined using conventional                     ogy according to its ﬁtness to goals, preconditions, post conditions, con-
+hazard recognition (hazards) and mitigation (resources) strategies.                    straints and options. The developed ontology is evaluated through
+These resources are regulated by Safety_Speciﬁcation instances derived                 interviews with subject experts and then tested through the developed
+from safety regulation or best safety practices. The type and classiﬁca-               JHA application as a task-based evaluation, which will be discussed in
+tion of potential hazards follow the Occupational Injury and Illness                   the next section.
+Classiﬁcation Manual [43]. The connections between Job_Step and                            One-on-one interviews were conducted with construction safety ex-
+Potential_Hazard are established based on industry safety database                     perts to evaluate the content and structure of the ontology. 11 profes-
+such as the Construction Solutions Database [42].                                      sionals completed the survey whose time in the industry accumulates
+    The Resource class hierarchy is further explained in Fig. 5 using                  to about 117 years of practical work experience (Table 2). The evalua-
+the same annotation as Fig. 4. It contains four resource subclasses,                   tion process consists of three major sections: 1) the taxonomy, relations,
+namely Equipment, Material, Labor and Safety_Measure. The                              and axioms of the construction safety ontology were ﬁrst presented to
+Safety_Measure has ﬁve subclasses: (1) Training to train workers to                    the safety professional, then 2) an open discussion was held to explain
+conduct the job in a safe manner, (2) Personal_Protective_Equipment,                   the details of the ontology and also to receive constructive feedback,
+such as gloves and lifelines, (3) Safe_guard, for example guardrail                    and 3) the participant was asked to evaluate the ontology through an
+systems which are applied on instances of Building_Element,                            online survey after the interview.
+34                                                 S. Zhang et al. / Automation in Construction 52 (2015) 29–41
+
+
+
+
+                                                            Fig. 4. The Construction Safety Ontology.
+
+
+   The survey used a Likert six-point scale to record the responses of              • Participants ﬁnd the concepts and relations used in the ontology are
+experts, with 1 being the most favorable (see Table 3). The results indi-             “representative” of construction safety knowledge.
+cate that:                                                                          • Participants ﬁnd the navigation through the ontology to be
+                                                                                      “easy”.
+• Participants ﬁnd the concepts used to be in the range of “very familiar”          • Participants “agree” that the ontology covers the main concepts
+  to “familiar.”                                                                      and relations within the construction safety domain.
+
+
+
+
+                                                    Fig. 5. Resource class in the Construction Safety Ontology.
+                                                             S. Zhang et al. / Automation in Construction 52 (2015) 29–41                                                 35
+
+
+Table 2                                                                                       Table 3
+Industry safety professional participants.                                                    Survey results.
+
+  Participant      Years of experience       Job title                                          Question                             Mean Median Standard Result
+                                                                                                                                                 deviation
+  1                20                        Safety Engineering Supervisor
+  2                 9                        OSHA Inspector and Industrial Hygienist            Are you familiar with the concepts   1.45   1     0.5      “Very familiar”
+  3                35                        Construction Project Manager                         used in the ontology?                                    to “familiar”
+  4                15                        Safety Professional                                Do you think the concepts and        1.64   2     0.48     “Representative”
+  5                10                        Safety Director                                      relations used in the ontology
+  6                 5                        Assistant Superintendent                             are representative?
+  7                 5                        Safety Engineer                                    How easy was it to understand        1.82   2     0.54     “Easy”
+  8                 1                        Project Safety Coordinator                           and navigate through the
+  9                 9                        HSE Manager                                          ontology?
+  10                6                        Projects HSE Consultant                            Does the ontology cover the main     1.91   2     0.51     “Agree”
+  11                2                        Project Safety Advisor                               concepts and relations within
+                                                                                                  the Construction Safety domain?
+
+
+
+                                                                                              7.2. Individual generation
+7. Automated JHA in BIM: a case study
+                                                                                                  The individual generation is the process to create ontology instances
+7.1. SWRL rule development                                                                    based on model items in BIM, and the process is illustrated in Fig. 7 as an
+                                                                                              example. Individuals are generated based on the information both from
+    The OSHA regulation of masonry construction [41] was ﬁrst                                 the safety ontology and BIM. In Fig. 7, Masonry_Wall_362 is generated as
+interpreted into SWRL rules using the ontology's concepts. The                                an individual of Masonry_Wall. Related classes are also generated to the
+following examples show (1) the requirement of limited access                                 instance level as shown from the snippet of OWL RDF/XML of this indi-
+zone for masonry wall and (2) the requirement of having a bracing                             vidual in Fig. 8 including activity, task, resource, potential hazard, etc. In
+system, if the height of the wall is greater than 8 ft for a Placing_Brick                    addition, information such as geometry and schedule obtained from
+job step. It should be noted that other job steps related to construct-                       BIM are attached to the individual.
+ing the masonry wall also need to establish such SWRL rules. All units
+were converted from U.S. standard to metric in the SWRL rules. The
+concepts and attributes in these two SWRL rules are illustrated in                            7.3. Individual update and visualization
+Fig. 6, which also shows their correspondence with the Construction
+Safety Ontology in Fig. 4.                                                                        In this example, dimensions of an inferred Limited_Access_Zone
+    OSHA Regulation 1:                                                                        are computed by running the rule engine and evaluating the SWRL
+                                                                                              rule. In Fig. 9, the height, length and width of the individual
+                                                                                              Limited_Access_Zone_362 are computed based on the geometry of
+   1926.706(a) A limited access zone shall be established whenever                            the masonry wall, and displayed in Protégé. Fig. 10 shows the snippet
+   a masonry wall is being constructed.                                                       of the Limited_Access_Zone_362 in OWL RDF/XM format. Hence, the
+   1926.706(a)(2) The limited access zone shall be equal to the                               BIM is updated to visualize the limited access zone for masonry
+   height of the wall to be constructed plus four feet, and shall run                         construction.
+   the entire length of the wall.                                                                 Limited_Access_Zone has been created and visualized in the model
+                                                                                              (see Fig. 11a). In addition, since the height for this masonry wall is larger
+                                                                                              than 8 ft, Masonry_Wall_Bracing task has been automatically inserted
+                                                                                              into schedule with a link to the wall object in BIM (see Fig. 11b). The
+    SWRL Rule 1:
+                                                                                              limited access zone is generated on one side of the wall, and usually
+    Masonry_Wall(?mw) ∧ hasHeight(?mw, ?h) ∧ Task_Masonry_
+                                                                                              scaffolding will be erected at the other side. Since it is a layout issue,
+Wall(?act) ∧ produce(?act, ?mw) ∧ consistOf(?act, ?sub) ∧
+                                                                                              side for limited access zone is ﬁrst randomly picked by the program
+Masonry_Operation(?sub) ∧ consistOf(?sub, ?pb) ∧ Placing_Brick(?
+                                                                                              and the user can switch the two sides if needed afterwards.
+pb) ∧ needResources(?pb, ?laz) ∧ Limited_Access_Zone(?laz) ∧
+hasHeight(?mw, ?h) ∧ hasLength(?mw, ?l) ∧ swrlb:add(?x, ?h,
+1219.2) → hasWidth(?laz, ?x) ∧ hasLength(?laz, ?l) ∧ hasHeight(?
+                                                                                              7.4. Automated JHA and reporting
+laz, ?h)
+    OSHA Regulation 2:
+                                                                                                 A JHA prototype was developed using Microsoft Visual C# to imple-
+                                                                                              ment the ontology-based hazard identiﬁcation application (Fig. 12). The
+   1926.706(b) All masonry walls over eight feet in height shall be ad-                       JHA Advisor user interface is designed to leverage different sets of BIM
+   equately braced to prevent overturning and to prevent collapse                             and the Construction Safety Ontology. The general steps of applying
+   unless the wall is adequately supported so that it will not overturn                       the prototype are listed as follows:
+   or collapse. The bracing shall remain in place until permanent
+   supporting elements of the structure are in place.                                         1) Load construction schedule from the building model
+                                                                                              2) Load construction safety ontology as OWL format
+                                                                                              3) Generate individuals based on both project schedule and ontology
+                                                                                              4) Output individuals into new OWL ﬁle
+   SWRL Rule 2:                                                                               5) Use Jess rule engine to check individuals and infer new knowledge
+   Masonry_Wall(?mw) ∧ hasHeight(?mw, ?h) ∧ Task_Masonry_                                     6) Re-load individuals from updated OWL ﬁle to visualize protective
+Wall(?act) ∧ produce(?act, ?mw) ∧ consistOf(?act, ?sub) ∧                                        zones and to update schedule to include safety tasks
+Masonry_Operation(?sub) ∧ consistOf(?sub, ?pb) ∧ Placing_Brick(?                              7) Review the construction sequence according to 4D model simulation
+pb) ∧ swrlb:greaterThan(?h, 2438.4) → needResources(?pb, Mason-                               8) Generate the JHA report including the JHA results and also the
+ry_Wall_Bracing)                                                                                 snapshot of the simulated 3D building model
+36              S. Zhang et al. / Automation in Construction 52 (2015) 29–41
+
+
+
+
+     Fig. 6. Masonry wall task related classes and attributes used in SWRL rule 1 and 2.
+
+
+
+
+               Fig. 7. Individual generation based on both ontology and BIM.
+                                                       S. Zhang et al. / Automation in Construction 52 (2015) 29–41                                                37
+
+
+
+
+                                             Fig. 8. Snippet of OWL RDF/XML showing an individual of Task_Masonry_Wall.
+
+
+
+
+                                                  Fig. 9. Computed dimensions of Limited_Access_Zone_362 in Protégé.
+
+
+
+                                                                                            A masonry model along with scaffolding was built as shown in
+                                                                                        Fig. 13. All building elements were linked to a corresponding construc-
+                                                                                        tion schedule (see Fig. 14). The scaffolding models were generated
+                                                                                        semi-automatically using algorithms developed in Kim and Teizer
+                                                                                        [50]. These temporary structures match the masonry model and comply
+                                                                                        with OSHA rules. Construction schedules in BIM typically do not show
+                                                                                        high levels of detail. For example, detailed activities, such as a wall erec-
+                                                                                        tion activity for every instance of a wall, are often not listed in the Gantt
+                                                                                        chart. Instead, the schedule usually represents these through a summa-
+                                                                                        ry activity, e.g. one activity that represents all wall erection activities on
+Fig. 10. Snippet of OWL RDF/XML showing an individual of Limited_Access_Zone.           a given level. The developed JHA program is capable of populating the
+38                                                        S. Zhang et al. / Automation in Construction 52 (2015) 29–41
+
+
+
+
+                          Fig. 11. (a) Generated Limited Access Zone for masonry wall and (b) Inserted Masonry_Wall_Bracing task in the schedule.
+
+
+
+
+                                                                                           interface provides a valuable tool that may ﬁnd popular application in
+                                                                                           the ﬁeld as it increases communication among project stakeholders.
+                                                                                           The smallest time step for the purpose of the simulation was set to a
+                                                                                           minute in the developed program to allow for micro-level analysis of
+                                                                                           the activities.
+                                                                                               For each task in the schedule, the corresponding Activity, Job_Step,
+                                                                                           Potential_Hazard and Mitigation are shown (see Fig. 12). An informative
+                                                                                           report (see Fig. 15) was automatically generated by the system as an
+                                                                                           ExcelTM sheet. As can be seen in this example, the JHA template of
+                                                                                           Table 1 is applied to the “Dismantle guardrails, ledgers, transoms, and
+                                                                                           standards from the level above” job step and its related safety resources,
+                                                                                           and supplemented with the view of the simulated BIM according to
+                                                                                           schedule. According to the review time of the 4D simulation of the pro-
+                                                                                           ject, the JHA related elements are shown in orange to be distinguished
+                                                                                           from other ongoing tasks that are shown in blue. Such JHA reports can
+                                                                                           not only provide safety analysis in a time-efﬁcient manner, but it can
+                                                                                           also become a useful safety training tool for improving worker's safety
+                                                                                           awareness and their understanding of the surrounding working
+                                                                                           environment.
+                     Fig. 12. RAPIDS JHA advisor interface.
+                                                                                           8. Discussions and conclusions
+detailed construction schedule depending on pre-allocated percentage
+of the time for each activity and job step. The time percentage used for                   8.1. Limitations and future study
+each activity and job step is stored in the ontology as an attribute,
+which then will also be generated for each individual during the individ-                     The initial implementation and test show that the proposed ap-
+ual generation process. At the same time, relevant safety information is                   proach can support a more comprehensive project safety management
+also retrieved. Such activity level based construction simulation is help-                 leveraging BIM technology. However, it is acknowledged that compre-
+ful to practitioners as it communicates where and when safety equip-                       hensive testing of the framework and extensive application to a wider
+ment is needed and needs to be removed. Thus, the developed user                           construction domain will be required to further help validate both the
+
+
+
+
+                                                                   Fig. 13. Masonry model with scaffolding.
+                                                          S. Zhang et al. / Automation in Construction 52 (2015) 29–41                                             39
+
+
+                                                                                           recommended to have a safety expert audit the results generated by
+                                                                                           the automated system and also provide his/her input.
+                                                                                               The developed Construction Safety Ontology intends to be extend-
+                                                                                           able. Two new safety management aspects are being considered to be
+                                                                                           included into the ontology:
+
+                                                                                              (1) Safety risk factors [51] can be integrated into the ontology sche-
+                                                                                                  ma and be used to assess and compare different construction
+                                                                                                  methods and sequences. This assists construction managers to
+                                                                                                  select the safest solution. In addition, the risk assessment results
+                                                                                                  can be visualized in BIM using a color code. This becomes a useful
+                                                                                                  tool for safety inspectors who need to identify and resolve haz-
+                                                                                                  ards on the construction site. Preliminary results can be found
+                                                                                                  in Collins et al. [52].
+                                                                                              (2) Construction workspace conﬂict detection [53–56] has the
+                                                                                                  potential to be solved in BIM if workspace information and pa-
+                                                                                                  rameters can be included in the Construction Safety Ontology.
+                  Fig. 14. The project building model schedule.                                   Fig. 16 shows an extension of Construction Safety Ontology
+                                                                                                  with workspace information included.
+
+model and the framework. The identiﬁed main limitation is that the JHA
+knowledge would not be able to consider construction site layout issues,                       Technology-based safety solutions need to be developed [57] taking
+since information such as terrain, site logistics, and construction equip-                 advantage of computer-aided approaches that replace or assist in tradi-
+ment operation is currently not included and represented in BIM. Some                      tional management practices. In terms of the IFC exchange format, the
+examples include power line proximity issue, struck-by hazard led by                       current scope of IfcConstructionMgmtDomain schema focuses on sched-
+heavy equipment operations, and cave-in hazard. Secondly, since it                         ule, cost and quantities of the project without considering construction
+may currently not be possible to update BIM model frequently to reﬂect                     safety aspect. Since safety is an important aspect of construction man-
+current construction site condition and schedule, which will largely af-                   agement, it is crucial to extend the existing IFC schema to include safety
+fect the JHA results using the developed system. In addition, the devel-                   prevention methods, requirement, and risk factors in the long run for
+oped prototype intends to assist human decision-making; it is                              creating an integrated safety management system. In addition to
+
+
+
+
+                 Fig. 15. Sample JHA report generated by JHA Advisor automatically (grey—ﬁnished, orange—ongoing task in review, blue—other ongoing task).
+40                                                        S. Zhang et al. / Automation in Construction 52 (2015) 29–41
+
+
+                                                                                    Building_Component
+
+                                                                                              occupy
+
+
+                                                                               Building_Component_Space
+
+
+                                                    Equipment                occupy          Equipment_Space
+
+
+                                Resource             Material                occupy             Handling_Path                    Work_Space
+
+
+                                                       Labor                 occupy              Crew_Space
+
+
+                                                   Safety_Measure                             Protective_Space
+
+
+
+                                               Fig. 16. Extended Construction Safety Ontology to include workspace information.
+
+
+conducting hazard analysis in BIM, future research may also explore                         [2] A.F. Waly, W.Y. Thabet, A virtual construction environment for preconstruction
+                                                                                                planning, Automation in Construction, 12(2), Elsevier, 2003. 139–154.
+BIM as an interface for safety knowledge acquisition, transfer, and rea-                    [3] V. Bansal, Application of geographic information systems in construction safety
+soning, which will then fully integrate safety with project lifecycle                           planning, Int. J. Proj. Manag. 29 (1) (2011) 66–77.
+through BIM.                                                                                [4] U.S. Dept. of Labor, Job Hazard Analysis. Publication 3071, Occupational Safety and
+                                                                                                Health Administration, Washington, DC, 2002.
+                                                                                            [5] National Safety Council, Sample JHA, Supervisor's Safety Manual, 9th edition67,
+                                                                                                1997.
+8.2. Conclusions                                                                            [6] M.P. Nepal, S. Staub-French, R. Pottinger, A. Webster, Querying a building informa-
+                                                                                                tion model for construction-speciﬁc spatial information, Advanced Engineering In-
+    This paper presents ontology-based semantic modeling of a con-                              formatics, 26 (4), Elsevier, 2012. 904–923.
+                                                                                            [7] A. Taivalsaari, Classes vs. prototypes-some philosophical and historical observations,
+struction safety knowledge framework. A Construction Safety Ontology                            J. Object-Oriented Program. 10 (7) (1996) 44–50.
+was developed to formalize the construction safety management                               [8] N.M. El-Gohary, T.E. El-Diraby, Domain ontology for processes in infrastructure and
+knowledge. Interviews and surveys with construction experts were                                construction, ASCE J. Constr. Eng. Manag. 136 (7) (2010) 730–744.
+                                                                                            [9] H.-H. Wang, F. Boukamp, Ontology-based representation and reasoning framework
+conducted to evaluate the ontology structure and content. Also, it sup-                         for supporting job hazard analysis, ASCE J. Comput. Civ. Eng. 25 (6) (2011) 442–456.
+ports safer and healthier construction project execution while linking                     [10] B. Hadikusumo, S. Rowlinson, Capturing safety knowledge using design-for-safety-
+the developed ontology to BIM. Based on the developed framework,                                process tool, ASCE J. Constr. Eng. Manag. 130 (2) (2004) 281–289.
+                                                                                           [11] J.A. Gambatese, M. Behm, J.W. Hinze, Viability of designing for construction worker
+a prototype was developed that supports automated ontology-
+                                                                                                safety, ASCE J. Constr. Eng. Manag. 131 (9) (2005) 1029–1036.
+based JHA in BIM to further test the ontology. The prototype intro-                        [12] M. Kiviniemi, K. Sulankivi, K. Kähkönen, T. Mäkelä, K. Merivirta, BIM-based Safety
+duces signiﬁcant automation in existing manual/experience-based                                 Management and Communication for Building ConstructionAvailable online:
+                                                                                                http://www.vtt.ﬁ/inf/pdf/tiedotteet/2011/T2597.pdf (Accessed Oct. 2013).
+JHA processes, allowing a user to apply different sets of JHA on
+                                                                                           [13] C. Cruz-Neira, D.J. Sandin, T.A. DeFanti, Surround-screen projection-based virtual real-
+building information models. Simulation of safety and visualization                             ity: the design and implementation of the CAVE, Proceedings of the 20th Annual Con-
+of models with safety resources becomes possible. The developed                                 ference on Computer Graphics and Interactive Techniques, ACM, 1993, pp. 135–142.
+knowledge or best practice can be transferred and applied by safety                        [14] H. Guo, H. Li, V. Li, VP-based safety management in large-scale construction projects:
+                                                                                                a conceptual framework, Automation in Construction, 34, Elsevier, 2012. 16–24.
+and ﬁeld staff on construction sites. This may include individuals                         [15] K.-Y. Lin, J.W. Son, E.M. Rojas, A pilot study of a 3D game environment for construc-
+with limited safety knowledge and different levels of safety experi-                            tion safety education, J. Inf. Technol. Constr. 16 (2011) 69–83.
+ence. The prototype supports a safety engineer or manager to plan                          [16] C.M. Eastman, P. Teicholz, R. Sacks, K. Liston, BIM Handbook: a Guide to Building
+                                                                                                Information Modeling for Owners, Managers, Architects, Engineers, Contractors,
+for safety at the front-end of a project more efﬁciently. It further as-                        and Fabricators, 2nd ed. John Wiley and Sons, Hoboken, NJ, 2011.
+sists in decision making that will be made by humans. In addition,                         [17] J.-K. Lee, J. Lee, Y.-s. Jeong, H. Sheward, P. Sanguinetti, S. Abdelmohsen, C.M.
+the construction safety ontology is expected to be able to provide                               Eastman, Development of space database for automated building design review sys-
+                                                                                                 tems, Automation in Construction, 24, Elsevier, 2012. 203–212.
+other beneﬁts, if leveraged in safety planning tools. For example,                         [18] C. Eastman, J.-m. Lee, Y.-s. Jeong, J.-k. Lee, Automatic rule-based checking of building
+when the schedule of a project changes, the user can re-run the pro-                            designs, Automation in Construction, 18(8), Elsevier, 2009. 1011–1033.
+gram and quickly receive updated results of the hazard analysis.                           [19] J.K. Lee, Building environment rule and analysis (BERA) language and its application
+                                                                                                for evaluating building circulation and spatial programPh.D. dissertation Georgia
+Further goals of future research and implementation must be to
+                                                                                                Institute of Technology, 2011.
+use such tools just prior to conducting work and for that purpose,                         [20] S. Zhang, J. Teizer, J.-K. Lee, C.M. Eastman, M. Venugopal, Building information
+readily available as-built BIMs are necessary that the developed                                 modeling (BIM) and safety: automatic safety checking of construction models and
+                                                                                                 schedules, Automation in Construction, 29, Elsevier, 2013. 183–195.
+prototype can use. These can then eventually aid in preventing so
+                                                                                           [21] J. Melzner, S. Zhang, J. Teizer, H.-J. Bargstädt, A case study on automated safety
+called house-keeping issues and conditions related to human be-                                 compliance checking to assist fall protection design and planning in building infor-
+havior that lead to accidents on construction sites, e.g., power                                mation models, Construction Management and Economics, 31 (6), Taylor and
+cords laying on ﬂoor causing tripping or falling accidents and gener-                           Francis, 2013. 661–674.
+                                                                                           [22] Solibri, Accessed Sep., 2013 http://www.solibri.com/solibri-model-checker.html.
+al unsafe behavior caused by absence of mind or missing instruc-                           [23] T.R. Gruber, Toward principles for the design of ontologies used for knowledge
+tions or infrequent occupational safety and health education and                                sharing? Int. J. Hum. Comput. Stud. 43 (5) (1995) 907–928.
+training, respectively. These need to be addressed at same priority                        [24] I. Horrocks, Description logic reasoning, International Conference on Logic Program-
+                                                                                                ming and Automated Reasoning, Montevideo, Uruguay, 2000.
+as safety regulations suggested by OSHA regulations.                                       [25] A. Aksamija, F. Grobler, Architectural ontology: development of machine-readable
+                                                                                                representations for building design drivers, International Workshop on Computing
+                                                                                                in Civil Engineering2007. 168–175.
+References                                                                                 [26] M. Venugopal, C.M. Eastman, R. Sacks, J. Teizer, Semantics of model views for
+ [1] E.A.L. Teo, F.Y.Y. Ling, A.F.W. Chong, Framework for project managers to manage             information exchanges using the industry foundation class schema, Advanced
+     construction safety, Int. J. Proj. Manag. 23 (4) (2005) 329–341.                            Engineering Informatics, 26 (2), Elsevier, 2012. 411–428.
+                                                               S. Zhang et al. / Automation in Construction 52 (2015) 29–41                                                                   41
+
+[27] C. Lima, T. El-Diraby, J. Stephens, Ontology-based optimization of knowledge               [42] CPWR, Construction Solutions DatabaseAccessed Dec. 1 2013 http://www.cpwr.
+     management in e-construction, J. IT Constr. 10 (2005) 305–327.                                  com/research/construction-solutions-database.
+[28] B. Akinci, H. Karimi, A. Pradhan, C.-C. Wu, G. Fichtl, CAD and GIS interoperability        [43] Bureau of Labor Statistics, Occupational Injury and Illnesses Classiﬁcation
+     through semantic web services, J. IT Constr. 13 (2010) 39–55.                                   ManualAccessed Sep., 2013 http://www.bls.gov/iif/oshwc/oiicm.pdf.
+[29] T. El-Diraby, H. Osman, A domain ontology for construction concepts in urban               [44] I. Horrocks, P.F. Patel-Schneider, H. Boley, S. Tabet, B. Grosof, M. Dean, SWRL: A
+     infrastructure products, Automation in Construction, 20 (8), Elsevier, 2011.                    semantic web rule language combining OWL and RuleML, W3C Member submis-
+     1120–1132.                                                                                      sion, 212004. 79.
+[30] S. Zhang, J. Teizer, F. Boukamp, Automated Ontology-based Job Hazard Analysis              [45] M.A. Musen, L.M. Fagan, D.M. Combs, E.H. Shortliffe, Use of a domain model to drive
+     (JHA) in Building Information Modelling (BIM), Proceedings of CIB W099                          an interactive knowledge-editing tool, Int. J. Man Mach. Stud. 26 (1) (1987)
+     International Conference on “Modelling and Building Health and Safety”, 2012,                   105–121.
+     pp. 74–81.                                                                                 [46] ISO 6707-1, Building and civil engineering – Vocabulary – Part 1: General
+[31] B. Zhong, L. Ding, H. Luo, Y. Zhou, Y. Hu, H. Hu, Ontology-based semantic modeling              termsAccessed Jan., 2014 http://www.iso.org/iso/catalogue_detail.htm?
+     of regulation constraint for automated construction quality compliance checking,                csnumber=60034.
+     Automation in Construction, 28, Elsevier, 2012. 58–70.                                     [47] A. Benevolenskiy, K. Roos, P. Katranuschkov, R.J. Scherer, Construction processes
+[32] M. Gangolells, M. Casals, An ontology-based approach for on-site integrated envi-               conﬁguration using process patterns, Advanced Engineering Informatics, 26 (4),
+     ronmental and health and safety management, Rev. Ing. Constr. 27 (3) (2012)                     Elsevier, 2012. 727–736.
+     103–127.                                                                                   [48] C. Brewster, H. Alani, S. Dasmahapatra, Y. Wilks, Data driven ontology evaluation,
+[33] A. Fuertes, M. Casals, M. Gangolells, N. Forcada, X. Roca, An ontology for Environ-             Proceedings of Int. Conf. on Language Resources and Evaluation, Lisbon, 2004.
+     mental and Health and Safety risks' evaluation for construction, FOMI 2008—3rd             [49] A. Gangemi, C. Catenacci, M. Ciaramita, J. Lehmann, Modelling ontology evaluation
+     Workshop on Formal Ontologies Meet Industry, IOS press, Torino, Italy, June 2008.               and validation, The Semantic Web: Research and Applications, Springer, 2006.
+     [http://ebooks.iospress.nl/publication/4129].                                                   140–154.
+[34] N. Forcada, M. Casals, M. Gangolells, X. Roca, A. Fuertes, An ontology for the             [50] K. Kim, J. Teizer, Automatic design and planning of scaffolding systems using build-
+     Environmental and Safety integration in the construction sector, 3rd International              ing information modeling, Advanced Engineering Informatics, 28, Elsevier, 2014.
+     Conference I-ESA 2007 Interoperability for Enterprise Software and Applications,                66–80.
+     Springer London, Funchal—Madeira, Portugal, March 2007 [http://link.springer.              [51] O. Rozenfeld, R. Sacks, Y. Rosenfeld, H. Baum, Construction job safety analysis, Safety
+     com/chapter/10.1007/978-1-84628-858-6_67].                                                      Science, 48(4), Elsevier, 2010. 491–498.
+[35] J. Zhang, N. El-Gohary, Automated regulatory information extraction from building          [52] R. Collins, S. Zhang, K. Kim, J. Teizer, Integration of safety risk factors in BIM for scaf-
+     codes leveraging syntactic and semantic information, Proceedings of the 2012                    folding construction, Proc. ICCCBE 2014, Florida, 2014.
+     ASCE Construction Research Congress (CRC), 2012.                                           [53] O. Rozenfeld, R. Sacks, Y. Rosenfeld, ‘CHASTE’: construction hazard assessment with
+[36] N. Chi, K. Lin, S. Hsieh, On effective text classiﬁcation for supporting job hazard             spatial and temporal exposure, Construction Management and Economics, 27(7),
+     analysis, Proceedings of the ASCE International Workshop on Computing in                        Taylor and Francis, 2009. 625–638.
+     Civil Engineering2013. 613–620.                                                            [54] R. Sacks, O. Rozenfeld, Y. Rosenfeld, Spatial and temporal exposure to safety hazards
+[37] H. Kim, H. Lee, M. Park, B. Choi, Automated information retrieval for hazard                    in construction, ASCE J. Constr. Eng. Manag. 135 (8) (2009) 726–736.
+     identiﬁcation in construction site, Proceedings of the ASCE International Workshop         [55] M.R. Hallowell, J.A. Gambatese, Activity-based safety risk quantiﬁcation for concrete
+     on Computing in Civil Engineering2013. 897–904.                                                 formwork construction, ASCE J. Constr. Eng. Manag. 135 (10) (2009) 990–998.
+[38] N. Chi, K. Lin, S. Hsieh, Using ontology-based text classiﬁcation to assist Job Hazard     [56] N. Forcada, M. Casals, M. Gangolells, X. Roca, A. Fuertes, An Ontology for the Environ-
+     Analysis, Adv. Eng. Inform. (2014)http://dx.doi.org/10.1016/j.aei.2014.05.001.                  mental and Safety Integration in the Construction Sector, Published in the Book:
+[39] B. Memarian, P. Mitropoulos, Safety incidents and high-risk activities of masonry               Enterprise Interoperability II, New Challenges and Approaches, Part VII, Springer,
+     construction, Proc., 2012 ASCE Construction Research Congress (CRC)2012.                        London, 2007. 617–620.
+[40] F. Boukamp, B. Akinci, Automated processing of construction speciﬁcations to               [57] J. Garrett, J. Teizer, Human factors analysis classiﬁcation system relating to human
+     support inspection and quality control, Automation in Construction, 17(1), Elsevier,            error awareness taxonomy in construction safety, ASCE J. Constr. Eng. Manag. 135
+     2007. 90–106.                                                                                   (8) (2009) 754–763.
+[41] OSHA, 1926.706 Requirements for masonry constructionAccessed Dec 2013 https://
+     www.osha.gov/pls/oshaweb/owadisp.show_document?p_table=STANDARDS&p_
+     id=10785.
+

@@ -1,0 +1,909 @@
+                                                                  Automation in Construction 177 (2025) 106305
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                          journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Context-aware vision-language model agent enriched with domain-specific
+ontology for construction site safety monitoring
+Chak-Fu Chan a , Peter Kok-Yiu Wong a,* , Xiaowen Guo a , Jack C.P. Cheng a,b,* ,
+Jolly Pui-Ching Chan c , Pak-Him Leung b, Xingyu Tao a
+a
+  Department of Civil and Environmental Engineering, The Hong Kong University of Science and Technology, Clear Water Bay, Kowloon, Hong Kong Special
+Administrative Region
+b
+  AutoSafe Limited, Hong Kong Special Administrative Region
+c
+  Drainage Services Department, The Government of the Hong Kong Special Administrative Region, Wanchai, Hong Kong Island, Hong Kong Special Administrative Region
+
+
+
+
+A R T I C L E I N F O                                      A B S T R A C T
+
+Keywords:                                                  Traditional approaches of construction site safety monitoring heavily rely on manual on-site inspection, which
+Construction safety ontology                               are prone to overlooked incidents. Existing computer vision methods require time-consuming and case-by-case
+Construction site safety monitoring                        data labeling, and lack high-level reasoning capability. This paper develops a human-alike virtual assistant
+Domain-tailored prompt engineering
+                                                           agent by integrating a multi-modal vision-language model into video analytics: (1) To efficiently generate image-
+Context-aware vision-language model
+Virtual construction safety assistant
+                                                           text data for model development, a semi-automatic image-text labeling pipeline based on in-context learning is
+                                                           designed; (2) To optimize a virtual agent from pre-trained to domain-tailored, a two-stage curriculum learning
+                                                           paradigm is designed to enhance model fine-tuning effectiveness toward domain-specific tasks; (3) To inject
+                                                           construction-domain knowledge more effectively into the virtual agent, a hierarchical prompting framework
+                                                           driven by a construction safety ontology is developed for more domain-tailored reasoning capability. The virtual
+                                                           agent has been deployed on a real construction site for real-time video analytics, with over 90 % accuracy in
+                                                           identifying violations of work-at-height safety regulations.
+
+
+
+
+1. Introduction                                                                                  (CV) techniques based on convolutional neural networks (CNN) are
+                                                                                                 widely adopted for identifying unsafe worker behaviors [4,5], checking
+    The construction sector is recognized as one of the most dangerous                           personal protective equipment (PPE) compliance [6] and analyzing
+worldwide, with a history of high accident and casualty rates. From                              heavy machinery operation [7–9].
+2013 to 2019, the construction sector in Hong Kong has consistently                                  However, CNN-based image/video analytics has several limitations
+recorded the highest death rates compared to the other 14 primary in­                            in practical applications. First, developed CV models are specialist
+dustry sectors [1,2]. Similarly, in 2023, the United States reported that                        models only well-trained for a small subset of detection tasks, thus
+approximately 20 % of work-related deaths took place at construction                             limited by the narrow domain of knowledge. Case-specific mathematical
+sites [3]. Many of the casualties are related to non-compliance with                             formulation based on the bounding boxes’ size and coordinates are
+construction safety rules. Construction sites are characterized by safety                        needed for analyzing for particular safety rules, as illustrated by Khan
+risks that arise from complex interactions between numerous workers                              et al. [10] using CNN to analyze worker-scaffold relationship, which
+and machinery. To prevent safety risks and serious injuries, it’s crucial                        may require a sophisticated system design and much human effort.
+to detect and analyze any unsafe practices among workers in real time.                           Second, the architecture of CNN-based models leads to limited
+This can involve monitoring workers’ activity on-site and ensuring                               embedded semantic information (e.g. object category and localization),
+they’re complying with the safety rules. Traditional site safety moni­                           while extracting semantic information (e.g., construction activities, in­
+toring mainly involves regular on-site safety inspection by management                           teractions between different construction objects) from construction
+personnels and safety inspectors, which is labor-intensive and easily                            images is an essential step for further CV-based application in con­
+leads to overlooking in unsafe behavior. In recent years, computer vision                        struction management [11,12]. Importantly, existing CV models still
+
+
+ * Corresponding author at: Department of Civil and Environmental Engineering, The Hong Kong University of Science and Technology, Clear Water Bay, Kowloon,
+Hong Kong Special Administrative Region.
+   E-mail address: cejcheng@ust.hk (J.C.P. Cheng).
+
+https://doi.org/10.1016/j.autcon.2025.106305
+Received 6 December 2024; Received in revised form 25 May 2025; Accepted 26 May 2025
+Available online 2 June 2025
+0926-5805/© 2025 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+C.-F. Chan et al.                                                                                                    Automation in Construction 177 (2025) 106305
+
+
+lack in-depth reasoning capability to perform semantic understanding,               originally pre-trained with diverse data which only capture generic
+while construction applications like safety compliance checking require             knowledge on object recognition and text understanding, while often
+high-level reasoning of worker behaviors and on-site conditions. While              fall short in logical reasoning within construction safety contexts.
+combining the CV models with an external ontology-based module (i.e.,               Although fine-tuning on domain datasets can already enhance the
+by exporting the outputs of a specialist model to a carefully designed              general ability of the VLM in construction domain, in-context
+rule-checking system) can acquire a higher level of semantic reasoning,             prompting can further adapt it to diverse site-specific tasks effec­
+the process is time-consuming and requires constant model or system                 tively and improve its reasoning and compliance checking in site
+updates when adapting to various site conditions. More importantly, it is           safety. To integrate structured safety knowledge into AI inference
+not an end-to-end process, which means any information lost in the                  process, a construction safety ontology is developed and embedded
+vision modality will not be transferred to the external module and                  into a domain-tailored prompting framework to enable knowledge-
+represented in the language modality.                                               enhanced reasoning of VLMs.
+    To address the limitation of traditional CNN-based or ontology-based
+methods in processing multi-modal semantic information, a more                       To address these essential challenges in adapting VLMs for con­
+comprehensive and end-to-end method should be considered. Recently,              struction safety monitoring, we develop a holistic framework to tackle
+multi-modal large language models (MLLM) are widely studied upon                 the problems, leading to the following specific research objectives to be
+their multi-modal conversational capability, upon which vision-                  achieved in this paper:
+language models (VLM) combine image processing and natural lan­
+guage processing (NLP). For example, GPT-4 V [13] and Grounding­                 1) A semi-automatic data generation pipeline to address the data availability
+DINO [14] can extract both intricate visual and linguistic features,                problem: We develop a streamlined workflow to generate high-
+undergo deep feature fusion and generate detailed image descriptions                quality, multi-modal instruction-following dataset for aligning the
+[15], perform multiple types of instruction-following tasks such as                 VLM toward construction safety compliance monitoring, greatly
+image captioning, visual grounding and visual question answering                    reducing the time required to prepare such a comprehensive dataset.
+(VQA) [16]. Toward construction applications, construction safety rules          2) A two-stage curriculum learning paradigm for fine-tuning VLM to address
+in textual format can potentially be extracted from safety handbooks or             the data imbalance and efficiency problem: For the first stage of the
+guidelines [17], given to the VLM as queries to obtain intuitive answers            training, we mainly include crowd-sourced images with some
+in natural language, such as detailed incident descriptions with recom­             descriptive tasks assigned, as these data are more available and can
+mended actions reported to site engineers/safety supervisors [18]. VLMs             quickly adapt the VLM from a pre-trained model to a construction
+show potential for human-like cross-modal reasoning ability in con­                 context-aware model. For the second stage, we incorporate the less
+struction safety, with the image, instruction and embedded safety rules             available real-site data with site-specific instruction-following tasks,
+inputs undergoing deep fusion in an end-to-end approach for more                    to further fine-tune the task-specific safety monitoring ability of the
+efficient and effective data processing and a higher level of semantic              VLM.
+understanding. However, there remain several essential challenges                3) Design of a generic prompting framework driven by a construction safety
+when trying to adapt generic VLMs for construction safety monitoring:               ontology to address the domain knowledge problem: We embed the
+                                                                                    construction-related knowledge from an established ontology into a
+1) Lacked multi-modal data for developing domain-tailored VLMs: A huge              hierarchical prompting framework of the VLM, which can further
+   volume of labeled, high-quality and multi-modal data are required                enhance the object localization and rule analysis capabilities of the
+   for domain adaptation. The construction industry suffers from                    model in an effective end-to-end manner. The framework can also
+   limited amount of structured data for AI model training, and                     adapt to diverse construction environments easily by changing the
+   currently lacks public datasets for effectively fine-tuning VLMs to­             prompts in natural language.
+   ward diverse construction safety tasks. Existing foundation and
+   open-source VLMs, such as CogVLM [19] and LLaVA [20], require a                   After development of the VLM based on the above objectives, we
+   vast amount of images for comprehensive pre-training or even for              further integrate it with real-time video analytical system for on-site
+   supervised fine-tuning, for which manual annotation is labor-                 testing and evaluation. Safety officers can easily interact with the
+   intensive. Hence, an efficient methodology for image-text data la­            designed software for automatic safety alarming and comprehensive
+   beling will greatly facilitate the development of domain-tailored             question answering, greatly reducing human monitoring efforts when
+   VLMs.                                                                         compared to conventional methods.
+2) Lacked an efficient fine-tuning strategy for developing domain-tailored
+   VLMs: Similar to CNN-based models, VLMs are mainly pre-trained                2. Literature review
+   on internet crowdsourced images, which have notably different
+   image quality as those captured on real construction sites by sur­                To help with developing a VLM and ontology based safety moni­
+   veillance cameras. There is a significant data distribution shift when        toring system which accomplishes the research objectives, we have
+   trying to adapt a VLM for real-site downstream tasks, while the in­           reviewed the current application and limitations of VLM, prompt engi­
+   dustry lacks open-access real-site data for fine-tuning. Moreover, the        neering and ontology methods in construction safety analysis.
+   fine-tuning of VLMs on construction safety domain is not only
+   dependent on the images, but also dependent on the high-quality               2.1. Vision-language models for construction safety analysis
+   instruction-response sets for learning domain-specific knowledge,
+   which are also not publicly available and require intensive annota­               Current VLMs are mainly based on the Vision Transformer-Linear
+   tion. Efficient learning of domain knowledge with limited and                 layer-LLM architecture, which treats an image as a sequence of visual
+   imbalanced vision-text data tailored for safety monitoring remains a          tokens from flattened patches, similar to how a language model treats a
+   critical research gap that needs to be addressed by special fine-tuning       sentence as a sequence of word tokens. Several methods have been
+   strategies.                                                                   developed for multi-modal feature alignment, such as shallow alignment
+3) Lacked integration of construction domain knowledge into VLMs: Exist­         via a trainable linear layer for embedding mapping [21] or image-text
+   ing AI-based solutions primarily performed object detection and               joint training adopted by PaLI [22] and Qwen-VL [23]. To develop
+   classification from site images, while lacking a standardized repre­          domain-tailored VLMs, those foundation models pre-trained on general
+   sentation of domain-specific knowledge crucial for accurate safety            tasks can be fine-tuned to suit various specific downstream tasks. This is
+   monitoring. Although VLMs are a potential solution, they are                  achieved by continuing the training process on more human-supervised
+
+                                                                             2
+C.-F. Chan et al.                                                                                                  Automation in Construction 177 (2025) 106305
+
+
+task-specific datasets.                                                         adopted for several civil engineering applications, including building
+    Fan et al. [24] fine-tuned the MiniGPT-4 with a hand-crafted dataset        information modeling [38–40], automated building design performance
+specifically for identifying ergonomic risks of workers. However, they          optimization [41–43] and construction supply chain management
+reported hallucination problems among their evaluation, possibly due to         [44,45]. For construction safety, several studies [46–49] defined se­
+the limited volume and diversity of their training data (for such a spe­        mantic ontology to represent safety-related knowledge (e.g. key entities
+cific task). Jung et al. [25] generated daily construction reports via          and their hierarchical relationships) but have not integrated with on-site
+keyword-based image retrieval to extract relevant site video footages,          image analytics for automated compliance checking. Shen et al. [50]
+with a vision-language transformer to describe the site conditions and          defined an ontology as the reasoning basis for identifying safety risks by
+activities on each image. However, such captions only describe what             analyzing the planned construction process/schedule of a building. Xing
+happens on a site, rather than performing practical safety compliance           et al. [51] also developed an ontology for inferring safety risks from
+checking which requires more high-level reasoning.                              construction project statements in planning stage. However, these
+    Traditionally, for pre-training of LLM, a lot of data and computa­          studies only focused on design for safety but have not integrated with
+tional resources are required due to the scaled-up model parameters. A          real-time on-site condition monitoring.
+more effective fine-tuning technique is necessary to ensure a smoother              As for construction site monitoring, construction safety ontology
+learning process on various downstream tasks. Parameter-Efficient Fine-         encapsulates domain-specific information regarding safety regulations,
+Tuning (PEFT) is always used to adapt large pre-trained models to               hazards and best safety practices, which can facilitate construction
+downstream tasks by only fine-tuning a small number of model pa­                safety compliance checking. Several studies integrated CV models with
+rameters or additional small-size adapters [26]. This approach signifi­         NLP algorithms for on-site safety compliance checking [52,53], utilizing
+cantly decreases the computational and storage costs required to                well-established ontology for more structured and comprehensive
+finetune LLMs. Low-Rank Adaptation (LoRA) is a specific method of               analysis of safety conditions. Zhang et al. [48] utilized Mask-RCNN to
+PEFT that performs on-par or even better than full fine-tuning in model         detect individual objects and Transformer to infer object pair-wise
+quality when fine-tuning on task-specific datasets, despite having              relationship. Then, they combined BERT with a keyword mapping
+significantly fewer trainable parameters [27]. LoRA freezes the pre-            mechanism to integrate domain knowledge from regulation, finally to
+trained model weights and injects trainable low-rank decomposition              generate hazard description. However, their categorization of rule
+matrices into selected layers of the Transformer architecture.                  violation was limited in scope, only checking if workers wear PPE or not
+                                                                                based on straightforward object detection. Analyses of the more com­
+2.2. Prompt engineering for construction safety analysis                        plex worker motion for behavioral monitoring are needed. Fang et al.
+                                                                                [53] defined an ontology to facilitate spatial proximity/conflict analysis
+    Prompt engineering is a technique that incorporates task-specific           among workers, PPE and moving equipment. Pan et al. [54] proposed a
+hints or instructions to enable LLMs to adapt to new tasks without su­          knowledge extraction framework to extract entities from videos/images
+pervised learning processes. Different prompting strategies include task        and perform semantic mapping with a construction activity ontology.
+instruction prompting [28], in-context learning [29], retrieval-based           However, these studies still utilized ontology as an external module to
+prompting [30], and chain-of-thought prompting [31].                            align the objects extracted from images frames with safety rules. The
+    Several studies leveraged prompt engineering to adapt pre-trained           process of handling vision and language modules separately rather than
+VLMs toward construction applications. Yong et al. [32] examined the            in an end-to-end model is inefficient and time-consuming, due to the
+effectiveness of prompts in improving zero-shot and few-shot classifi­          inherent complexity of multi-modal data correlation and feature ag­
+cation and detection of building defects. Wong et al. [33] designed a           gregation. Moreover, a critical issue arises during the transfer of safety
+two-step prompting strategy for identifying project risks from contract         information across different modalities: features that are not extracted
+clauses, based on in-context learning and majority voting mechanism;            in the vision modality may be lost when represented in the language
+yet they only adopted a pre-trained LLM for project risk assessment in          modality. This loss of information can lead to incomplete, inaccurate or
+the pre-construction stage, without considering on-site safety upon             even distorted representations of the safety conditions, potentially
+actual execution which shall involve video analytics. Ho et al. [34]            compromising the effectiveness of the compliance checking process.
+injected textual prompts with an image segmentation model to identify               To address the above limitations, the potential integration of con­
+the floor elevation from street view images. Chen et al. [15] developed a       struction safety ontology with VLM prompt design may enhance the
+visual construction safety query chatbot that combines real-time image          multimodal feature extraction in an end-to-end manner, which is still
+captioning, safety-centric VQA and keyword-based image-text retrieval.          under-explored. More crucially, the ontology models used in conven­
+Sun et al. [35] introduced a specialized VLM aimed at recognizing               tional methods require a sophisticated system design and frequent up­
+construction waste, integrating a pre-feature interaction network to            dates to keep track of the ever-changing conditions on the construction
+better facilitate prompt engineering.                                           site. This constant need for updates can pose significant challenges in
+    The existing studies in the literature show that a standardized             terms of maintenance cost and scalability. Meanwhile, the in-context
+prompting framework for construction safety monitoring is lacking.              learning prompt of a VLM can be updated more efficiently via simple
+Current VLMs lack contextual awareness and suffer from hallucination            edition in natural language. The integration of ontology in an in-context
+in complex tasks or unfamiliar scenarios, when applied to a specific            prompt can address the challenges in both cost and time.
+domain without proper prompting. Existing studies of prompt engi­
+neering in the construction industry mainly catered for case-by-case            3. Proposed methodology
+response to short queries, while lacking a comprehensive prompt
+design to align with the construction domain knowledge (e.g. a full list            To address the fundamental challenges in adapting VLMs for con­
+of safety regulations). A knowledge-enhanced prompting framework                struction safety applications, a comprehensive framework is proposed to
+will guide a VLM to analyze and report unsafe worker behaviors more             systematically tackle the data scarcity issue and the domain adaptation
+adaptively.                                                                     difficulty. The overall methodology is illustrated in Fig. 1, mainly
+                                                                                including: (1) Literature review for defining a list of safety rules for
+2.3. Ontology for construction safety analysis                                  compliance checking; (2) Semi-automatic data generation with an in-
+                                                                                context learning pipeline; (3) Development of a context-aware VLM
+   Ontology is structured representations of knowledge that consist of          with a two-stage curriculum learning paradigm; (4) Design of a domain-
+entities, attributes, and relationships between them [36,37], enabling          tailored prompting framework driven by a construction safety ontology.
+machines to reason and infer new knowledge. Ontologies have been                (5) Deployment on a real construction site for real-time video analytics
+
+                                                                            3
+C.-F. Chan et al.                                                                                                      Automation in Construction 177 (2025) 106305
+
+
+
+
+                                   Fig. 1. Proposed methodology for developing a VLM-based safety monitoring system.
+
+
+with incident reporting and interactive VQA.                                      coordinates for developing a domain-tailored VLM toward construc­
+                                                                                  tion safety compliance monitoring. A semi-automatic and self-instructed
+                                                                                  annotation pipeline driven by an in-context learning framework is
+3.1. Semi-automatic image-text data labeling pipeline
+                                                                                  designed, as illustrated in Fig. 2.
+                                                                                      The data generation pipeline utilizes the pre-trained capability of
+   This section describes a streamlined workflow to generate a high-
+                                                                                  GPT-4 V and GroundingDINO, i.e., open-set object recognition of
+quality, multi-modal and instruction-following dataset with key-object
+
+
+
+
+                                 Fig. 2. Semi-automatic self-instructed data labeling pipeline based on in-context learning.
+
+                                                                              4
+C.-F. Chan et al.                                                                                                           Automation in Construction 177 (2025) 106305
+
+
+GroundingDINO as well as multimodal understanding and prompting of                       and ID numbering from 1, from left to right of the image). Also, include
+GPT-4 V. Specifically, the semi-automatic labeling pipeline performs the                 each worker’s BBox and any of his appearance (like vest color or helmet
+following five steps:                                                                    color) when you mention his safety condition. The given BBox data is
+                                                                                         sorted in ascending order of x1 coordinate (from left to right). Please
+1) Automatic Label and Bounding Box Generation: GPT-4 V is utilized to                   include request for grounding with coordinates in the instruction part, and
+   generate a key object list (pseudo labels) of each image in batches.                  keep the response concise within 200 words, step-by-step and specific to
+   The pseudo labels are then passed to GroundingDINO as text                            the content of the image. Only include things that you are sure about. Now
+   prompts, in order to generate candidate bounding boxes for the                        you will be given an example for reference:
+   specified kinds of objects.                                                             Example:
+2) Pseudo Label Correction: While the combination of pre-trained GPT-4                     {
+   V and GroundingDINO demonstrates competitive zero-shot image
+   processing accuracy, their inferred pseudo-labels and bounding                         Image: # An image of a construction site with a few workers and a tower
+   boxes are manually inspected to ensure accuracy and reliability.                   crane.
+3) Seed Image Selection and Hand-Crafting: A seed image is chosen from                    Objects: [.
+   the annotated images of each safety scenario (e.g. confined space as                   {“value”: 1, “label”: “worker”, “box”: “140,320,240,720”};
+   shown in Fig. 3), and the description of the seed image is hand-                       … # List of candidate objects with corresponding label and bounding box.
+   crafted according to the verified bounding boxes either as groun­                      {“value”: 8, “label”: “red safety helmet”, “box”: “814,294,890,360”}.
+   ded captioning (detailed descriptions) or question answering of                        ]
+   safety compliance analysis. This forms an example of the instruction-                  Instruction: Please describe the work environment and safety condition in
+   response dataset that we want to acquire.                                          the image, and include the worker IDs (count from left to right) and co­
+                                                                                      ordinates for crucial objects in format [object] [[x0,y0,x1,y1]].
+4) In-context Learning for Dataset Generation: The seed image with the                    Response: The image depicts a construction site with a tower crane in the
+   example instruction-response set is passed to an in-context learning               background and five workers visible:
+   prompt, for GPT-4 V to generate candidate instruction-response sets                    - [Worker 1] [[000,330,100,740]] is not wearing a safety helmet or vest.
+   for remaining images. The in-context learning prompt designed for                      - [Worker 2] [[140,320,240,720]] has a white [safety helmet]
+   acquiring instruction-response sets for grounded captioning in this                [[164,325,202,368]], but lacks a safety vest.
+   paper is summarized below:                                                             - [Worker 3] [[370,230,520,980]] is wearing a red [safety helmet]
+      System Message: You are a professional construction safety inspector            [[410,230,490,300]], yet lacks a safety vest.
+   generating labeled data for fine-tuning a safety domain-specific Vision                - [Worker 4] [[480,260,600,910]] is without any safety helmet or vest.
+   Large Language Model.                                                                  - [Worker 5] [[800,290,970,999]] sports a red [safety helmet]
+      You will be given the accurate data of bounding boxes of some workers           [[814,294,890,360]], but lacks a safety vest.
+   and objects in the given annotated image. The coordinates of the BBoxes                Immediate action is required to ensure all workers are equipped with
+   are in ‘x1,y1,x2,y2’ format with the origin at the top left corner, the x-         safety helmets and high-visibility vests.
+   axis to the right, and the y-axis downward, (x1,y1) and (x2,y2) as top-                }
+   left and bottom-right corners of the box respectively and values in relative           You need to rephrase the instruction in a natural way. In the response, the
+   coordinates multiplied by 1000 (prefixed with zeros to three digits).              grounded objects with BBoxes should be marked in format [object] followed
+      Please help me draft an instruction for a brief description of the safety       by coordinates in format [[x1,y1,x2,y2]]. Use the format [[x1,y1,x2,y2;x1,
+   condition shown in the image and the corresponding response, and the               y1,x2,y2;x1,y1,x2,y2;…]] (No spacing between sets of coordinates) for
+   response should include reference to the given bounding boxes of workers           multiple BBoxes of the same object type. You should also pay attention to
+   and objects. Please count the number of workers and give a number ID to            whether each worker wears sufficient PPE, especially a safety helmet and a
+   each worker (ignore the BBox IDs of the workers and start the counting             safety vest. Now, you will be given the image and key objects for your output
+
+
+
+
+                                                  Fig. 3. Seed image annotated by GPT-4 V + GroundingDINO.
+
+                                                                                  5
+C.-F. Chan et al.                                                                                                      Automation in Construction 177 (2025) 106305
+
+
+                                                                                       Specifically, the architecture of CogAgent [55] is chosen as our
+                                                                                   baseline model, with added-on LoRA adapters used for fine-tuning, as
+                                                                                   illustrated in Fig. 5. CogAgent is built on a pre-trained VLM, specifically
+                                                                                   the CogVLM 17B, which is an open-source and state-of-the-art large
+                                                                                   vision language model.
+                                                                                       EVA2-CLIP-E is used as the encoder for low-resolution image input
+                                                                                   (490 × 490 pixels), and an MLP adapter to map its output into the
+                                                                                   feature space of the visual-language decoder. The visual-language
+                                                                                   decoder consists of both vision experts and language backbone for
+                                                                                   effective deep fusion between image feature and language feature. The
+                                                                                   decoder processes a combined input of the low-resolution image feature
+                                                                                   sequence and text feature sequence, and autoregressively outputs the
+                                                                                   target text. However, the original CogVLM can only accommodate im­
+                                                                                   ages of relatively low resolution (e.g. 224 or 490), which is insufficient
+                                                                                   for screen resolution of computers or smart devices which is typically
+                                                                                   1280 × 720 pixels or higher. To address this, a high-resolution but size-
+                                                                                   efficient cross-module is introduced in the CogAgent architecture, which
+                                                                                   not only maintains efficiency with high-resolution images but also offers
+                                                                                   flexible adaptability to a variety of visual-language model architectures.
+                                                                                   The high-resolution cross-module acts as a new branch for higher-
+                                                                                   resolution input, accepting images of size 1120 × 1120 pixels. Unlike
+                                                                                   the original low-resolution input branch, the high-resolution cross-
+                                                                                   module adopts a much smaller pre-trained vision encoder (EVA2-CLIP-L
+                                                                                   with 0.30B parameters), and uses cross-attention of a small hidden size
+                                                                                   to fuse high-resolution image features with every layer of the VLM
+                                                                                   decoder, thus reducing the computational cost. The formulation of each
+                                                                                   decoder layer’s attention module is summarized in Eqs. (1)–(2):
+                                                                                              (           ( i ))
+                                                                                   Xʹi = MSA layernorm Xin       + Xin
+                                                                                                                    i
+                                                                                                                                                           (1)
+                                                                                             (         ( )       )
+                                                                                   Xout
+                                                                                    i
+                                                                                        = MCA layernorm Xʹi , Xhi + Xʹi                                        (2)
+
+                                                                                       MSA and MCA respectively represent multi-head self-attention of the
+                                                                                   decoder visual expert and the multi-head cross-attention between the
+                                                                                   high-resolution module and the decoder. The cross-attention with high-
+                                                                                   resolution images can be perceived as a complement to the features of
+                                                                                   low-resolution images, thereby effectively utilizing the previous pre-
+                                                                                   trained model in low resolution. CogAgent exhibits exceptional perfor­
+        Fig. 4. Sample output of semi-automatic data labeling pipeline.            mance on benchmarks that assess referring expression comprehension
+                                                                                   (REC), such as RefCOCO, RefCOCO+, and RefCOCOg, whose grounding
+of the corresponding instruction and response:                                     capability is comparable to GroundingDINO.
+    Image: #The image to be used in the dataset.                                       Current studies adopted a staged learning scheme to train VLMs more
+    Objects: #The key object list of the image with the IDs and coordinates.       effectively. For instance, MiniGPT-v2 was trained with three stages
+    Output:                                                                        (pretraining, multi-task training and multi-modal instruction tuning) for
+    The candidate instruction-response sets generated by the above                 better visual-textual feature alignment [16], with the data decreasing in
+prompt may contain certain faults and require further polishing.                   volume but increasing in human supervision across stages. Inspired by
+                                                                                   such principle, a two-stage curriculum learning paradigm is proposed to
+5) Polishing Candidate Datasets: The candidate instruction-response sets           equip our VLM with domain knowledge and capabilities in multiple
+   generated by GPT-4 V are further optimized with human supervision               safety-related tasks, as illustrated in Fig. 6.
+   to create more desired samples in the dataset, each forms an image-                 The two-stage curriculum learning paradigm mimics the learning
+   instruction-response triplet. A sample output is illustrated in Fig. 4,         process of humans, which starts with easier tasks and ends up with more
+   following the conversational format adopted by VLM-related                      challenging tasks to help the model learn domain knowledge more
+   research [13]. The instruction across different images is slightly              efficiently:
+   different to inject textual diversity, which fosters the VLM to learn
+   more robust and generalizable features from the input instruction.              1) Stage 1 – Domain Feature Adaptation: The first stage involves fine-
+                                                                                      tuning of the VLM on a set of construction site images with groun­
+                                                                                      ded captioning, for injecting construction-specific domain knowl­
+3.2. Two-stage curriculum learning paradigm for a context-aware VLM                   edge given the objects of interest annotated with labels, coordinates
+                                                                                      and inter-relationships. The bounding box annotation can increase
+    With the image-instruction-response triplet dataset generated from                the model’s attention toward relevant image pixels during this
+3.1, a context-aware VLM is then developed for high-level reasoning                   learning stage, helping it align with domain cross-modal knowledge
+among the multi-modal data. Previous studies reported that VLMs pre-                  more efficiently. This stage serves to convert the pre-trained VLM
+trained with generic dataset suffer from hallucination, i.e. inaccurate               into a construction-aware VLM, which excels in related descriptive
+responses due to misinterpreted knowledge for a specific domain. To                   tasks. As descriptive-task data and crowdsourced online images are
+more effectively integrate domain knowledge into a VLM and to address                 more readily prepared and available, we mainly include this kind of
+the aforementioned data imbalance problem, this paper proposes a two-                 data for fine-tuning in this stage.
+stage curriculum learning paradigm to enhance VLM fine-tuning.
+
+                                                                               6
+C.-F. Chan et al.                                                                                                       Automation in Construction 177 (2025) 106305
+
+
+
+
+                                      Fig. 5. Architecture of our proposed VLM architecture (revised upon Hong et al. 2024).
+
+
+                                                                                    When prompted by an image with workers working at height, the pre-
+                                                                                    trained VLM (a generalist) only considers a general safety rule of
+                                                                                    wearing helmet, and does not provide useful recommendations to safety
+                                                                                    supervisors. After injecting construction domain knowledge, our
+                                                                                    context-aware VLM (a specialist) is capable of analyzing more complex
+                                                                                    scenarios with more actionable recommendations, e.g. unguarded
+                                                                                    opening with a notable risk of falling, hence guardrails and personal fall
+                                                                                    arrest equipment are suggested.
+
+                                                                                    3.3. Hierarchical prompting framework based on construction safety
+                                                                                    ontology
+
+                                                                                        Subsequently, the fine-tuned CogAgent is used for VQA process with
+                                                                                    different work-at-height scenario images. During the inference, an
+                                                                                    effective VLM prompting framework has been developed to further
+                                                                                    enhance the VQA performance of CogAgent. Prompting refers to
+                                                                                    providing an initial input or context to VLM to generate a desired
+                                                                                    response or continuation. The prompts can be in the form of a question,
+                                                                                    sentences, code snippets or examples. The prompts serve as a starting
+         Fig. 6. Illustration of two-stage curriculum learning paradigm.            point or a specific instruction to guide VLM when generating responses,
+                                                                                    ensuring that it aligns with the desired context or topic. It provides
+                                                                                    initial context and constraints that guarantee reasonable and domain-
+2) Stage 2 – Safety-oriented Instruction Tuning: The second stage focuses
+                                                                                    oriented answers output by VLM. Several prompting principles are
+   on tuning the instruction-following mechanism of the VLM on
+                                                                                    proposed as general guidelines for different applications, including:
+   domain tasks, toward site-specific safety rules to gain task-
+   specialized performance in safety compliance inspection. This stage
+                                                                                     • Chain-of-Thought (COT) Prompting [31]: The COT principle en­
+   serves to transform the construction-aware VLM (after finishing
+                                                                                       ables LLMs to tackle complex arithmetic or reasoning tasks by
+   Stage 1) into a safety-oriented virtual assistant with context-aware
+                                                                                       multiple-step intermediate reasoning and get the correct final answer
+   reasoning capability. By learning from more specific safety compli­
+                                                                                       from steps. This method is particularly useful for tasks that require
+   ance/violation cases and their analysis in the samples, the model is
+                                                                                       logical reasoning or problem-solving skills.
+   encouraged to perform logical thinking based on the specific safety
+                                                                                     • Least-to-Most (LTM) Prompting [56]: The LTM principle is a
+   requirements. As these kinds of samples require more annotation
+                                                                                       method that solves a complex problem by breaking it down into a
+   about sophisticated reasoning and more real-site image for reference,
+                                                                                       series of simpler sub-problems. The process consists of two stages:
+   they are less readily available. Therefore, the dataset is less in vol­
+                                                                                       Decomposition and Sub-problem solving. In the Decomposition
+   ume but more supervised in this stage, which corresponds to the
+                                                                                       stage, instruction or few-shot examples that demonstrate the
+   common paradigm in conventional VLM fine-tuning and effectively
+                                                                                       decomposition are provided in the prompt, followed by the specific
+   solves the data imbalance problem.
+                                                                                       question to be decomposed. In the Sub-problem solving stage, few-
+                                                                                       shot examples demonstrating how subproblems are solved can be
+  The before-and-after analysis in Fig. 7 demonstrates the enriched and
+                                                                                       provided, then the language model is queried to sequentially solve
+more domain-tailored reasoning capability of our VLM after fine-tuning.
+                                                                                       the subproblems to obtain final answers. LLM with least-to-most
+
+                                                                                7
+C.-F. Chan et al.                                                                                                    Automation in Construction 177 (2025) 106305
+
+
+
+
+                                      Fig. 7. Illustration of knowledge-enhanced VLM’s improved reasoning capability.
+
+
+    prompting is capable of generalizing to more difficult problems than               structuring ensures more deterministic output at each step,
+    those seen in the prompts or training sets.                                        allowing the VLM to effectively interpret the intermediate output
+                                                                                       from previous step as the basis for performing subsequent step.
+    During the inference, an effective prompting framework is developed            (3) Prompt chaining: By combining the COT and LTM techniques, the
+to further enhance the VQA performance of VLM. The motivation is to                    complex problem of safety compliance checking is broken down
+embed construction-related knowledge into CogAgent as part of the                      into easier sub-problems, forming a systematic procedure to
+prompts. The list of safety rules/regulations/questions are summarized                 analyze an image step-by-step.
+and then enriched by several strategies:
+                                                                                     Since the original safety rules tend to be abstract/generic for VLM to
+   (1) Domain-specific role definition: A specific role is defined for the       interpret and perform reasoning, the original descriptions are first
+       VLM in second-person perspective (“As a professional construc­            converted into a set of prompts that are more suitable for the VQA
+       tion site safety supervisor…”), increasing its likelihood to              process of our VLM engine based on construction ontology. Fig. 8
+       perform more domain-suited reasoning and generate answers                 summarizes our proposed hierarchical workflow for generating a con­
+       that involve more suitable keywords (e.g. PPE compliance, safety          struction safety ontology.
+       risks, etc.).                                                                 The ontology generation framework consists of four levels:
+   (2) Structured responses: The format/structure of each intermediate
+       response of our VLM is well-defined (e.g. prompting it to output
+       JSON, with a list of pre-defined key-value pairs). Such data
+
+
+
+
+                                   Fig. 8. Proposed hierarchical framework for generating a construction safety ontology.
+
+
+                                                                             8
+C.-F. Chan et al.                                                                                                       Automation in Construction 177 (2025) 106305
+
+
+1) Level 1 – Scenarios: The specific construction task(s) involved in the              iv. Whist installing, alternating or dismantling fall protection facil­
+   monitoring process should be identified for clearly defining the scope                  ities at the floor edge, opening and windows, suitable fall
+   of safety requirements, e.g. working at height, lifting or excavation.                  arresting system should be provided to workers
+2) Level 2 – Key entities: Based on the list of safety rules defined, the
+   essential objects/equipment/machines relevant to the safety ana­                     With the scope defined for the work-at-height regulations listed
+   lyses are identified, e.g. ladders/scaffolds for working at height,              above, a guideline for key objects and safety aspects to inspect is formed
+   tower cranes for lifting, etc.                                                   for safety monitoring. A construction safety ontology is generated
+3) Level 3 – Safety aspects: Based on the entities identified, the categories       correspondingly, as shown in Fig. 9, which logically represents the se­
+   of possible unsafe behaviors are identified, e.g. PPE is needed if               mantic and hierarchical relationships among the concepts/entities/be­
+   workers are concerned, ladder climbing should be monitored if                    haviors related to working at height.
+   involving work-at-height tasks, danger zone should be defined if                     Based on the generated construction safety ontology, a domain-
+   tower crane lifting is necessary, etc.                                           tailored prompting framework is further designed:
+4) Level 4 – Safety rules: Based on the defined scope (scenarios, entities
+   and safety aspects), a specific list of safety rules is then defined,                 i. Identify the relevant scenario(s) from an image, based on specific
+   which should be categorized into the relevant safety aspects. Such                       objects/features present in the image. This forces the VLM to
+   grouping will benefit the prompting framework design subsequently.                       focus on checking against the relevant safety rules. In particular,
+                                                                                            the VLM is prompted to first detect whether each of the following
+    It is noted that this workflow is generic, which can be adapted to                      objects exist. The output is a JSON with the following keys, each
+different site-specific safety requirements. For a more comprehensive                       with a value either True/False to denote the presence of the cor­
+illustration in this paper, a list of essential work-at-height safety rules                 responding objects.
+are extracted from the Safety Manual established by Drainage Service                        a. Worker
+Department (2018), and the Work-at-Height Safety Handbook co-                               b. Light-duty mobile platform
+published by Development Bureau and Construction Industry Council                           c. Power-elevated working platform (PEWP)
+of Hong Kong (2019). These handbooks also provide a detailed expla­                         d. Floor opening
+nation of each safety rule, with graphical illustration that notably                    ii. The JSON output in Step(i) is further processed. For each of the
+facilitated our understanding of how to fine-tune the VLM for moni­                         objects marked with True, the VLM is prompted to check the
+toring the behaviors and reasoning about the rule analysis. The list of                     compliance against those relevant safety rules associated with
+work-at-height behaviors are:                                                               that object:
+                                                                                            a. Light-duty mobile platform
+a. Powered-Operated Elevating Working Platforms (PEWP)                                          i. Approved type of platform (step platform vs ladder)
+   i. Wear full body safety harness with its lanyard anchored to a                             ii. Waste or miscellaneous materials around the platform
+      specified anchorage point                                                             b. Light-duty mobile platform & Worker
+b. Metal Scaffolds                                                                              i. Facing to the platform
+   i. When erecting, altering dismantling of scaffolds or it is impracti­                      ii. Maintaining three-point contact
+      cable to erect a safe working platform or provide safe access and                     c. PEWP & Worker
+      egress, the use of full body safety harness attached to secure                            i. Safety harness
+      anchorage point or an independent lifeline is required                                   ii. Secured to anchorage point
+c. Light-Duty Working Platform/ Mobile Working Platform                                     d. Floor opening
+     i. When ascending or descending, worker should face to the                                 i. Fully covered by safety net
+        working platform and keep 3 points contact                                             ii. Guardrails, toe boards and warning signs along the edge
+    ii. Only three types of platforms are allowed to carry out work-at-                iii. Report specifically the safety rules that are violated after the
+        height tasks, including hop-up platform, step platform and mo­                      analysis in Step(ii), with a brief description of the violation
+        bile platform
+   iii. The surrounding of working platforms should be kept free from               3.4. Real-time video analytical system
+        waste and miscellaneous materials
+d. Floor Opening/Edge Protection                                                       The VLM-based safety compliance monitoring system operates in
+     i. Provide guard-rails and toe-boards at the floor edge                        two different modes: (1) automatic reporting mode and (2) interactive
+    ii. Provide secure coverings with warning signs at the floor opening.           chatbot mode.
+   iii. Provide guard-rails, toe boards and warning signs at the floor                 In the first mode, the real-time video from each camera is streamed
+        opening                                                                     continuously to the computer, where video frames are sampled at reg­
+                                                                                    ular intervals to be fed into the VLM for inference (10 s in our field
+
+
+
+
+                                      Fig. 9. Proposed construction safety ontology based on the hierarchical framework.
+
+                                                                                9
+C.-F. Chan et al.                                                                                                           Automation in Construction 177 (2025) 106305
+
+
+
+
+                    Fig. 10. Illustrations of (a) descriptive alert message and (b) no-alert frame processing output generated by our alarm system.
+
+
+trials). Then, the VLM automatically generates appropriate answers to                  determining the safety scenario that image belongs to and then going on
+the image, based on our three-step prompting framework designed in                     analyzing the corresponding safety rules).
+Section 3.3. On the other hand, the second mode can be user-triggered                      The VLM is then fine-tuned with our two-stage curriculum learning
+via a simple button to extract the current frame at any time. Based on                 paradigm proposed in Section 3.2. The data split is 6:4, i.e. 60 % (900
+the frame, site engineers or safety supervisors can input any question to              images) for training and validation, the remaining 40 % (600 images) for
+prompt the VLM to interactively generate personalized answers.                         testing. Among the training and validation sets, 600 were collected from
+    An alarm mechanism is developed to generate descriptive alert                      the internet via keywords search on objects and scenes related to the
+messages to safety supervisors. As illustrated in Fig. 10, in case any                 work-at-height scope, and the remaining 300 were collected from the
+safety rule violation is identified, such “Failed” safety compliance is                target site. For the testing set, all 600 images were collected from the
+reported via an alarm from the onsite computer, where the safety su­                   target site. The fine-tuning was done with a single NVIDIA A40 GPU with
+pervisors are notified in real-time. A descriptive alert message is then               48 GB of available VRAM. For the training configuration, due to the
+prompted out, concisely summarizing which specific safety rules are                    limited amount of computational resources and dataset, PEFT is rather
+violated. In case no violation is observed from an image, as illustrated in            suitable for supervised fine-tuning than full-parameter training [27].
+Fig. 10, it passes the safety compliance checking by our VLM which                     LoRA is adopted to achieve PEFT, with all the original weights frozen.
+results in a simple message “No Safety Risk” output without triggering                 Five LoRA modules, each with a rank of 64, and a LoRA alpha value of
+the alarm system.                                                                      128, were injected into the visual language backbone, the high-
+    In addition, an incident logging system is developed to store all the              resolution cross-attention layers, the Vision Transformer encoder and
+processed images and generated output. These data are properly                         the MLP adapter respectively. The VLM was trained with a batch size of
+indexed/labeled, which constitute a well-managed database for record-                  2 for 2 epochs for each of the two stages, with a warmup ratio of 0.1, an
+keeping, which also allows safety supervisors to query historical in­                  initial learning rate of 3e-5, and a cosine learning rate scheduler. The
+cidents and search for associated images for verification. As illustrated              LoRA dropout was set to 0.1 and the weight decay was set to 0.05. After
+in Fig. 10, each processed frame is indexed with a number (e.g. “00250”                finetuning, the VLM was quantized to 8 bit and deployed in one RTX-
+denotes the 250th frame of a video stream), which serves as the key for                4090 GPU with 24 GB of VRAM.
+future queries. All these indexed frames are stored, each of which is then                 The fine-tuned VLM was then integrated with our ontology-driven
+labeled with the final output generated by the VLM (i.e. the texts                     prompting framework designed in Section 3.3, as well as our real-time
+denoting any safety rules violated), which serve as the value for future               video analytical system developed in Section 3.4. The entire moni­
+queries.                                                                               toring system was finally deployed to the SWHSTW construction site,
+                                                                                       with four cameras covering the major work-at-height areas on two floors
+4. Validation and discussion                                                           of an industrial building.
+
+    The developed VLM system was deployed at a real construction site
+in the Shek Wu Hui Sewage Treatment Works (SWHSTW). This site is a                     4.2. Quantitative evaluation
+secondary sewage treatment plant occupying 9.4 ha of land and
+handling 81,000 m3 of sewage per day produced by a population of                           The images collected from the real site were then fed into our VLM to
+300,000 in Sheung Shui and Fanling Districts.                                          carry out VQA. The performance of safety compliance checking was
+                                                                                       evaluated with the protocol summarized in Table 1. In the context of
+                                                                                       safety compliance checking in this project, two possible outcomes were
+4.1. Experimental setup                                                                defined: (1) Compliance – Pass, where no safety rule is violated, and (2)
+                                                                                       Compliance – Failed, where a particular safety rule is violated.
+    The dataset for finetuning CogAgent model consists of 1500 con­                    Therefore:
+struction site images, after applying augmentation techniques including
+random cropping, horizontal flipping and color space alternation. The                   • True Positive (TP) means that an image does contain violation sce­
+images were then annotated with the semi-automatic pipeline proposed                      nario(s), and the VLM correctly identifies them. Note that the eval­
+in Section 3.1. As shown in Fig. 11, the raw images were first processed                  uation is counted on a per-rule basis rather than a per-image basis.
+by the data labeling pipeline to obtain precise bounding boxes with                     • False Negative (FN) means that an image does contain violation
+diverse textual description and instruction-following samples.                            scenario(s), but the VLM cannot identify them and wrongly output
+    The textual descriptions are based on the list of safety questions                    “Pass – No Safety Risk”.
+summarized. Some features/objects in the images are highly relevant to                  • False Positive (FP) means that an image has no safety violation, but
+certain safety rules (e.g. scaffolds, working platforms), thus are specif­                the VLM wrongly outputs “Failed” for a particular safety rule.
+ically highlighted in the annotations to ensure that such knowledge can                 • True Negative (TN) means that an image has no safety violation, and
+be incorporated into our VLM engine. The incorporated examples also                       the VLM correctly outputs “Pass – No Safety Risk”.
+aim to teach CogAgent about the domain COT and LTM prompting
+techniques designed, which decompose safety analyses into step-by-step                   These measures are the foundation for our two primary evaluation
+question-answering to obtain final reasonable analysis (i.e. by first                  metrics, Sensitivity and Specificity, defined in Eqs. (3)–(4):
+
+                                                                                  10
+C.-F. Chan et al.                                                                                                           Automation in Construction 177 (2025) 106305
+
+
+
+
+                       Fig. 11. Snapshot of the collected (a) crowdsourced and (b) real-site image datasets for VLM fine-tuning and testing.
+
+
+                      TP                                                              Table 1
+Sensitivity (%) =                                                          (3)
+                    TP + FN                                                           Proposed evaluation metrics for safety compliance checking.*
+                                                                                       Ground-truth \ Output          Compliance – Failed           Compliance – Pass
+                      TN
+Specificity (%) =                                                          (4)             Compliance – Failed                TP                           FN
+                    TN + FP
+                                                                                            Compliance – Pass                 FP                           TN
+                                                                                       *
+                                                                                           The values denote the number of safety rules being checked one-by-one.
+ • Sensitivity denotes the percentage of violation scenarios correctly
+   identified by VLM.
+ • Specificity denotes the percentage of compliant scenarios correctly                significant practical implications. Sensitivity measures the system’s
+   passed without alert.                                                              ability to correctly identify actual safety violations, such as missing PPE
+                                                                                      or unsafe behaviors at heights. This metric is particularly crucial as
+    In the context of construction safety monitoring, these metrics carry             missing violations (false negatives) could lead to serious accidents or
+
+
+                                                                                 11
+C.-F. Chan et al.                                                                                                             Automation in Construction 177 (2025) 106305
+
+
+Table 2                                                                                    are illustrated below.
+Quantitative results among different methods.
+  Variant           Strategy 1: Ontology-   Strategy 2:   Sensitivity   Specificity         • Case 1: Light-duty Mobile Platform
+                    driven prompting        Two-stage                                       • “Failed”: The results are shown in Fig. 12 (a) where a ladder was
+                                            curriculum                                        correctly identified as an non-approved type of mobile platform, and
+                                            learning
+                                                                                              Fig. 12 (b) where the waste or miscellaneous materials around the
+   Baseline                  £                    £        76.3 %        74.3 %               ladder were successfully detected. Both correctly identified incidents
+  Strategy 1                 √                    £        86.5 %        85.5 %               had triggered the alarm system to prompt out alert messages with a
+  Strategy 2                                               84.7 %        91.7 %
+                                                                                              brief description of the violation. It is noted that a worker was around
+                             £                    √
+  Strategy 1                 √                    √        90.3 %        92.5 %
+      +2                                                                                      the ladder but not ascending/descending it. There was also a PEWP
+                                                                                              next to the ladder and worker but not being used at that moment.
+                                                                                              Hence, only the two relevant safety rules (mobile platform type and
+fatalities. Complementarily, specificity measures the system’s accuracy                       surrounding materials) were checked, and our VLM is capable of
+in correctly identifying safe conditions while avoiding false alarms. High                    filtering out other irrelevant rules during inference.
+specificity is essential for maintaining operational efficiency, as false                   • “Pass”: The results are shown in Fig. 12 (c) and Fig. 12 (d). Our VLM
+positives can cause unnecessary interruptions on the site engineers’                          correctly identified the mobile platform being used as a step platform
+daily routines, possibly diminishing their confidence in the monitoring                       (one of the approved types), and its surrounding was free of waste or
+system.                                                                                       miscellaneous materials. Under such scenario without violating any
+    The quantitative results among the implementation of different                            safety rule, the output “Pass: No Safety Risk” was printed only on
+methods are summarized in Table 2. Specifically, four variants were                           screen for safety supervisors to verify the VLM’s response to the input
+compared, including the baseline one without our proposed strategies,                         image.
+and the remaining three variants incorporating different combinations
+of the two main strategies, i.e., ontology-driven prompting and two-                        • Case 2: Light-duty Mobile Platform (with Worker Climbing)
+stage curriculum learning, proposed in this paper.                                          • “Pass”: As shown in Fig. 13 (a), the worker ascending/descending
+    For the baseline variant, the original model without fine-tuning is                       the step platform was facing directly to the platform and maintaining
+used for inference, with no special prompting strategy. All rules were                        a three-point contact with it. Hence, the safety compliance checking
+directly fed into the VLM at once, asking the VLM in a straightforward                        resulted in a “Pass”.
+manner to output the ones being violated. With such direct prompting,                       • “Failed”: As shown in Fig. 13 (b), the worker was facing away from
+the baseline model suffered from information overflow and insufficient                        the step platform, and his hands were not holding the step platform
+reasoning capability, leading to suboptimal sensitivity and specificity                       safely. In this case, the alarm system was triggered with an alert
+rates of 76.3 % and 74.3 % respectively. This phenomenon suggested                            message prompted out, stating the safety rules being violated.
+that the model struggled to distinguish pertinent details amidst the vast
+data inputs.                                                                                • Case 3: PEWP (with Worker in Operation)
+    Hence, our ontology-driven prompting strategy effectively struc­                        • “Pass”: As shown in Fig. 14 (a), the worker standing on top of the
+tured the model’s reasoning process by leveraging hierarchical and                            PEWP was wearing safety harness, with its lanyard attached to a
+logical thinking based on the work-at-height safety knowledge. This                           secure anchorage point. The VLM simply printed “Pass: No Safety
+method substantially boosted sensitivity to 86.5 % and specificity to                         Risk” on screen to verify his safety compliance, without triggering
+85.5 %, indicating a more effective retrieval of relevant information.                        any alarm.
+Still, the pre-trained vision backbone module might have limited the                        • “Failed”: As shown in Fig. 14 (b), the worker on the PEWP was not
+VLM in discerning finer domain-specific details.                                              wearing a safety harness. Our VLM correctly identified such safety
+    Hence, further improvements were achieved by our two-stage cur­                           violation and generated the corresponding alert message.
+riculum learning strategy, which effectively adapted the pre-trained
+VLM to construction domain and work-at-height scenarios, signifi­                           • Case 4: Floor Opening/Edge
+cantly enhancing the specificity to 91.7 %. This increase indicated a                       • “Pass”: As shown in Fig. 15 (a), the floor opening was fully covered
+more refined ability to identify accurate information. However, a slight                      by safety net, with guardrails and toe boards protecting the floor
+decrease in sensitivity to 84.7 % was observed, possibly due to the                           edge. It is noted that a warning sign was not visible in the image,
+persistent challenge of information overflow, which required prompt                           while the protective measures for that floor opening already sufficed.
+engineering to deal with.                                                                     Hence, the VLM eventually outputted a “Pass”.
+    The most notable enhancement was achieved by combining both                             • “Failed”: As shown in Fig. 15 (b), the upper portion of the floor
+strategies proposed in this paper (i.e. two-stage curriculum learning                         opening was not covered by safety net, leaving a noticeable gap that
+paradigm and ontology-driven prompting framework), which harmo­                               pose falling hazard. In addition, there was no warning sign around
+niously addressed the weaknesses of both individual methods. This dual                        the floor edge. Under such scenario, our VLM correctly identified
+approach leveraged the strengths of domain-tailored model adaptation                          these safety risks and generated the alert messages “not fully
+and the context-aware reasoning process. The result was a remarkable                          covered” and “no warning sign”.
+achievement, with 91.5 % sensitivity and 90.5 % specificity, demon­
+strating the efficacy of this integrated approach for construction safety                      Overall, our VLM demonstrated competitive performance in work-at-
+monitoring. The comparative analysis shows that both proposed                              height safety compliance monitoring. However, two cases were found
+methods can effectively improve the performance of the system in terms                     particularly challenging: (1) For identifying a three-point contact with
+of both accuracy and operation efficiency.                                                 the mobile platform, the worker’s limbs are frequently occluded when
+                                                                                           climbing the mobile platform (e.g. when facing to the right, his left hand
+4.3. Qualitative evaluation                                                                and left leg are occluded respectively by his body and right leg); (2) For
+                                                                                           determining whether a safety harness is attached to a secure anchorage
+    Besides quantitative evaluation, qualitative evaluation is also an                     point (e.g. a PEWP), the thinness of the rope and small size of the anchor
+intuitive way to inspect the performance of our domain-enhanced VLM.                       make the object identification difficult. More crucially, the anchor is
+Based on the work-at-height safety rules listed in Section 3.3, the output                 usually occluded by the worker or the PEWP itself, further challenging
+generated by our VLM (for compliance “Pass” and “Failed” respectively)                     the detection of anchorage. These are the edge cases where compliance
+
+                                                                                      12
+C.-F. Chan et al.                                                                                                 Automation in Construction 177 (2025) 106305
+
+
+
+
+                                      Fig. 12. Results of compliance checking for Light-duty Mobile Platform.
+
+
+
+
+                    Fig. 13. Result of facing to the platform and three-point contact compliance for Light-duty Mobile Platform.
+
+
+
+
+                                                                         13
+C.-F. Chan et al.                                                                                                     Automation in Construction 177 (2025) 106305
+
+
+
+
+                              Fig. 14. Result of safety harness and anchorage compliance for PEWP with worker in operation.
+
+
+
+
+                                             Fig. 15. Result of compliance for floor opening/edge protection.
+
+
+checking accuracy will be compromised. Future research shall develop              adapting VLM-based systems to specialized domains with limited data
+more specialized techniques to ensure robustness of the analytical sys­           availability, while the success demonstrated in real-world deployment
+tem in such cases.                                                                establishes a practical pathway for automating construction safety
+                                                                                  monitoring. Compared with existing conventional CV-NLP safety
+5. Conclusion and future work                                                     monitoring systems which require significant data, human labor and
+                                                                                  sophisticated system design upon development, our innovative system
+    This paper addressed critical challenges in adapting VLMs for con­            can be developed and set up more efficiently, and allows for deep
+struction safety monitoring through a comprehensive framework. Our                multimodal feature extraction and a higher level of reasoning as
+semi-automatic self-instructed pipeline, combining GPT-4 V and                    demonstrated in this paper. The simple interface design also allows the
+GroundingDINO for instruction-following dataset generation, success­              safety officer, whether on site or in remote position, to interact with the
+fully overcomes the data scarcity problem. The two-stage curriculum               VLM easily and greatly facilitates site safety monitoring. The high ac­
+learning also addresses the data imbalance between online images and              curacy achieved in real-site safety compliance inspection suggests sig­
+real-site images. With our curriculum learning paradigm and ontology-             nificant potential for widespread adoption in construction site
+driven prompting framework, the VLM-based monitoring system dem­                  management, enabling more proactive and efficient safety protocols.
+onstrates remarkable effectiveness in domain knowledge integration.                   At the same time, there also exist some edge cases where the system’s
+Upon deployment on a real construction site in Hong Kong, the inte­               robustness may be compromised due to limitation in visual information
+grated system achieved a sensitivity of 90.3 % and a specificity of 92.5 %        processing, e.g., small object detection and occlusion issues. More so­
+in work-at-height safety compliance checking, substantially improved              phisticated strategies, such as multi-frame temporal correlation, can be
+over the baseline method.                                                         achieved by fine-tuning with multi-frame data or in-context learning
+    These research findings have significant implications for both                framework with more comprehensive prompting for processing multiple
+academia and industry. Our framework provides a scalable solution for             image frames. Multiple frames are more reliable than a single frame
+
+
+                                                                             14
+C.-F. Chan et al.                                                                                                                        Automation in Construction 177 (2025) 106305
+
+
+when processing complicated visual information such as action recog­                          [3] U.S. Bureau of Labor Statistics, Census of Fatal Occupational Injuries Summary
+                                                                                                  2023. https://www.bls.gov/news.release/cfoi.nr0.htm, 2023 (last accessed May
+nition or scenes with occlusion. For small object detection, an external
+                                                                                                  24, 2025).
+CNN-based module may be incorporated into our framework for                                   [4] M. Wang, P. Wong, H. Luo, S. Kumar, V. Delhi, J. Cheng, Predicting safety hazards
+detection and localization of small objects, to enhance the robustness in                         among construction workers and equipment using computer vision and deep
+visual information processing without compromising efficiency (i.e.,                              learning techniques, in: ISARC. Proceedings of the International Symposium on
+                                                                                                  Automation and Robotics in Construction, IAARC Publications, 2019, https://doi.
+CNN-based models are computational-efficient when compared to                                     org/10.22260/isarc2019/0054.
+VLMs).                                                                                        [5] J.C.P. Cheng, P.K.Y. Wong, H. Luo, M. Wang, P.H. Leung, Vision-based monitoring
+    Another limitation lies in the ontology-driven approach, such as                              of site safety compliance based on worker re-identification and personal protective
+                                                                                                  equipment classification, Autom. Constr. 139 (2022) 104312, https://doi.org/
+requiring update of the ontology-based prompt to accommodate new                                  10.1016/j.autcon.2022.104312.
+safety regulations or site-specific variations. When compared with                            [6] H. Wu, J. Zhao, An intelligent vision-based approach for helmet identification for
+conventional methods, ours can already allow for more efficient adap­                             work safety, Comput. Ind. 100 (2018) 267–277, https://doi.org/10.1016/j.
+                                                                                                  compind.2018.03.037.
+tation of the ontology by editing in natural language rather than ma­                         [7] H. Luo, M. Wang, P.K.Y. Wong, J. Tang, J.C.P. Cheng, Construction machine pose
+chine language. Nonetheless, this process can be further automated                                prediction considering historical motions and activity attributes using gated
+through ontology extraction and prompt conversion upon various site-                              recurrent unit (GRU), Autom. Constr. 121 (2021) 103444, https://doi.org/
+                                                                                                  10.1016/j.autcon.2020.103444.
+specific regulations by a LLM specialist. Automated approaches for                            [8] H. Luo, M. Wang, P.K.Y. Wong, J.C. Cheng, Full body pose estimation of
+ontology adaptation can be made feasible by LLM prompt engineering,                               construction equipment using computer vision and deep learning techniques,
+as LLM specializes in analyzing long pieces of regulation and extracting                          Autom. Constr. 110 (2020) 103016, https://doi.org/10.1016/j.
+                                                                                                  autcon.2019.103016.
+key objects and relationships for building ontology. Future research will
+                                                                                              [9] J. Tang, M. Wang, H. Luo, P.K.Y. Wong, X. Zhang, W. Chen, J.C. Cheng, Full-body
+focus on enhancing the system through the above vision processing                                 pose estimation for excavators based on data fusion of multiple onboard sensors,
+methods and ontology-update method for improving contextual                                       Autom. Constr. 147 (2023) 104694, https://doi.org/10.1016/j.
+awareness and scalability. The framework’s generalizability can also be                           autcon.2022.104694.
+                                                                                             [10] N. Khan, M.R. Saleem, D. Lee, M.W. Park, C. Park, Utilizing safety rule correlation
+further validated across a more diverse set of safety rules and a variety of                      for mobile scaffolds monitoring leveraging deep convolution neural networks,
+site conditions, and be extended to analytics of more complex worker or                           Comput. Ind. 129 (2021) 103448, https://doi.org/10.1016/j.
+machine actions for more comprehensive safety monitoring practices.                               compind.2021.103448.
+                                                                                             [11] S. Paneru, I. Jeelani, Computer vision applications in construction current state,
+                                                                                                  opportunities & challenges, Autom. Constr. 132 (2021) 103940, https://doi.org/
+CRediT authorship contribution statement                                                          10.1016/j.autcon.2021.103940.
+                                                                                             [12] Y. Wang, B. Xiao, A. Bouferguene, M. Al-Hussein, H. Li, Vision-based method for
+                                                                                                  semantic information extraction in construction by integrating deep learning
+    Chak-Fu Chan: Writing – review & editing, Writing – original draft,                           object detection and image captioning, Adv. Eng. Inform. 53 (2022) 101699,
+Software, Methodology, Formal analysis, Data curation. Peter Kok-Yiu                              https://doi.org/10.1016/j.aei.2022.101699.
+Wong: Writing – review & editing, Writing – original draft, Visualiza­                       [13] OpenAi, GPT-4V(ision) System Card. https://cdn.openai.com/papers/G
+                                                                                                  PTV_System_Card.pdf, 2023 (last accessed May 24, 2025).
+tion, Validation, Methodology, Formal analysis. Xiaowen Guo: Writing                         [14] S. Liu, Z. Zeng, T. Ren, F. Li, H. Zhang, J. Yang, C. Li, J. Yang, H. Su, J. Zhu,
+– review & editing, Visualization, Formal analysis, Data curation. Jack                           L. Zhang, Grounding dino Marrying dino with grounded pre-training for open-set
+C.P. Cheng: Supervision, Resources, Project administration, Investiga­                            object detection, arXiv (2023), https://doi.org/10.48550/arXiv.2303.05499
+                                                                                                  preprint arXiv:2303.05499.
+tion, Funding acquisition, Conceptualization. Jolly Pui-Ching Chan:                          [15] H. Chen, L. Hou, S. Wu, G. Zhang, Y. Zou, S. Moon, M. Bhuiyan, Augmented reality,
+Resources, Project administration, Investigation, Data curation. Pak-                             deep learning and vision-language query system for construction worker safety,
+Him Leung: Software, Resources, Project administration, Funding                                   Autom. Constr. 157 (2024) 105158, https://doi.org/10.1016/j.
+                                                                                                  autcon.2023.105158.
+acquisition, Data curation. Xingyu Tao: Writing – review & editing,
+                                                                                             [16] J. Chen, D. Zhu, X. Shen, X. Li, Z. Liu, P. Zhang, R. Krishnamoorthi, V. Chandra,
+Visualization, Methodology.                                                                       Y. Xiong, M. Elhoseiny, Minigpt-v2 large language model as a unified interface for
+                                                                                                  vision-language multi-task learning, arXiv (2023), https://doi.org/10.48550/
+                                                                                                  arXiv.2310.09478 preprint arXiv:2310.09478.
+Declaration of competing interest                                                            [17] Y.C. Zhou, Z. Zheng, J.R. Lin, X.Z. Lu, Integrating NLP and context-free grammar
+                                                                                                  for complex rule interpretation towards automated compliance checking, Comput.
+                                                                                                  Ind. 142 (2022) 103746, https://doi.org/10.1016/j.compind.2022.103746.
+    The authors declare that they have no known competing financial
+                                                                                             [18] B. Xiao, Y. Wang, Y. Zhang, C. Chen, A. Darko, Automated daily report generation
+interests or personal relationships that could have appeared to influence                         from construction videos using ChatGPT and computer vision, Autom. Constr. 168
+the work reported in this paper.                                                                  (2024) 105874, https://doi.org/10.1016/j.autcon.2024.105874.
+                                                                                             [19] W. Wang, Q. Lv, W. Yu, W. Hong, J. Qi, Y. Wang, J. Ji, Z. Yang, L. Zhao, X. Song,
+                                                                                                  J. Xu, Cogvlm Visual expert for pretrained language models, arXiv (2023), https://
+Acknowledgment                                                                                    doi.org/10.48550/arXiv.2311.03079 preprint arXiv:2311.03079.
+                                                                                             [20] H. Liu, C. Li, Y. Li, Y.J. Lee, Improved baselines with visual instruction tuning, in:
+    The authors would like to acknowledge the project (No. DEMP/                                  Proceedings of the IEEECVF Conference on Computer Vision and Pattern
+                                                                                                  Recognition, 2024, https://doi.org/10.1109/CVPR52733.2024.02484.
+2023/25) funded by Drainage Services Department, the Government of                           [21] J. Li, D. Li, S. Savarese, S. Hoi, Blip-2 Bootstrapping language-image pre-training
+the Hong Kong Special Administrative Region, Wanchai, Hong Kong                                   with frozen image encoders and large language models, in: International
+Island, Hong Kong, SAR, for providing support to this research. The                               Conference on Machine Learning, PMLR, 2023, https://doi.org/10.48550/
+                                                                                                  arXiv.2301.12597.
+authors declare no known competing financial interests or personal re­                       [22] X. Chen, X. Wang, S. Changpinyo, A.J. Piergiovanni, P. Padlewski, D. Salz,
+lationships that could have appeared to influence the work reported in                            S. Goodman, A. Grycner, B. Mustafa, L. Beyer, A. Kolesnikov, Pali A jointly-scaled
+this paper.                                                                                       multilingual language-image model, arXiv (2022), https://doi.org/10.48550/
+                                                                                                  arXiv.2209.06794 preprint arXiv:2209.06794.
+                                                                                             [23] J. Bai, S. Bai, S. Yang, S. Wang, S. Tan, P. Wang, J. Lin, C. Zhou, J. Zhou, Qwen-vl A
+Data availability                                                                                 frontier large vision-language model with versatile abilities, arXiv (2023), https://
+                                                                                                  doi.org/10.48550/arXiv.2308.12966 preprint arXiv:2308.12966.
+                                                                                             [24] C. Fan, Q. Mei, X. Li, Assisting in the identification of ergonomic risks for workers a
+    Data will be made available on request.                                                       large vision-language model approach, in: ISARC Proceedings of the International
+                                                                                                  Symposium on Automation and Robotics in Construction, IAARC Publications,
+References                                                                                        2024, https://doi.org/10.22260/isarc2024/0131.
+                                                                                             [25] Y. Jung, I. Cho, S.H. Hsu, M. Golparvar-Fard, VisualSiteDiary a detector-free
+                                                                                                  vision-language transformer model for captioning photologs for daily construction
+ [1] Labour Department of, H.G, Occupational Safety and Health Statistics 2018. https
+                                                                                                  reporting and image retrievals, Autom. Constr. 165 (2024) 105483, https://doi.
+     ://www.labour.gov.hk/eng/osh/pdf/archive/statistics/OSH_Statistics_2018_eng.
+                                                                                                  org/10.1016/j.autcon.2024.105483.
+     pdf, 2018 (last accessed May 24, 2025).
+                                                                                             [26] Z. Han, C. Gao, J. Liu, S.Q. Zhang, Parameter-efficient fine-tuning for large models:
+ [2] Labour Department of, H.G, Occupational Safety and Health Statistics 2019. https
+                                                                                                  a comprehensive survey, arXiv (2024), https://doi.org/10.48550/
+     ://www.labour.gov.hk/eng/osh/pdf/archive/statistics/OSH_Statistics_2019_eng.
+                                                                                                  arXiv.2403.14608 preprint arXiv:2403.14608.
+     pdf, 2019 (last accessed May 24, 2025).
+
+
+                                                                                        15
+C.-F. Chan et al.                                                                                                                             Automation in Construction 177 (2025) 106305
+
+[27] E.J. Hu, Y. Shen, P. Wallis, Z. Allen-Zhu, Y. Li, S. Wang, L. Wang, W. Chen, Lora             [42] Z. Wu, Z. Wang, J.C.P. Cheng, H.H. Kwok, A knowledge-informed optimization
+     Low-rank adaptation of large language models, arXiv (2021), https://doi.org/                       framework for performance-based generative design of sustainable buildings, Appl.
+     10.48550/arXiv.2106.09685 preprint arXiv:2106.09685.                                               Energy 367 (2024) 123318, https://doi.org/10.1016/j.apenergy.2024.123318.
+[28] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever, Language Models are            [43] S. Wu, Q. Shen, Y. Deng, J.C.P. Cheng, Natural-language-based intelligent retrieval
+     Unsupervised Multitask Learners. https://cdn.openai.com/better-language-model                      engine for BIM object database, Comput. Ind. 108 (2019) 73–88, https://doi.org/
+     s/language_models_are_unsupervised_multitask_learners.pdf, 2019 (last accessed                     10.1016/j.compind.2019.02.016.
+     May 24, 2025).                                                                                [44] J.C.P. Cheng, M. Das, Ontology-based standardized web services for context aware
+[29] Q. Dong, L. Li, D. Dai, C. Zheng, J. Ma, R. Li, H. Xia, J. Xu, Z. Wu, T. Liu, A survey             building information exchange and updating, Comp. Civ. Eng. (2011), https://doi.
+     on in-context learning, arXiv (2022), https://doi.org/10.48550/arXiv.2301.00234                    org/10.1061/41182(416)80.
+     preprint arXiv:2301.00234.                                                                    [45] M. Das, J.C.P. Cheng, K.H. Law, An ontology-based web service framework for
+[30] O. Rubin, J. Herzig, J. Berant, Learning to retrieve prompts for in-context learning,              construction supply chain collaboration and management, Eng. Constr. Archit.
+     arXiv (2021), https://doi.org/10.48550/arXiv.2112.08633 preprint arXiv:                            Manag. 22 (5) (2015) 551–572, https://doi.org/10.1108/ECAM-07-2014-0089.
+     2112.08633.                                                                                   [46] K. Farghaly, R.K. Soman, W. Collinge, P. Manu, M.H. Mosleh, C. Cheung,
+[31] J. Wei, X. Wang, D. Schuurmans, M. Bosma, F. Xia, E. Chi, Q.V. Le, D. Zhou, Chain-                 Construction safety ontology development and alignment with industry foundation
+     of-thought prompting elicits reasoning in large language models, Adv. Neural Inf.                  classes (IFC), Electron. J. Inf. Technol. Constr. 27 (2022) 94–108, https://doi.org/
+     Proces. Syst. 35 (2022) 24824–24837, https://doi.org/10.48550/                                     10.36680/j.itcon.2022.005.
+     arXiv.2201.11903.                                                                             [47] Y. Lu, Q. Li, Z. Zhou, Y. Deng, Ontology-based knowledge modeling for automated
+[32] G. Yong, K. Jeon, D. Gil, G. Lee, Prompt engineering for zero-shot and few-shot                    construction safety checking, Saf. Sci. 79 (2015) 11–18, https://doi.org/10.1016/j.
+     defect detection and classification using a visual-language pretrained model,                      ssci.2015.05.008.
+     Comput. Aided Civ. Inf. Eng. 38 (11) (2023) 1536–1554, https://doi.org/10.1111/               [48] L. Zhang, J. Wang, Y. Wang, H. Sun, X. Zhao, Automatic construction site hazard
+     mice.12954.                                                                                        identification integrating construction scene graphs with BERT based domain
+[33] S. Wong, C. Zheng, X. Su, Y. Tang, Construction contract risk identification based                 knowledge, Autom. Constr. 142 (2022) 104535, https://doi.org/10.1016/j.
+     on knowledge-augmented language models, Comput. Ind. 157 (2024) 104082,                            autcon.2022.104535.
+     https://doi.org/10.1016/j.compind.2024.104082.                                                [49] F. Simone, S.M. Ansaldi, P. Agnello, R. Patriarca, Industrial safety management in
+[34] Y.H. Ho, L. Li, A. Mostafavi, Integrated vision language and foundation model for                  the digital era constructing a knowledge graph from near misses, Comput. Ind. 146
+     automated estimation of building lowest floor elevation, Comput. Aided Civ. Inf.                   (2023) 103849, https://doi.org/10.1016/j.compind.2022.103849.
+     Eng. 40 (1) (2025) 75–90, https://doi.org/10.1111/mice.13310.                                 [50] Q. Shen, S. Wu, Y. Deng, H. Deng, J.C.P. Cheng, BIM-based dynamic construction
+[35] Y. Sun, Z. Gu, S.B. Yang, Probing vision and language models for construction                      safety rule checking using ontology and natural language processing, Buildings 12
+     waste material recognition, Autom. Constr. 166 (2024) 105629, https://doi.org/                     (5) (2022) 564, https://doi.org/10.3390/buildings12050564.
+     10.1016/j.autcon.2024.105629.                                                                 [51] X. Xing, B. Zhong, H. Luo, H. Li, H. Wu, Ontology for safety risk identification in
+[36] S. Ji, S. Pan, E. Cambria, P. Marttinen, S.Y. Philip, A survey on knowledge graphs                 metro construction, Comput. Ind. 109 (2019) 14–30, https://doi.org/10.1016/j.
+     representation, acquisition, and applications, IEEE Trans. Neur. Netw. Learn. Syst.                compind.2019.04.001.
+     33 (2) (2022) 494–514, https://doi.org/10.1109/TNNLS.2021.3070843.                            [52] S. Tang, D. Roberts, M. Golparvar-Fard, Human-object interaction recognition for
+[37] C. Ramonell, R. Chacón, H. Posada, Knowledge graph-based data integration                         automatic construction site safety inspection, Autom. Constr. 120 (2020) 103356,
+     system for digital twins of built assets, Autom. Constr. 156 (2023) 105109, https://               https://doi.org/10.1016/j.autcon.2020.103356.
+     doi.org/10.1016/j.autcon.2023.105109.                                                         [53] W. Fang, L. Ma, P.E. Love, H. Luo, L. Ding, A.O. Zhou, Knowledge graph for
+[38] W. Chen, K. Chen, J.C.P. Cheng, Towards an ontology-based approach for                             identifying hazards on construction sites integrating computer vision with
+     information interoperability between BIM and facility management, Adv. Comp.                       ontology, Autom. Constr. 119 (2020) 103310, https://doi.org/10.1016/j.
+     Strateg. Eng. (2018), https://doi.org/10.1007/978-3-319-91638-5_25. Cham:                          autcon.2020.103310.
+     Springer.                                                                                     [54] Z. Pan, C. Su, Y. Deng, J.C.P. Cheng, Image2Triplets a computer vision-based
+[39] H. Liu, J.C.P. Cheng, V.J. Gan, S. Zhou, A novel data-driven framework based on                    explicit relationship extraction framework for updating construction activity
+     BIM and knowledge graph for automatic model auditing and quantity take-off,                        knowledge graphs, Comput. Ind. 137 (2022) 103610, https://doi.org/10.1016/j.
+     Adv. Eng. Inform. 54 (2022) 101757, https://doi.org/10.1016/j.aei.2022.101757.                     compind.2022.103610.
+[40] H. Liu, J.C.P. Cheng, V.J. Gan, S. Zhou, A knowledge model-based BIM framework                [55] W. Hong, W. Wang, Q. Lv, J. Xu, W. Yu, J. Ji, Y. Wang, Z. Wang, Y. Dong, M. Ding,
+     for automatic code-compliant quantity take-off, Autom. Constr. 133 (2022)                          J. Tang, Cogagent a visual language model for gui agents, in: Proceedings of the
+     104024, https://doi.org/10.1016/j.autcon.2021.104024.                                              IEEECVF Conference on Computer Vision and Pattern Recognition, 2024, https://
+[41] Z. Wu, J.C.P. Cheng, Z. Wang, H.H. Kwok, An ontology-based framework for                           doi.org/10.48550/arXiv.2312.08914.
+     automatic building energy modeling with thermal zoning, Energ. Build. 296 (2023)              [56] D. Zhou, N. Schärli, L. Hou, J. Wei, N. Scales, X. Wang, D. Schuurmans, C. Cui,
+     113267, https://doi.org/10.1016/j.enbuild.2023.113267.                                             O. Bousquet, Q. Le, E. Chi, Least-to-most prompting enables complex reasoning in
+                                                                                                        large language models, arXiv (2022), https://doi.org/10.48550/arXiv.2205.10625
+                                                                                                        preprint arXiv:2205.10625.
+
+
+
+
+                                                                                              16
+

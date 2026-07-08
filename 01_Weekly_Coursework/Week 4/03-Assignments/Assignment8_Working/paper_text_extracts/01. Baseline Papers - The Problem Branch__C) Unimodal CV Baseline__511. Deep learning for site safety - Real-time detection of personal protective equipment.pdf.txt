@@ -1,0 +1,1528 @@
+                                                                 Automation in Construction 112 (2020) 103085
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                       journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Deep learning for site safety: Real-time detection of personal protective                                                                                  T
+equipment
+                                                             ⁎
+Nipun D. Natha, Amir H. Behzadanb, , Stephanie G. Paala
+a
+    Zachry Department of Civil Engineering, Texas A&M University, 3136 TAMU, College Station, TX 77843, USA
+b
+    Department of Construction Science, Texas A&M University, 3137 TAMU, College Station, TX 77843, USA
+
+
+
+
+A R T I C LE I N FO                                        A B S T R A C T
+
+Keywords:                                                  The leading causes of construction fatalities include traumatic brain injuries (resulted from fall and electrocu-
+Personal protective equipment (PPE)                        tion) and collisions (resulted from struck by objects). As a preventive step, the U.S. Occupational Safety and
+Construction safety                                        Health Administration (OSHA) requires that contractors enforce and monitor appropriate usage of personal
+Deep learning                                              protective equipment (PPE) of workers (e.g., hard hat and vest) at all times. This paper presents three deep
+Transfer learning
+                                                           learning (DL) models built on You-Only-Look-Once (YOLO) architecture to verify PPE compliance of workers;
+Image dataset
+Real-time object detection
+                                                           i.e., if a worker is wearing hard hat, vest, or both, from image/video in real-time. In the ﬁrst approach, the
+                                                           algorithm detects workers, hats, and vests and then, a machine learning model (e.g., neural network and decision
+                                                           tree) veriﬁes if each detected worker is properly wearing hat or vest. In the second approach, the algorithm
+                                                           simultaneously detects individual workers and veriﬁes PPE compliance with a single convolutional neural
+                                                           network (CNN) framework. In the third approach, the algorithm ﬁrst detects only the workers in the input image
+                                                           which are then cropped and classiﬁed by CNN-based classiﬁers (i.e., VGG-16, ResNet-50, and Xception) ac-
+                                                           cording to the presence of PPE attire. All models are trained on an in-house image dataset that is created using
+                                                           crowd-sourcing and web-mining. The dataset, named Pictor-v3, contains ~1,500 annotated images and ~4,700
+                                                           instances of workers wearing various combinations of PPE components. It is found that the second approach
+                                                           achieves the best performance, i.e., 72.3% mean average precision (mAP), in real-world settings, and can process
+                                                           11 frames per second (FPS) on a laptop computer which makes it suitable for real-time detection, as well as a
+                                                           good candidate for running on light-weight mobile devices. The closest alternative in terms of performance
+                                                           (67.93% mAP) is the third approach where VGG-16, ResNet-50, and Xception classiﬁers are assembled in a
+                                                           Bayesian framework. However, the ﬁrst approach is the fastest among all and can process 13 FPS with 63.1%
+                                                           mAP. The crowed-sourced Pictor-v3 dataset and all trained models are publicly available to support the design
+                                                           and testing of other innovative applications for monitoring safety compliance, and advancing future research in
+                                                           automation in construction.
+
+
+
+
+1. Introduction                                                                                exorbitant [3]. The leading causes of construction fatalities include fall,
+                                                                                               struck by an object, electrocutions, and caught-in/between – together
+    With $1.3 trillion annual expenditure (~6.3% of the GDP) [1] and                           comprising the “fatal four” – which were responsible for nearly 60% of
+7.2 million employees (~5% of the total workforce) [2], construction is                        construction worker deaths in 2017 (Fig. 1) [4].
+one of the largest sectors of the U.S. economy. However, the high                                  The majority of these injuries/fatalities could be prevented if
+number of workplace accidents and worker injuries has also made this                           workers wore appropriate personal protective equipment (PPE), e.g.,
+industry one of the most hazardous among all industries. In 2016–17                            hard hat, safety vest, gloves, safety goggles, and steel toe shoes [5]. The
+alone, the total number of fatal occupational injuries was the highest in                      U.S. Occupational Safety and Health Administration (OSHA) and si-
+construction compared to all other industries in the U.S. According to                         milar agencies in other countries require that all personnel, working in
+the Bureau of Labor Statistics (BLS), during this period, 991 fatal in-                        close proximity of site hazards, wear proper PPE to minimize the risk of
+cidents (~19% of all the fatalities) were recorded [3]. In addition, in                        being exposed to or injured by hazards [5]. According to a report by the
+2017, the number of non-fatal occupational injuries and illnesses in                           National Institute for Occupational Safety and Health (NIOSH), be-
+construction jobs was 79,810 (~9% of total cases) which was also                               tween 2003 and 2010, a total of 2,210 construction fatalities occurred
+
+
+    ⁎
+        Corresponding author.
+        E-mail addresses: nipundebnath@tamu.edu (N.D. Nath), abehzadan@tamu.edu (A.H. Behzadan), spaal@tamu.edu (S.G. Paal).
+
+https://doi.org/10.1016/j.autcon.2020.103085
+Received 7 July 2019; Received in revised form 6 January 2020; Accepted 8 January 2020
+Available online 17 January 2020
+0926-5805/ © 2020 Elsevier B.V. All rights reserved.
+N.D. Nath, et al.                                                                                                        Automation in Construction 112 (2020) 103085
+
+
+                                                                                      wearing proper PPE [16]. Another example includes using a local area
+                                        39.2%                                         network (LAN) to check RFIDs, installed on PPE components, that
+                                                                                      continuously monitor PPE compliance while the employees are working
+      OTHERS                                                 FATAL FOUR               [17]. A similar approach is investigated by Naticchia et al. [18] where
+       40.2%                                                 59.8%                    each PPE item is equipped with short-range transponders, and a wire-
+                                             8.2%                                     less system checks the types of PPE each worker is wearing to verify if it
+                           5.1%     7.3%                                              complies with the regulations. However, the sensor-based approach
+                                                                                      requires a signiﬁcant investment in purchasing, installing, and main-
+                                                                                      taining complicated sensor networks that might deter its implementa-
+                                                                                      tion in practice.
+          FALL                                  STRUCK BY OBJECT                          On the contrary, vision-based approaches use cameras to record
+          ELECTROCUTION                         CAUGHT-IN/BETWEEN                     images or videos of the job site, which are then analyzed to verify PPE
+                                                                                      compliance. This approach provides richer information about the scene
+Fig. 1. Percentage of fatal injuries caused by the “fatal four” in construction       that can be utilized to understand complex construction sites more
+industry in 2017.                                                                     promptly, precisely, and comprehensively [19]. Although many re-
+                                                                                      searchers have used depth-based cameras, e.g., Kinect and VICON, to
+because of traumatic brain injury (TBI) which represented 25% of all                  analyze unsafe behaviors of construction workers [20], due to the RGB-
+construction fatalities during that period [6]. The most common causes                D camera's various shortcomings (e.g., limited range of view), regular
+of TBIs in construction sites are fall from height, fall of objects on head,          RGB cameras are more feasible for practical uses [10]. Examples in-
+and electrocution by overhanging wires [5,6]. OSHA tries to minimize                  clude but are not limited to video-based surveillance methods that use
+head injuries by mandating workers to wear hard hats when there are                   facial features, and motion and color information [21], image-based
+overhead objects, or there is a possibility of workers bumping their                  edge detection [22], and Histogram of Oriented Gradient (HOG)-based
+heads against objects, or having accidental contact with overhanging                  method [23], to detect hard hats. Other examples are using HOG-based
+electrical hazards [5]. Similarly, in many construction sites, struck by              feature and machine-learning algorithms, e.g., Support Vector Machine
+objects can occur due to site traﬃc or heavy equipment (e.g., trucks,                 (SVM) [24] and k-Nearest Neighbor (kNN) to detect if a person is
+bulldozers, graders) operating in close proximity to workers [4]. To                  wearing a safety vest [25].
+ensure high visibility in all lighting and weather conditions, OSHA re-                   In recent years, deep learning methods have drawn signiﬁcant at-
+quires that workers wear safety vests (generally, red or orange in color,             tention in computer vision due to their ability to self-learn useful fea-
+and reﬂective if employee works at night) [7].                                        tures from large-scale, annotated training data [26]. Particularly,
+    While governing laws and safety regulations (OSHA-1926.28a) al-                   Convolutional Neural Network (CNN) is being widely used for image
+most always hold employers responsible for enforcing, monitoring, and                 classiﬁcation and object detection. For example, LeCun et al. [27] used
+maintaining appropriate PPE on the job site [8], employees often do not               CNNs to recognize hand-written digits, and Krizhevsky et al. [28] and
+comply with this regulation due to the lack of safety awareness, dis-                 Simonyan and Zisserman [29] studied deep CNNs to classify 1.2 million
+comfort of wearing PPE, and the feeling that PPE interferes with their                images (ImageNet dataset) into 1000 diﬀerent classes of various ev-
+work [9–11]. According to OSHA, not using proper PPE (e.g., eye and                   eryday objects and animals. Within the construction domain, Kolar
+face protection) was one of the most violated regulations in 2017–18                  et al. [26] used CNNs to detect safety guardrails. Siddula et al. [30]
+[12]. To incentivize compliance, OSHA ﬁnes the employer by imposing                   coupled a Gaussian Mixture Model (GMM) [31] with CNNs to detect
+a penalty for each employee (up to $13,260) who fails to comply with                  objects on roof construction sites. Ding et al. [32] combined a Long
+PPE requirements [13]. For example, in a 12-month period ending in                    Short-Term Memory (LSTM) [33] model with CNNs to recognize
+September 2018, OSHA issued 895 citations for not wearing protective                  workers' potentially unsafe behaviors (e.g., climbing a ladder). More
+helmet (total penalty of $1,916,511) and 78 citations for violating other             recently, Nath et al. [34,35] used CNNs to identify common construc-
+PPE requirements (total penalty of $309,474) in construction sites [14].              tion-related objects (e.g., building, equipment, and workers).
+To note, the burden of full compensation falls onto employers and/or
+employees since insurance companies do not cover any damages caused                   3. State-of-the-art techniques and problem statement
+by improper PPE practice. At the same time, OSHA also encourages
+employers to train workers about the necessity of proper PPE [4].                         Most existing vision-based methods for monitoring PPE compliance
+However, from a practical perspective, manual monitoring of large                     merely focus on identifying hard hats. For example, Fang et al. [10]
+number of workers for PPE compliance is expensive, time-consuming,                    used Region-based CNNs (R-CNNs) to detect if a worker is not wearing
+and resource-intensive [15]. Therefore, recent research has looked into               hard hat. Wu et al. [36] proposed a Single Shot Detector (SSD)-based
+the possibility of automating PPE detection. In this paper, the authors               algorithm to detect hard hat, and Mneymneh et al. [15] isolated moving
+explore current trends in PPE detection and introduce deep learning                   worker (by detecting motion) in videos and identiﬁed if any hard hat
+(DL) methods for fast and accurate PPE detection. In particular, three                was located in or around the top area of a worker's detection box. Si-
+approaches are presented to identify, in real-time, if a construction                 milarly, Xie et al. [37] used fully convolution-based algorithms to de-
+worker is wearing PPE components (e.g., hard hat and vest). Moreover,                 tect workers' hard hats. However, to date, few studies have been di-
+the approach to collecting relevant data and preparing the annotations                rected at identifying multi-class PPE harnessing the power of DL
+is also discussed.                                                                    algorithms. Among the scarce examples of multiple PPE detection, a
+                                                                                      commercially available software, named smartvid.io, applies an AI-
+                                                                                      driven algorithm to detect multiple PPE components (e.g., hard hat,
+2. Literature review                                                                  safety vest, gloves, safety goggles, and steel toe shoes) [38]. None-
+                                                                                      theless, methods for “real time” detection [36,37] of PPE are scanter,
+    Current techniques of automated monitoring of PPE compliance can                  albeit signiﬁcantly important for ensuring safety. Previous studies [39]
+be broadly categorized into two types: sensor-based and vision-based.                 have deﬁned “real-time” as processing at least 5 video frames per
+Sensor-based techniques comprise of installing a sensor and analyzing                 second (FPS) although more recent studies [40,41] prefer higher FPS to
+its signals. An example includes using Radio Frequency Identiﬁcation                  be considered as real-time. However, in this study, processing speed ≥5
+(RFID) tags installed on each PPE component, and checking the tags                    FPS is considered as “real-time” and failing that, at least ≥1 FPS is
+with a scanner at the entrance of a job site to control if workers are                considered as “near real-time”. At such a fast rate, detection of PPE
+
+                                                                                  2
+N.D. Nath, et al.                                                                                                   Automation in Construction 112 (2020) 103085
+
+
+(e.g., hard hat, and vest) as a standalone application or in conjunction         4. Overview of relevant deep learning methods
+with other construction-related objects (e.g., building, equipment) en-
+ables the identiﬁcation of more complex and subtle spatiotemporal                    The building blocks of the developed methodology comprise of
+relationships (including those that may put workers in life-threatening          several DL-based methods. These methods are brieﬂy discussed in this
+situations) that might not be possible to detect otherwise. For example,         section, followed by a detailed demonstration of the overall metho-
+an employee, not wearing a hard hat and/or safety vest while working             dology.
+in close proximity to heavy construction equipment (e.g., excavator), is
+exposed to a high risk of being struck by the equipment. Therefore, to           4.1. Real-time object detection
+precisely track object movements in a live video feed and predict im-
+minent collisions, it is necessary to have an extremely fast algorithm                In computer vision, the object detection problem is deﬁned as
+that can repeatedly process videos frame-by-frame and provide feed-              identifying an object (a.k.a., classiﬁcation) in an image and precisely
+back in real-time. Moreover, since a fast algorithm is less computa-             estimating its location (a.k.a., localization) within the image [43]. One
+tionally expensive, it will signiﬁcantly reduce the upfront cost for             of the most prevalent examples of state-of-the-art object detection al-
+computational resources and can be launched on mobile devices (e.g.,             gorithms is Region-based CNN (R-CNN) [44]. An R-CNN ﬁrst identiﬁes
+smartphones, tablets) and even on light-weight drones [42].                      several regions of interest (a.k.a., candidate regions), and then uses a
+     Since safety incidents occur in speciﬁc contexts (i.e., when certain        CNN to classify those regions to detect objects in them [44,45]. Since
+spatial or temporal rules are not properly followed), identifying only           the original R-CNN is slow [45], faster variants of it, e.g., Fast R-CNN
+the workers and PPE components (e.g., hard hat, and vest) in an image            [45], Faster R-CNN [39], and Mask R-CNN [46] have been proposed.
+or video frame, without recognizing the contextual relationship be-              Yet, all of these algorithms fall short of achieving real-time detection of
+tween them, does not eﬀectively verify PPE compliance or the lack                objects from continuous video feeds. At present, the most promising
+thereof. Even after detecting the presence of individual objects (e.g.,          algorithms capable of doing real-time object detection are SSD (Single
+worker, hard hat, and vest), verifying whether a worker is properly              Shot Detector) [47], YOLO (You-Only-Look-Once) [40], R-FCN (region-
+using the PPE components that comply with safety regulations still               based fully convolutional network), and RetinaNet [48]. However, the
+remains a question that needs to be answered by analyzing the spa-               challenge in achieving real-time computation is to sustain decent ac-
+tiotemporal relationships between the detected objects considering               curacy. While most often, fast algorithms signiﬁcantly compromise
+context. For example, while verifying PPE compliance for hard hat, one           accuracy for achieving real-time computation, to date, only YOLO
+needs to know if a worker is actually wearing it on his/her head, just           (particularly, YOLO-v3) is faster yet more accurate than other alter-
+holding it, or simply laying it somewhere. Therefore, the task of mon-           natives [49]. For example, previous research [37] has found that YOLO
+itoring PPE compliance involves two subtasks in itself, namely detection,        signiﬁcantly performs better than SSD and R-FCN in detecting hard hat,
+i.e., detecting workers and PPE components, and veriﬁcation, i.e.,               while still performing the detection at higher frame rate (i.e., faster)
+checking if a worker is properly using PPE components. The majority of           than those algorithms.
+previous research in this area has attempted at identifying workers (i.e.,            Unlike R-CNN-based approaches, YOLO reduces the computational
+detection) ﬁrst and then checking if a hard hat is present in or around a        burden and, thus, allows much faster detection of objects, by combining
+worker's detection region (i.e., veriﬁcation) [15,21,22]. For instance,          the classiﬁcation and localization tasks into a single CNN framework
+Fang et al. [10] identify candidate regions in the image (that may or            [40]. Particularly, a variant of YOLO model, YOLO-v3, takes a
+may not include a worker) and classify if the region is a “worker                416 × 416 RGB image as input and contains three output layers, each
+without hat”. On the other hand, Xie et al. [37] detect workers and hard         dividing the input image into 13 × 13 grids (Output-1), 26 × 26 grids
+hats individually but simultaneously and then verify if a worker is or is        (Output-2), and 52 × 52 grids (Output-3), respectively (Fig. 2). Each of
+not wearing hard hat based on the amount of overlap between the                  the three output layers is associated with three anchor boxes, resulting
+worker's head and the detected hard hats. However, the level of com-             in a total of nine anchor boxes. Output-1 layer is associated with the
+plexity for the veriﬁcation task exponentially increases with an increase        three largest anchor boxes (to detect large objects), Output-2 layer is
+in the number and types of PPE components. Particularly, there are 2n            associated with the next three larger anchor boxes (to detect medium-
+possible combinations of PPE attire for n diﬀerent types of PPE com-             sized objects), and Output-3 layer is associated with the three smallest
+ponents. For example, for one type of PPE (n = 1), suppose hard hat,             anchor boxes (to detect small objects). In the training phase, each grid
+there are two (21 = 2) combinations, i.e., worker not wearing hard hat           cell in the output layers takes corresponding anchor boxes and learns
+and worker wearing hard hat. However, for two components (n = 2),                how to shift and/or scale these anchor boxes so that the modiﬁed boxes
+suppose hard hat and vest, there are four (22 = 4) combinations, i.e.,           (a.k.a., bounding boxes) perfectly ﬁt the objects of interest, as illu-
+worker not wearing hard hat and vest (referred to as W), wearing just            strated in Fig. 2. As shown in this Figure, each predicted bounding box
+hard hat (referred to as WH), wearing just vest (referred to as WV), and         is     associated     with    a     (N     +     5)-dimensional      vector
+wearing both hard hat and vest (referred to as WHV). Therefore, a                [ tx ty tw th p0 p1 … pN ]T . In this vector, values tx, ty, tw, and th re-
+comprehensive model should be able to identify all workers in a video            present x- and y-coordinates of the center, and the width and height of
+frame, and then determine if individual workers are wearing each (or a           the box, respectively. The value p0 (a.k.a., objectness score) is the
+combination) of considered PPE components.                                       probability of an object located inside the bounding box. The remaining
+     Our literature review has revealed that previously proposed                 values are N conditional probabilities, P(Ci| object), each indicating that
+methods of verifying PPE compliance either depend on obtrusive and               given an object presents inside the box what is the probability that it
+expensive sensor networks or can identify only one type of PPE com-              belongs to class Ci, where i = 1, …, N. In total, YOLO-v3 outputs
+ponent (e.g., hard hat), or require signiﬁcant amount of processing time         (13 × 13 × 3) + (26 × 26 × 3) + (52 × 52 × 3) = 10,647 boxes for
+(i.e., not real-time) to complete the analyses. This research oﬀers a            a single image. However, intuitively, most of these output boxes are
+scientiﬁcally robust and comprehensive method capable of overcoming              either false positive or represent the same object in the input image.
+these limitations while achieving reliable performance. In particular,           Therefore, to discard redundancy and duplication in the inference
+this study aims to develop DL-assisted vision-based frameworks to                phase, YOLO uses the non-maximum suppression (NMS) technique
+monitor workers' safety compliance, associated with multiple PPE                 [40,41,44] to eliminate boxes with lower conﬁdence levels but higher
+components, in real-time for more feasible, comprehensive, and prompt            percentage of overlapping, thus preserving a single bounding box for a
+assessment of workplace safety.                                                  single corresponding object.
+                                                                                      A common metric to measure the performance of object detection
+                                                                                 algorithm is intersection over union (a.k.a. IoU). As shown in Fig. 3, IoU
+
+                                                                             3
+N.D. Nath, et al.                                                                                                                                   Automation in Construction 112 (2020) 103085
+
+
+                                                                         OUTPUT-1                       OUTPUT-2                      OUTPUT-3
+
+                                 INPUT
+
+
+
+
+                                                       YOLO-v3 CNN
+                                                       (hidden layers)
+                                                                                               +                                  +
+
+                               RGB Image
+                              (416 416 3)
+                                                                               Output-1 Boxes                       Output-2 Boxes           Output-3 Boxes
+                                                                                 (13 13 3)                            (26 26 3)                (52 52 3)
+                                                                              Anchor box (Boxk)
+                                                                                                                                      Predictions
+                                                                                                                                      Output-2, Celli,j and Boxk
+                               cy
+
+
+
+
+                                                                                                               th
+                                                                                                               bh = ahe
+                                         Celli,j                                       Center
+                              (ty)                                                                        ah
+                                                                                                                             tx ty tw th p0 p1        ...   pN
+
+                                                                                                                           box predictions      class scores
+                                                                                          aw                                                    objectness score
+
+                                                                                                   tw
+                                cx       (tx)                                          bw = awe
+                                                                                             Bounding box
+
+                                      26 26 grids
+                                 PLACEMENT OF BOXES                                 BOX PROPERTIES                                RAW PREDICTIONS
+
+                                                                 Fig. 2. Schematic diagram of the YOLO-v3 algorithm.
+
+
+represents the percentage of overlap between two boxes, e.g., the                                       features (e.g., edges, shapes, colors) from the source dataset to the
+ground-truth box (G) and the predicted box (P), and is calculated using                                 extent that is relevant and useful for the classes in the target dataset
+Eq. (1) [37].                                                                                           [50].
+                                                                                                            Publicly available large-scale datasets generally contain annotated
+         intersection   G∩P
+IoU =                 =                                                                                 images of common daily objects. Examples include but are not limited
+            union       G∪P                                                            (1)
+                                                                                                        to ImageNet [52] dataset containing 3.2 million images of 5,247 cate-
+                                                                                                        gories of objects, PASCAL (pattern analysis, statistical modelling and
+                                                                                                        computational learning) VOC (visual object class) 2012 dataset [53]
+4.2. Transfer learning and image dataset
+                                                                                                        containing 20 categories of objects in ~21,000 images, and Microsoft's
+                                                                                                        COCO (common objects in context) [54] dataset containing 328,000
+    A CNN model can be trained from scratch on a particular dataset.
+                                                                                                        images with 2.5 million instances of 91 diﬀerent types of objects. In this
+However, achieving optimal results in this approach requires large
+                                                                                                        study, YOLO-v3 models are pre-trained on the COCO dataset [54] since
+training data along with hyperparameter tuning which can take a
+                                                                                                        it contains classes (e.g., person) and contexts (e.g., outdoor locations)
+substantial processing time [26]. To overcome these challenges and
+                                                                                                        that are visually relevant to the target application (e.g., workers in a
+achieve signiﬁcantly better and consistent performance, transfer
+                                                                                                        construction site).
+learning is performed [50,51]. Transfer learning is a process where a DL
+model is pre-trained on a diﬀerent, but related dataset (a.k.a., source
+dataset) which is generally larger in size. Next, the model is re-trained                               5. Methodology
+on the desired dataset (a.k.a., target dataset) which could be smaller in
+size. Through this process, the model learns high- and mid-level                                           This section presents generic frameworks for verifying safety
+
+
+                                                          INTERSECTION                                                    UNION
+
+                                                   G                      P                                    G              P
+
+
+
+
+                                                   GROUND-TRUTH (G)                                                 PREDICTION (P)
+                                Fig. 3. Calculation of intersection over union (IoU) between ground-truth and predicted boxes.
+
+
+                                                                                               4
+N.D. Nath, et al.                                                                                                                 Automation in Construction 112 (2020) 103085
+
+
+
+
+                                                                                              Hat (H)
+
+
+
+                    APPROACH-1
+
+
+
+
+                                                     YOLO-v3-A1
+
+
+
+
+                                                                                                                    CLASSIFIERS
+                                                                                                                                               W
+                                                                                              Vest (V)                                         WH
+
+
+
+
+                                                                                                                        ML
+                                                                                                                                               WV
+                                                                                              Worker (W)                                       WHV
+                    APPROACH-2
+
+
+
+
+                                                     YOLO-v3-A2
+                                                                                                       W
+                                                                                                       WH
+                                                                                                       WV
+                                                                                                       WHV
+                    APPROACH-3
+
+
+
+
+                                                     YOLO-v3-A3
+
+
+
+
+                                                                                                                                               W
+
+
+
+
+                                                                                                                    CLASSIFIER
+                                                                                                                                               WH
+
+
+
+
+                                                                                                                      CNN
+                                                                                              W
+                                                                                                                                               WV
+                                                                                                                                               WHV
+
+
+
+
+                                                                  Fig. 4. Three diﬀerent approaches.
+
+
+compliance for multiple PPE from visual data (image or video). In                     subsections.
+particular, three diﬀerent DL-based approaches are proposed to perform
+the veriﬁcation in real-time. Although the proposed techniques are                    5.2.1. Preparation of the dataset and the pre-trained models
+designed to work for any number (≥1) and type of PPE (e.g., hard hat,                     In general, a YOLO-v3 model takes 416 × 416 images as input.
+safety vest, gloves, safety goggles, and steel toe shoes), for the scope of           Therefore, all images are initially resized to a size of 416 × 416 using
+this study, the technical discussions, data analysis, and validation are              bi-cubic interpolation [55]. The original aspect ratio is maintained
+particularly conducted for two types of PPE, i.e., hard hat (referred to as           during resizing by padding each image equally on both sides along the
+hat) and safety vest (referred to as vest).                                           shorter dimension. Next, the entire dataset is randomly split into
+                                                                                      training (64%), validation (16%), and testing (20%) subsets. Then, k-
+5.1. Overview of the three diﬀerent approaches                                        means clustering [41] is performed on all the rectangular boxes in the
+                                                                                      training dataset to obtain nine anchor boxes for the models. All YOLO-
+    Fig. 4 illustrates a schematic diagram of the three proposed ap-                  v3 models are subsequently pre-trained on the COCO dataset [54].
+proaches for automatically verifying PPE compliance of workers from
+visual data. In Approach-1, a YOLO-v3-based model is trained and                      5.2.2. Architecture of the YOLO-v3 models
+tested to detect worker (W) and diﬀerent PPE types, e.g., hat (H), and                    In all three approaches, the architecture of the pre-trained YOLO-v3
+vest (V), individually. Next, a veriﬁcation algorithm is applied to check             models (particularly, the last three output layers) are modiﬁed based on
+if each worker is wearing the PPE properly. This algorithm, particu-                  the number of considered classes in each approach. For example, in
+larly, checks all the workers and classiﬁes each worker into one of the               Approach-1, the YOLO-v3 model detects worker and n number of dif-
+four classes: worker wearing no hat and vest (W), worker wearing only                 ferent PPE types, a total of n + 1 classes, individually. Therefore, each
+hat (WH), worker wearing only vest (WV), and worker wearing both hat                  bounding box in each grid cell of the output layers of the YOLO-v3
+and vest (WHV). In contrast, in Approach-2, a YOLO-v3-based model is                  architecture (Fig. 2) should be a (n + 6)-dimensional vector (Section
+designed to localize workers and directly classify them based on their                4.1). For example, since there are 3 bounding boxes in each 13 × 13
+PPE attire, i.e., W, WH, WV, and WHV. Finally, Approach-3 ﬁrst uses a                 grid of Output-1 layer, the dimension of the predicted tensor should be
+YOLO-v3-based model to detect only workers (regardless of the PPE                     13 × 13 × 3(n + 6) (Table 1). Similarly, for Output-2 and Output-3
+attire), then crops parts of the image that contain workers, and ﬁnally,              layers, the dimensions of the predicted tensors should be
+applies a CNN-based classiﬁer to each cropped image to classify it into               26 × 26 × 3(n + 6) and 52 × 52 × 3(n + 6), respectively (Table 1).
+one of the possible classes, i.e., W, WH, WV, and WHV.                                However, since the dimensions of output layers and the number and
+                                                                                      types of classes in the pre-trained YOLO-v3 models may not match with
+5.2. Common steps in all three approaches                                             the problem at hand, all three output layers are replaced with new
+                                                                                      layers with required dimensions, and the weights in the newly added
+    The common denominator of all three approaches is that they use                   layers are randomly initialized. The modiﬁed model is referred to as
+adopted YOLO-v3 models to detect targeted object classes. Therefore,                  YOLO-v3-A1.
+the preliminary steps, e.g., preparation of the data and formation of the                 In Approach-2, the YOLO-v3 model directly detects worker's 2n
+YOLO-v3 models follow similar procedures in all three approaches.                     diﬀerent combinations of PPE attire for n diﬀerent PPE types.
+Considering the generality in these procedures, the common steps in all               Therefore,      the   dimensions      of   the     output     layers  are
+three approaches are discussed in this subsection and more technical                  13 × 13 × 3(2n + 5), 26 × 26 × 3(2n + 5), and
+details on each approach are discussed individually in the following                  52 × 52 × 3(2n + 5), respectively (Table 1). With the same token as in
+
+                                                                                  5
+N.D. Nath, et al.                                                                                                        Automation in Construction 112 (2020) 103085
+
+
+Table 1
+Dimensions of the output layers in modiﬁed YOLO-v3 models in three approaches.
+  PPE types                          Layers                   Approach-1                                Approach-2                             Approach-3
+
+                                                                                                                     n
+  n types of PPE                     Output-1                 13 × 13 × 3(n + 6)                        13 × 13 × 3(2 + 5)                     13 × 13 × (3 × 6)
+                                     Output-2                 26 × 26 × 3(n + 6)                        26 × 26 × 3(2n + 5)                    26 × 26 × (3 × 6)
+                                     Output-3                 52 × 52 × 3(n + 6)                        52 × 52 × 3(2n + 5)                    52 × 52 × (3 × 6)
+  hat and vest (n = 2)               Output-1                 13 × 13 × 24                              13 × 13 × 27                           13 × 13 × 18
+                                     Output-2                 26 × 26 × 24                              26 × 26 × 27                           26 × 26 × 18
+                                     Output-3                 52 × 52 × 24                              52 × 52 × 27                           52 × 52 × 18
+
+
+
+Approach-1, the output layers of the YOLO-v3 model for Approach-2                 in the image. After obtaining the predicted boxes, the next task is to
+are modiﬁed and referred to as YOLO-v3-A2 hereafter. In contrast, re-             verify PPE compliance for each worker. One potential way could be
+gardless of the number of considered PPE types, in Approach-3, the                applying an algorithm with explicit rules that are determined through
+YOLO model detects only workers (i.e., one class) in the input image or           empirical observations. For example, if a hat detection box is located at
+video frame. Therefore, the dimensions of the output layers in the                the upper portion of the worker detection box, and the two boxes have
+modiﬁed YOLO-v3 model for this approach (referred to as YOLO-v3-A3)               an overlapping area larger than a certain threshold, then the worker is
+are 13 × 13 × (3 × 6), 26 × 26 × (3 × 6), and 52 × 52 × (3 × 6),                  marked as probably wearing a hat. However, manually establishing
+respectively (Table 1).                                                           these rules for multiple PPEs is a complicated task and results may not
+                                                                                  be structured or comprehensive enough to consider all possible sce-
+5.2.3. Training of the YOLO-v3 models                                             narios. Therefore, in this paper, traditional machine learning (ML) al-
+    In YOLO-v3-A1, -A2, and -A3 models, all layers, except the last three         gorithms (e.g., neural network and decision tree) are used to implicitly
+output layers, contain pre-determined weights obtained by pre-training            learn such rules by harnessing the power of big data.
+the models on COCO dataset. These pre-trained weights can extract                     In particular, the authors suggest training n diﬀerent ML classiﬁers,
+useful features (e.g., colors, edges) that can eﬀectively distinguish the         each for n diﬀerent PPE types, since the rules for diﬀerent types of PPE
+classes (e.g., person, dog, car, apple, laptop, clock) present in the COCO        might be considerably diﬀerent. However, for all classiﬁers, we propose
+dataset. However, in the newly added output layers (listed in Table 1),           to prepare the inputs according to the following steps. First, as shown in
+weights are initialized with random values and updated through re-                Fig. 5, each bounding box Ci for class C ∈ {W, H, V} is represented by
+                                                                                                           →                   T
+training the models with the Pictor-v3 dataset for classifying the target         two positional vectors: Ci,0 = [ x 0Ci y0Ci ] pointing to the top-left corner
+classes. During this re-training process, the weights in all other layers                                       →                  T
+                                                                                  (x0Ci, y0Ci) of the box, and Ci,1 = [ x1Ci y1Ci ] pointing to the bottom-
+are kept frozen (i.e., unchanged). The idea is to familiarize the models                           Ci  Ci
+                                                                                  right corner (x1 , y1 ) of the box. Here, i is the index for detected boxes
+with the new target classes and allow them to learn how to use the pre-           of a class. Next, when considering if worker Wi is wearing any particular
+learned features to distinguish the target classes. The re-training process       type of PPE, P ∈ {H, V}, ﬁrst, the width and height of the box Wi (de-
+involves training for 25 epochs with a learning rate of 10−3 using Adam           noted by wWi and hWi, respectively) are calculated using Eq. (2). Then,
+[56] optimizer.                                                                   all Pj boxes of that PPE type are normalized using Eq. (3). As shown in
+    Next, the entire model is ﬁne-tuned by updating the weights in all            Fig. 5, this equation performs a coordinate transformation, i.e., a
+layers, however, with a slower learning rate. This allows the models to           translation which sets the top corner of Wi as the origin of the trans-
+slightly modify the pre-learned features to ﬁnd more eﬀective features            formed coordinate system, followed by a scaling that scales all the
+that work better for detecting the target classes. To prevent the model           boxes such that the width and height of the transformed Wi box become
+from overﬁtting, ﬁne-tuning is performed by continuously monitoring               unity.
+the validation loss after each epoch and adjusting the learning rate
+accordingly. Particularly, the following criteria are maintained in this                     x Wi     x Wi
+                                                                                  ⎡ w ⎤ = ⎡ 1 ⎤ − ⎡ 0 ⎤ = ⎯→ ⎯       ⎯
+                                                                                                                    ⎯→
+                                                                                      Wi
+step: ﬁne-tuning of the model is started with an initial learning rate of            Wi    ⎢   W  ⎥ ⎢   Wi ⎥
+                                                                                                             Wi,1 − Wi,0
+                                                                                  ⎣ h        y  i
+                                                                                         ⎦ ⎣ 1 ⎦ ⎣ 0 ⎦y                                                          (2)
+10−4; the learning rate is reduced by half if the validation loss does not
+decrease for three consecutive epochs; training is terminated if the
+validation loss does not decrease for 10 consecutive epochs.                                             ⎡ 1     0 ⎤
+                                                                                  ⎡∼           ∼
+                                                                                      Pj, Wi     P ,W                       Pj  Pj       Wi   Wi
+                                                                                    x0         x1 j i ⎤ ⎢ wWi       ⎥ ⎛ ⎡ x 0 x1 ⎤ ⎡ x 0 x 0 ⎤ ⎞
+                                                                                                        =⎢                          −
+                                                                                  ⎢ ∼ Pj, Wi   ∼ P ,W ⎥
+                                                                                               y1 j i ⎦ ⎢ 0      1 ⎥ ⎜ ⎢ y Pj y Pj ⎥ ⎢ y Wi y Wi ⎥ ⎟
+5.2.4. Data augmentation                                                          ⎣ y0                              ⎥ ⎣ 0      1 ⎦    ⎣ 0    0 ⎦
+    During the re-training and ﬁne-tuning phases, real-time data aug-                                    ⎣      hWi ⎦ ⎝                            ⎠
+                                                                                                                                                                 (3)
+mentation is performed. In particular, at the beginning of each epoch,
+                                                                                      The input of the ML classiﬁers is the four elements of the trans-
+training images and annotations are randomly distorted to obtain more
+                                                                                  formed matrix, shown on the LHS of Eq. (3), which can be also ex-
+diverse data that would help prevent overﬁtting [57]. To do this, the                            ⎯ Wi ⎯→
+                                                                                                ⎯→      ⎯ Wi
+                                                                                  pressed as ⎡ P∼       ∼
+geometric shape of each training image is randomly changed by scaling                              j ,0 P j,1 ⎤, and the output is a binary decision, i.e., if a
+                                                                                              ⎣               ⎦
+up or down by ± 30%, translating horizontally and vertically                      worker Wi is wearing that Pj or not. An important point to consider is
+by ± 30%, and horizontally ﬂipping in randomly chosen 50% of the                  that in the testing phase, the Wi and Pj boxes are the outputs of YOLO-
+times. Additionally, the color space, i.e., hue, saturation, and value            v3-A1 model that may contain inherent noise, i.e., slightly diﬀer from
+(brightness), of the training image are also randomly (with uniform               the ground-truth boxes. Therefore, in the training phase, the ML clas-
+probability) changed in the range of [-10%, +10%], [-33%, +50%],                  siﬁers should be trained with ground-truth Wi and Pj boxes, however,
+and [-33%, +50%], respectively.                                                   with added noise. In this research, it has been empirically found that for
+                                                                                  the training set of Pictor-v3 dataset, and the trained YOLO models, the
+5.3. Overall framework of each approach                                           noise in the elements of transformed matrix resembles a standard
+                                                                                  normal distribution with a standard deviation of 0.08, i.e., N(0, 0.0064).
+5.3.1. Approach-1                                                                     In this study, two types of ML classiﬁer algorithms are investigated,
+    In Aprroach-1, the dataset and the YOLO-v3-A1 model are prepared              namely neural network (NN) and decision tree (DT). The reason behind
+following the procedures described in Section 5.2. The trained YOLO-              using NN is that it can learn a complex function to map input features to
+v3-A1 model outputs individual boxes for worker and PPE components                output decisions. The architecture of the NN model consists of one input
+
+                                                                              6
+N.D. Nath, et al.                                                                                                                                               Automation in Construction 112 (2020) 103085
+
+
+
+                                               ACTUAL BOXES                                                            NORMALIZED BOXES
+                                                                                                                              ~
+                                                              X                                                               X
+                                     Wi,0      W      W                                                 -0.5
+                                            (x 0 i , y0 i )
+
+                                        Pj,0
+                                                   P      P
+                                               (x 0 j , y0 j )                                          0.0
+                                                                                                                  ~W
+                                                   Pj,1                                                           Pj,0 i
+                                                                                                    ~                                            ~W
+                                                                                                    Y 0.5                                        Pj,1 i
+                               Y
+                                                                  P     P
+                                                              (x 1 j , y1 j )
+
+                                                                                                        1.0
+
+
+                                                                 Wi,1              W      W
+                                                                                (x 1 i , y1 i )         1.5
+                                                                                                          -0.5         0.0                 0.5            1.0           1.5
+
+
+                                         Fig. 5. Normalization of the worker and PPE boxes by vector transformation.
+
+
+layer containing four nodes (since the number of features is four), two                                  particular problem of multiple PPE detection (scope of this paper), the
+hidden layers each containing eight nodes, and one output layer con-                                     following observations are made. First, since the size and shape of the
+taining one node (since the output is a binary decision). The model is                                   workers are very similar, there is a considerably fewer number of grids
+trained for 50 epochs with Adam optimizer. However, often the func-                                      that may contain multiple classes, especially when the grid sizes are
+tion learned by NN is not human interpretable. In contrast, rules                                        very small. Second, given the semantic deﬁnition of the classes (i.e., W,
+learned by DT are easy to interpret and apply by human to reach the                                      WH, WV, WHV), one worker can belong to only one class. For instance,
+decision by examining the input features [58]. Therefore, a DT model is                                  if a worker is detected as WHV, this detection supersedes any WV, WH,
+trained with the Gini index [58] to be the criteria for splitting a decision                             or W detections of the same worker.
+branch, and by restricting the depth of the tree to be not > 4.                                               In light of this fundamental implementation diﬀerence, to calculate
+    Suppose, an ML model MP is trained to verify if a worker is wearing                                  class probabilities in YOLO-v3-A2, the SoftMax activation function [60]
+a particular type of PPE P ∈ {H, V, …}. Then, the overall structure of the                               is used, as expressed in Eq. (5). This function assumes that all classes are
+veriﬁcation algorithm is as follows,                                                                     disjoint and, therefore, normalizes the class probabilities altogether
+                                                                                                         such that their sum equals 1.
+
+                                                                                                                                e zi
+                                                                                                         σSoftMax (z )i =    K
+                                                                                                                            ∑ j = 1 e zj                                                                (5)
+
+                                                                                                             Furthermore, in the original YOLO-v3 algorithm, non-max-sup-
+                                                                                                         pression is applied by considering each class individually. This means
+                                                                                                         that for each object class, only the detection box with the highest
+                                                                                                         conﬁdence level is kept and all other overlapping detection boxes (of
+                                                                                                         the same class) are considered redundant and therefore, removed.
+                                                                                                         However, since classes in Approach-2 are disjoint, we propose to use
+                                                                                                         non-max-suppression across all classes after applying the regular non-
+                                                                                                         max-suppression, to remove duplications where the same worker is
+5.3.2. Approach-2                                                                                        detected as multiple classes. After performing brute force search, it is
+    It must be noted that there is an important distinction between the                                  found in this research that the best result can be achieved by removing
+object classes in Approach-2 and the object classes for which the ori-                                   all boxes (regardless of the class) with conﬁdence scores lower than
+ginal YOLO-v3 is designed. For example, in the original YOLO-v3                                          80% if they have signiﬁcant overlap (IoU > 90%) with another box
+model, multiple classes may coexist inside a particular grid cell of an                                  with a higher conﬁdence level. Besides these modiﬁcations, the re-
+image. As shown in Fig. 6, this coexistence may arise from diﬀerent                                      training and ﬁne-tuning of the YOLO-v3-A2 model, and the data aug-
+sizes and shapes of objects (e.g., table, ball, and pencil) or from the                                  mentation during training are similar to the protocols used in
+semantic deﬁnition of the classes (e.g., person and female). Therefore,                                  Approach-1 (YOLO-v3-A1 model).
+the original YOLO-v3 implementation considers each class individually
+and calculates class probabilities by applying the Sigmoid activation                                    5.3.3. Approach-3
+function [59] in the last output layers, as expressed in Eq. (4). This                                       After modifying the model architecture, the remaining steps for
+function treats each class independently and normalizes the predicted                                    training the YOLO-v3-A3 model, i.e., retraining and ﬁne-tuning, and
+probability zi for each class i to the range [0, 1]. A normalized value                                  data augmentation during training, are similar to the protocols used in
+σsigmoid(zi) (i.e., probability) greater than a certain threshold (e.g., 0.5)                            Approach-1 (YOLO-v3-A1). However, Approach-3 involves additional
+indicates the presence of a particular class in a grid cell.                                             training of the classiﬁer models, e.g., VGG-16 [29], ResNet-50 [61], and
+                      e zi                                                                               Xception [62]. In the testing phase, the CNN models process only the
+σsigmoid (z i ) =                                                                                        segments of the actual image that contain workers. However, the
+                    e zi + 1                                                                  (4)
+                                                                                                         bounding boxes of workers are determined by YOLO-v3-A3 and, thus,
+    However, as shown in Fig. 6, when applying Approach-2 to the                                         the geometric shape of the boxes may slightly diﬀer from the ground-
+
+                                                                                                    7
+N.D. Nath, et al.                                                                                                           Automation in Construction 112 (2020) 103085
+
+
+
+                                                     REGULAR CLASSES                          CLASSES IN APPROACH-2
+
+                                                           Person
+                                                           Female
+                                                                                                      WV                     WH
+
+
+
+
+                                                                                                                  WHV
+
+                                                               Ball
+                                                               Pencil
+                                                               Table
+
+
+
+
+                    Fig. 6. Classes in regular object detection (original YOLO-v3 implementation) vs. classes in Approach-2 (multiple PPE detection).
+
+
+truth boxes. Therefore, for the reasons described in Section 5.3.1,                     average precision (mAP) metric, commonly used in object detection
+random noises are added to ground-truth boxes similar to Approach-1                     and information retrieval domains. Using mAP, the usefulness of the
+while cropping the images of workers. Next, the cropped images are                      entire system can be presented by a single numerical value [39,63]. To
+resized to square-sized images (e.g., 150 × 150 for VGG-16, 224 × 224                   calculate mAP, ﬁrst, the IoU (Eq. (1)) is calculated. Next, all detections
+for ResNet-50, and 229 × 229 for Xception) using the method de-                         are sorted in descending order of their corresponding conﬁdence level.
+scribed in Section 5.2.1. Next, from each pre-trained classiﬁer (VGG-16,                Then, starting from the detection with the highest conﬁdence level,
+ResNet-50, and Xception), only the convolutional layers (referred to as                 precision, and recall for a particular class are calculated at each posi-
+the base model) are taken. Additionally, two fully connected layers,                    tion. To calculate precision (Eq. (8)) and recall (Eq. (9)) [37], TP, FP,
+containing 64 nodes and 16 nodes, respectively, and each followed by a                  and FN are determined based on IoU (Fig. 7). TP, FP, and FN refer to
+Rectiﬁed Linear Unit (ReLU) activation function, is appended to the                     true positive (correctly classiﬁed to the class), false positive (incorrectly
+base model. For each classiﬁer model, the output layer contains 4 nodes                 classiﬁed to the class), and false negative (incorrectly classiﬁed to an-
+(each for one of the four classes: W, WH, WV, and WHV) and is followed                  other class), respectively.
+by a SoftMax (Eq. (5)) activation function (because of the similar ar-                                  TP
+guments posed in Section 5.3.2). Each model is pre-trained on the Im-                   Precision =
+                                                                                                      TP + FP                                                       (8)
+ageNet dataset and, then, only the last two layers are re-trained and,
+ﬁnally, the entire model is ﬁne-tuned using Adam [56] optimizer.                                       TP
+                                                                                        Recall =
+    Additionally, Bayesian inference models are investigated where the                              TP + FN                                                         (9)
+prior and posterior probabilities are calculated from the predictions of                    For each class, the average precision (AP) is calculated using Eq.
+CNN classiﬁers (e.g., VGG-16, ResNet-50, and Xception) on trained                       (10) [37] where n is the total number of detections, i is the rank of a
+data, and the posterior probability is used to classify the test images.                particular detection in the list of sorted detections, p(i) is the precision
+Particularly, given a set of n classes C = {c1, …cn} and CNN models M1,                 of the sub-list ranged from the ﬁrst to ith detection, and Δr(i) is the
+…, Mm, a sample that is classiﬁed to class ciMj ∈ C by the CNN model Mj,                change in recall from (i − 1)th to ith detection. Finally, mAP is esti-
+the posterior probability P(ckB| ciM1, …, cjMm) represents the probability              mated by calculating the mean of APs of all possible classes.
+that the sample belongs to class ckB ∈ C. The posterior probabilities for                      n
+all combination of ckB, ciM1, …, cjMm ∈ C are calculated from the training              AP = ∑ p (i) ∆r (i)
+dataset using the Bayesian formula shown in Eq. (6).                                          i=1                                                                 (10)
+                              P (ckB , ciM1,…, c jMm )
+P (ckB | ciM1, …, c jMm ) =                                                             6. Dataset description
+                                P (ciM1,…, c jMm )                            (6)
+    During the inference phase, a test sample is classiﬁed by each CNN                      This study expands the annotated, in-house image dataset, Pictor-v2
+model as ciMj with probability pMj(ci). The ﬁnal class (cB) is determined               (containing buildings, equipment, and workers) by including two new
+by checking the posterior probabilities for all classes ckB ∈ C and                     classes: hat and vest. The new dataset is named Pictor-v3. In this paper,
+choosing the class (cB) that yields the maximum probability, as shown                   only the relevant classes (i.e., worker, hat, and vest) from this dataset
+in Eq. (7). Also, the ﬁnal probability is the maximum of the prob-                      are used. Images in this dataset are collected through crowd-sourcing
+abilities of the ﬁnal class, i.e., max p Mj (c B ) .                                    [64] and web-mining [65]. Crowd-sourced images are obtained from
+                                              j
+                                                                                        three diﬀerent construction projects, while web-mined images are re-
+c B = argmaxP (ckB | ciM1, …, c jMm )
+        ckB ∈ C
+                                                                                        trieved from publicly available image search engines (i.e., Google)
+                                                                              (7)
+                                                                                        using keyword search [66]. To achieve the best annotation results, a
+   In this approach, the ﬁnal conﬁdence score of a detection is de-                     human annotator initially used a web-based annotation toolbox, La-
+termined by the product of the conﬁdent score provided by the YOLO-                     belBox [67], to annotate all images. Next, similar to VOC's annotation
+v3-A3 model and the probability yielded by the classiﬁer model.                         protocol [53], all annotations were reviewed by a second annotator in
+                                                                                        LabelMe [68], an oﬄine annotation toolbox, to ensure completeness
+5.4. Quantifying the performance of the YOLO-v3 models                                  and correctness of the labels. Using two independent human annotators
+                                                                                        also helped minimize the subjective bias in annotation. It must be noted
+    The performance of each model is evaluated considering the mean                     that the choice of toolbox (LabelBox and LabelMe) was based on
+
+                                                                                    8
+N.D. Nath, et al.                                                                                                        Automation in Construction 112 (2020) 103085
+
+
+
+                        TRUE POSTIVE (TP):                                                      FALSE POSTIVE (FP):
+                               P                                     P                                       P
+                    G                            G                                      G
+                                                                                                                                                P
+
+
+
+
+                        FALSE NEGATIVE (FN):                                                           TRUE NEGATIVE (TN)
+
+                    G
+                                                  G
+
+
+
+
+                                                GROUND-TRUTH (G)                         PREDICTION (P)
+
+                            Fig. 7. Examples of true positive (TP), false positive (FP), false negative (FN), and true negative (TN).
+
+
+annotators' personal preferences and had no eﬀect on the annotation                7. Results
+outcome.
+    The number of images and the number of instances per class label               7.1. Clustering
+(worker, hat, and vest) in the crowd-sourced and web-mined subsets of
+the Pictor-v3 dataset are shown in Fig. 8. As this Figure shows, there are             Since YOLO-v3 requires nine anchor boxes, for each approach, all
+774 crowd-sourced images containing workers in Pictor-v3 dataset.                  boxes in the training subset (regardless of class labels) of the Pictor-v3
+However, among them, 240 images contain only worker (W), 517                       dataset are clustered into nine groups using k-means clustering (k = 9)
+images contain worker and hat (W + H), and 17 images contain                       [41]. For example, in Fig. 11, points represent geometric shapes of the
+worker, hat, and vest (W + H + V). There is no image containing                    training boxes (X- and Y-axis are the width and height in pixels, re-
+worker and vest (W + V) in the crowd-sourced subset of Pictor-v3 da-               spectively) and colors represent diﬀerent clusters. Next, a re-
+taset. Evidently, a single image can contain multiple worker instances.            presentative (centroid) from each group is selected as the anchor box,
+As shown in Fig. 8, there are a total of 2,496 instances of worker in the          and anchor boxes (Fig. 11) are assigned to the output layers according
+crowd-sourced subset of Pictor-v3 dataset. However, 873 workers do not             to their sizes, as mentioned in Section 4.1.
+wear any hat or vest (W), 1,583 workers wear hat (WH), 40 workers                      It is worth noting that the number and geometric shapes of the
+wear both hat and vest (WHV), and no worker wears only vest without                bounding boxes for Approach-2 and Approach-3 are identical; both
+hat (WV) in the crowd-sourced images.                                              containing boxes for workers. However, in Approach-2, boxes are la-
+    Examples of annotations for the three detection approaches (Section            beled as either W, WH, WV, or WHV, while in Approach-3 all boxes are
+5.1) in the Pictor-v3 dataset are shown in Fig. 9. As explained earlier,           labeled only as worker. Therefore, the same clusters and representative
+this Figure shows that in Approach-1, workers, hats, and vests are an-             anchor boxes are used in Approach-2 and Approach-3. Moreover, the
+notated individually. However, in Approach-2, only workers are an-                 set of bounding boxes in Approach-2 and Approach-3 is a subset of the
+notated with boxes but assigned to four diﬀerent classes (W, WH, WV,               bounding boxes in Approach-1. That is, the boxes of workers in
+and WHV) based on their PPE attire. On the other hand, in Approach-3,              Approach-2 and Approach-3 are also present in Approach-1. Moreover,
+each worker's portion is cropped into a separate image, and the entire             Approach-1 also considers boxes for hat and vest, which are relatively
+cropped image is labeled as one of the four classes (W, WH, WV, and                smaller in size compared to worker boxes. Therefore, compared to
+WHV), similar to Approach-2.                                                       Approach-2 and Approach-3, in Approach-1 there are more boxes but
+    The number of images and number of instances of hat, vest, worker,             the sizes are smaller. Consequently, the sizes of the anchor boxes in
+W, WH, WV, and WHV in the randomly-split training, validation, and                 Approach-1 are slightly smaller (Fig. 11). Furthermore, anchor boxes in
+testing subsets of the Pictor-v3 dataset are shown in Fig. 10. For ex-             Approach-2 and Approach-3 are slenderer indicating the presence of
+ample, there are 944 training images, 240 validation images, and 288               slender objects (i.e., standing workers) in the dataset. On the other
+test images. In the training images, there are 2,115 instances of hat, 916         hand, wider anchor boxes in Approach-1 mostly represent the presence
+instances of vest, and 3,109 instances of worker. Moreover, among all              of hats.
+the workers in the training images, 778 of them are W (wearing no hat
+or vest), 1,436 are WH (wearing only hat), 248 are WV (wearing only
+vest), and the rest (647) are WHV (wearing both hat and vest).
+
+
+                                                                               9
+N.D. Nath, et al.                                                                                                           Automation in Construction 112 (2020) 103085
+
+
+
+                                                                                PICTOR-V3
+
+                                                              CROWD-SOURCED                        WEB-MINED
+                                                                  (774)                               (698)
+
+
+                                                                                                  W+H              W
+
+
+
+
+                                               # Images
+                                                                                                  (195)           (54)
+
+
+                                                                 W        W+H
+                                                               (240)      (517)
+                                                                                                 W+H+V         W+V
+                                                                                                  (358         (91)
+                                                                             W+H+V
+                                                                              (17)
+
+
+                                                              CROWD-SOURCED                        WEB-MINED
+                                                                  (2,496)                            (2,230)
+
+
+                                                                                                    WH               W
+                                               # Instances
+
+
+
+
+                                                                                                   (623)           (336)
+
+
+                                                               W            WH
+                                                             (873)        (1,583)
+                                                                                                  WHV               WV
+                                                                                                  (943)            (328)
+                                                                                WHV
+                                                                                (40)
+
+                                                                       WORKER              HAT             VEST
+
+                    Fig. 8. Number of images and number of instances per class label in the crowd-sourced and web-mined subsets of Pictor-v3 dataset.
+
+
+7.2. Training of the YOLO-v3 models                                                      approaches is illustrated in Fig. 14, which shows that Approach-1
+                                                                                         achieves 81.2% mAP, with the AP of the worker class (W) reaching 85%
+    All YOLO-v3 models are trained following the method described in                     (highest among all three classes). This can be attributed to the use of
+Section 5.2.3. During training, data augmentation is performed, as laid                  transfer learning where the model “remembers” the learned features of
+out in Section 5.2.4. Examples of actual data and generated data                         a similar class (i.e., person) presented in the pre-trained dataset
+through random data augmentation are shown in Fig. 12.                                   (COCO), and eﬀectively “transfers” the learning to the target class, i.e.,
+    NN-based DL models are often criticized for being “black box” since                  worker. This observation is consistent with a previous study [50] that
+the underlying processes and criteria for feature creation and the                       concluded that the presence of overlapping classes between the source
+complex non-linear functions learned by the model to make decisions                      and target datasets improves the transfer task. In contrast to the worker
+(e.g., feature selection, transforming the feature space) are rather dif-                class, the AP of the class hat (H) is the lowest among all classes po-
+ﬁcult to explain [69]. However, researchers generally suggest visua-                     tentially because of its small size.
+lizing the features (particularly, in the upstream layers) to get an idea of                 The mAP of the YOLO-v3 model is the lowest in Approach-2
+what features (e.g., edges, colors) the model ﬁnds important [70]. Al-                   (72.3%). This result is not surprising since the target classes (i.e., W,
+though a thorough investigation of this topic is not within the scope of                 WH, WV, and WHV) are visually very similar (i.e., all contain humans).
+this paper, to facilitate the discussion, a visual example of an input                   Moreover, target classes can only be diﬀerentiated by subtle attributes
+image and extracted features by YOLO-v3-A1 model in its ﬁrst con-                        (e.g., based on the presence of hat and/or vest) that are not directly fed
+volutional layer is presented in Fig. 13. This Figure shows that features                to the model in the training phase (in contrast to Approach-1).
+A8 (row A, column 8), C7, and D1 highlight red- and yellow-colored                       However, in this approach, the AP of class WHV is disproportionately
+portions of the input image. These colors are generally associated with                  higher (80%) than other classes. This can be explained considering that
+hard hat, and therefore, highlighted regions could potentially contain                   when a worker is wearing hat and vest (i.e., WHV), it is easier for the
+hat objects. Similarly, features B2, C8, and D7 focus on the upper-body                  model to distinguish the worker from the background.
+of the workers, which are potential regions of vest objects. Furthermore,                    As expected, the mAP of Approach-3 is the highest (85.6%) of all
+features B3 and B4 outline the silhouette of the workers. Continuing                     three approaches, mainly due to the fact that since there is only one
+from there, in the next layers, the model reﬁnes these features, adds                    class to learn (i.e., W), there is no chance of inter-class confusion (in
+extra new features, and/or eliminates irrelevant features so that it can                 contrast to Approach-2). Moreover, similar to Approach-1, the transfer
+ultimately conclude where and what types of objects are present in the                   learning framework provides the model with a better starting point to
+image.                                                                                   eﬀectively learn the worker class.
+
+
+7.3. Performance of the YOLO-v3 models                                                   7.4. Performance of the ML classiﬁers in Approach-1
+
+    The performance of the implemented YOLO-v3 models in all three                          As mentioned in Section 5.3.1, detection boxes of workers, hats, and
+
+                                                                                    10
+N.D. Nath, et al.                                                                                                                  Automation in Construction 112 (2020) 103085
+
+
+
+                                                                          EXAMPLE OF ANNOTATED IMAGES
+
+
+                                                 APPROACH-1                            APPROACH-2                             APPROACH-3
+                    CROWD-SOURCED DATASET
+                    WEB-MINED DATASET
+
+
+
+
+                                            WORKER        HAT     VEST             W     WH      WV      WHV             W      WH      WV      WHV
+
+                                            Fig. 9. Examples of annotations in the crowd-sourced and web-mined subsets of Pictor-v3 dataset.
+
+
+vests are normalized using Eq. (3). Examples of normalized boxes in the                            To demonstrate the importance of normalizing the boxes and
+randomly selected training samples are shown in Fig. 15. According to                          training the models with added noise (as described in Section 5.3.1),
+this Figure, the hat worn by a worker generally resides in the upper-                          the results of diﬀerent models with or without these steps are sum-
+middle portion of that worker's body. Also, a hat that is signiﬁcantly                         marized in Table 2. In particular, each model receives detected boxes of
+outside the detected worker's box is most likely not worn by that worker                       workers, hats, and vests from YOLO-v3-A1 model, and classiﬁes each
+(e.g., could be worn by another worker). On the other hand, in general,                        detected worker as W, WH, WV or WHV. Results shown in Table 2
+the vest that is worn by a worker covers the entire width of that worker                       indicate that normalization and training noise, individually, improves
+and resides mostly within the upper half of the body.                                          the model's mAP by 5.4% to 25.5%, and by 0.7% to 20.6%,
+
+
+                                                                                          11
+N.D. Nath, et al.                                                                                                                           Automation in Construction 112 (2020) 103085
+
+
+                                                                                                  Total number
+                                 0               500                   1000       1500      2000         2500        3000        3500       4000         4500         5000
+
+                      # Images                   944                     240 288
+
+                          Hat                                           2115                            542          581
+
+                          Vest                  916                     210 214
+            Classes
+
+
+
+
+                       Worker                                                      3109                                           797                821
+
+                            W               778                       221 210
+
+                          WH                            1436                        372     398
+                                           47
+                          WV         248        34
+
+                         WHV               647             157 179
+
+
+                                                                                    Train    Validation          Test
+                                                Fig. 10. Number of images and instances in the training, validation and testing subsets.
+
+
+respectively. Thus, when normalization and training noise are applied                                   input features, i.e., coordinates of top-left (x0, y0) and bottom-right (x1,
+together, the models achieve the best mAP and mean F1 score. More-                                      y1) corners of the normalized box of hat, the model can verify PPE
+over, to contrast the performance of an ML model that has implicitly                                    compliance by performing at most 4 Boolean comparisons.
+learned the PPE veriﬁcation rules (Section 5.3.1), a baseline model with
+explicit rules is also tested. The baseline model simply checks the IoU
+                                                                                                        7.5. Eﬀect of the proposed modiﬁcations in Approach-2
+between a worker box and hat/vest box, and if the IoU > 45% (em-
+pirically-found threshold), it is assumed that the worker is wearing that
+                                                                                                            In Approach-2, we proposed two major modiﬁcations over the ori-
+hat/vest. Table 2 shows that ML models with normalization and
+                                                                                                        ginal YOLO-v3 implementation (apart from the modiﬁcation to the
+training noise outperform the baseline model, particularly, the DT
+                                                                                                        architecture), i.e., using SoftMax activation in the output layer, and
+model, by achieving ~3% higher mAP and ~5% higher mean F1 score.
+                                                                                                        performing NMS across all classes in the post-processing step. To verify
+This ﬁnding indicates that ML models can learn more eﬃcient rules.
+                                                                                                        the eﬀectiveness of these proposed modiﬁcations, a baseline model is
+    Furthermore, the best model, i.e., DT model, also provides the
+                                                                                                        trained and tested similar to the YOLO-v3-A2 model, however, without
+learned rules in the form of a decision tree that is human-interpretable.
+                                                                                                        those modiﬁcations. The comparison between the two models is de-
+An example of the DT-generated rules for veriﬁcation of hat in
+                                                                                                        monstrated in Fig. 17, which shows that the modiﬁed model achieves
+Approach-1 is illustrated in Fig. 16. This Figure shows that based on the
+                                                                                                        ~2.4% higher mAP than the baseline model. However, the
+
+
+                                                                               APPROACH-1                  APPROACH-2 & 3
+                                                       CLUSTERS
+                                                       ANCHOR BOXES
+
+
+
+
+                                                         Fig. 11. Nine clusters and corresponding anchor boxes for each approach.
+
+
+                                                                                                   12
+N.D. Nath, et al.                                                                                                      Automation in Construction 112 (2020) 103085
+
+
+
+                                            APPROACH-1                    APPROACH-2                     APPROACH-3
+
+
+
+
+                            ACTUAL
+                            AUGMENTED
+
+
+
+
+                                        WORKER     HAT    VEST        W    WH     WV    WHV                 WORKER
+
+                                        Fig. 12. Examples of actual and randomly augmented data in three approaches.
+
+
+improvement in the average precision of classes W (4.2%) and WV                  7.6. Performance of the CNN classiﬁerss in Approach-3
+(4.4%) is signiﬁcant. The underlying reasons can be better understood
+from the given examples in Fig. 17, which show that the baseline model               Given cropped test images of workers, the accuracy of the VGG-16,
+sometimes detects a single worker as multiple classes, e.g., worker in           ResNet-50, and Xception models in classifying that image into W, WH,
+example B1 (row B, column 1) in Fig. 17 is detected as both W and WH.            WV, and WHV classes are 78.2%, 77.8%, and 76.8%, respectively. The
+However, the modiﬁed model eﬀectively eliminates such redundant                  confusion matrices for these models are illustrated in Fig. 18, which
+detections (e.g., example B3 in Fig. 17) and generally outputs only one          shows that in general, all three models are better at detecting classes
+detection for each worker. These visual examples support the argu-               that contain hat (i.e., WH and WHV) compared to those that do not
+ments posed in Section 5.3.2 and justify the proposed modiﬁcations in            contain hat (i.e., W and WV). For example, all three models detect
+Approach-2.                                                                      classes WH and WHV with > 81% accuracy, while the accuracy of W
+                                                                                 and WH detection is capped under 78%. Furthermore, classes without
+                                                                                 hat are mostly confused with their counterpart classes with hat. For
+
+
+                                                                            13
+N.D. Nath, et al.                                                                                                  Automation in Construction 112 (2020) 103085
+
+
+
+                                                                  INPUT IMAGE
+
+
+
+
+                                  EXTRACTED FEATURES IN THE 1ST CONV LAYER OF YOLO-V3-A1
+
+                          1           2           3           4            5           6           7           8
+                                                                                                                                   - 1.0
+                    A
+
+                    B
+                                                                                                                                   - 0.5
+                    C
+
+                    D
+                                                                                                                                   - 0.0
+                               Fig. 13. Example of extracted features in the ﬁrst convolutional layer of YOLO-v3-A1 model.
+
+
+
+                        YOLO-V3-A1                                   YOLO-V3-A2                                     YOLO-V3-A3
+
+
+
+
+                                            Fig. 14. Performance of the YOLO-v3 models in three approaches.
+
+
+example, in VGG-16, W is confused with WH in 21% of cases, while WV             ﬁnd it diﬃcult to determine the presence or absence of hat in an image
+is confused with WHV in 35% of the time. This indicates that the                since hats are relatively smaller in size.
+models false-positively detect hats in those images. A potential reason
+could be the unbalance of the dataset, where the number of samples in           7.7. Comparison of the overall performance of three approaches
+W and WV is signiﬁcantly lower than WH and WHV, respectively
+(Fig. 8). This can bias the models toward more frequently predicting the           In previous subsections, the performance of various components in
+classes with higher number of samples (i.e., WH and WHV). Ad-                   each approach was reported individually. In this subsection, the overall
+ditionally, similar to the YOLO-v3 models, the classiﬁer models might           performance of each approach is investigated. Fig. 19 indicates that
+
+                                                                           14
+N.D. Nath, et al.                                                                                                                       Automation in Construction 112 (2020) 103085
+
+
+
+                         NORMALIZED BOXES OF HAT                                                           NORMALIZED BOXES OF VEST
+
+            -0.5                                                                               -0.5
+
+
+
+             0.0                                                                                 0.0
+
+
+
+
+             0.5                                                                                 0.5
+
+
+
+
+             1.0                                                                                 1.0
+
+
+
+             1.5                                                                                 1.5
+               -0.5           0.0            0.5           1.0            1.5                      -0.5            0.0            0.5          1.0           1.5
+
+                          Detected worker                                                                   Detected worker
+                          Hat worn by the considered worker                                                 Vest worn by the considered worker
+                          Hat not worn by the considered worker                                             Vest not worn by the considered worker
+                                                   Fig. 15. Randomly selected examples of normalized boxes of hat and vest.
+
+
+Table 2
+Summary of the results from ML classiﬁers in Approach-1.
+              Baseline   Not normalized, and no training noise   Not normalized, but with training noise   Normalized, but no training noise   Normalized, and with training noise
+
+                         DT                 NN                   DT                  NN                    DT                NN                DT                  NN
+
+  mAP         60.3%      36.9%              42.6%                37.6%               56.9%                 42.5%             59.4%             63.1%               62.3%
+  Mean F1     61.3%      45.3%              49.0%                46.2%               60.6%                 49.2%             63.3%             66.3%               65.5%
+
+
+
+Approach-2 yields the best mAP (72.3%) among all approaches. Al-                               less time for processing. On the other hand, the Bayesian models are the
+though the mAP of YOLO-v3 models in Approach-1 (81.2%) and Ap-                                 slowest among all since they require the prediction from CNN classiﬁers
+proach-3 (85.6%) is higher than the one in Approach-2 (72.3%), the                             before applying the Bayesian theorem to infer the ﬁnal output. None-
+accumulated errors in the post-processing steps reduce the ﬁnal mAP in                         theless, Approach-1, Approach-2, and Approach-3 with single classiﬁer
+these approaches. To note, in Approach-3, while using a single CNN                             models can process > 5 images per second and, therefore, are suitable
+classiﬁer, ResNet-50 provides the best performance (64.2%). However,                           for real-time detection of workers' PPE attire. Moreover, the Bayesian
+almost all the Bayesian models tend perform better than the single CNN                         models can process multiple images (> 3) per second and, thus, can be
+classiﬁers with one exception of Bayesian with VGG-16 and Xception                             considered as near real-time.
+(61.5%). The best model in this approach is the Bayesian with all three
+classiﬁers (67.9%).
+    To compare the processing time in each approach, all models are                            8. Discussion
+run on the same device, a Dell Precision-7530 laptop with Intel Core i7
+8850H (6 cores, each at 2.6 Hz), 16 GB RAM, NVIDIA Quadro P2000                                8.1. Benchmarking the results
+GPU with 4GB memory, and Windows 10 operating system. The
+average processing time for one test image in each approach is shown in                            To benchmark the performance of the developed PPE detection
+Fig. 20, according to which, Approach-1 with DT is the fastest                                 approaches, results are compared with the reported ﬁndings in the
+(74.8 ms), closely followed by Approach-1 with NN (79.2 ms). Although                          literature [10,15,36,37], and summarized in Table 3. To ensure a fair
+the processing time for YOLO-v3 models in Approach-3 is faster                                 comparison with previous studies that mostly focused on verifying hard
+(69.4 ms) than in Approach-1 and Approach-2, the added time for                                hat usage, the performance of the developed methods in this study in
+subsequent classiﬁer models made this approach the slowest among all.                          detecting only hard hat is also measured and reported. To do this, the
+    It must be noted that the processing time for YOLO-v3 models is                            ﬁnal output classes, i.e., W, WH, WV, and WHV, are merged into two
+directly proportional to the number of classes these models predict. The                       classes: hat (WH ∪ WHV) and no hat (W ∪ WV). Similarly, to measure
+number of output classes is 3, 4, and 1, in YOLO-v3-A1, YOLO-v3-A2,                            the performance of detecting only vest, ﬁnal output classes are merged
+and YOLO-v3-A3, respectively. This explains the variations in the pro-                         into vest (WV ∪ WHV) and no vest (W ∪ WH).
+cessing time of YOLO-v3 models in Fig. 20. Also, in Approach-3, VGG-                               Results listed in Table 3 shows that Fang et al. [10] achieves the
+16 (51.5 ms) is faster than ResNet-50 (89.7 ms) and Xception                                   highest precision, but can only detect workers who are not wearing
+(118.8 ms) because it has fewer convolutional layers and thus, requires                        hard hat. Besides this limitation, training and testing images were
+                                                                                               randomly drawn from consecutive video frames which makes it highly
+
+                                                                                          15
+N.D. Nath, et al.                                                                                                                             Automation in Construction 112 (2020) 103085
+
+
+
+                                                                                               x0    -0.177
+                                                                 Left edge indicates TRUE                        Right edge indicates FALSE
+
+
+
+                                                          x0    -0.228                                                                 x1   1.167
+              DECISION TREE
+
+
+
+
+                                             No
+                                             Hat
+                                                                               x1   0.355                        y1    -0.111                             x0    0.284
+
+
+
+
+                                                                         No                                                                                             No
+                                  (x0, y0)                               Hat
+                                                                                       y1    0.514      y0    -0.021        y1       1.0         x1    1.246            Hat
+                              0
+
+                                     Normalized
+                                     box of hat
+                              1                                                                No       No                            No                  No
+                                               (x1, y1)                                Hat                       Hat       Hat                  Hat
+                                                                                               Hat      Hat                           Hat                 Hat
+                                     0             1
+              EXAMPLES
+
+
+
+
+                                                                0                                                 0
+                              Any hat box inside this region                                                                                Any hat box inside this region
+                              is considered as“not wearing”                                                                                 is considered as “wearing” by
+                              by the worker.                                                                                                the worker.
+                                                                1                                                 1
+
+                                                                     0         1                                       0         1
+
+                                                               Fig. 16. Decision tree for verifying PPE compliance of wearing hat.
+
+
+likely that testing images are visually very similar (i.e., taken by the                             8.2. Qualitative comparison of the three approaches
+same device, at the same location, from the same view angle, and al-
+most at the same time). In contrast, in the research presented in this                                   A comparison of the three proposed approaches is summarized in
+paper, images are taken individually from a variety of devices, loca-                                Table 4. This qualitative analysis conﬁrms that all three approaches are
+tions, times, perspectives, and projects. Therefore, testing images are                              scalable, i.e., they can be scaled up to detect more than two PPE types,
+more challenging and thus, the performances of the proposed methods                                  or scaled down to detect only one PPE type (hat or vest). However,
+reﬂect their most probable performance when tested on new (unseen)                                   scaling up may require collecting and annotating more training images
+images, making these methods highly scalable and more reliable for                                   and re-training some or all models in each of the approaches. As such,
+practical use.                                                                                       the modularity of Approach-1 and Approach-3 can be signiﬁcantly
+    Table 3 also shows that the method proposed by Mneymneh et al.                                   beneﬁcial. For example, in Approach-1, ML classiﬁers (each verifying
+[15] can achieve a high precision (86.79%) in detecting hat. However,                                individual PPE compliance) can be applied independently. Therefore,
+the method can process only 2 FPS, and it requires video frames as                                   when adding a new type of PPE (e.g., steel toe shoe), the ML classiﬁers
+input to identify workers based on their movements in the scene. In                                  that are trained to verify existing PPE types (hat and vest) do not re-
+contrast, the proposed methods in this paper are applicable to both still                            quire any further re-training. The same is true in Approach-3 since the
+images and video frames and do not rely on any kind of object move-                                  YOLO-v3-A3 model does not require any re-training either as it only
+ment, making them more practical for general applications.                                           detects workers (regardless of the PPE attire). Moreover, the modularity
+    As listed in Table 3, the performance of the proposed methods are                                of these approaches facilitates the investigation of each module in-
+on par with or higher than the methods developed by Xie et al. [37] and                              dependently for further improvement. However, Approach-2 sacriﬁces
+Wu et al. [36] in terms of average precision and detection speed.                                    modularity for simplicity, i.e., only one model (YOLO-v3-A2) directly
+Moreover, the methods introduced in this study have an added cap-                                    provides end-to-end veriﬁcation results. Nonetheless, Approach-1 and
+ability to verify PPE compliance with vest. However, the method de-                                  Approach-2 are more robust as they can perform the veriﬁcation task in
+veloped by Wu et al. [36] can verify diﬀerent colors of hat as well.                                 real-time, while Approach-3 can be considered as “near” real-time. Fi-
+    The performance of the YOLO-v3-AI model in detecting hat is fur-                                 nally, it can be inferred that in a broader sense, Approach-1 can identify
+ther assessed by testing it on the GDUT-HWD dataset published by Wu                                  the contextual relationship between a person and objects (e.g., if a
+et al. [36]. To note, the ground-truth boxes of hat objects in GDUT-                                 person is “wearing” a hat or not) without explicitly deﬁning the rules.
+HWD include not only the hat but also the face of the worker who is                                  This capability makes Approach-1 adoptable by other domains beyond
+wearing that hat, while the output hat boxes generated by the YOLO-v3-                               checking PPE compliance, e.g., if a person is “holding” a weapon (e.g.,
+A1 model only cover hat objects (and not workers' faces). To account                                 in safety and security applications).
+for this diﬀerence, output hat boxes generated by the YOLO-v3-AI
+model are elongated 65% from the bottom to approximately include the
+worker's face. Detection results indicate that the YOLO-v3-A1 model                                  8.3. Lessons learned and limitations
+can detect hat with 72.73% average precision, compared to the mean
+average precision of 74.76% in Wu et al. [36] (including all colors).                                    One of the most important lessons learned from this study is that
+                                                                                                     using transfer learning from larger datasets that contain person, can
+                                                                                                     signiﬁcantly beneﬁt object detection models intended for identifying
+                                                                                                     construction workers in visual data. It is also found that models
+
+                                                                                                16
+N.D. Nath, et al.                                                                                                                                                  Automation in Construction 112 (2020) 103085
+
+
+
+                                                              BASELINE                                                                            YOLO-V3-A2
+
+                                  90%
+                                                           mAP = 69.9%                                                                              mAP = 72.3%
+                                  80%
+              AVERAGE PRECISION
+
+
+                                  70%
+
+
+
+
+                                                                                           WHV: 79.8%
+
+
+
+
+                                                                                                                                                                                   WHV: 80.1%
+                                  60%
+
+
+
+
+                                                                   WH: 68.6%
+
+
+
+
+                                                                                                                                                           WH: 69.5%
+                                                                               WV: 69.3%
+
+
+
+
+                                                                                                                                                                       WV: 73.7%
+                                                        W: 61.9%
+
+
+
+
+                                                                                                                                                W: 66.1%
+                                  50%
+                                  40%
+                                  30%
+                                  20%
+                                  10%
+                                  0%
+                                                 1                                                      2                                   3                                                   4
+
+
+
+                                      A                                                                                      A
+              EXAMPLES
+
+
+
+
+                                      B                                                                                      B
+
+
+
+
+                                      C                                                                                      C
+
+
+
+
+                                          Fig. 17. Comparison between baseline YOLO-v3 model and modiﬁed YOLO-v3-A2 model in Approach-2.
+
+
+generally struggle to detect smaller objects, e.g., hat. Therefore, it is                                              often unmanageable by humans, particularly, when the rules are too
+anticipated that even a suﬃciently-trained model may ﬁnd it diﬃcult to                                                 complicated. Moreover, in this process, normalizing the boxes and
+detect smaller PPE components (e.g., gloves). In Approach-1, it was                                                    training the model with added noise improve the accuracy of the
+found that ML classiﬁers can explicitly learn the rules to verify if a                                                 models. Furthermore, in Approach-2, it was observed that since classes
+worker is properly wearing any PPE component. In particular, a DT                                                      are disjoint, applying the SoftMax activation function (instead of
+model can express the rules in a more structured form that might be                                                    Sigmoid) in the last layers of YOLO-v3 models improves detection
+
+                                                       VGG-16                                                          ResNet-50                                              Xception
+                                                      Predicted                                                        Predicted                                             Predicted
+                                            W        WH            WV                 WHV                   W          WH        WV    WHV                 W               WH                   WV    WHV
+                                  W       78%        21%            0%                     0%               72%        26%       2%    0%             74%                 23%                   0%    3%
+            Actual
+
+
+
+
+                                  WH       6%        92%            0%                     2%               6%     88%           0%    6%                  9%            87%                    0%    4%
+                                  WV       3%        0%            62%                 35%                  0%         3%        65%   32%                 3%               3%                  62%   32%
+                                  WHV      1%        15%            3%                 81%                  0%         10%       3%    87%                 1%             11%                   4%    84%
+
+                                                     Fig. 18. Confusion matrices for VGG-16, ResNet-50, and Xception classiﬁer models.
+
+
+                                                                                                                  17
+N.D. Nath, et al.                                                                                                                                                                        Automation in Construction 112 (2020) 103085
+
+
+       90%
+       80%                                                                 72.3%
+                                                                                                                                                      65.0%                                                  67.9%
+                            62.3%                       63.1%                                62.6%             64.2%              63.2%                                  61.5%              64.2%
+       70%
+       60%
+       50%
+       40%
+       30%
+       20%
+        10%
+        0%
+                                NN                       DT                                  VGG-16           ResNet-50          Xception            Bayesian           Bayesian           Bayesian         Bayesian
+                                                                                               (V)               (R)                (X)               (V+R)              (V+X)              (R+X)           (V+R+X)
+
+                                            Approach-1                Approach-2                                                                    Approach-3
+
+                                                                                   AP (W)            AP (WH)           AP (WV)              AP (WHV)               mAP
+
+                                                                               Fig. 19. Comparison of the overall performance of each approach.
+
+
+accuracy. Finally, in Approach-3, the YOLO-v3-A3 model showed the                                                                 authors proposed novel techniques to normalize the detected boxes and
+most promising result in detecting workers since the entire model ar-                                                             add random noise (i.e., randomly shifting and scaling the boxes) while
+chitecture was dedicated to learning one object class.                                                                            training the ML models (Section 5.3.1). It was found that the proposed
+    One of the main limitations of vision-based detection methods is                                                              normalization and addition of noise signiﬁcantly improved the perfor-
+that they are susceptible to occlusion, poor illumination, and blurriness.                                                        mance of the ML models (Table 2).
+Moreover, the speed of the implementation may vary depending on the                                                                   In Approach-2, the YOLO-v3-A2 model localized workers in the
+computer hardware used for testing. Furthermore, although the theo-                                                               input image and directly classiﬁed each detected worker as W, WH,
+retical framework introduced in this study is designed to be scalable to                                                          WV, or WHV. Since the classes in this approach are disjoint (Section
+any number and type of PPE, proposed methods were only tested on hat                                                              5.3.2), the authors proposed to apply SoftMax activation function in the
+and vest classes, necessitating future experimentation with more data to                                                          output layer of YOLO-v3-A2 as opposed to Sigmoid activation function
+draw conclusions about the generalizability of the results. Moreover,                                                             used in the original YOLO-v3 algorithm. Moreover, the original YOLO
+the proposed methods do not identify the color of the PPE components,                                                             algorithm uses non-max-suppression (NMS) to discard duplicated de-
+neither do they associate any personal identiﬁcation with the output of                                                           tections for each class individually. However, in this research, NMS was
+the veriﬁcation (i.e., results do not indicate which worker is not in                                                             used across all classes since experimental observation indicated that
+compliance). At the same time, this latter limitation guarantees the                                                              one worker might be detected as multiple classes. Results conﬁrm that
+privacy of individual workers on the job site.                                                                                    the proposed modiﬁcations to YOLO algorithms improved the perfor-
+                                                                                                                                  mance of the model in this approach.
+9. Summary and conclusion                                                                                                             In Approach-3, the model ﬁrst detected all workers in the input
+                                                                                                                                  image and then, a CNN-based classiﬁer model (e.g., VGG-16, ResNet-
+    This paper introduced, tested, and evaluated three DL-based ap-                                                               50, Xception, or Bayesian) was applied to the cropped worker images to
+proaches for detecting PPE attire (i.e., if a worker is wearing hat, vest,                                                        classify the detected worker as W, WH, WV, or WHV. To achieve better
+or both). The proposed methods are designed to be scalable to any                                                                 results by combining the output from multiple CNN classiﬁers, the
+number and type of PPE (e.g., not only hard hat, and safety vest but also                                                         authors proposed to apply Bayesian framework, which resulted in
+gloves, safety goggles, and steel toe shoes). This can be achieved by                                                             generally better results compared to using a single CNN classiﬁer.
+modifying the last layer of the YOLO-v3 models to accommodate object                                                                  All in all, the Approach-2 provided the most accurate detection of
+classes of interest in each application (Table 1).                                                                                PPE attire (72.3% mAP) among all. While the YOLO models in
+    In Aproach-1, worker, hat, and vest (three object classes) were de-                                                           Approach-1 and -3 achieved 81.2% and 85.6% mAP, respectively, the
+tected by YOLO-v3-A1 individually. Next, ML classiﬁers, e.g., NN and                                                              errors generated by the classiﬁers in the subsequent parts lowered the
+DT, were used to check if a detected hat or vest was in fact worn by a                                                            mAP to 63.1% (with DT) and 67.9% (Bayesian with all three CNN
+detected worker. Based on the worker's PPE attire, s/he was classiﬁed                                                             classiﬁers), respectively. It indicates that potentially better perfor-
+as W (wearing no hat or vest), WH (wearing only hat), WV (wearing                                                                 mances may be achieved by improving the classiﬁers in these ap-
+only vest), or WHV (wearing both hat and vest). Furthermore, the                                                                  proaches. In terms of processing speed, Approach-1 with DT was the
+
+                          350
+
+                          300
+
+                          250
+              time (ms)
+
+
+
+
+                          200                                                                                                                                                                                     260.1
+                                                                                                                                                                                                    210.2
+                          150                                                                                                                                                    169.8
+                                Real-time
+
+
+
+
+                                                                                                                                            118.8               141.4
+                                                                                                                          89.7
+                          100                    4.7                 0.3                               51.5
+                          50                                                          87.7
+                                                 74.5            74.5                                  69.4               69.4              69.4                69.4             69.4               69.4          69.4
+                           0
+                                                 NN                  DT                               VGG-16         ResNet-50            Xception         Bayesian          Bayesian           Bayesian        Bayesian
+                                                                                                        (V)             (R)                  (X)            (V+R)             (V+X)              (R+X)          (V+R+X)
+
+                                                        Approach-1                 Approach-2                                                             Approach-3
+
+                                                                                                                   YOLO-v3         Classifier
+
+                                                                             Fig. 20. Average time for processing one test image in each approach.
+
+
+                                                                                                                            18
+N.D. Nath, et al.                                                                                                                     Automation in Construction 112 (2020) 103085
+
+
+Table 3
+Performance of diﬀerent PPE detection models.
+  Criteria          Detection    Previous studies                                                                        This study
+
+                                 Fang et al. [10]       Mneymneh et al. [15]   Xie et al. [37]       Wu et al. [36]      Approach-1        Approach-2       Approach-3 (
+                                                                               (CAHD)                (Pelee-RPA)         (DT)                               Bayesian: V + R + X)
+
+  Hat               Hat          ×                      –                      –                     74.76%              74.29%            79.81%           79.33%
+                    No hat       > 90%a                 –                      –                     62.67%              63.84%            68.12%           63.13%
+                    Overall      > 90%a                 86.79%a                54.6%                 72.34%              69.06%            73.97%           71.23%
+  Vest              Vest         ×                      ×                      ×                     ×                   74.32%            84.96%           83.01%
+                    No Vest      ×                      ×                      ×                     ×                   73.18%            78.71%           77.98%
+                    Overall      ×                      ×                      ×                     ×                   73.75%            81.84%           80.49%
+  Hat + Vest        Overall      ×                      ×                      ×                     ×                   63.1%             72.3%            67.93%
+  FPS                            10                     2                      11                    3.22                13                11                3
+
+– Not available.
+× Not applicable.
+  a
+    Precision.
+
+Table 4                                                                                     Declaration of competing interest
+Qualitative comparison of the three proposed approaches.
+  Criteria                 Approach-1               Approach-2          Approach-3
+                                                                                                The authors declare that they have no known competing ﬁnancial
+                                                                                            interests or personal relationships that could have appeared to inﬂu-
+  Scalability              ✓                        ✓                   ✓                   ence the work reported in this paper.
+  Modularity               ✓                                            ✓
+  Robustness               ✓                        ✓
+  Adoptability             ✓
+                                                                                            Acknowledgments
+
+                                                                                               The authors gratefully acknowledge the U.S. National Science
+fastest (74.8 ms) among all while Approach-2 being a close alternative                      Foundation (NSF) for supporting this project through grant CMMI
+(87.7 ms). In Approach-3, assembling multiple CNN classiﬁers in                             1800957, as well as Mr. Yalong Pi for assisting in data preparation. Any
+Bayesian frameworks improved the detection performance, however, it                         opinions, ﬁndings, conclusions, and recommendations expressed in this
+lowered the detection speed by signiﬁcant margin.                                           paper are those of the authors and do not necessarily represent the
+     Approach-1 can adapt to other domains since it has the potential to                    views of the NSF or the individual named above.
+understand contextual relationship between diﬀerent objects (e.g., if a
+worker is “wearing” hat or not). On the other hand, Approach-2 pro-                         References
+vides a simpliﬁed framework with single DL-based network for end-to-
+end PPE veriﬁcation. Last but not least, Approach-3 has the highest                          [1] United States Census Bureau, Construction spending, https://www.census.gov/
+                                                                                                 construction/c30/prpdf.html , Accessed date: 6 July 2019.
+potential for achieving the best performance (e.g., by assembling mul-                       [2] Bureau of Labor Statistics, Industries at a glance: construction, https://www.bls.
+tiple CNN classiﬁers in a Bayesian framework) since the YOLO algo-                               gov/iag/tgs/iag23.htm , Accessed date: 6 July 2019.
+rithm adopted in this approach detects workers with the highest pre-                         [3] Bureau of Labor Statistics, Fatal occupational injuries counts and rates by selected
+                                                                                                 industries, https://www.bls.gov/news.release/cfoi.t04.htm , Accessed date: 6 July
+cision. Therefore, all three proposed methods are deemed practical for
+                                                                                                 2019.
+detecting PPE attire of workers. Particularly, Approach-1, Approach-2,                       [4] OSHA, Commonly used statistics, https://www.osha.gov/oshstats/commonstats.
+and Approach-3 with single CNN classiﬁer can be implemented in real-                             html , Accessed date: 6 July 2019.
+time. Also, these methods can be scaled to detect more than two types                        [5] OSHA, Worker safety series: construction, https://www.osha.gov/Publications/
+                                                                                                 OSHA3252/3252.html , Accessed date: 6 July 2019.
+of PPE. Furthermore, the modularity of Approach-1 and -3 allows their                        [6] Centers for Disease Control and Prevention, Traumatic brain injuries in construc-
+individual components to be improved independently to obtain a better                            tion, https://blogs.cdc.gov/niosh-science-blog/2016/03/21/constructiontbi/ ,
+overall performance. From a practical point of view, when fast PPE                               Accessed date: 6 July 2019.
+                                                                                             [7] OSHA, Safety vest requirements to protect ﬂaggers from traﬃc hazards during
+detection or running on a mobile device is important, Approach-1 is                              construction work, https://www.osha.gov/laws-regs/standardinterpretations/
+recommended since it requires the least amount of computation. On the                            2002-03-11 , Accessed date: 6 July 2019.
+other hand, for best prediction, Approach-2 is recommended since it                          [8] OSHA, Safety and health regulations for construction, https://www.osha.gov/laws-
+                                                                                                 regs/regulations/standardnumber/1926/1926.28 , Accessed date: 6 July 2019.
+outperforms the other two methods in terms of PPE detection accuracy.                        [9] F. Akbar-Khanzadeh, Factors contributing to discomfort or dissatisfaction as a result
+     The trained YOLO-v3 models can be applied to construction images/                           of wearing personal protective equipment, J. Hum. Ergol. 27 (1–2) (1998) 70–75.
+videos to generate results in real-time. These models have eﬀectively                       [10] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-use
+                                                                                                 by a deep learning method from far-ﬁeld surveillance videos, Autom. Constr. 85
+learned the features of workers and the most common PPE components,
+                                                                                                 (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.
+i.e., hard hat and vest, and therefore, can be used in a transfer learning                  [11] X. Huang, J. Hinze, Analysis of construction worker fall accidents, J. Constr. Eng.
+framework to build other solutions for detecting PPE. To foster future                           Manag. 129 (3) (2003) 262–271, https://doi.org/10.1061/(asce)0733-9364(2003)
+                                                                                                 129:3(262).
+innovative solutions and assist construction practitioners and re-
+                                                                                            [12] OSHA, Top 10 most frequently cited standards, https://www.osha.gov/Top_Ten_
+searchers to apply or improve DL-based applications to ensure work-                              Standards.html , Accessed date: 6 July 2019.
+place safety, all models, as well as the crowd-sourced Pictor-v3 dataset                    [13] OSHA, Employer payment for personal protective equipment; ﬁnal rule, https://
+described in this paper, are publicly available on authors' GitHub page                          www.osha.gov/laws-regs/federalregister/2007-11-15-0 , Accessed date: 6 July
+                                                                                                 2019.
+at https://github.com/ciber-lab/pictor-ppe. In the future, the authors                      [14] OSHA, Cited standard in construction, https://www.osha.gov/pls/imis/
+will expand the dataset to detect other common PPE components, e.g.,                             citedstandard.naics?p_naics=23&p_esize=&p_state=FEFederal , Accessed date: 20
+safety glass and gloves. Furthermore, the authors are planning to de-                            January 2019.
+                                                                                            [15] B.E. Mneymneh, M. Abbas, H. Khoury, Vision-based framework for intelligent
+velop a DL-based methodology to automatically generate safety reports                            monitoring of hardhat wearing on construction sites, J. Comput. Civ. Eng. 33 (2)
+in natural language based on construction site imagery.                                          (2018) 4018066, https://doi.org/10.1061/(asce)cp.1943-5487.0000813.
+                                                                                            [16] A. Kelm, L. Laußat, A. Meins-Becker, D. Platz, M.J. Khazaee, A.M. Costin,
+                                                                                                 M. Helmus, J. Teizer, Mobile passive radio frequency identiﬁcation (RFID) portal
+
+
+
+                                                                                       19
+N.D. Nath, et al.                                                                                                                              Automation in Construction 112 (2020) 103085
+
+
+     for automated and rapid control of personal protective equipment (PPE) on con-                     eﬃcient convolutional neural network detector for real-time UAV applications,
+     struction sites, Autom. Constr. 36 (2013) 38–52, https://doi.org/10.1016/j.autcon.                 Proc. 2018 Design, Automation and Test in Europe Conference and Exhibition
+     2013.08.009.                                                                                       (DATE), Dresden, Germany, 2018, pp. 967–972, , https://doi.org/10.23919/date.
+[17] S. Barro-Torres, T.M. Fernández-Caramés, H.J. Pérez-Iglesias, C.J. Escudero, Real-                 2018.8342149.
+     time personal protective equipment monitoring system, Comput. Commun. 36 (1)                  [43] C. Szegedy, A. Toshev, D. Erhan, Deep neural networks for object detection, Adv.
+     (2012) 42–50, https://doi.org/10.1016/j.comcom.2012.01.005.                                        Neural Inf. Proces. Syst. 26 (2013) 2553–2561.
+[18] B. Naticchia, M. Vaccarini, A. Carbonari, A monitoring system for real-time inter-            [44] R. Girshick, J. Donahue, T. Darrell, J. Malik, Rich feature hierarchies for accurate
+     ference control on large construction sites, Autom. Constr. 29 (2013) 148–160,                     object detection and semantic segmentation, Proc. IEEE Conference on Computer
+     https://doi.org/10.1016/j.autcon.2012.09.016.                                                      Vision and Pattern Recognition, Columbus, OH, 2014, pp. 580–587, , https://doi.
+[19] J. Seo, S. Han, S. Lee, H. Kim, Computer vision techniques for construction safety                 org/10.1109/cvpr.2014.81.
+     and health monitoring, Adv. Eng. Inform. 29 (2) (2015) 239–251, https://doi.org/              [45] R. Girshick, Fast R-CNN, Proc. IEEE International Conference on Computer Vision,
+     10.1016/j.aei.2015.02.001.                                                                         Santiago, Chile, 2015, pp. 1440–1448, , https://doi.org/10.1109/iccv.2015.169.
+[20] S. Han, S. Lee, A vision-based motion capture and recognition framework for be-               [46] K. He, G. Gkioxari, P. Dollar, R. Girshick, Mask R-CNN, Proc. IEEE International
+     havior-based safety management, Autom. Constr. 35 (2013) 131–141, https://doi.                     Conference on Computer Vision (ICCV), Venice, Italy, 2017, pp. 2961–2969, ,
+     org/10.1016/j.autcon.2013.05.001.                                                                  https://doi.org/10.1109/iccv.2017.322.
+[21] S. Du, M. Shehata, W. Badawy, Hard hat detection in video sequences based on face             [47] W. Liu, D. Anguelov, D. Erhan, C. Szegedy, S. Reed, C.Y. Fu, A.C. Berg, SSD: Single
+     features, motion and color information, Proc. 3rd International Conference on                      shot multibox detector, Proc. European Conference on Computer Vision,
+     Computer Research and Development (ICCRD), Shanghai, China, 4 2011, pp.                            Amsterdam, the Netherlands, 2016, pp. 21–37, , https://doi.org/10.1007/978-3-
+     25–29, , https://doi.org/10.1109/iccrd.2011.5763846.                                               319-46448-0_2.
+[22] K. Shrestha, P.P. Shrestha, D. Bajracharya, E.A. Yfantis, Hard-hat detection for              [48] T.Y. Lin, P. Goyal, R. Girshick, K. He, P. Dollár, Focal loss for dense object detection,
+     construction safety visualization, Journal of Construction Engineering (2015) 1–8,                 Proc. IEEE International Conference on Computer Vision, Venice, Italy, 2017, pp.
+     https://doi.org/10.1155/2015/721380.                                                               2980–2988, , https://doi.org/10.1109/iccv.2017.324.
+[23] M.W. Park, N. Elsafty, Z. Zhu, Hardhat-wearing detection for enhancing on-site                [49] J. Redmon, A. Farhadi, YOLOv3: An incremental improvement, arXiv preprint,
+     safety of construction workers, J. Constr. Eng. Manag. 141 (9) (2015) 04015024, ,                  arXiv:1804.02767, 2018.
+     https://doi.org/10.1061/(asce)co.1943-7862.0000974.                                           [50] M. Oquab, L. Bottou, I. Laptev, J. Sivic, Learning and transferring mid-level image
+[24] J. Weston, C. Watkins, Technical Report CSD-TR-98-04, Department of Computer                       representations using convolutional neural networks, Proc. IEEE Conference on
+     Science, University of London, 1998.                                                               Computer Vision and Pattern Recognition, Columbus, OH, 2014, pp. 1717–1724, ,
+[25] M.W. Park, I. Brilakis, Construction worker detection in video frames for initializing             https://doi.org/10.1109/cvpr.2014.222.
+     vision trackers, Autom. Constr. 28 (2012) 15–25, https://doi.org/10.1016/j.autcon.            [51] H.C. Shin, H.R. Roth, M. Gao, L. Lu, Z. Xu, I. Nogues, J. Yao, D. Mollura,
+     2012.06.001.                                                                                       R.M. Summers, Deep convolutional neural networks for computer-aided detection:
+[26] Z. Kolar, H. Chen, X. Luo, Transfer learning and deep convolutional neural networks                CNN architectures, dataset characteristics and transfer learning, IEEE Trans. Med.
+     for safety guardrail detection in 2D images, Autom. Constr. 89 (2018) 58–70,                       Imaging 35 (5) (2016) 1285–1298, https://doi.org/10.1109/tmi.2016.2528162.
+     https://doi.org/10.1016/j.autcon.2018.01.003.                                                 [52] J. Deng, W. Dong, R. Socher, L.J. Li, K. Li, L. Fei-Fei, ImageNet: a large-scale
+[27] Y. LeCun, L. Bottou, Y. Bengio, P. Haﬀner, Gradient-based learning applied to                      hierarchical image database, Proc. IEEE Conference on Computer Vision and
+     document recognition, Proc. IEEE 86 (11) (1998) 2278–2324, https://doi.org/10.                     Pattern Recognition, Miami, FL, 2009, pp. 248–255, , https://doi.org/10.1109/
+     1109/5.726791.                                                                                     cvpr.2009.5206848.
+[28] A. Krizhevsky, I. Sutskever, G.E. Hinton, ImageNet classiﬁcation with deep con-               [53] M. Everingham, L.V. Gool, C.K.I. Williams, J. Winn, A. Zisserman, The pascal visual
+     volutional neural networks, Commun. ACM 60 (6) (2017), https://doi.org/10.                         object classes (VOC) challenge, Int. J. Comput. Vis. 88 (2) (2010) 303–338, https://
+     1145/3065386.                                                                                      doi.org/10.1007/s11263-009-0275-4.
+[29] K. Simonyan, A. Zisserman, Very deep convolutional networks for large-scale image             [54] X. Chen, H. Fang, T.Y. Lin, R. Vedantam, S. Gupta, P. Dollár, C.L. Zitnick, Microsoft
+     recognition, arXiv preprint arXiv:1409.1556, 2014.                                                 COCO captions: data collection and evaluation server, arXiv preprint
+[30] M. Siddula, F. Dai, Y. Ye, J. Fan, Unsupervised feature learning for objects of in-                arXiv:1504.00325, 2015.
+     terest detection in cluttered construction roof site images, Procedia Engineering 145         [55] Y. Zhang, D. Zhao, J. Zhang, R. Xiong, W. Gao, Interpolation-dependent image
+     (2016) 428–435, https://doi.org/10.1016/j.proeng.2016.04.010.                                      downsampling, IEEE Trans. Image Process. 20 (11) (2011) 3291–3296, https://doi.
+[31] Z. Zivkovic, Improved adaptive Gaussian mixture model for background subtrac-                      org/10.1109/tip.2011.2158226.
+     tion, Proc. ICPR, Cambridge, UK, 2004, pp. 28–31, , https://doi.org/10.1109/icpr.             [56] D.P. Kingma, J. Ba, Adam: a method for stochastic optimization, arXiv preprint
+     2004.1333992.                                                                                      arXiv:1412.6980, 2014.
+[32] L. Ding, W. Fang, H. Luo, P.E.D. Love, B. Zhong, X. Ouyang, A deep hybrid learning            [57] L. Perez, J. Wang, The eﬀectiveness of data augmentation in image classiﬁcation
+     model to detect unsafe behavior: integrating convolution neural networks and long                  using deep learning, arXiv preprint arXiv:1712.04621, 2017.
+     short-term memory, Autom. Constr. 86 (2018) 118–124, https://doi.org/10.1016/j.               [58] C.M. Bishop, Pattern Recognition and Machine Learning, Springer, 2006.
+     autcon.2017.11.002.                                                                           [59] J. Friedman, T. Hastie, R. Tibshirani, The Elements of Statistical Learning, Springer
+[33] S. Hochreiter, J. Schmidhuber, Long short-term memory, Neural Comput. 9 (8)                        Series in Statistics vol. 1, Springer, 2001.
+     (1997) 1735–1780, https://doi.org/10.1162/neco.1997.9.8.1735.                                 [60] K.P. Murphy, Machine Learning: A Probabilistic Perspective, MIT press, 2012.
+[34] N.D. Nath, T. Chaspari, A.H. Behzadan, A transfer learning method for deep neural             [61] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, Proc.
+     network annotation of construction site imagery, Proc. Conference on Construction                  IEEE Conference on Computer Vision and Pattern Recognition, Las Vegas, NV,
+     Applications of Virtual Reality (CONVR), Auckland, New Zealand, 2018, pp. 1–10.                    2016, pp. 770–778, , https://doi.org/10.1109/cvpr.2016.90.
+[35] N.D. Nath, T. Chaspari, A.H. Behzadan, Single- and multi-label classiﬁcation of               [62] F. Chollet, Xception: Deep learning with depthwise separable convolutions, Proc.
+     construction objects using deep transfer learning methods, Journal of Information                  IEEE Conference on Computer Vision and Pattern Recognition, Honolulu, HI, 2017,
+     Technology in Construction 24 (28) (2019) 511–526, https://doi.org/10.36680/j.                     pp. 1251–1258, , https://doi.org/10.1109/cvpr.2017.195.
+     itcon.2019.028.                                                                               [63] A. Turpin, F. Scholer, User performance versus precision measures for simple search
+[36] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn                     tasks, Proc. 29th Annual International ACM SIGIR Conference on Research and
+     by construction personnel: a deep learning approach and benchmark dataset,                         Development in Information Retrieval, Seattle, Washington, 2006, pp. 11–18, ,
+     Autom. Constr. 106 (2019) 102894, , https://doi.org/10.1016/j.autcon.2019.                         https://doi.org/10.1145/1148170.1148176.
+     102894.                                                                                       [64] M.C. Yuen, I. King and K.S. Leung, A survey of crowdsourcing systems, in: Proc. 3rd
+[37] Z. Xie, H. Liu, Z. Li, Y. He, A convolutional neural network based approach towards                IEEE International Conference on Privacy, Security, Risk and Trust, Boston, MA,
+     real-time hard hat detection, Proc. IEEE International Conference on Progress in                   2011, pp. 766–773, https://doi.org/10.1109/passat/socialcom.2011.203.
+     Informatics and Computing (PIC), IEEE, 2018, pp. 430–434, , https://doi.org/10.               [65] R. Kosala, H. Blockeel, Web mining research: a survey, ACM SIGKDD Explorations
+     1109/pic.2018.8706269.                                                                             Newsletter 2 (1) (2000) 1–15, https://doi.org/10.1145/360402.360406.
+[38] Smartvid.io, Inc, Smartvid.io, https://www.smartvid.io , Accessed date: 6 July                [66] R. Fergus, L. Fei-Fei, P. Perona, A. Zisserman, Learning object categories from
+     2019.                                                                                              Google's image search, Proc. 10th IEEE International Conference on Computer
+[39] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: towards real-time object detection               Vision, Beijing, China, 2005, pp. 1816–1823, , https://doi.org/10.1109/iccv.2005.
+     with region proposal networks, IEEE Trans. Pattern Anal. Mach. Intell. 39 (6)                      142.
+     (2017) 1137–1149, https://doi.org/10.1109/tpami.2016.2577031.                                 [67] Labelbox, Inc, Labelbox, www.labelbox.com , Accessed date: 6 July 2019.
+[40] J. Redmon, S. Divvala, R. Girshick, Ali Farhadi, You only look once: Uniﬁed, real-            [68] B.C. Russell, A. Torralba, K.P. Murphy, W.T. Freeman, LabelMe: a database and
+     time object detection, Proc. IEEE Conference on Computer Vision and Pattern                        web-based tool for image annotation, Int. J. Comput. Vis. 77 (1–3) (2008) 157–173
+     Recognition, Las Vegas, NV, 2016, pp. 779–788 https://doi.org/10.1109/cvpr.                        https://doi.org/10.1007/s11263-007-0090-8.
+     2016.91.                                                                                      [69] D. Castelvecchi, Can we open the black box of AI? Nature News 538 (7623) (2016)
+[41] J. Redmon, A. Farhadi, YOLO9000: better, faster, stronger, Proc. IEEE Conference                   20, https://doi.org/10.1038/538020a.
+     on Computer Vision and Pattern Recognition, Honolulu, HI, 2017, pp. 7263–7271, ,              [70] M.D. Zeiler and R. Fergus, Visualizing and understanding convolutional networks,
+     https://doi.org/10.1109/cvpr.2017.690.                                                             in: Proc. European Conference on Computer Vision (2014), Zurich, Switzerland, pp.
+[42] C. Kyrkou, G. Plastiras, T. Theocharides, S.I. Venieris, C.S. Bouganis, DroNet:                    818–833, https://doi.org/10.1007/978-3-319-10590-1_53.
+
+
+
+
+                                                                                              20
+

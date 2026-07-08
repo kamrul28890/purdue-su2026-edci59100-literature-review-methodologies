@@ -1,0 +1,1178 @@
+                                                                  Automation in Construction 148 (2023) 104748
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                               Automation in Construction
+                                                          journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Monitoring safety behaviors of scaffolding workers using Gramian angular
+field convolution neural network based on IMU sensing data
+Sungkook Hong a, Jihwan Yoon a, Youngjib Ham b, Bogyeong Lee c, Hyunsoo Kim a, *
+a
+  Department of Architectural Engineering, Dankook University 152 Jukjeon-ro, Suji-gu, Yongin-si, Gyeonggi-do, 16890; Republic of Korea
+b
+  Department of Construction Science, Texas A&M University, 3337 TAMU, College Station, TX 77843, United States of America
+c
+  Department of Architectural Engineering, Dankook University, Republic of Korea
+
+
+
+
+A R T I C L E I N F O                                      A B S T R A C T
+
+Keywords:                                                  Monitoring workers’ safety compliance is critical to the construction accident prevention. However, current
+Safety behavior                                            practices mainly rely on the safety mangers’ manual observation. To improve safety management, this study
+Safety compliance                                          examines the feasibility of the automated framework to classify pre-defined safety behaviors of scaffolding
+Inertial measurement unit (IMU)
+                                                           workers and identify whether each safety behavior was carried out. To examine the fidelity of the framework, 35
+Convolution neural network (CNN)
+Gramian angular fields (GAF)
+                                                           scaffold workers were studied by using five inertial measurement unit (IMU) sensors and implementing the five
+Safety regulations                                         safety regulations. To classify compliance with safety regulations, this study builds on the Gramian angular fields
+                                                           (GAFs) based convolution neural network (CNN). The proposed model is compared to five other classification
+                                                           algorithms. The performance evaluation results show that the proposed method is feasible to identify whether
+                                                           workers comply with safety regulations automatically. This outcome has the potential to improve safety man­
+                                                           agement through personalized worker training or notification during work.
+
+
+
+
+1. Introduction                                                                                  challenging to categorize various unsafe behaviors since the behaviors
+                                                                                                 vary from individuality under diverse situations. Here, safety regula­
+    In jobsites, workers may not occasionally follow safety regulations                          tions for preventing describe how a worker should act in a specific sit­
+because they are excessively familiar with their work or lack accidental                         uation, and thus monitoring workers’ safety compliance with them
+experience. Especially, such safety insensitivity linked to the feature that                     could be effective in evaluating an individual’s level of safety compli­
+workers frequently work in a high place and with heavy equipment in­                             ance. For example, if one worker complies with the safety regulations at
+curs fatal accidents. Most construction procedures have the associated                           90% and another at 70%, safety managers could focus more on the latter
+safety regulations and rules to place safety managers at the sites to                            (i.e., workers who comply less with the safety regulations) for safety
+prevent accidents. However, it is inadequate to supervise every worker                           accident prevention.
+due to the limited number of safety managers on a construction site.                                 Most fatal accidents are fall accidents on construction sites [1,8]. In
+Therefore, a majority of efforts have been made to prevent accidents by                          particular, scaffolding-related accidents result in approximately 60
+monitoring construction workers’ behavioral tendencies and patterns                              deaths and 4500 injuries every year, according to the United States
+[1–4]. Recently, studies for detecting hazard zones and changes in body                          Bureau of Labor Statistics (BLS) [9]. These high risks of accidents are
+stability have been mainly conducted [2,4–6]. Previous studies focused                           closely related to the nature of the scaffolding works. Scaffolding is
+on finding hazards, hazard zones, obstacles, and body stability, and they                        installed in various ways in places where accessibility to workers is poor,
+have extracted unsafe behaviors based on deep-learning algorithms. Yu                            such as the facade of the upper floor of the building. Therefore, the
+et al. [7] validated a method that detects unsafe behavior of workers                            scaffolding worker needs to keep safety regulations strictly than other
+using an image-skeleton-based parameterized approach in construction                             process workers and must check their safety equipment (e.g., safety
+sites. Although several studies have tried to extract unsafe behaviors,                          helmet, safety hook, etc.) and working environments (e.g., whether the
+unsafe behavior appears to have different forms and features by indi­                            scaffold is connected, etc.). However, workers’ carelessness (non-
+vidual workers. Extracting such individual unsafe behavior is                                    compliance with safety regulations) is one of the causes of accidents
+
+
+ * Corresponding author.
+   E-mail addresses: dk_hsk22@dankook.ac.kr (S. Hong), jihwan@dankook.ac.kr (J. Yoon), yham@tamu.edu (Y. Ham), bglee_@dankook.ac.kr (B. Lee), hkim13@
+dankook.ac.kr (H. Kim).
+
+https://doi.org/10.1016/j.autcon.2023.104748
+Received 27 September 2022; Received in revised form 19 December 2022; Accepted 6 January 2023
+Available online 13 January 2023
+0926-5805/© 2023 Elsevier B.V. All rights reserved.
+S. Hong et al.                                                                                                         Automation in Construction 148 (2023) 104748
+
+
+[10]. For example, when workers work on scaffolding, their working                 occurring in potential accidents [24,25].
+behaviors without fastening the safety hook corresponds to the care­                   Kim et al. [26] showed that the abnormality of subjects differed by
+lessness of safety [11]. To prevent the safety accident of scaffolding             their capability that respond to the hazard. In this regard, categorizing
+workers, an effective monitoring system of the compliance with safety              unsafe behaviors may be difficult since various unsafe behaviors occur
+regulations is required.                                                           differently on individuality and characteristics of situations. Meanwhile,
+    Recently, the shortage of management personnel has been addressed              safety behaviors that are strictly defined by safety regulations are likely
+by monitoring the overall situation in the workplace through several               standardized, and thus these behaviors are less affected by individuality
+closed-circuit televisions (CCTV). In this context, studies have been              and situations. Given that most construction works are supposed to
+conducted to classify worker behaviors through computer vision tech­               follow safety regulations, monitoring the safety compliance of individ­
+niques [12]. Despite the benefits, it is difficult to expect CCTV systems to       ual workers can provide a chance to improve jobsite safety. Therefore,
+cover all construction sites without blind spots. Given that covering the          this paper aims to (1) classify various safety behaviors and (2) identify
+entire site corresponds to the fundamental of safety that there should be          whether workers properly conduct safety behaviors determined by
+no place to be excluded, relying on a vision-based approach to establish           safety regulations.
+an extensive monitoring system is still challenging. Although the safety               With the advancement of deep-learning algorithms and a graphic
+monitoring system must be continuous and cover extensive sight, vision             processing unit, vision-based behavior recognition have been applied to
+sensors (e.g., CCTV, camera, LiDAR, Radar, etc.) are expensive to build            extract unsafe behavior in construction [27,28]. Han et al. [29] detected
+monitoring systems without any blind spots. Given the nature of tem­               unsafe actions of construction workers using vision-based depth sensors.
+porary structures such as scaffoldings that repeat assembling and dis­             Detecting the personal protection equipment (PPE) such as safety har­
+assembling frequently, vision sensors attached have limitations in                 nesses using a vision-based approach was also validated by Fang et al.
+monitoring work continuously.                                                      [28]. Besides, motion sensors such an IMU has showed high suitability
+    On the other hand, motion sensors such as IMU has an advantage in              that is highly durable, available in low-visibility conditions, and low-
+that it is relatively cheaper than vision sensors and can monitor worker           power usage [30–32]. With these advantages, IMU is one of the
+behaviors for a long time, even with lower power usage. In addition, it is         widely used sensors in the construction industry [24]. Joshua and Var­
+a small-sized sensor that does not interfere with worker performance               ghese [33] showed that IMU data can classify characteristics of activ­
+and can collect motion data continuously regardless of the location. In            ities. Yoon et al. [34] attempted to examine the gait stability of
+this context, this study aims to examine the feasibility of a framework for        ironworkers based on IMU data. These studies validated the feasibility of
+monitoring workers’ safety behaviors regarding safety compliance. The              using IMU sensors to extract subtle characteristics of the activities of
+data collected through the IMU sensor attached to the worker body is               workers. Although these studies focused on classifying each activity by
+used to analyze whether the worker’s behavior follows the safety                   IMU data and extracting unsafe behaviors in their task sequence, it is
+regulation or not. This study builds upon the following hypotheses: (1)            also essential to identify whether a worker’s behavior follows the safety
+distinguishable characteristics of motion data will appear depending on            regulation.
+each safety regulation, and (2) IMU data can be used to identify whether               Previous studies monitored potential accidents by extracting unsafe
+a scaffolding worker complies with the safety regulation properly or not.          behaviors using various sensors. They focused on defining and extract­
+This study builds on the GAF-CNN algorithm for classifying and iden­               ing unsafe behaviors of workers using various sensing approaches. They
+tifying safety behaviors. For collecting data, experiments were con­               concentrated on the attitude at a specific point in time or on the rela­
+ducted with 35 scaffolding workers. The collected data is used to train            tionship with external elements (mainly equipment) rather than on the
+and test the proposed model. After training and testing the model, the             worker’s continuous behavior. For example, they detected a lack of
+performance evaluation results are compared with other algorithms.                 necessary equipment, or poor fastening of safety equipment. However,
+    This paper is organized in the following order. First, the approaches          this can be a missing link in terms of compliance with safety regulations,
+used in the existing safety behavior analysis and related state-of-the-art         which requires proper implementation of safety activities within
+techniques are reviewed. Then, the overall methodology including the               continuous behaviors. Therefore, there is a knowledge gap in measuring
+selection process of safety regulations through the survey of experienced          the continuous behavior and analyze the activities of the workers
+practitioners are described. The rest of this paper discusses the results of       therein to identify whether the safety regulations have been properly
+experiments designed for validation.                                               implemented. This study used IMU sensors to collect workers’ activities
+                                                                                   corresponding to the experimental conditions to analyze their bodily
+2. Research background                                                             movement. The following section describes the experimental design and
+                                                                                   the collection and analysis of workers’ behavioral data.
+    Occupational health and safety have long been critical issues in the
+construction industry. To build a safe environment, extensive efforts              3. Methodology
+have been made. The Center for Construction Research and Training
+(CPWR) and the Construction Industry Institute (CII) have established                  This study hypothesized that each safety regulation has distin­
+training programs for construction workers and explored the latest                 guishable characteristics and that each safety behavior that workers
+technologies for applying to work sites [13,14]. There have been studies           conduct will be assessed to identify whether it meets the criteria. To test
+to automate safety management by monitoring construction sites using               the feasibility, the motion data of 35 scaffold workers were collected
+various approaches (e.g., sensor-based technology, computer vision)                through IMU sensors reflecting whole body movements (IMUs are
+[15–18]. For example, Yan et al. [19] extracted ergonomically hazard­              attached to the head, both wrists, and both ankles). The worker per­
+ous activities using IMU sensors. Another approach that detects                    formed five safety behaviors while walking on the scaffold. The exper­
+collapsing of body balance has been used to identify potential accidents           imental setup includes five zones, and a worker should conduct a safety
+[20]. In this regard, Dzeng et al. [21] detected the balance collapsing of         behavior in each zone. For example, when the workers enter the first
+tiling workers by using the built-in smartphone accelerometer. In the              zone, scaffold workers conduct the first safety behavior (checking per­
+previous study by Wu et al. [22], detection of balance loss was used to            sonal protection equipment (PPE)) determined by the safety regulations.
+examine the potential risk of accidents by using a radio frequency                 The collected IMU data were compared with the simultaneously recor­
+identification system and ultrasonic transceiver. Because 80–90% of                ded video to confirm how the time series data corresponding to the
+construction accidents are caused by unsafe activities and behaviors of            actual situation. Then, collected data are analyzed through three ma­
+construction workers [23], prior research on safety monitoring,                    chine learning and three deep learning algorithms, respectively. In this
+including the above, were geared toward extracting unsafe activities               procedure, two-way approaches are used to analyze IMU data. One is
+
+                                                                               2
+S. Hong et al.                                                                                                               Automation in Construction 148 (2023) 104748
+
+
+activity classification, which includes the total dataset (5250 datasets).          experiments, and a total of 5250 safety behavior data collected. A
+From the total dataset, the authors have attempted to classify five reg­            description of each zone and the experiment setup is shown in Fig. 2 (b).
+ulations. The other one is to identify whether each type of safety                  The entire experiment procedure was simultaneously video recorded to
+behavior (1050 dataset for each safety behavior) properly follows the               identify activities. Additionally, before the experiments, every subject
+safety regulation. Fig. 1 illustrates the process; (1) experiment and data          was trained by safety managers for all safety regulations. The subjects
+collection; (2) comparing the actual movement to IMU data and label­                were also instructed to thoroughly obey the safety regulations with ac­
+ing; (3) time series data preprocessing by the signal vector magnitude              curate movement. Even though they had tried to comply with all regu­
+(SVM) and Gramian angular field (GAF); (4) applying machine learning                lations properly, a few activities are classified as cases of non-
+and deep learning algorithms; (5) classification performance reports.               compliance with safety regulations.
+
+3.1. Experimental design                                                            3.2. Data preprocessing and segmentation
+
+    Scaffolding is essential in construction projects for easy installation,            Human motion data from multi-sensors increases the likelihood of
+quick dismantling, and securing ample workspace. Since various tasks                producing meaningful results in safety and health risk assessments [24].
+are performed simultaneously, safety accidents such as falls and falling            In this study, the locations of five IMU sensors are 1) head, 2) both
+objects are the most common in scaffolding works. Therefore, the                    wrists, and 3) both ankles. Each acceleration and gyroscopic graph have
+experiment of this study is designed and conducted to test whether the              three axes (x, y, and z, respectively).
+workers’ safety behaviors follow the safety regulations correctly                       Since workers’ activities are measured continuously, they are
+through wearable sensing.                                                           segmented into small data forms for analyzing data. Segmentation
+    A total of 35 subjects were clinically healthy. The minimum age is 22,          techniques are primarily categorized into activity-defined windows,
+and the maximum age is 37. The experiment was conducted on subjects                 event-define widows, and sliding windows [35]. Because fused data are
+with at least three years of experience in scaffolding. Their average age           manually annotated by referencing the judgment of a group of six safety
+was 30.53 years old. Their fatigue state did not affect the experiment              experts for supervised learning, sliding window approaches that simplify
+through sufficient rest for at least 8 h before the experiment. Subject             data preprocessing are not suitable for this study. In addition, event-
+details are described in Table 1.                                                   defined approaches that extract specific events can skip the safety reg­
+    Each subject was equipped with a total of five IMU sensors. One                 ulations or worker’s movement. Therefore, activity-defined window
+sensor was attached to a worker’s head, two sensors were attached to                approaches that detect activity changes are applied to extract safety
+both wrists, and two sensors were attached to both ankles. IMU sensors              regulations. In the labeling process, the activity classification results by
+collect accelerometer and gyroscope signals with a 128 Hz sampling                  experts show that every activity concludes within five seconds of an
+rate. In the experiment, all subjects wore a safety helmet, a safety vest,          implementation. Therefore, selecting a five-second window size can
+safety gloves, a safety harness, safety shoes, and gaiters. Fig. 2 (a) shows        include every activity without omitting data points of safety regulation.
+the location of the attached IMU sensors. Subjects were asked to follow                 While machine learning algorithms and LSTM utilize raw data, data
+five safety regulations. The length of each zone is 1000 mm (the length             for training convolution neural network (CNN) algorithms based on
+of each step board). For the safety, scaffolding was installed on the flat          images need to be transformed into simplified images. The signal vector
+asphalt with a sufficient bearing capacity of scaffoldings, and the posi­           magnitude (SVM*) of the IMU data is used to represent the intensity and
+tion of the step board was installed at the height of 150 mm from the               severity of movement and reduce the size of the data by one-third. The
+ground.                                                                             SVM formula is used to reduce data noise and secure the calculation
+    Safety regulations are selected by interviews with skilled safety               process’s efficiency [36,37]. In this study, 3-axis accelerometer and 3-
+managers of construction sites (a total of six safety managers having               axis gyroscope data from 5 different body parts (Head-acc, Head-gyro,
+more than ten years site experience). They responded to the interview               Right Wrist-acc, Right Wrist-gyro, Left Wrist-acc, Left Wrist-gyro,
+question that requests what important tasks during scaffold are. By                 Right Ankle-acc, Right Ankle-gyro, Left Ankle-acc, and Left Ankle-
+combining the answers of the safety managers, five safety regulations               gyro) is calculated through the SVM shown in Eq. (1). A total of 30
+are selected. The first safety regulation is set as the inspection of per­          graphs shrinks into 10 graphs, and they are aligned in parallel and
+sonal protective equipment (PPE). The regulation for the first zone (Zone           transformed into images by each activity of safety regulation.
+1: PPE inspection) is that workers inspect all their equipment by tapping                    [                              ]
+                                                                                               ∑n √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+them with both hands at least twice. Tapping the safety helmet multiple             SVM ij =           x 2
+                                                                                                           + y 2
+                                                                                                                  +    z 2
+                                                                                                                                                             (1)
+                                                                                                         k     k         k
+times ensures that the helmet has not been peeled off owing to any
+                                                                                                  k=1
+
+external impact. Visual inspection can be difficult to verify that the
+                                                                                        In the study by Wang et al. [38], the framework that encodes time
+helmet is worn correctly. In the second zone (Zone 2: Responding to
+                                                                                    series as images using the Gramian Angular Field (GAF) was proposed.
+warning alarm), a worker is asked to respond to the warning alarm.
+                                                                                    GAF has advantages that it can preserve temporal dependency. GAF
+When the alarm starts, a worker is asked to look around twice. In the
+                                                                                    image can compress extensive IMU graphs transformed into polar co­
+third zone (Zone 3: Joint inspection), a worker inspects whether the
+                                                                                    ordinates into one image. Generally, the Gramian matrix has a problem
+joint of scaffoldings is appropriately installed. To complete the zone, a
+                                                                                    that has a large size of n×n, n is the length of the raw time series.
+worker inspects and hammers two marked joints in Zone 3 at least twice.
+                                                                                    However, the data preprocessing segments raw time series data by 5 s of
+In the fourth zone (Zone 4: Step board inspection), workers inspect
+                                                                                    window size. Consequently, GAF images have 640×640 size, which is
+whether the step board of the scaffold is assembled adequately by
+                                                                                    affordable for training CNN. For transforming IMU data to GAF image,
+pounding the step board with their own foot at least twice. Lastly, Zone 5
+                                                                                    raw IMU data is transformed into polar coordinates. Before that, given a
+is set to hooking the safety hook. In this zone, a worker hooks the safety
+                                                                                    time series X = {x1, x2, …, xn} of n real-time value, X need to be rescaled
+hook and inspects it by pulling it at least twice. In the following, the five
+                                                                                    for making all value that they into the interval [− 1,1] or [0,1] by:
+classified safety activities are denoted as (Z1) PPE, (Z2) Warning Alarm,
+(Z3) Joint, (Z4) Step board, and (Z5) Safety hook. The selected safety                       (xi − max(X) + (xi − min(X) )
+                                                                                    x∼i
+                                                                                     − 1 =                                                                           (2)
+regulations were based on the safety guidelines of the Occupational                                max(X) − min(X)
+Safety and Health Administration (OSHA) and Korea Occupational
+Safety and Health Administration (KOSHA). Fig. 2 (c) represents the                 or
+safety codes of OSHA and KOSHA guidelines, which serve as base for the
+safety regulations used in this study. All subjects performed 30 sets of
+
+                                                                                3
+S. Hong et al.                                                                           Automation in Construction 148 (2023) 104748
+
+
+
+
+                 Fig. 1. Framework for safety behavior monitoring in scaffolding work.
+
+
+
+
+                                                   4
+S. Hong et al.                                                                                                              Automation in Construction 148 (2023) 104748
+
+
+Table 1                                                                                performances. The five different algorithms are Random Forest (RF)
+Subject Information.                                                                   [40], Support Vector Machine (SVM**) [41,42], Naïve Bayes (NB) [43],
+  Statistical parameters          Height             Weight             Age            Long-Short Term Memory (LSTM) [44,45], and SVM*-CNN. This study
+                                  (cm)               (kg)               (years)        was conducted to verify the frameworks for classifying each activity and
+  Mean                            171.72             72.56              30.53          identifying whether workers follow the safety regulations correctly. For
+  Median                          171.13             70.53              32             examining the feasibility, a two-way approach is used for model
+  Standard Deviation              6.68               8.71               4.34           training. Firstly, model training for activity classification proceeds. 75%
+  Minimum Value                   161.55             58.51              22             of the total dataset was used for training each algorithm model, and 25%
+  Maximum Value                   183.13             87.86              37
+                                                                                       of the total dataset, which is non-overlapped, was used to verify the
+                                                                                       performance of the model. Then, data was segregated by behaviors to
+        (xi − min(X) )                                                                 identify behaviors correctly following safety regulations. In each safety
+x∼i
+ 0 =                                                                         (3)       regulation, 75% of behaviors correctly following safety regulation data
+       max(X) − min(X)
+                                                                                       and 75% of behaviors incorrectly following safety regulation data were
+   Furthermore, rescaled time series X ̃ is transformed into polar co­                 applied to model training. The other 25% of each data not used to train
+ordinates by encoding the value as angular cosine and the time stamp                   the model was used for model verification. Data segregation was per­
+with the equation as follows:                                                          formed randomly. Tables 2 and 3 represent the parameters of machine
+⎧            ( ∼)                                                                      learning models in the order of RF and SVM**. Table 4 describes the
+⎪                         ∼      ∼   ̃
+⎨ ∅ = arccos xi , − 1 ≤ xi ≤ 1, xi ∈ X                                                 parameters of deep learning-based models—LSTM and CNN (including
+                                                                   (4)
+⎪
+⎩
+                  ti
+              r = , ti ∈ N                                                             SVM*-CNN and GAF-CNN). To investigate the feasibility of the algo­
+                  N                                                                    rithm for this study, both classification and identification models were
+    In Eq. (4), ti refers time stamp and N is regularized span of the polar            verified based on the F-1 score as well as precision, recall, and accuracy
+coordinates which is constant factor [39]. The transformed polar co­                   score.
+ordinates of IMU raw data can exploit the angular perspective to identify
+temporal correlation. The Gramian summation angular field is defined                   4. Results
+in Eq. (5).
+                                     √̅̅̅̅̅̅̅̅̅̅̅̅̅ √̅̅̅̅̅̅̅̅̅̅̅̅̅                         A total of 5250 safety regulations were collected for each activity. In
+         [ (            )]     ′
+                                                                                       all experiment processes, workers’ activities were collected simulta­
+GASF = cos ∅i − ∅j = X       ̃ •X ̃−   I− X   ̃2 • I − X     ̃2         (5)
+                                                                                       neously through videos. A total of 5250 collected data from workers
+   Fig. 3 (a) represents the visual changes in the transformation process              were analyzed and classified by experts into behaviors following safety
+from raw time series data to GAF image. Fig. 3 (b) describes the featured              regulations correctly and behaviors not following safety regulations. The
+time series and GAF imange of each safety regulation.                                  results are as follows. (Z1) PPE: 840 compliance, 210 non-compliance;
+                                                                                       (Z2) Warning Alarm: 908 compliance, 142 non-compliance; (Z3) Joint
+                                                                                       Inspection: 875 compliance, 175 non-compliance; (Z4) Step Board In­
+3.3. Data analysis                                                                     spection: 945 compliance, 105 non-compliance; and (Z5) Safety Hook:
+                                                                                       980 compliance, 70 non-compliance.
+    In this study, the proposed GAF-CNN algorithm is compared with
+five other algorithms. Three machine learning and two deep learning
+algorithms are applied to compare the classification and identification
+
+
+
+
+        Fig. 2. Overview of the experiment; (a) subject preparation, (b) order of safety regulations, and (c) reference guidelines for each safety regulation.
+
+                                                                                   5
+S. Hong et al.                                                                                                               Automation in Construction 148 (2023) 104748
+
+
+
+
+    Fig. 3. Time series data and transformed GAF image: (a) transforming process of time-series data, and (b) plot of featured data pattern of each data form.
+
+
+                 Table 2                                                              4.1. Activity classification results
+                 Parameter table of RF.
+                  Parameter name                         Value                            A total of 35 workers implemented five safety regulations 30 times,
+                                                                                      respectively. In the procedure of activity classification, the authors have
+                  n_estimators                           65
+                  max_depth                              15                           attempted to validate that the model can classify each activity by su­
+                  max_features                           auto                         pervised machine learning and deep learning algorithms. Therefore,
+                  min_samples_split                      15                           model learning was conducted by assigning a label to the data for each
+                  min_samples_leaf                       15                           activity, and all behaviors incorrectly following regulations were given a
+                                                                                      Null label. Accuracy in the three machine learning models was derived
+                 Table 3                                                              from 78.58% at RF, 80.36% at SVM**, and 82.23% at NB, respectively.
+                 Parameter table of SVM**.                                            Precision and recall values were derived significantly lower than the
+                                                                                      accuracy because the performance decrease derived from error caused
+                   Parameter name                        Value
+                                                                                      by the inclusion of non-compliance regulation as Null labels, which is
+                   C                                     1.0                          relatively difficult to distinguish. Precision (0.115 at RF, 0.144 at SVM,
+                   gamma                                 auto
+                                                                                      and 0.183 at NB) and recall (0.218 at RF, 0.274 at SVM, and 0.372 at NB)
+                   degree                                3
+                   Coef0                                 0.0                          value of Null is lower than average precision (0.357 at RF, 0.411 at SVM,
+                   kernal                                rbf                          and 0.467 at NB) and recall (0.357 at RF, 0.411 at SVM, and 0.467 at
+                                                                                      NB). Therefore, compared to the model’s accuracy, the F1-score was
+                                                                                      relatively low. Each F1-score is 0.357, 0.411, and 0.467, in the order of
+Table 4                                                                               RF, SVM, and NB.
+Hyperparameter table of LSTM and CNN.
+                                                                                          On the other hand, the overall indicators derived from the deep
+  Hyperparameter                      LSTM                       CNN                  learning model are higher than the machine learning model. Training
+  Layers                              3 LSTM layer               2 Conv2D             accuracy from deep learning models is 88.65%, 92.06%, and 94.97% in
+  Filter (# of filters)               –                          5*5 (20, 50)         order of LSTM, SVM*-CNN, and GAF-CNN. GAF-CNN has the highest
+  Epoch                               250                        200                  performance in activity recognition which shows 0.849 in F1-score.
+  Optimizer                           ADAM                       ADAM
+  Learning Rate                       0.001                      0.001
+                                                                                      After that, SVM*-CNN shows the second highest of F1-score at 0.762.
+  Batch size                          64                         16                   LSTM derives the lowest representing 0.659 of F1-score within deep
+  Activation function                 ReLU / Softmax             ReLU / Softmax       learning training results.
+                                                                                          (Z2) Warning Alarm has the highest indicators across all algorithms
+
+
+
+
+                                                                                  6
+S. Hong et al.                                                                                                                                                                                                                                          Automation in Construction 148 (2023) 104748
+
+
+except in recall of GAF-CNN. In the GAF-CNN algorithm, recall of (Z4)
+
+
+
+
+                                                                                                                                                                                                                            0.183
+
+                                                                                                                                                                                                                            0.372
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.557
+
+                                                                                                                                                                                                                                                                                                        0.778
+Step Board Inspection has the highest indicator as 0.958. Overall, (Z2)
+
+
+
+
+                                                                                                                                                                                                                            Null
+
+                                                                                                                                                                                                                            Null
+
+
+
+
+                                                                                                                                                                                                                                                                                                        Null
+
+                                                                                                                                                                                                                                                                                                        Null
+shows the highest classification performance, followed by (Z4).
+Although (Z1), (Z3), and (Z5) are mainly implemented by workers’
+hands, (Z2) and (Z4) are performed by physical movement of other parts
+
+
+
+
+                                                                                                                                                                                                                            0.493
+
+                                                                                                                                                                                                                            0.386
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.897
+
+                                                                                                                                                                                                                                                                                                        0.794
+                                                                                                                                                                                                                            (Z5)
+
+                                                                                                                                                                                                                            (Z5)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z5)
+
+                                                                                                                                                                                                                                                                                                        (Z5)
+of the body such as the head or foot. Consequently, characteristic signals
+generated from body attachment sensors other than hands show higher
+classification performance than activities mainly using hands. Activity
+
+
+
+
+                                                                                                                                                                                                                            0.669
+
+                                                                                                                                                                                                                            0.499
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.966
+
+                                                                                                                                                                                                                                                                                                        0.958
+                                                                                                                                                                                                                            (Z4)
+
+                                                                                                                                                                                                                            (Z4)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z4)
+
+                                                                                                                                                                                                                                                                                                        (Z4)
+classification results are represented in Table 5.
+    Fig. 4 presents confusion matrices of activity classification. In (Z3), a
+high acceleration signal is applied to the subject’s body by hitting the
+
+
+
+
+                                                                                                                                                                                                                            0.461
+
+                                                                                                                                                                                                                            0.423
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.825
+
+                                                                                                                                                                                                                                                                                                        0.805
+structure, and in (Z5), a high acceleration signal is also applied to the
+
+
+
+
+                                                                                                                                                                                                                            (Z3)
+
+                                                                                                                                                                                                                            (Z3)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z3)
+
+                                                                                                                                                                                                                                                                                                        (Z3)
+body in the process of confirming the fastening of the hook. Therefore,
+similarity in the signal pattern of a specific movement occurs in the two
+activities. Therefore, (Z3) and (Z5) have the most errors and exhibit a
+
+
+
+
+                                                                                                                                                                                                                            0.685
+
+                                                                                                                                                                                                                            0.626
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.982
+
+                                                                                                                                                                                                                                                                                                        0.957
+                                                                                                                                                                                                                            (Z2)
+
+                                                                                                                                                                                                                            (Z2)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z2)
+
+                                                                                                                                                                                                                                                                                                        (Z2)
+high error tendency in the confusion matrix. On the other hand, (Z2) and
+
+
+
+
+                                                                                                                                                                                      Naive Bayes
+(Z4) were generally distinguishable with high probability.
+
+
+
+
+                                                                                                                                                                                                                                                                                   GAF-CNN
+                                                                                                                                                                                                               82.23%
+
+
+
+
+                                                                                                                                                                                                                                                                                   94.97%
+                                                                                                                                                                                                               0.561
+
+                                                                                                                                                                                                               0.480
+                                                                                                                                                                                                               0.467
+
+
+
+
+                                                                                                                                                                                                                                                                                   0.902
+
+                                                                                                                                                                                                                                                                                   0.781
+                                                                                                                                                                                                                                                                                   0.849
+                                                                                                                                                                                                               (Z1)
+
+                                                                                                                                                                                                               (Z1)
+
+
+
+
+                                                                                                                                                                                                                                                                                   (Z1)
+
+                                                                                                                                                                                                                                                                                   (Z1)
+4.2. Activity identification results
+
+    It may be more difficult to identify whether a safety behavior un­
+
+
+
+
+                                                                                                                                                                                                                            0.144
+
+                                                                                                                                                                                                                            0.274
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.442
+
+                                                                                                                                                                                                                                                                                                        0.694
+dertaken by a worker meets certain criteria (correctly following the
+
+
+
+
+                                                                                                                                                                                                                            Null
+
+                                                                                                                                                                                                                            Null
+
+
+
+
+                                                                                                                                                                                                                                                                                                        Null
+
+                                                                                                                                                                                                                                                                                                        Null
+safety regulation) than to classify different activities. The supervised
+learning was conducted for each activity to see if the proposed GAF-CNN
+algorithm can identify whether safety behaviors correctly follow safety
+
+
+
+
+                                                                                                                                                                                                                            0.454
+
+                                                                                                                                                                                                                            0.363
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.833
+
+                                                                                                                                                                                                                                                                                                        0.737
+                                                                                                                                                                                                                            (Z5)
+
+                                                                                                                                                                                                                            (Z5)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z5)
+
+                                                                                                                                                                                                                                                                                                        (Z5)
+regulations. The algorithm adequacy through model evaluation in­
+dicators, including F1-score and accuracy, was derived in the order of
+RF, SVM**, NB, LSTM, SVM*-CNN, and GAF-CNN. In all algorithms,
+
+
+
+
+                                                                                                                                                                                                                            0.560
+
+                                                                                                                                                                                                                            0.432
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.866
+
+                                                                                                                                                                                                                                                                                                        0.801
+                                                                                                                                                                                                                            (Z4)
+
+                                                                                                                                                                                                                            (Z4)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z4)
+
+                                                                                                                                                                                                                                                                                                        (Z4)
+(Z2) has highest indicators in accuracy and F1-score, which is 0.464,
+0.516, 0.583, 0.733, 0.825, and 0.948 in accuracy and 0.627, 0.671,
+0.722, 0.833, 0.893, and 0.969 in F1-score. (Z4) follows (Z2) in every
+
+
+
+                                                                                                                                                                                                                            0.395
+
+                                                                                                                                                                                                                            0.367
+
+
+
+
+                                                                                                                                                                                                                                                                                                          0.782
+
+                                                                                                                                                                                                                                                                                                          0.736
+                                                                                                                                                                                                                                                                                   Signal Vector Magnitude-CNN
+indicator except accuracy using the SVM** algorithm (0.410 of accuracy
+
+                                                                                                                                                                                                                            (Z3)
+
+                                                                                                                                                                                                                            (Z3)
+
+
+
+
+                                                                                                                                                                                                                                                                                                          (Z3)
+
+                                                                                                                                                                                                                                                                                                          (Z3)
+at SVM** in (Z4)). In this case, (Z1) has the second highest value in
+                                                                                                                                                                                      Support Vector Machine
+
+
+accuracy, which is 0.417. On the GAF-CNN algorithm, every indicator in
+                                                                                                                                                                                                                            0.611
+
+                                                                                                                                                                                                                            0.572
+
+
+
+
+                                                                                                                                                                                                                                                                                               0.925
+
+                                                                                                                                                                                                                                                                                               0.846
+every safety regulation outperforms the other algorithms. All indicators
+                                                                                                                                                                                                                            (Z2)
+
+                                                                                                                                                                                                                            (Z2)
+
+
+
+
+                                                                                                                                                                                                                                                                                               (Z2)
+
+                                                                                                                                                                                                                                                                                               (Z2)
+in (Z2) and (Z4) show high performance above 0.945. This tendency is
+similar to the activity classification results. Contrary to the activity
+                                                                                                                                                                                                               80.36%
+
+
+
+
+                                                                                                                                                                                                                                                                                   92.06%
+classification results, identification results tend to have a higher F1-
+                                                                                                                                                                                                               0.483
+
+                                                                                                                                                                                                               0.429
+                                                                                                                                                                                                               0.411
+
+
+
+
+                                                                                                                                                                                                                                                                                   0.824
+
+                                                                                                                                                                                                                                                                                   0.739
+                                                                                                                                                                                                                                                                                   0.762
+                                                                                                                                                                                                               (Z1)
+
+                                                                                                                                                                                                               (Z1)
+
+
+
+
+                                                                                                                                                                                                                                                                                   (Z1)
+
+                                                                                                                                                                                                                                                                                   (Z1)
+score than accuracy.
+    When switching model learning from a machine learning algorithm
+to a deep learning algorithm, average accuracy and average F1-score
+                                                                                                                                                                                                                            0.115
+
+                                                                                                                                                                                                                            0.218
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.336
+
+                                                                                                                                                                                                                                                                                                        0.568
+                                                                                                                                                                                                                            Null
+
+                                                                                                                                                                                                                            Null
+
+
+
+
+                                                                                                                                                                                                                                                                                                        Null
+
+                                                                                                                                                                                                                                                                                                        Null
+increase significantly. The difference between the average accuracy
+and the average F-1score is 0.054%p, 0.055%p in RF to SVM**, and
+0.056%p and 0.051%p when changing from SVM** to NB, respectively.
+                                                                                                                                                                                                                            0.390
+
+                                                                                                                                                                                                                            0.321
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.722
+
+                                                                                                                                                                                                                                                                                                        0.643
+On the other hand, when the machine learning algorithm changes from
+                                                                                                                                                                                                                            (Z5)
+
+                                                                                                                                                                                                                            (Z5)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z5)
+
+                                                                                                                                                                                                                                                                                                        (Z5)
+
+
+
+NB to the deep learning algorithm LSTM, it shows a difference in an
+                                                                                    Accuracy of training data classifying each activity by algorithm (%).
+
+
+
+
+average accuracy of 0.192%p and an average F1-score difference of
+0.165%p. The detailed indicators are presented in Table 6.
+                                                                                                                                                                                                                            0.508
+
+                                                                                                                                                                                                                            0.390
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.786
+
+                                                                                                                                                                                                                                                                                                        0.696
+                                                                                                                                                                                                                            (Z4)
+
+                                                                                                                                                                                                                            (Z4)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z4)
+
+                                                                                                                                                                                                                                                                                                        (Z4)
+
+
+
+
+    Fig. 5 shows confusion matrices derived based on the results of each
+algorithm. Learning results derived through machine learning do not
+yield diagonal results, and the form of an inverse diagonal also occurs.
+                                                                                                                                                                                                                            0.331
+
+                                                                                                                                                                                                                            0.314
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.692
+
+                                                                                                                                                                                                                                                                                                        0.662
+                                                                                                                                                                                                                            (Z3)
+
+                                                                                                                                                                                                                            (Z3)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z3)
+
+                                                                                                                                                                                                                                                                                                        (Z3)
+
+
+
+
+The confusion matrix, which shows the reverse diagonal trend, changes
+                                                                                                                                                            Machine Learning Result
+
+
+
+
+the diagonal direction with darker colors when the deep learning algo­
+rithm is used. In the case of using the deep learning algorithm, the best
+                                                                                                                                                                                                                            0.569
+
+                                                                                                                                                                                                                            0.521
+
+
+
+
+                                                                                                                                                                                                                                                                                                        0.850
+
+                                                                                                                                                                                                                                                                                                        0.768
+
+
+
+
+results are derived in identifying the activity of (Z2) and (Z4).
+                                                                                                                                                                                                                            (Z2)
+
+                                                                                                                                                                                                                            (Z2)
+
+
+
+
+                                                                                                                                                                                                                                                                                                        (Z2)
+
+                                                                                                                                                                                                                                                                                                        (Z2)
+                                                                                                                                                                                      Random Forest
+
+
+
+
+5. Discussions
+                                                                                                                                                                                                               78.58%
+
+
+
+
+                                                                                                                                                                                                                                                                                   88.65%
+                                                                                                                                                                                                               0.405
+
+                                                                                                                                                                                                               0.346
+                                                                                                                                                                                                               0.357
+
+
+
+
+                                                                                                                                                                                                                                                                                   0.716
+
+                                                                                                                                                                                                                                                                                   0.594
+                                                                                                                                                                                                                                                                                   0.659
+                                                                                                                                                                                                                                                                                   LSTM
+                                                                                                                                                                                                               (Z1)
+
+                                                                                                                                                                                                               (Z1)
+
+
+
+
+                                                                                                                                                                                                                                                                                   (Z1)
+
+                                                                                                                                                                                                                                                                                   (Z1)
+
+
+
+
+5.1. Effect of movement characteristics of body parts on results
+                                                                                                                                                                                                                                                                   Deep Learning Result
+
+
+
+
+   As shown in the classification and identification results, the perfor­
+                                                                                                                                                                                                               Training Accuracy
+
+
+
+
+                                                                                                                                                                                                                                                                                          Training Accuracy
+
+
+
+
+mance indicators of (Z2) and (Z4) outperform other safety behaviors
+(Z1, Z3, and Z5). It may be notable to investigate why these two be­
+                                                                                                                                                                                                                                   Precision
+
+
+
+
+                                                                                                                                                                                                                                                                                                              Precision
+                                                                                                                                                                                                                                                        F1-Score
+
+
+
+
+                                                                                                                                                                                                                                                                                                                                   F1-Score
+
+
+
+
+haviors show higher performance indicator values. The suggested
+                                                                                    Table 5
+
+
+
+
+                                                                                                                                                                                                                                               Recall
+
+
+
+
+                                                                                                                                                                                                                                                                                                                          Recall
+
+
+
+
+method (i.e., GAF-CNN) includes the procedures that finds features that
+are used for facilitating classification. In the case of (Z2), the action
+
+                                                                                7
+S. Hong et al.                                                                                                                 Automation in Construction 148 (2023) 104748
+
+
+
+
+                                                       Fig. 4. Results of confusion matrix each classifier.
+
+
+
+Table 6
+Accuracy and F1-score of identifying standardized activity by algorithms (%).
+  Zone                    Approved Regulation               Accuracy             of approved regulation by each classifier
+
+                                                            F1-Score
+
+                          Disapproved Regulation            RF                   SVM**                NB                     LSTM              SVM*                GAF
+                                                                                                                                               -CNN                -CNN
+
+  (Z1)                    840                               0.344                0.417                0.457                  0.588             0.723               0.763
+    PPE                   210                               0.458                0.541                0.586                  0.697             0.810               0.840
+  (Z2)                    908                               0.464                0.516                0.583                  0.733             0.825               0.948
+    Alarm                 142                               0.627                0.671                0.722                  0.833             0.893               0.969
+  (Z3)                    875                               0.304                0.355                0.428                  0.660             0.739               0.799
+    Joint                 175                               0.429                0.487                0.552                  0.764             0.825               0.870
+  (Z4)                    945                               0.370                0.410                0.488                  0.677             0.790               0.945
+    Step Board            105                               0.528                0.568                0.637                  0.795             0.873               0.969
+  (Z5)                    980                               0.305                0.355                0.380                  0.639             0.731               0.791
+    Hook                  70                                0.463                0.513                0.537                  0.769             0.837               0.877
+
+SVM* - Signal Vector Magnitude.
+SVM** - Support Vector Machine.
+
+
+“looking around” means rotating a head. The main features that classify             lowest performance indicators in the deep learning algorithms,
+activities seems to be judged by signals from rotating head movement,               including the GAF-CNN algorithm. By analyzing the miss-classified in­
+which is (Z2), within various signals from subjects’ movement. Because              stances, the authors found an interesting point. In the (Z1), workers were
+(Z1), (Z3), (Z4) and (Z5) doesn’t include movement that looking around              asked to tap their safety helmet twice with both hands. However, there
+the sites few times, while (Z2) have extraordinary movement (i.e.,                  are some instances when workers tap their helmet just once. During the
+rotating head).                                                                     labeling process, tapping a safety helmet twice with two hands is
+    In addition, (Z4) has a featured characteristic, such as stamping a             determined as correct behavior. Most workers tapped a safety helmet
+step board twice. In general, this stamping action is unique in scaffolding         twice with both hands (right and left hands touching the helmet
+work. Although there are steps during the experiment, the signals from              simultaneously) that is represented in video recording of Fig. 6 (A).
+steps and stampings are different from each other. During the general               However, one worker tapped a safety helmet in both hands (right-hand
+scaffolding work situations, walking and stamping patterns can be                   taps the helmet first, then left taps the helmet) that is represented in
+distinguishable in the IMU data.                                                    video recording of Fig. 6 (B). This worker just tapped once (one right-
+    On the other hand, the safety regulations (Z1, Z3, and Z5) focus on             hand tap and one left-hand tap) in every 30 experiment trials.
+hand and arm movement. Among these three behaviors, (Z1) shows the                  Although this action was labeled as Null, the algorithm classified it as
+
+
+                                                                                8
+S. Hong et al.                                                                                                        Automation in Construction 148 (2023) 104748
+
+
+
+
+                                                    Fig. 5. Results of confusion matrix each classifier.
+
+
+
+
+                                               Fig. 6. Experiment to reproduce the cause of false negatives.
+
+
+correctly following the regulation since tapping a safety helmet in both         5.2. Expected benefits and potential applications
+hands once makes similar signals to tapping a safety helmet twice
+(correctly following the regulation). This is because collected data from            This study focuses on the IMU sensors to classify workers’ activities
+both cases have similar pattern of signals. This confused action may             and automatically makes a judgment on whether movements have been
+decrease the evaluation performance.                                             performed in accordance with a specific criterion. In addition, through
+    Moreover, the hands of the worker are used extensively for various           the analysis of individual workers, it is possible to provide a personal­
+tasks. For example, workers do not let their hands rest, such as using           ized safety measure to individual workers (e.g., notifications, correc­
+various tools and cell phones. Therefore, the movement of the hands of           tions, warnings, etc.). Furthermore, if the proposed method is operated
+the workers acts as a noise of identifying safety regulations, making it         in real-time, it is possible to provide a notification about the violation of
+difficult to determine whether to implement safety regulations correctly.        individual safety regulations to all workers at any location, improving
+
+
+                                                                             9
+S. Hong et al.                                                                                                                  Automation in Construction 148 (2023) 104748
+
+
+safety management.                                                                  were more evident than the other regulations. Because (Z2) and (Z4)
+    Furthermore, although the experiments conducted in this study are               were mainly performed using body parts (i.e., feet or head) other than
+limited to scaffolding work, the authors envision that the contents of this         hands, it was assumed that they have easier conditions to predict activity
+study include the possibility of detecting safety regulations in other              between (Z2) and (Z4) due to the IMU data characteristics where sensor
+works. Because all algorithms used in this study can be used to analyze             values were measured for each body part.
+data collected using IMU sensors, they are applicable to other con­                     The main contribution of this study is that it represents the feasibility
+struction tasks other than scaffolding.                                             of automatically detecting compliance with safety regulations using IMU
+                                                                                    sensor’s. Given that safety behaviors defined by safety regulations
+5.3. Limitations and future research                                                reflect less individuality of workers than other behaviors, this study
+                                                                                    found that the safety behavior of workers in jobsites can be classified and
+    A large amount of learning data is required to examine whether                  identified with IMU sensors. This finding can be the basis for advanced
+safety regulations have been appropriately complied with. Labeling                  safety management by continuous activity monitoring approaches that
+(compliance or non-compliance) should be performed depending on the                 can decrease human error and unstable behaviors under a situation with
+workers’ compliance with safety regulations. In this study, two types of            safety regulations. Moreover, safety management can be improved
+data (image-based and time-series based) were manually labeled.                     through personalized safety management training and countermeasures
+Although the results of this study confirmed that the model learned by              based on individual characteristics and behavioral patterns (safety
+the labeled data shows high accuracy, considering the characteristics of            compliance level) of workers.
+construction sites where many workers work simultaneously, automat­
+ically performing labeling is considered necessary. In other fields
+                                                                                    Declaration of Competing Interest
+(especially in the smart factory field), if the collected data shows a
+certain level of deviation, it is classified as anomaly data to minimize the
+                                                                                        The authors declare that they have no known competing financial
+resources required for labeling (unsupervised learning-based classifica­
+                                                                                    interests or personal relationships that could have appeared to influence
+tion). To apply labeling methods in other fields, analysis of the threshold
+                                                                                    the work reported in this paper.
+level of behavior data (which is for classification as anomaly data) must
+be conducted in advance. In addition, research is required to be con­
+                                                                                    Data availability
+ducted on a method that can automatically label workers’ behaviors in
+consideration of the characteristics of the construction site through
+                                                                                        Data will be made available on request.
+various approaches. Similarly, because various situations may occur
+owing to the specificity of the construction site, applying the safety
+regulations adopted in this study directly to the site is challenging.              Acknowledgment
+Selecting regulations to prevent safety accidents that may occur under
+various field conditions should be studied in advance. Further research                This research was supported by the Basic Science Research Program
+is required on the process of analyzing the validity of the proposed                through the National Research Foundation of Korea (NRF) and the
+framework according to the safety behavior of selected regulations.                 Ministry    of   Education    (NRF-2022R1F1A1072450,         2021R1|
+    However, the result of learning by converting time-series data into a           1A1A01052305).
+GAF image secured >90% in this study. Nevertheless, it is considered
+necessary to apply and analyze various encoding methods developed.                  References
+Various types of behavioral characteristics occurring in the construction
+                                                                                     [1] Y. Kang, S. Siddiqui, S.J. Suk, S. Chi, C. Kim, Trends of fall accidents in the U.S.
+site can affect classification accuracy according to the encoding method.                construction industry, J. Constr. Eng. Manag. 143 (2017) 04017043, https://doi.
+Therefore, comparing and analyzing various encoding techniques are                       org/10.1061/(ASCE)CO.1943-7862.0001332.
+necessary to examine the suitability of techniques for each behavior or              [2] M.F. Antwi-Afari, H. Li, Fall risk assessment of construction workers based on
+                                                                                         biomechanical gait stability parameters using wearable insole pressure system,
+task in the future studies.
+                                                                                         Adv. Eng. Inform. 38 (2018) 683–694, https://doi.org/10.1016/j.aei.2018.10.002.
+                                                                                     [3] W. Chen, Z. Jiang, H. Guo, X. Ni, Fall detection based on key points of human-
+6. Conclusion                                                                            skeleton using OpenPose, Symmetry. 12 (2020) 744, https://doi.org/10.3390/
+                                                                                         sym12050744.
+                                                                                     [4] J. Yoon, B. Lee, J. Chun, B. Son, H. Kim, Investigation of the relationship between
+    This study examined the feasibility of a framework that automati­                    Ironworker’s gait stability and different types of load carrying using wearable
+cally identifies whether workers’ behavior is in accordance with the                     sensors, Adv. Eng. Inform. 51 (2022), 101521, https://doi.org/10.1016/j.
+safety regulations. The authors hypothesized that scaffolding activities                 aei.2021.101521.
+                                                                                     [5] M. Antwi-Afari, H. Li, S. Anwer, S. Yevu, Z. Wu, P. Antwi-Afari, I. Kim, Quantifying
+have distinguishable characteristics and that data collected from IMU                    workers’ gait patterns to identify safety hazards in construction using a wearable
+would be able to classify activities. In this study, a system scaffold was               insole pressure system, Saf. Sci. 129 (2020) 104855, https://doi.org/10.1016/j.
+installed, and six safety managers selected five pre-defined safety reg­                 ssci.2020.104855.
+                                                                                     [6] K. Yang, C.R. Ahn, M.C. Vuran, H. Kim, Collective sensing of workers’ gait patterns
+ulations. During the experiment, 35 healthy subjects conducted five                      to identify fall hazards in construction, Autom. Constr. 82 (2017) 166–178,
+types of safety behaviors related to scaffolding work. When the subjects                 https://doi.org/10.1016/j.autcon.2017.04.010.
+were conducting the experiment, the video records collected during the               [7] Y. Yu, H. Guo, Q. Ding, H. Li, M. Skitmore, An experimental study of real-time
+                                                                                         identification of construction workers’ unsafe behaviors, Autom. Constr. 82 (2017)
+experiment were used to determine whether the worker’s behavior                          193–206, https://doi.org/10.1016/j.autcon.2017.05.002.
+conforms to the safety regulations. The workers’ movements were                      [8] Fatal and nonfatal falls, slips, and trips in the construction industry: The Economics
+labeled for each zone and safety regulations and trained to three ma­                    Daily: U.S. Bureau of Labor Statistics, (n.d.). https://www.bls.gov/opub/ted/
+                                                                                         2021/fatal-and-nonfatal-falls-slips-and-trips-in-the-construction-industry.htm
+chine learning algorithms, and three deep learning algorithms. Each                      (accessed August 13, 2021).
+model derives the performance of classifying behaviors and the perfor­               [9] Scaffolding - Overview | Occupational Safety and Health Administration, (n.d.). htt
+mance of identifying behaviors that follow the safety regulations                        ps://www.osha.gov/scaffolding (accessed January 18, 2022).
+                                                                                    [10] N. Chau, G.C. Gauchard, D. Dehaene, L. Benamghar, C. Touron, P.P. Perrin, J.-
+correctly. Safety behavior classification results presented that RF pro­
+                                                                                         M. Mur, Contributions of occupational hazards and human factors in occupational
+duced the lowest accuracy and F1-score, and GAF-CNN showed the                           injuries and their associations with job, age and type of injuries in railway workers,
+highest performance. In addition, within the classification results, (Z2)                Int. Arch. Occup. Environ. Health 80 (2007) 517–525, https://doi.org/10.1007/
+and (Z4) achieved the highest accuracy and F1-score. Similarly, safety                   s00420-006-0158-8.
+                                                                                    [11] M. Szóstak, B. Hoła, P. Bogusławski, Identification of accident scenarios involving
+behavior identification results showed that the highest performance was                  scaffolding, Autom. Constr. 126 (2021), 103690, https://doi.org/10.1016/j.
+achieved with GAF-CNN and that identification results of (Z2) and (Z4)                   autcon.2021.103690.
+
+
+                                                                               10
+S. Hong et al.                                                                                                                               Automation in Construction 148 (2023) 104748
+
+[12] Y. Yu, W. Umer, X. Yang, M.F. Antwi-Afari, Posture-related data collection methods                complex construction worker activities, J. Build. Eng. 35 (2021), 102001, https://
+     for construction workers: a review, Autom. Constr. 124 (2021), 103538, https://                   doi.org/10.1016/j.jobe.2020.102001.
+     doi.org/10.1016/j.autcon.2020.103538.                                                        [31] R. Akhavian, A.H. Behzadan, Smartphone-based construction workers’ activity
+[13] CII - Education, (n.d.). https://www.construction-institute.org/resources/educat                  recognition and classification, Autom. Constr. 71 (2016) 198–209, https://doi.org/
+     ion (accessed July 25, 2022).                                                                     10.1016/j.autcon.2016.08.015.
+[14] T. Simpson, CPWR | Disaster Response, CPWR |. (n.d.). https://www.cpwr.com/                  [32] Y. Tian, J. Zhang, L. Chen, Y. Geng, X. Wang, Single wearable accelerometer-based
+     training/training-programs/disaster-response/ (accessed July 25, 2022).                           human activity recognition via kernel discriminant analysis and QPSO-KELM
+[15] R.M. Choudhry, Behavior-based safety on construction sites: a case study, Accid.                  classifier, IEEE Access. 7 (2019) 109216–109227, https://doi.org/10.1109/
+     Anal. Prev. 70 (2014) 14–23, https://doi.org/10.1016/j.aap.2014.03.007.                           ACCESS.2019.2933852.
+[16] H. Li, G. Chan, M. Skitmore, Visualizing safety assessment by integrating the use of         [33] L. Joshua, K. Varghese, Accelerometer-based activity recognition in construction,
+     game technology, Autom. Constr. 22 (2012) 498–505, https://doi.org/10.1016/j.                     J. Comput. Civ. Eng. 25 (2011) 370–379, https://doi.org/10.1061/(ASCE)
+     autcon.2011.11.009.                                                                               CP.1943-5487.0000097.
+[17] J. Park, K. Kim, Y.K. Cho, Framework of automated construction-safety monitoring             [34] J. Yoon, B. Lee, J. Chun, B. Son, H. Kim, Investigation of the relationship between
+     using cloud-enabled BIM and BLE mobile tracking sensors, J. Constr. Eng. Manag.                   Ironworker’s gait stability and different types of load carrying using wearable
+     143 (2017) 05016019, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001223.                          sensors, Adv. Eng. Inform. 51 (2022), 101521, https://doi.org/10.1016/j.
+[18] R. Sacks, A. Perlman, R. Barak, Construction safety training using immersive                      aei.2021.101521.
+     virtual reality, Constr. Manag. Econ. 31 (2013) 1005–1017, https://doi.org/                  [35] O. Banos, J.-M. Galvez, M. Damas, H. Pomares, I. Rojas, Window size impact in
+     10.1080/01446193.2013.828844.                                                                     human activity recognition, Sensors. 14 (2014) 6474–6499, https://doi.org/
+[19] X. Yan, H. Li, A.R. Li, H. Zhang, Wearable IMU-based real-time motion warning                     10.3390/s140406474.
+     system for construction workers’ musculoskeletal disorders prevention, Autom.                [36] D.M. Karantonis, M.R. Narayanan, M. Mathie, N.H. Lovell, B.G. Celler,
+     Constr. 74 (2017) 2–11, https://doi.org/10.1016/j.autcon.2016.11.007.                             Implementation of a real-time human movement classifier using a triaxial
+[20] Y.-C. Fang, R.-J. Dzeng, Accelerometer-based fall-portent detection algorithm for                 accelerometer for ambulatory monitoring, IEEE Trans. Inf. Technol. Biomed. 10
+     construction tiling operation, Autom. Constr. 84 (2017) 214–230, https://doi.org/                 (2006) 156–167, https://doi.org/10.1109/TITB.2005.856864.
+     10.1016/j.autcon.2017.09.015.                                                                [37] N. Bidargaddi, A. Sarela, L. Klingbeil, M. Karunanithi, Detecting walking activity in
+[21] R.-J. Dzeng, Y.-C. Fang, I.-C. Chen, A feasibility study of using smartphone built-in             cardiac rehabilitation by using accelerometer, in: Sensor Networks and Information
+     accelerometers to detect fall portents, Autom. Constr. 38 (2014) 74–86, https://                  2007 3rd International Conference on Intelligent Sensors, 2007, pp. 555–560,
+     doi.org/10.1016/j.autcon.2013.11.004.                                                             https://doi.org/10.1109/ISSNIP.2007.4496903.
+[22] W. Wu, H. Yang, D.A.S. Chew, S. Yang, A.G.F. Gibb, Q. Li, Towards an autonomous              [38] Z. Wang, T. Oates, Imaging time-series to improve classification and imputation,
+     real-time tracking system of near-miss accidents on construction sites, Autom.                    in: Proceedings of the 24th International Conference on Artificial Intelligence,
+     Constr. 19 (2010) 134–141, https://doi.org/10.1016/j.autcon.2009.11.017.                          Association for the Advancement of Artificial Intelligence Press, Buenos Aires,
+[23] H. Lingard, S. Rowlinson, Occupational Health and Safety in Construction Project                  Argentina, 2015, pp. 3939–3945, https://doi.org/10.48550/arXiv.1506.00327.
+     Management, n.d. https://www.routledge.com/Occupational-Health-and-Safety-                   [39] N. Hatami, Y. Gavet, J. Debayle, Classification of time-series images using deep
+     in-Construction-Project-Management/Lingard-Rowlinson/p/book/97811381031                           convolutional neural networks, in: A. Verikas, P. Radeva, D.P. Nikolaev, J. Zhou
+     91 (accessed July 25, 2022).                                                                      (Eds.), 2017 the 10th International Conference on Machine Vision (ICMV 2017),
+[24] C.R. Ahn, S. Lee, C. Sun, H. Jebelli, K. Yang, B. Choi, Wearable sensing technology               SPIE, Vienne, Austria, 2017, https://doi.org/10.1117/12.2309486.
+     applications in construction safety and health, J. Constr. Eng. Manag. 145 (2019)            [40] L. Breiman, Random forests, Mach. Learn. 45 (2001) 5–32, https://doi.org/
+     03119007, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001708.                                     10.1023/A:1010933404324.
+[25] W. Fang, L. Ding, P.E.D. Love, H. Luo, H. Li, F. Peña-Mora, B. Zhong, C. Zhou,              [41] D.A. Pisner, D.M. Schnyer, Chapter 6 - support vector machine, in: A. Mechelli,
+     Computer vision applications in construction safety assurance, Autom. Constr. 110                 S. Vieira (Eds.), Machine Learning, Academic Press, 2020, pp. 101–121, https://
+     (2020), 103013, https://doi.org/10.1016/j.autcon.2019.103013.                                     doi.org/10.1016/B978-0-12-815739-8.00006-7.
+[26] H. Kim, C.R. Ahn, K. Yang, Identifying safety hazards using collective bodily                [42] S. Suthaharan, Support vector machine, in: S. Suthaharan (Ed.), Machine Learning
+     responses of workers, J. Constr. Eng. Manag. 143 (2017) 04016090, https://doi.                    Models and Algorithms for Big Data Classification: Thinking with Examples for
+     org/10.1061/(ASCE)CO.1943-7862.0001220.                                                           Effective Learning, Springer US, Boston, MA, 2016, pp. 207–235, https://doi.org/
+[27] W. Fang, B. Zhong, N. Zhao, P.E.D. Love, H. Luo, J. Xue, S. Xu, A deep learning-                  10.1007/978-1-4899-7641-3_9.
+     based approach for mitigating falls from height with computer vision:                        [43] S. Chen, G.I. Webb, L. Liu, X. Ma, A novel selective naïve Bayes algorithm, Knowl.-
+     convolutional neural network, Adv. Eng. Inform. 39 (2019) 170–177, https://doi.                   Based Syst. 192 (2020), 105361, https://doi.org/10.1016/j.knosys.2019.105361.
+     org/10.1016/j.aei.2018.12.005.                                                               [44] F.A. Gers, D. Eck, J. Schmidhuber, Applying LSTM to time series predictable
+[28] W. Fang, L. Ding, H. Luo, P.E.D. Love, Falls from heights: a computer vision-based                through time-window approaches, in: R. Tagliaferri, M. Marinaro (Eds.), Neural
+     approach for safety harness detection, Autom. Constr. 91 (2018) 53–61, https://                   Nets WIRN Vietri-01, Springer, London, 2002, pp. 193–200, https://doi.org/
+     doi.org/10.1016/j.autcon.2018.02.018.                                                             10.1007/978-1-4471-0219-9_20.
+[29] S. Han, S. Lee, F. Peña-Mora, Vision-based detection of unsafe actions of a                 [45] M. Ullah, H. Ullah, S.D. Khan, F.A. Cheikh, Stacked lstm network for human
+     construction worker: case study of ladder climbing, J. Comput. Civ. Eng. 27 (2013)                activity recognition using smartphone data, in: 2019 8th European Workshop on
+     635–644, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000279.                                      Visual Information Processing (EUVIP), 2019, pp. 175–180, https://doi.org/
+[30] L. Sanhudo, D. Calvetti, J.P. Martins, N.M.M. Ramos, P. Mêda, M.C. Gonçalves,                    10.1109/EUVIP47703.2019.8946180.
+     H. Sousa, Activity classification using accelerometers and machine learning for
+
+
+
+
+                                                                                             11
+

@@ -1,0 +1,1081 @@
+                                                                   Automation in Construction 182 (2026) 106728
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                                Automation in Construction
+                                                            journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Vision-language model-based intelligent assistant for onsite construction
+safety inspection
+Rahat Hussain a , Doyeop Lee b, Muhammad Sibtain Abbas b , Syed Farhan Alam Zaidi b,
+Akeem Pedro b, Chansik Park b,*
+a
+    Department of Construction Science, College of Architecture, Texas A&M University, College Station, TX 77840, USA
+b
+    School of Architecture and Building Science, Chung-Ang University, Seoul 06974, Republic of Korea
+
+
+
+
+A R T I C L E I N F O                                        A B S T R A C T
+
+Keywords:                                                    Construction site inspection demands a contextual understanding of dynamic job-site conditions, traditionally
+Safety management                                            relying on inspectors’ expertise combined with adherence to predefined safety regulations and industry stan­
+Hazard identification                                        dards to identify hazards. While vision-language models can detect and describe hazards, they struggle to
+Computer vision
+                                                             correlate observations with regulations due to limitations in geometric reasoning. Recent studies show progress
+Large language model
+                                                             in compliance checking, but these models are still challenged by dynamic scenarios. This paper introduces a
+Image captioning
+                                                             hybrid framework that combines geometric reasoning with LLM-powered interpretation to improve regulation-
+                                                             aware hazard detection. The system achieved high detection accuracy: 97 % for ladder use, 94.6 % for mobile
+                                                             scaffolding, and 99 % for fire-related work. Captioning performance evaluated through BLEU, ROUGE, METEOR,
+                                                             and BERT Score showed strong semantic alignment. User feedback confirmed its efficiency and ease of use, even
+                                                             under dynamic conditions. By integrating visual data with regulatory reasoning, the proposed system offers a
+                                                             practical, domain-adapted solution for enhancing construction safety inspections.
+
+
+
+
+1. Introduction                                                                                   context of modern construction sites with their inherent dynamic and
+                                                                                                  complex nature [5]. Furthermore, the growing size and complexity of
+    The construction industry is consistently recognized as one of the                            these sites further compound the challenges faced by inspectors [6].
+most hazardous sectors, characterized by persistently high workplace                              Even experienced professionals may overlook critical aspects due to
+injury and fatality incidence rates. Despite the implementation of safety                         these inherent complexities of construction jobsites. The limitations of
+training methods, adjustments to safety regulations, improvements in                              manual observation are becoming increasingly apparent, highlighting
+inspection procedures, and extensive research efforts, the prevalence of                          the need for innovative solutions that provide an easy-to-adopt solution
+accidents remains alarmingly high [1,2]. The Bureau of Labor Statistics                           for inspectors, which not only inspect the situation but also provide a
+reports a work-related fatality rate of 3.7 per 100,000 full-time equiv­                          platform to discuss the hazard mitigation solutions.
+alent workers in the United States for 2023, reflecting a significant 5.7 %                           Emerging technologies hold immense potential to transform the
+increase from the previous year [3]. These statistics, beyond the tragic                          safety monitoring process by automating hazard detection and infor­
+human cost, represent a significant financial burden for individuals,                             mation dissemination. Particularly, computer vision has recently
+companies, and society at large.                                                                  attracted increasing attention because of its potential to overcome the
+    Construction safety inspectors play a critical role in ensuring safe                          limitations of manual observation in identifying on-site hazards. By
+work environments. They usually walk around the jobsite to identify and                           extracting visual information from on-site images and videos through
+mitigate hazards before work begins and ensure compliance with safety                             the integration of computer vision and deep learning techniques, com­
+rules during operations. These safety inspection processes rely heavily                           puter vision systems enable continuous and automated detection of
+on predefined regulations and the prior knowledge of inspectors [4].                              unsafe worker behaviors and hazardous working situations [7]. Despite
+This conventional way of inspection restricts the ability to detect un­                           advancements in vision solutions, a critical gap remains in under­
+foreseen dangers and address intricate safety issues, particularly in the                         standing and reasoning based on relevant safety regulations within
+
+
+
+    * Corresponding author.
+      E-mail addresses: rahat4hussain@tamu.edu (R. Hussain), doyeop@cau.ac.kr (D. Lee), muhammadsibtain@cau.ac.kr (M.S. Abbas), cpark@cau.ac.kr (C. Park).
+
+https://doi.org/10.1016/j.autcon.2025.106728
+Received 23 July 2025; Received in revised form 20 November 2025; Accepted 14 December 2025
+Available online 24 December 2025
+0926-5805/© 2025 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+R. Hussain et al.                                                                                                   Automation in Construction 182 (2026) 106728
+
+
+captured visuals. While visual information data offers numerous benefits         2. Literature review
+for construction safety, its practical implementation remains limited [8].
+This limitation hinders their full potential in addressing complex safety           This section provides an overview of prior research on computational
+challenges. Current Computer Vision (CV) systems can classify con­               approaches for construction site monitoring, focusing on methods rele­
+struction situations as safe or unsafe according to regulations, however         vant to hazard detection, safety compliance, and scene understanding.
+they fall short in providing further interpretation and detailed guidance        The review highlights the capabilities, limitations, and gaps in existing
+such as the specific mitigation strategies of these hazards like those           computer vision (CV) and vision-language approaches, setting the
+offered by experienced safety inspectors.                                        context for the development of the hybrid reasoning framework pre­
+    One potential solution lies in the use of Large Language Models              sented in this work.
+(LLMs). LLMs are a specific type of artificial neural network (ANN)
+trained on massive datasets of text by leveraging techniques like deep           2.1. Computer vision techniques in construction safety inspections
+learning and transformer architecture to process and understand the
+nuances of human language [9]. Deep learning employs a layered ANN                    CV-based methods have emerged as promising solutions for moni­
+structure inspired by the human brain, allowing LLMs to extract complex          toring various aspects of construction sites, including safety [11,12],
+patterns and relationships from data. Transformer architecture enables           progress [13], structural health [14], and productivity [15]. These
+them to analyze the relationships between words, giving them a strong            techniques, encompassing algorithms such as classification, object
+grasp of context and meaning. LLMs excel at tasks like answering open-           detection, object tracking, and instance segmentation, are extensively
+ended questions by analyzing the context and information available to            applied for tracking workers and equipment, identifying hazards, pre­
+them, providing insightful and relevant responses. These features make           venting accidents, and classifying behavior. Object detection identifies
+LLMs well-suited to interpret visual information for better understand­          and categorizes objects within images [16], while object tracking locates
+ing of complex jobsite situations in the construction industry. Current          objects across video frames [5]. Instance segmentation assigns each
+vision-language models (VLMs) (e.g., GPT-4 V, BLIP-2) can extract in­            pixel of an image to predefined classes while distinguishing similar
+formation from images and describe visual scenes, but they lack the              objects. These algorithms are integrated into monitoring systems to
+geometric reasoning required for critical safety measurements, making            provide real-time data for safety personnel.
+them inadequate for regulatory compliance in complex construction                     CV-based detection algorithms are categorized into one-stage de­
+environments [10]. They also fall short in domain-specific reasoning,            tectors, which directly detect objects from the full image, and two-stage
+limiting their ability to translate raw visual data into actionable safety       detectors, which generate region proposals before classifying objects.
+insights. Although custom models can detect and describe hazards, they           While one-stage detectors are faster, they may be less accurate, partic­
+frequently fail to perform the spatial analysis required for evaluating          ularly for small objects or cluttered scenes. Examples of two-stage de­
+compliance with safety regulations. While CV techniques are effective in         tectors include Region-based Convolutional Neural Networks (R-CNN),
+detecting objects and classifying scenes, they lack the capacity to              Region-based Fully Convolutional Networks (R-FCN), and Mask R-
+perform higher-level regulatory reasoning. Conversely, VLMs excel at             CNN, while popular one-stage detectors include You Only Look Once
+contextual language understanding but cannot execute geometric mea­              (YOLO) series, Single Shot Detector (SSD), and RetinaNet. Researchers
+surements from visual data. This complementary gap underscores the               have employed two-stage detectors for object detection and instance
+need for a hybrid framework that integrates both approaches for                  segmentation in construction site safety, achieving high accuracy in
+comprehensive safety inspection.                                                 tracking workers despite occlusions and scale variations [17–19]. For
+    Building on the identified research gaps, this study is guided by the        instance, studies such as those by Wang et al., (2019) and Wu et al.,
+following central question: How can the integration of geometric                 (2019) have demonstrated the effectiveness of Mask R-CNN in identi­
+reasoning from computer vision and large language models enhance                 fying and segmenting without-helmet behavior from surveillance videos
+scene understanding for real-time hazard detection and safety compli­            of construction sites [18,20]. One-stage detectors are commonly used for
+ance on construction sites? To address this challenge, the paper in­             real-world data, with studies focusing on improving performance under
+troduces a system built on a novel hybrid reasoning architecture. The            different weather conditions and customizing algorithms for specific
+primary contribution lies not in developing a new vision model or LLM,           safety monitoring applications [21,22]. Wang et al. (2021) and Kim er
+but in designing and validating a two-stage framework that synergizes            al., (2019) have utilized YOLO for object detection tasks in construction
+the strengths of both. The first stage employs a domain-specific CV              site safety, showcasing its capability to detect objects efficiently in
+module with custom algorithms to perform precise, rule-based geo­                different environments [23,24]. Similarly, Chern et al., (2023) proposed
+metric reasoning tasks, delivering reliable quantitative measures for            a vision-based modularized system for context-aware safety monitoring
+regulatory checks where general VLMs typically fall short. The second            of workers to assess personal protective equipment compliance [25].
+stage leverages an LLM for its advanced natural language understanding,          These systems used object detection, semantic segmentation, and depth
+translating these structured findings into actionable insights and facili­       estimation models to differentiate workers at height and on the ground
+tating interactive user dialogue. Collectively, the study pursues three          and apply different PPE compliance rules.
+objectives: 1) to design a hybrid CV–LLM framework, 2) to implement a                 Efforts to automate safety monitoring and inspection processes have
+mobile-based intelligent assistant for hazard detection and safety dia­          centered on real-time visual data collection. It has been mainly used in
+logue, and 3) to validate the approach in real-world construction                semantic segmentation to discern and categorize all objects within im­
+scenarios.                                                                       ages [26]. Similarly, the classification of site images has been pursued
+    This paper first reviews existing literature and technical foundations       through the correlation of categorized scenes with specific safety rules
+relevant to computer vision and language models in construction safety.          [27]. For instance, Anjum et al., (2022) initially detected objects and
+It then presents the methodological framework and development of the             then correlated their heights to classify the scene in accordance with
+proposed intelligent assistant, detailing the object detection and inter­        safety protocols [28]. However, these methodologies are constrained by
+action modules along with the mobile application interface. The                  a basic limitation associated with the data capture process and its final
+experimental setup is subsequently introduced, followed by the evalu­            representation. For instance, Liu et al., (2020) emphasized that scene
+ation procedures used to validate the accuracy of generated safety               elements are often examined separately, leading to a final representation
+captions and assess the overall system effectiveness. The manuscript             typically composed of a predetermined combination of semantic labels
+concludes with a discussion of key findings, limitations, practical im­          presented as singular words or phrases [29]. A need is identified to find
+plications, and directions for future research.                                  an automated methodology capable of analyzing construction site
+                                                                                 scenes, extracting diverse objects, connections between the objects, and
+
+                                                                             2
+R. Hussain et al.                                                                                                                  Automation in Construction 182 (2026) 106728
+
+
+pertinent attributes from images in real-time, and converting them into                   effectively [33]. Additionally, traditional ontology processing relies on
+comprehensive narratives, which can further be utilized as point of                       rigid semantic engines, which may limit flexibility and adaptability.
+departure for safety discussions. This type of scene analysis within the                  Storing a comprehensive safety knowledge base within an ontology can
+construction domain has received relatively little attention. The subse­                  require significant storage space, posing scalability challenges for large-
+quent section will delve into an in-depth exploration of the various                      scale deployments [34]. Furthermore, encoding knowledge of numerous
+methodologies for scene analysis presented by different research studies,                 safety regulations into SWRL rules is time-consuming, which presents a
+as well as the associated gaps and limitations.                                           significant challenge for the practical application of the system.
+                                                                                              [7] and [29] proposed a different approach that generates spatial
+                                                                                          relationship construction scene graphs by utilizing computer vision
+2.2. Methods for extracting and utilizing information from construction
+                                                                                          (CV)-based descriptions, encompassing entities, attributes, and their
+scenes
+                                                                                          interactions. This approach then employs a C-BERT Bidirectional
+                                                                                          Encoder Representations from Transformers, (Natural Language Pro­
+    Advance applications for construction safety management rely solely
+                                                                                          cessing (NLP)) network to reason about hazards by integrating these
+on either vision-based or text-based data [30]. In recent years, a few
+                                                                                          scene graphs with construction regulations. This integration allows the
+efforts have been made to address this gap by adopting various methods
+                                                                                          system to leverage the rich contextual information encoded in the scene
+and techniques (Table 1). Liu et al. (2020) proposes an image captioning
+                                                                                          graph and the regulatory knowledge embedded within the construction
+method using two Deep Neural Network (DNN) compositions (i.e., VGG-
+                                                                                          rules for improved hazard identification. However, the system faces
+16 with LSTM, and ResNet-50 with Long Short-Term Memory, LSTM) for
+                                                                                          limitations in practical applications. Scene graphs for relation detection
+scene description of three construction activities [29]. This approach
+                                                                                          heavily rely on labeled datasets, which necessitate a higher cost of
+involves linguistic descriptive schema to generate automatic image
+                                                                                          dataset annotation with relations compared to the annotation of entities.
+captions of construction images by utilizing CV and Natural language
+                                                                                          Particularly for construction scenes involving multiple workers and
+generation (NLG). While the results for the dedicated case scenarios
+                                                                                          machines, defining interrelationships can be exceedingly complex.
+presented in this paper are promising, the authors acknowledge signif­
+                                                                                          Moreover, this approach lacks flexibility for dynamic rule generation,
+icant limitations. This approach struggles to effectively capture the
+                                                                                          making it less adaptable to evolving construction scenarios.
+diverse nature of construction sites and practices. Additionally, the
+                                                                                              Another approach involves comparing image captions with safety
+creation of caption datasets is costly and requires constant supplemen­
+                                                                                          regulations by using dense image captioning techniques. Wang et al.
+tation to expand sample size and categories, posing practical challenges.
+                                                                                          (2023) [8] presented a vision-assisted behavior-based method, propos­
+Moreover, it lacks the capability to interpret construction safety regu­
+                                                                                          ing a visual–text semantic similarity method. This enables the system to
+lations corresponding to the scene.
+                                                                                          automate the safety hazard identification process using computer vision
+    To address these limitations, Wu et al., 2021 [31] and Fang et al.,
+                                                                                          and facilitate reasoning about hazards in the caption by utilizing natural
+2023 [32] introduced an approach that combines CV with ontology
+                                                                                          language processing. However, this approach can be limited by factors
+techniques to semantically reason about hazards and their mitigations
+                                                                                          such as rare view angles, confusing construction materials, and mis­
+by generating auto-phrases based on the given images. This method
+                                                                                          matches between image content and captions. Additionally, the model
+utilizes pre-defined Semantic Web Rule Language (SWRL) rules to
+                                                                                          may struggle to handle situations with multiple entities or may not be
+formally represent safety regulatory knowledge alongside detected
+                                                                                          fully interpretable [35], particularly regarding the CNN-based encoder
+hazards and their mitigations. Ontologies excel at managing well-
+                                                                                          used for image processing. Furthermore, this method does not offer
+defined knowledge bases with a small set of entities and relationships.
+                                                                                          precise regulatory reasoning, which is crucial for safety compliance in
+However, construction safety regulations can be intricate and evolving
+                                                                                          construction sites.
+due to the dynamic nature of industry. When dealing with highly com­
+                                                                                              The methods discussed in this section extract information from
+plex and dynamic knowledge structures, ontologies can struggle to scale
+
+Table 1
+Comparison of methods for utilizing visual data in the construction industry.
+  Author and Year:         [7]                                                                    [29]
+
+  Technique and                       Scene Graph ➔ BERT for Regulations checking                          Captioning model ➔ Image Caption for scene description
+    Objectives:
+  Example Image:
+
+
+
+
+  Results:                                          Worker is unsafe,                               A man wearing a yellow helmet and a yellow reflective vest is fixing the
+                                                   Falling, combating.                                                           ceramic tile.
+  Limitations:                 Lacks natural language understanding for regulatory checks.                      Lacks precision in detecting safety violations.
+  Author and Year:                                         [31]                                                                      [8]
+  Technique and             Visual information ➔ SWRL rule-based ontology for description of           Dense Captioning ➔ Semantic similarity for Regulation checking
+    Objectives:                                          hazards
+  Example Image:
+
+
+
+
+  Results:                 There are two types of hazards in image: falling from heigh and head     worker should wear a safety helmet,” “worker should wear safety boots
+                                                           injuries
+  Limitations:                         Lacks flexibility for dynamic rule generation.                             Requires large datasets, limiting scalability.
+
+
+                                                                                      3
+R. Hussain et al.                                                                                                     Automation in Construction 182 (2026) 106728
+
+
+construction scenes by generating textual descriptions (sets of words or          insights into the system’s applicability and potential adoption. The pa­
+single phrases) based on visual data captured by cameras. However,                per’s sequential workflow is illustrated in Fig. 1, elucidating the step-by-
+these approaches face several limitations. As discussed, the reliability of       step progression of the paper.
+these descriptions can be hampered by factors like dataset limitations or
+complex scene elements. Furthermore, data utilization is restricted, as it
+                                                                                  3.1. System development and integration
+typically doesn’t allow for user interaction or discussion about the
+generated content. This highlights the inability of these systems to
+                                                                                      Fig. 2 illustrates the workflow of a construction safety analysis sys­
+bridge the gap between raw visual data and a comprehensive under­
+                                                                                  tem accessible through a mobile application. An inspector captures a
+standing of its safety implications. A recent study adopted a real-time
+                                                                                  scene image, which is then processed by a computer vision module to
+image captioning technique for situational awareness and introduced
+                                                                                  detect objects and elements like workers, equipment, and safety gear.
+a query system based on content for workers in augmented reality [36].
+                                                                                  The system checks pre-defined safety rules associated with these de­
+Nevertheless, this approach is limited by its reliance on textual data for
+                                                                                  tections to classify the scene as safe or unsafe. Information extracted
+caption generation, hindering their ability to precisely assess specific
+                                                                                  from the image, including objects and the safety classification, is then
+situations for inspection purposes in accordance with construction
+                                                                                  used as a prompt for a Large Language Model (LLM). This LLM generates
+safety rules.
+                                                                                  a descriptive caption summarizing the scene. Finally, an interactive
+    While recent advancements in vision-language models, such as GPT-
+                                                                                  chatbot within the application presents the caption to the user, allowing
+4 V, BLIP-2, and MiniGPT-4, have significantly expanded the capabilities
+                                                                                  for further discussion, questions, or additional information.
+of AI in multimodal tasks, they remain largely focused on semantic-level
+                                                                                      For instance, the system might analyze an image containing an A-
+understanding rather than precise geometric or quantitative reasoning
+                                                                                  type ladder scenario with multiple safety violations. By checking
+[10]. These models can describe what is seen in an image and generate
+                                                                                  Occupational Safety and Health Administration (OSHA) and Korea
+natural language explanations, but they lack the capacity for fine-
+                                                                                  Occupational Safety and Health Agency (KHOSA) guidelines, the system
+grained spatial measurements or compliance verification grounded in
+                                                                                  would identify violations such as workers without helmets, workers
+safety standards. Although GPT-4 V exhibits geometric reasoning in
+                                                                                  positioned at excessive heights, and workers standing on prohibited
+tasks like GPS localization, their performance in construction safety
+                                                                                  ladder positions. In this A-type ladder case, the system would then
+monitoring is limited due to multi-entity scenarios, regulation-based
+                                                                                  classify the scene as unsafe and generate a comprehensive caption like:
+evaluations, and real-time decision-making requirements. Addition­
+                                                                                  “Unsafe Behavior: A worker is working at a height of 1.82 meters
+ally, existing literature often overlooks the need for affordable and
+                                                                                  (greater than 1.2 meters) and at the top of a ladder. Although a co-
+accessible tools for safety managers to utilize the generated data effec­
+                                                                                  worker is present at the top of the ladder, this configuration is risky
+tively. To address these limitations and generate more accurate scene
+                                                                                  for both workers according to OSHA. Additionally, the absence of hel­
+descriptions, this paper leverages Large Language Models (LLMs) for
+                                                                                  met and improper use of a ladder without an outrigger are also unsafe.”
+two key purposes:
+                                                                                  The ladder used for this study is only A-type ladder. The inspector could
+                                                                                  then use the chatbot interface to discuss potential solutions. This in­
+ • Generating Scene Captions: LLMs analyze computer vision (CV) data
+                                                                                  formation can empower the inspector to address the identified safety
+   to create captions describing the construction scene.
+                                                                                  hazard and make informed decisions within the constraints of resource
+ • Facilitating Interactive Discussions: An interactive chatbot powered
+   by LLMs can be accessible on users’ mobile phones, enabling them to
+   discuss potential solutions for identified hazards.
+
+   To mitigate potential limitations related to domain knowledge, this
+paper utilized prompt engineering techniques within the LLM frame­
+work. The next section will delve into the details of our research
+methodology, explaining how these methods are developed.
+
+3. Research method
+
+    This section describes the development and evaluation process of the
+proposed system that integrates computer vision (CV) and language
+model processing (LLM) for analyzing construction scenes. The identi­
+fication of the problem stemmed from a comprehensive review of the
+literature, followed by the proposal and evaluation of solutions for each
+identified issue.
+    The system’s development phase commenced with the creation of a
+CV-based model, achieved through data collection and preprocessing
+techniques. Leveraging image data from publicly available datasets and
+augmenting it with additional images to ensure diversity in the training
+data. In the post-processing phase, safety rules relevant to objects were
+integrated to classify scenes in compliance with safety regulations. This
+process was adopted for three distinct scenarios.
+    Textual information derived from this process underwent LLM pro­
+cessing to generate descriptive captions, laying the foundation for the
+subsequent interactive chatbot module. The integration of these mod­
+ules culminated in the development of an Android mobile application,
+tailored for ease of use by construction personnel on-site.
+    Evaluation metrics were employed to assess the accuracy of the ob­
+ject detection model, post-processing outcomes, and generated captions.
+User feedback, gauged using the semantic differential scale, provided                                      Fig. 1. Research method.
+
+                                                                              4
+R. Hussain et al.                                                                                                   Automation in Construction 182 (2026) 106728
+
+
+
+
+                                                   Fig. 2. Proposed system process flow with example.
+
+
+availability. Further the chatbot can assist inspectors with solutions to        mode. This conversational mode can be accessed via the mobile appli­
+improve safety, for instance, (How can I make it safe?), explore relevant        cation interface, allowing users to pose specific questions about detected
+safety regulations (What other safety rules should I follow?), or even           scenes and receive responses from the system. Leveraging the extensive
+express limitations in implementing suggested safety measures (“I don’t          knowledge base of LLMs, users can engage in interactive dialogue,
+have enough resources to follow your recommended solution?”).                    enhancing their understanding of the captured scenarios.
+    The detection module begins the first phase from the application
+layer of System Architect (Fig. 3). This module employs advanced                 3.1.1. Detection module: object detection and safety rule correlation
+computer vision algorithms to identify objects within images, assigning              Identifying hazards and checking safety rules from computer vision
+unique identifiers and classifying them accordingly. This module also            techniques usually require two steps, first identifying objects, entities
+computes spatial coordinates for the detected objects, facilitating their        and then finding correlation between them to check the compliance of
+subsequent analysis within the system. Furthermore, this module in­              safety rules [37]. The initial step involves rigorous preprocessing of the
+corporates safety rules to classify scenarios as either safe or unsafe           image dataset to optimize it for training the object detection model
+events. Additionally, this layer integrates a rule-based safety analysis,        (Fig. 4). This includes various transformations such as resizing the im­
+categorizing observed scenarios as safe or unsafe, with the rationale for        ages to a standard input size, often chosen based on the architecture
+this determination being articulated through sophisticated post-                 requirements, to ensure uniformity in input dimensions across the
+processing techniques. The interaction module, constituting the sec­             dataset. Furthermore, augmentation techniques are employed to enrich
+ond phase of the application layer, utilizes visual descriptors such as          the dataset and improve the model’s ability to generalize to diverse
+object information, event status, and causative factors to construct             scenarios. Augmentation encompasses a spectrum of transformations,
+structured prompts. These prompts act as inputs as a caption generator,          including rotation, scaling, translation, and changes in brightness and
+which then interfaces with LLMs to produce contextually relevant cap­            contrast, applied randomly to each image during training.
+tions as well as the predicted hazards in the scene. These captions not              Following dataset preparation, the YOLOv12 state-of-the-art object
+only provide descriptive information but also initiate further interaction       detection framework was employed to train the model [38]. YOLOv12
+with the scene.                                                                  introduces a transformative attention-centric architecture that departs
+    The database layer, located at the system’s core, serves as a re­            from traditional CNN-based designs. Central to its innovation is the Area
+pository for storing original images, detection results, and generated           Attention module, which segments feature maps into horizontal or
+captions. This layer ensures efficient data management and retrieval for         vertical stripes, enabling efficient self-attention across large receptive
+ongoing and future analytical needs. Stored information can be accessed          fields while maintaining computational efficiency. Complementing this
+to facilitate further discussions about captured scenarios. To initiate a        is the Residual Efficient Layer Aggregation Network (R-ELAN), an
+conversation, a structured prompt containing information from the                enhanced backbone that facilitates deeper feature integration through
+database is provided, along with an instruction to enter conversational          residual connections, improving gradient flow and feature reuse.
+
+                                                                             5
+R. Hussain et al.                                                                                                 Automation in Construction 182 (2026) 106728
+
+
+
+
+                                                         Fig. 3. Proposed system architecture.
+
+
+
+
+                                                Fig. 4. CV-based detection and safety rule correlations.
+
+
+Additionally, YOLOv12 employs 7 × 7 separable convolutions to capture          dataset, the resultant model is adept at identifying objects within images
+broader contextual information with reduced parameters, and integrates         swiftly and accurately. During the inference phase, an input image un­
+Flash Attention to accelerate attention computations, thereby enhancing        dergoes a series of transformations and passes through the trained
+both speed and accuracy in real-time object detection tasks.                   model, yielding a set of bounding boxes encompassing the detected
+   Upon training the computer vision model on the preprocessed                 objects. Each bounding box is associated with a confidence score,
+
+
+                                                                           6
+R. Hussain et al.                                                                                                      Automation in Construction 182 (2026) 106728
+
+
+indicating the model’s certainty regarding the presence of the corre­              visual descriptors derived from the computer vision component are
+sponding object. Object detection provides valuable bounding box co­               processed into structured prompts. These prompts serve as inputs to the
+ordinates for identified objects, yet it alone is insufficient for assessing       LLM’s transformer-based encoder–decoder architecture, shown in the
+whether a person is actively engaged with the object under consider­               center panel. The encoder takes these prompts and encodes them into
+ation or determining the number of people present on it at any given               dense, context-rich vector representations using multiple layers of self-
+time. While the initial object detection process provides bounding box             attention and feed-forward networks. This encoding process is crucial
+coordinates for identified objects, additional post-processing techniques          for capturing the intricate dependencies between different elements of
+are indispensable to accurately ascertain worker behavior during tasks             the scene, such as the proximity of workers to hazardous equipment or
+and ensure adherence to safety protocols.                                          the absence of required personal protective equipment (PPE). In the
+    The post-processing stage involves analyzing the bounding box co­              right panel, the decoder leverages these encoded vectors to generate
+ordinates provided by the object detection algorithm and further inter­            coherent, context-aware image captions and interactive ques­
+preting the interactions between workers and objects. By analyzing the             tion–answer outputs. The decoder employs masked multi-head attention
+spatial relationships and interactions between workers and equipment,              mechanisms to predict the next word in the caption sequence while
+post-processing techniques enable the system to infer the nature of                considering all possible previous words. This iterative prediction process
+worker activities and assess safety compliance. Therefore, these tech­             continues until the caption is fully generated. The resulting caption not
+niques involve correlating the detected objects with safety regulations            only summarizes the scene but also highlights any identified safety vi­
+through a rule-based algorithm. This algorithm evaluates the presence              olations, providing the user with an immediate and concise description
+or absence of specific objects, such as safety gear like helmets or vests,         of the safety status.
+and compares them against predefined safety rules. For instance, if a                  Beyond caption generation, the interaction module extends its
+person is detected wearing a helmet, the algorithm classifies the scene as         functionality by enabling real-time, interactive dialogues with users
+safe; otherwise, it may flag it as unsafe. Visual descriptors are then             (Right Panel of Fig. 5). The generated caption, along with other relevant
+generated, encapsulating pertinent information such as the classification          contextual information, is used to initiate a conversation through the
+of safety (safe or unsafe) and a rationale for the classification decision.        system’s chatbot interface. This interactive component allows users to
+The visual descriptors serve as inputs for the subsequent module, which            ask follow-up questions or seek further clarification about the safety
+focuses on generating captions for input images. Leveraging the safety             assessment. For example, the chatbot can respond to queries like “What
+classifications and rationales provided by the visual descriptors, the next        specific rule is violated in this scene?” by retrieving and presenting the
+module produces descriptive text that summarizes the content of the                relevant safety regulation and its context. This fosters a deeper under­
+input image while also classifying the image based on relevant safety              standing of the safety issues present and supports informed decision-
+rules identified by the system.                                                    making.
+                                                                                       Additionally, the chatbot supports various user interactions,
+3.1.2. Interaction module: caption generation and question answer sessions         including requests for mitigation strategies, explanations of applicable
+    The interaction module in this system plays a critical role in bridging        safety regulations, and discussions of resource constraints. Users can
+the gap between visual scene analysis and meaningful textual de­                   inquire about potential solutions to rectify unsafe conditions, such as
+scriptions, ultimately enabling real-time, context-sensitive discussions           asking, “How can we make this area safer?” The chatbot responds by
+between users and the system. This module integrates computer vision               suggesting specific actions aligned with best practices, such as installing
+outputs with a Large Language Model (LLM) to generate accurate and                 guardrails or ensuring proper PPE use. The system can also handle
+relevant image captions and to support interactive question-and-answer             questions like “What other safety precautions should be taken in this
+sessions, fostering a more informed understanding of construction site             situation?” by generating recommendations that comply with industry
+safety.                                                                            standards. Moreover, in situations where resource limitations are a
+    As illustrated in Fig. 5, the process begins in the left panel, where          concern, the chatbot can propose alternative measures that are feasible
+
+
+
+
+                                                     Fig. 5. System architecture for interaction module.
+
+                                                                               7
+R. Hussain et al.                                                                                                       Automation in Construction 182 (2026) 106728
+
+
+within the constraints mentioned by the user, such as optimizing the use            integrated via Gradle, to showcase its advanced object detection capa­
+of existing resources or prioritizing the most critical safety interventions.       bilities. Images are processed through machine learning algorithms
+The LLM-powered chatbot facilitates a continuous learning process for               using the TensorFlow Lite interpreter, allowing for the classification of
+safety inspectors, helping them address specific hazards while also                 scenes as safe or unsafe. Moreover, users are provided with a compre­
+broadening their understanding of general safety practices. The inter­              hensive list of detected objects, complete with class IDs, bounding box
+action module, therefore, not only provides immediate insights into site            coordinates, and confidence scores. In instances of unsafe scenes, users
+safety but also empowers users to engage actively in discussions about              receive detailed explanations, fostering heightened situational aware­
+safety management, ultimately contributing to a safer work                          ness and informed decision-making. Lastly, the Chat Activity exemplifies
+environment.                                                                        the application’s integration with natural language processing (NLP)
+                                                                                    technologies. Leveraging the LLM API from OpenAI (client version
+3.1.3. Mobile application development                                               2.7.1), users engage in intuitive text-based interactions. The chat func­
+    The descriptive scene classification mobile application, developed in           tion retains the complete chat history throughout the session, ensuring
+Android Studio LGUANA (2023.2.1 Patch 2), is designed for Android                   that each response remains consistent with both the previously gener­
+smartphones running SDK versions 21 to 33, covering approximately                   ated caption and the ongoing conversation context. The implementation
+99.5 % of Android devices that can operate the Application. The app                 includes a recycler view for chat message display, with a robust model
+requires the “Internet” permission at installation to enable API in­                class managing data efficiently. Additionally, a local SQLite database,
+teractions with a large language model. It also seeks runtime permis­               implemented using Android’s Room Persistence Library, stores chat
+sions for accessing the camera and reading photos, media, and files from            data, ensuring seamless continuity and effortless reference of past
+the device, essential for capturing images directly from the camera or              interactions.
+accessing stored photos.                                                                The UI components of the application are defined using XML
+    The mobile application comprises a series of five primary activities            (extensible Markup Language), which structures the visual elements,
+(Fig. 6), designed to optimize user experience and functionality. Upon              while the logical operations are handled in Kotlin files. Kotlin, devel­
+application launch, users encounter the Login Activity, serving as the              oped by JetBrains, is a concise and expressive programming language
+initial checkpoint for secure access. Robust authentication mechanisms,             for Android app development, featuring null safety and coroutines for
+such as Firebase Authentication, are employed to ensure stringent access            asynchronous tasks. This clear separation aids in the efficient develop­
+control and data security. Following successful authentication, users               ment and maintenance of the application, with XML managing the
+transition to the Capture Scene Activity, where the CameraX API and                 interface layout and Kotlin implementing the functional aspects. Table 2
+Android’s media store API are leveraged for real-time scene capture.                provides a concise summary of each mobile application activity, de­
+This gives users the option to either load an image from the gallery or             tailing the activity name, primary function, key APIs and libraries used,
+capture one using the camera. Integration of advanced image processing              and the resulting outputs to complement the descriptive text.
+libraries like Glide are used to enhance functionality by ensuring effi­
+cient image loading and transformation.
+    The subsequent activity entails the selection of detectors, wherein             3.2. Experiment, evaluation and results
+users are presented with a predefined list of case scenarios. In this paper,
+these scenarios encompass the assessment of 1) Use of Ladder, 2) Use of                 In this section, three different scenarios inspired by existing litera­
+Mobile Scaffold, and 3) Checking the Fireworks for Cutting and Welding.             ture were adopted to evaluate the performance of the detection module.
+Leveraging dynamic loading techniques, users are empowered to                       Following the integration of the object detection algorithm and the large
+customize the subsequent detection process to align with their specific             language model (LLM), descriptive safety-related captions were gener­
+needs and requirements. Upon selecting a scenario, users are guided to              ated based on the identified hazards. Finally, user satisfaction with the
+the pivotal Detection Activity, where computer vision technology acts as            overall system was assessed. The comprehensive evaluation framework
+a central role in the application’s functionality. During this stage, the           is illustrated in Fig. 7. As shown, the system validation encompasses
+system utilizes the TensorFlow Lite GPU library (version 2.8.0),                    three core components: (1) the detection module, (2) caption genera­
+                                                                                    tion, and (3) user satisfaction. The detailed experimental procedure,
+
+
+
+
+                                                      Fig. 6. User interface flow for mobile application.
+
+                                                                                8
+R. Hussain et al.                                                                                                                     Automation in Construction 182 (2026) 106728
+
+
+Table 2                                                                                      performance of the models was evaluated on the independent test set.
+Mobile application activities summary.                                                       For the classification module, the images from the test set were manually
+  Activity          Function            Key APIs/Libraries     Output                        labeled as safe or unsafe according to safety rules to establish ground
+  Name                                                                                       truth. A high-performance workstation was used for training and testing
+  Login             Secure user         Firebase               Authenticated user            the object detection models as well as for evaluating the classification
+    Activity        authentication      Authentication SDK     session                       module. The workstation was equipped with an Intel Core i9–12,900
+  Capture           Image acquisition   CameraX API,           Preprocessed image            CPU @ 2.4 GHz, 32 GB RAM, and an NVIDIA RTX 3090Ti GPU with 24
+    Scene           and                 Android Media Store    for analysis                  GB VRAM. To assess practical usability in real-world scenarios, the
+    Activity        preprocessing       API, Glide v4.14.2
+  Selection of      Scenario-specific   Dynamic UI             Selected detection
+                                                                                             proposed framework was also deployed on a Samsung Galaxy S23 Ultra
+    Detectors       detector            components             scenario                      smartphone equipped with 8 GB RAM and Android OS version 14.
+                    configuration                                                                To mitigate the influence of image quality variations on detection
+  Detection         Object detection    TensorFlow Lite GPU    Detected objects (class       reliability, the system incorporates several control mechanisms. First,
+   Activity         and safety          v2.8.0, TensorFlow     IDs, bounding boxes,
+                                                                                             during model training, extensive data augmentation was applied
+                    classification      Lite Interpreter       confidence scores) and
+                                                               safety classification         (including adjustments in brightness, contrast, and sharpness, as well as
+  Chat              Natural language    OpenAI API Client      Interactive chat              random rotations and blurring) to simulate diverse real-world condi­
+    Activity        interaction and     v2.7.1, Room           responses with stored         tions. This enhanced the model’s ability to generalize images of varying
+                    consultation        Persistence Library,   conversation history          quality. Second, the mobile application integrates automatic pre-
+                                        Recycler View
+                                                                                             processing filters that normalize brightness and contrast before
+                                                                                             sending an image to the detection module.
+evaluation metrics and results for each component are detailed in the
+subsequent subsections.
+                                                                                             Table 3
+                                                                                             Safety requirements and corresponding regulations.
+3.2.1. Detection module
+                                                                                              Construction     Safety Requirement        OSHA [39]                 KOSHA [40]
+    For performance evaluation of the computer vision-based detection
+                                                                                              Entity
+module of the proposed system, three different construction scenarios
+were considered, namely, inspection of ladder, mobile scaffold, and                           A-Type Ladder    Used with outriggers      –                         Article 68
+                                                                                                                                                                   (1), [C-28-
+welding task usages. These scenarios were selected due to their preva­                                                                                             2018]
+lence and inherent hazards within the construction industry. To achieve                                        Maximum working           –                         Article 68 (3)
+this, the existing datasets from previous studies were extended with a                                         height 1.2 m, co-
+diverse range of images for each scenario, as outlined in Table 3. This                                        worker
+                                                                                                               Prohibition of            OSHA 1926.1053(b)         Article 68 (3)
+integration aimed to enhance the accuracy and robustness of the pro­
+                                                                                                               workers on ladder         (13)
+posed safety monitoring system. The three work activities included are                                         top
+the use of ladders, use of mobile scaffolds, and firework activities                                           Helmet required           OSHA 1926.100             Article 52
+(welding and cutting), each accompanied by specific safety regulations                                                                   (General
+derived from Occupational Safety and Health Administration (OSHA)                                                                        Requirements)
+                                                                                              Mobile           Outriggers required       OSHA 1926.452(w)(6)       Article 68
+and Korea Occupational Safety and Health Agency (KHOSA) guidelines.
+                                                                                               Scaffold                                  (iii)                     (1), [C-28-
+    For ladder usage, the dataset comprises 4530 images that reflect                                                                                               2018]
+safety-critical elements such as workers, helmets, ladders, and out­                                           Guardrail required        OSHA 29 CFR               Article 68 (1)
+riggers. The associated regulations emphasize proper equipment con­                                                                      1926.451(g)(4)(i)
+                                                                                                               No more than two          1926 Subpart L,           Article [C-
+dition, the mandatory use of outriggers, adherence to allowable working
+                                                                                                               workers                   Appendix A, Section 2     28-2018]
+heights, and helmet usage. Similarly, the mobile scaffold scenario in­                                                                   (g)(4)
+cludes 4868 images that capture relevant components like guardrails                                            Worker helmet             OSHA 1926.100             Article 52
+and outriggers. The regulations mandate the installation of guardrails,                                        required                  (General
+the use of helmets, and restrict the number of workers on scaffolds to                                                                   Requirements)
+                                                                                              Welding/Fire     Fire extinguisher         OSHA 1926.352(d)          Article 282,
+two at a time to prevent overloading. The firework scenario includes
+                                                                                               Work            present                                             Article 80-
+2070 images and focuses on safety measures during welding and cutting                                                                                              (20)
+activities, such as ensuring the presence of fire extinguishers and pre­                                       Flammable materials       OSHA 1926.352(c)          Article 282
+vention nets and checking for flammable materials.                                                             present
+                                                                                                               Fire prevention net                                 Article 282
+    All datasets were divided into training, validation, and testing sub­                                                                –
+                                                                                                               installed
+sets, as presented in Table 4. The training subset was used for model                                          Hard hat required         OSHA 1926.100             Article 52
+learning, while the validation set was employed for hyperparameter                                                                       (General
+optimization and monitoring potential overfitting. The final                                                                             Requirements)
+
+
+
+
+                                                                 Fig. 7. Evaluation strategy and process flow.
+
+                                                                                         9
+R. Hussain et al.                                                                                                        Automation in Construction 182 (2026) 106728
+
+
+Table 4                                                                               cutting/welding operations (Algorithm 4-MCW), it monitors PPE
+Dataset description and classification.                                               compliance and fire safety equipment availability. Each detection model
+  Work Scenario      Description                 Classes         Dataset              (ML, MMS, MCW) represents scenario-optimized YOLOv12 architec­
+                                                                 (Original +          tures trained on specific construction safety elements, with the geo­
+                                                                 newly added)         metric measurement and compliance assessment performed by the
+  Use of Ladder      For ladder safety, ensure   1.Worker        1825 + 2745 =        corresponding specialized algorithms (Algorithms 2–4, detailed in Ap­
+    [28]             each component is in                        4570 images          pendix 1).
+    See Algorithm    good condition and          2.Helmet        Train = 3653             These algorithms are evaluated using distinct performance in­
+    1 (Appendix 1)   adhere to regulatory        3. Ladder       Valid = 460
+                     guidelines.                 4. Outriggers   Test = 457
+                                                                                      dicators, such as precision, recall, precision-recall (PR) curve, and mean
+  Use of Mobile      Ensure safe usage of        1. Worker       933 + 3935 =         Average Precision (mAP), which offers a robust measure of the model’s
+    Scaffold [26]    mobile scaffolds by                         4868 images          detection. Precision and recall evaluate the model’s ability to correctly
+    See Algorithm    inspecting components       2. Helmet       Train = 3902         identify hazards and avoid false positives, while the PR curve demon­
+    2 (Appendix 1)   and following regulatory                    Valid = 483
+                                                                                      strates the model’s effectiveness across varying decision thresholds [42].
+                     requirements.               3. MScaffold    Test = 483
+                                                 4.Outriggers                         mAP is especially critical for multi-class object detection evaluation,
+                                                 5. Guardrails                        delivering a holistic measure of the model’s detection accuracy across
+  Fire Work          Implement safety            1.Welding       633 +                diverse object categories and varying confidence levels [43]. Since this
+    (Welding and     measures for welding        Equipment,      47,235,356           framework also involves binary classification (safe vs. unsafe), we
+    Cutting) [41]    tasks, including                            images
+    See Algorithm    equipment checks and                        Train = 4934
+                                                                                      further employed F1-score, and accuracy receiver operating character­
+    3 (Appendix 1)   adherence to regulations.                   Valid = 222          istic AUC-ROC, which are widely used for assessing classification
+                                                 2.Circular      Test = 200           effectiveness, especially under class imbalance [43].
+                                                 Saw                                      Findings from the evaluation, demonstrated through PR and ROC
+                                                                                      curves along with classification results, present clear validation of the
+                                                 3.Fire
+                                                 Extinguisher                         method’s effectiveness across three distinct safety scenarios: ladder use
+                                                 4.Flammable                          (mAP = 97.9 %), mobile scaffolding (mAP = 97.5 %), and welding work
+                                                 Material                             (mAP = 98.9 %) as shown in Fig. 8. Results from these metrics under­
+                                                 5.Prevention                         score the reliability of the approach in addressing safety-related sce­
+                                                 Net
+                                                                                      narios. The system’s performance is detailed in Table 5, highlighting
+                                                 6. Hard Hat
+                                                                                      robust precision, recall, and F1-scores across diverse construction safety
+                                                                                      scenarios. For ladder-related tasks, the model achieved overall precision
+    Recently, YOLOv12 [38] by Ultralytics has emerged with notable                    of 94.2 % and recall of 93.3 %, indicating strong capability in dis­
+improvements in accuracy and robustness, incorporating advanced                       tinguishing between safe and unsafe behaviors. Notably, it classified safe
+feature extraction, anchor-free design, and an optimized backbone. Its                behaviors with 94 % precision, 93 % recall, and 93 % F1-score. In the
+single-pass architecture enables real-time detection under challenging                mobile scaffolding scenario, the model attained 98.7 % overall precision
+conditions such as variable lighting and occlusion. Given these capa­                 and 87.0 % recall, reflecting its high sensitivity in detecting hazards
+bilities, YOLOv12 was employed as the underlying architecture for our                 even under complex conditions. For safe behavior classification, it
+computer vision system. Object detection provides bounding box co­                    achieved 99 % precision, 87 % recall, and 93 % F1-score. For fire-related
+ordinates for the detected objects, but it is insufficient to assess whether          tasks such as welding and cutting, it achieved overall performance with
+a person is working with object under consideration or to determine how               98 % precision and 91 % recall. Safe behavior classification demon­
+many people are on it at any given time. Therefore, rule-checking-based               strated exceptional performance with 100 % precision, 95 % recall, and
+algorithms were adopted and implemented to systematically evaluate                    97 % F1-score.
+adherence to safety rules. These algorithms are aimed at identifying                      End-to-end latency for the object detection module is 80–100 ms per
+unsafe behaviors or situations within each scenario. For example, when                frame (10–12 FPS) on mobile devices. ChatGPT-based conversational
+assessing compliance with the rule regarding worker height while on a                 responses incur 1.5–3.5 s latency but operate asynchronously to avoid
+ladder, the system first analyzes the coordinates of the worker and                   interrupting real-time detection. This ensures immediate safety alerts
+ladder bounding boxes. By establishing the relationship between these                 while providing contextual guidance shortly after.
+bounding boxes, the system determines if interaction between the
+worker and ladder is occurring. Subsequently, the vertical distance be­               3.2.2. Validation of generated captions
+tween the top of the worker’s bounding box and the bottom of the ladder                   To validate the captioning module of the proposed system, a
+is calculated to determine the worker’s height from the ground. If this               comprehensive evaluation was conducted using ten diverse visual in­
+height exceeds the specified limit, the system flags the result as unsafe,            puts, where each scenario represents a distinct construction safety sit­
+citing “worker exceeding height limit,”.                                              uation and task (e.g., ladder use, mobile scaffolding, welding) captured
+    The worker’s height is estimated from the bounding box geometry of                in an image with varying environmental conditions, worker activities,
+the detected worker and ladder, using a fixed ladder height of 2.0 m as               and safety compliance states. These scenarios were systematically
+the reference. The relative position of the worker’s bounding box is                  selected to cover a broad spectrum of real-world construction environ­
+proportionally scaled to this reference to obtain the estimated working               ments, ensuring comprehensive assessment of the model’s performance
+height. This approach follows the same height assessment strategy                     across different safety contexts including ladder operations, scaffolding
+introduced by Anjum et al. [28], where bounding box pixel values were                 work, and fire/welding activities. Each scenario encompasses multiple
+normalized against a calibrated ladder height to compute worker                       variables: environmental conditions (lighting, weather, site layout),
+elevation.                                                                            construction activities (different types of work being performed), safety
+    Algorithm 1 serves as the main controller function for safety detec­              equipment presence or absence (helmets, harnesses, outriggers), and
+tion across three construction scenarios. The algorithm performs                      regulatory compliance status (adherence to regulatory standards). For
+scenario-specific model selection and delegates geometric safety anal­                example, Fig. 9 illustrates one scenario with system generated caption
+ysis to specialized algorithms. For ladder safety (Algorithm 2-ML), it                involving ladder usage where the system identifies: 1) worker posi­
+evaluates outriggers deployment compliance, worker height, and helmet                 tioning relative to safety regulations (height of 1.82 m exceeding the
+usage. For mobile scaffolding (Algorithm 3-MMS), it assesses guardrail                1.2-m threshold), 2) safety equipment assessment (absence of helmet
+presence, outrigger deployment, and worker capacity limits. For                       and improper ladder setup without outriggers), and 3) regulatory
+
+                                                                                 10
+R. Hussain et al.                                                                                                          Automation in Construction 182 (2026) 106728
+
+
+                               Algorithm 1 Main function for safety detection
+                               Input: image_path, model_type, Detection Models [ML, MMS, MCW]
+                               Output: overall_status, safety_assessment, reasons
+                               1: Set overall_status ← Safe
+                               2: Initialize detection_results ← [ ]
+                               {Step 1: Load the Image}
+                               3: I ← Load image from image_path
+                               {Step 2: Select the model ML, MMS, MCW, model_type }
+                               4: if model_type = "ladder" then
+                               5:     model ← ML
+                               6:     R ← model(I)
+                               7: overall_status, IA, reasons ← detect_ladder (I, R) // Calls Algorithm 2
+                               8: else if model_type = "mobile_scaffolding" then
+                               9: model ← MMS
+                               10: R ← model(I)
+                               11: overall_status, IA, reasons ← detect_mobile_scaffolding (I, R) // Calls Algorithm 3
+                               12: else if model_type = "cutting_welding" then
+                               13: model ← MCW
+                               14: R ← model(I)
+                               15: overall_status, IA, reasons ← detect_cutting_welding (I, R) // Calls Algorithm 4
+                               16: else
+                               17: Error: Unknown model type
+                               18: return Error
+                               19: end if
+                                {Step 3:Display Image with final status}
+                               20: return overall_status, safety_assessment, reasons
+
+
+
+
+compliance evaluation (violation of regulatory standards), demon­                      diverse group of participants, including five safety inspectors (ages
+strating the multifaceted nature of each evaluation scenario.                          28–42, with 7–10 years of experience, 60 % male and 40 % female), six
+    The system autonomously generated textual descriptions for each                    construction management graduates (ages 28–35, with 3–7 years of
+input, detailing observed safety conditions, such as the presence or                   experience, all male), and four researchers (ages 28–36, specializing in
+absence of protective equipment, potential hazards, and adherence to                   construction automation, with 1–2 years of experience, 75 % male and
+safety protocols. To establish robust evaluation benchmarks, the same                  25 % female). To ensure participants gained a nuanced understanding of
+visual scenarios were independently evaluated by two expert groups: (1)                the system’s capabilities, they were introduced to its mobile application
+Safety Inspectors with practical field experience (Ground Truth 1), who                interfaces through detailed demonstration. Subsequently, participants
+assessed images based on regulatory standards and real-world safety                    engaged with the application across the designed construction scenarios,
+practices, and (2) Researchers specializing in construction safety                     such as checking the safe use of ladder, mobile scaffolding, and welding
+(Ground Truth 2), who evaluated scenarios against established theo­                    tasks and asking questions through interaction module.
+retical guidelines and academic frameworks.                                                To quantify the user experience, a semantic differential scale con­
+    The validation was performed using a combination of widely                         sisting of bipolar adjectives across four critical criteria was employed
+recognized evaluation metrics—BLEU, ROUGE, METEOR, and BERT                            [46,47]. Each criterion was scaled from 1 to 7 as presented in Table 6.
+Score [44]. These metrics were chosen to quantitatively assess the                     The assessment criteria were systematically selected based on estab­
+alignment between the system-generated descriptions and the expert-                    lished frameworks for construction safety technology evaluation,
+provided ground truths. Each metric offers a unique perspective: BLEU                  focusing on both technical performance and visual design perspectives:
+measures n-gram precision, ROUGE focuses on recall by assessing                        1) Time-efficiency and cost-effectiveness were evaluated following
+overlapping textual elements, METEOR accounts for both precision and                   mobile application rating scale for e-tools assessment [48]; 2) Suitability
+recall with additional synonym and stemming analysis, and BERT Score                   for inspection operations was assessed using established construction
+evaluates semantic similarity by leveraging contextual embeddings. The                 safety inspection guidelines to determine regulatory compliance align­
+combination of these metrics provides a comprehensive view of the                      ment [48];3) Ease of use was measured using semantic differential ad­
+model’s ability to produce accurate, lexically similar, and semantically               aptations of NASA-TLX principles, validated for assessing user interface
+meaningful captions [44,45].                                                           intuitiveness in complex operational environments [49]; and 4) Oper­
+    Fig. 10 presents the distribution of evaluation scores across all sce­             ability under dynamic conditions evaluated system reliability and sta­
+narios, the box plot analysis reveals a clear performance hierarchy:                   bility under real-world construction site scenarios [49]. This multi-
+BERTScore and ROUGE achieve superior performance (means of 0.442                       dimensional evaluation approach ensures comprehensive assessment
+and 0.412 respectively), while METEOR shows moderate performance                       across technical functionality, user interface design, regulatory
+(0.301) and BLEU demonstrates the lowest scores (0.064). Notably,                      compliance, and operational reliability dimensions essential for mobile
+BERTScore exhibits the most consistent performance across scenarios                    construction safety technology deployment.
+(smallest standard deviation of 0.086), indicating reliable semantic                       The user satisfaction level of the proposed system, as delineated
+understanding capabilities. This variability reflects the diverse                      through the statistical analysis provided in Table 6, highlights its sig­
+complexity of construction safety scenarios and suggests that the system               nificant effectiveness across crucial operational aspects. The evaluation
+performs particularly well on specific types of safety assessments while               reveals distinct performance patterns across different criteria: Partici­
+maintaining overall robust semantic understanding capabilities.                        pants rated the system’s performance in reducing time and cost with
+                                                                                       mean scores of 6.33 and 5.87, respectively, indicating notable efficiency
+3.2.3. System effectiveness assessment                                                 gains and cost savings. Moreover, from a managerial standpoint, the
+   To evaluate the effectiveness of the system, user experience was                    system’s ability to streamline inspection processes bears implications for
+assessed using the semantic differential scale. The evaluation involved a              resource allocation and project timelines. Additionally, the system
+
+
+                                                                                  11
+R. Hussain et al.                                                                                                          Automation in Construction 182 (2026) 106728
+
+
+
+
+            Fig. 8. PR-Curve and ROC curve for (a) Activity 1- working on ladder, (b) Activity 2- working with mobile scaffold (c) Activity 3- fire works.
+
+
+received favorable ratings for suitability and comprehensiveness, aver­                groups: Safety Inspectors, Construction Management Graduates, and
+aging 5.33 and 5.67, respectively, reflecting its adaptability to diverse              Researchers. The radar chart shows high ratings for time-saving, cost-
+inspection scenarios. This versatility not only enhances operational ef­               effective, suitable, and comprehensive attributes across all user groups,
+ficiency but also contributes to enhanced safety protocols, ensuring                   while lower scores in stability and reliability suggest areas requiring
+compliance with industry standards. Users also expressed satisfaction                  improvement. Primary improvement areas consistently identified across
+with the system’s usability, with a mean score of 6.27, indicating intu­               all groups include stability (M = 4.73,) and reliability (M = 4.87,), likely
+itive design and user-friendly features.                                               attributed to mobile device processing constraints and varying con­
+    Fig. 11 illustrates user satisfaction percentages across three distinct            struction site conditions, suggesting focused development needs for
+
+
+                                                                                  12
+R. Hussain et al.                                                                                                             Automation in Construction 182 (2026) 106728
+
+
+Table 5
+Classification results against each scenario.
+  Scenario/Performance Matrix (%)               Precision         Recall           F1-Score           Overall Accuracy        Overall Precision           Overall Recall
+
+  Working on Ladder                                                                                        97.0                     94.2                      93.3
+  Un-Safe                                          98               98               98
+  Safe                                             94               93               94
+  Working with Mobile Scaffold                                                                             94.6                     98.7                      87.0
+  Un-Safe                                          92               99               96
+  Safe                                             99               87               93
+  Fire Work (Welding and Cutting)                                                                           99                       98                        91
+  Un-Safe                                         98               100               99
+  Safe                                            100               95               97
+
+
+
+
+                                                            Fig. 9. Caption detail of unsafe use of ladder case.
+
+
+dynamic environmental performance. Statistical analysis revealed                          work (98.9 %) validate YOLOv12’s attention-centric architecture for
+different confidence intervals (95 % CI ± 0.45 to ±0.77) indicating                       complex construction environments. The superior performance on static
+acceptable precision, with significant group differences in cost-                         safety objects versus dynamic human–equipment interactions highlight
+effectiveness assessment (F = 4.161, p = .042, η2 = 0.410) and system                     the challenge of behavioral detection and underscores the system’s
+intuitiveness (F = 8.216, p = .006, η2 = 0.578). Researchers demon­                       prioritized reduction of false negatives. The integration of rule-based
+strated highest satisfaction with cost-effectiveness and intuitiveness,                   post-processing with deep learning outputs bridges object detection
+indicating that technology familiarity influences user acceptance pat­                    and regulatory compliance, addressing a key limitation of general-
+terns. This clear performance hierarchy indicates the system excels in                    purpose vision models. Minor performance variations between sce­
+user interface design and operational efficiency while requiring focused                  narios suggest that scenario-specific fine-tuning and adaptive thresh­
+development in dynamic environmental performance—providing crit­                          olding are needed for robust field deployment.
+ical insights for prioritizing future system enhancements and validating                      Regarding caption generation module evaluation, the analysis re­
+this hybrid CV-LLM approach’s current capabilities and limitations.                       veals that the BLEU scores are generally lower compared to the ROUGE
+                                                                                          and METEOR scores, primarily due to BLEU’s reliance on exact n-gram
+4. Discussion                                                                             matches. This can penalize the generated descriptions even when they
+                                                                                          convey the same meaning using different wording. For instance, in
+    The results of this paper illustrate the development, integration, and                scenario 2, where the generated description identifies “Unsafe condi­
+evaluation of a system designed to enhance safety monitoring in con­                      tions detected - A ladder without outriggers poses a safety risk,” the
+struction environments by leveraging computer vision (CV) and large                       BLEU score is low (0.0282) may be due to the differences in the phrases
+language models (LLMs). The primary objective is to provide support to                    from the ground truths. However, the higher BERT score (0.5489)
+inspectors for making decision by the automatic detection and classifi­                   demonstrates that despite lexical variations, the semantic content
+cation of safety hazards while offering real-time, descriptive feedback.                  closely matches the human evaluations. The relatively high BERT scores
+Through the validation of the generated captions as well as assessment                    in certain cases (e.g., a scenario with a score of 0.5302) suggest that the
+of user experience, a thorough understanding of the system’s perfor­                      system is particularly adept at identifying critical safety issues, such as
+mance across different metrics was obtained.                                              missing helmets or ladders without outriggers, details that are vital for
+    The consistently high mAP scores in detection module performance,                     ensuring safety compliance in real-world environments. This capability
+across ladder use (97.9 %), mobile scaffolding (97.5 %), and welding                      underscores the system’s potential utility in dynamic, safety-critical
+
+                                                                                    13
+R. Hussain et al.                                                                                                                   Automation in Construction 182 (2026) 106728
+
+
+
+
+                                              Fig. 10. Distribution of scores for different evaluations across diverse scenarios.
+
+
+                                                                                           The system achieved excellent performance in operational efficiency
+Table 6
+                                                                                           dimensions (time-saving and ease of use) across all user groups, while
+Results of user satisfaction against different criteria.
+                                                                                           demonstrating good performance in functional aspects (cost-effective­
+  Criterion                    Bipolar Adjectives          Mean   SD*    CI**              ness and comprehensiveness). Researchers demonstrated highest satis­
+  Reduction in Time and        Time inefficient -          6.33   0.47   [5.79,            faction with cost-effectiveness and intuitiveness, indicating that
+    Cost                       Timesaving                                6.87]             technology familiarity significantly influences user acceptance patterns.
+                               Costly – Cost effective     5.87   1.05   [5.18,
+                                                                                           However, stability and reliability consistently received the lowest rat­
+                                                                         6.56]
+  Suitability for Inspection   Not suitable - Highly       5.33   1.15   [4.56,            ings across all user groups, which may be attributed to mobile device
+                               suitable                                  6.11]             processing limitations under varying construction site conditions, real-
+                               Limited -                   5.67   0.89   [5.09,            time performance constraints during complex geometric calculations,
+                               Comprehensive                             6.25]             and dynamic environmental challenges inherent to construction sites.
+  Ease of Use                  Difficult to use - Easy     6.27   0.8    [5.82,
+                               to use                                    6.71]
+                                                                                           Future improvements may focus on optimizing model inference speed
+                               Confusing - Intuitive       5.67   0.83   [5.17,            through quantization techniques, implementing robust error handling
+                                                                         6.16]             for network interruptions, enhancing device stability through improved
+  Operability under
+                               Unstable - Stable           4.73   0.79
+                                                                         [3.97,            mounting solutions, and developing offline processing capabilities to
+   Dynamic Conditions                                                    5.50]
+                                                                                           ensure consistent performance and achieve full deployment readiness
+                                                                         [4.15,
+                               Unreliable - Reliable       4.87   0.89
+                                                                         5.59]             for construction safety inspection applications.
+                               CI** = confidence                                               This study has several limitations that need to be acknowledged. One
+  *SD = Standard Deviation
+                               interval                                                    primary limitation is the system’s reliance on pre-defined safety rules,
+                                                                                           which may not cover the full spectrum of safety hazards encountered in
+                                                                                           the ever-changing construction environment. The current system applies
+contexts where precise identification of hazards is crucial for informed                   task-specific rules (e.g., ladder use) rather than the regulatory corpus.
+decision-making and timely corrective actions. The ROUGE and                               While this approach demonstrates feasibility, it is limited in scope.
+METEOR scores across various inputs suggest that the system’s gener­                       Future work will focus on integrating comprehensive regulatory data­
+ated descriptions generally align with the experts’ evaluations, partic­                   bases (e.g., OSHA 1926, KOSHA) to enable broader applicability without
+ularly in terms of capturing key safety details. For instance, in scenario                 manual specification. While the current model is efficient in identifying
+3, the generated description achieves a ROUGE score of 0.5556 and a                        common risks, construction sites are dynamic and often present un­
+METEOR score of 0.5156, indicating strong overlap with the ground                          foreseen hazards. Future versions could incorporate adaptive learning
+truths provided by both safety inspectors and researchers. The                             mechanisms, enabling the system to refine its hazard detection over time
+captioning module was validated using ten visual inputs representing                       and adapt to evolving safety standards.
+distinct construction tasks. Future work will expand the dataset to                            The system’s performance degrades under partial occlusion, poor
+include a broader range of scenarios, enhancing the robustness and                         illumination, complex backgrounds, and suboptimal camera viewing
+generalizability of the system while providing more comprehensive in­                      angles, leading to classification and tracking errors in dynamic multi-
+sights into captioning performance.                                                        worker scenes. Mobile platform constraints also introduced processing
+    Concerning system effectiveness and user experience evaluation, the                    delays and network-induced instabilities that impaired real-time moni­
+results demonstrate a clear performance hierarchy that validates the                       toring. Moreover, due to the use of GPT API, language modules always
+hybrid CV-LLM approach while identifying specific improvement areas.                       need internet connection and sometime produced inconsistent safety
+
+
+                                                                                      14
+R. Hussain et al.                                                                                                     Automation in Construction 182 (2026) 106728
+
+
+
+
+                                                            Fig. 11. Satisfaction level of users.
+
+
+assessments due to ambiguous visual context. Additionally, the height             statistical inference, future studies will expand the participant pool and
+estimation method provides estimated rather than exact physical mea­              incorporate additional statistical measures like confidence intervals,
+surements, with camera perspective, occlusion, and equipment varia­               effect sizes, and subgroup analyses to increase the credibility of the re­
+tions introducing deviations of ±5–10 cm error margin, consistent with            sults. NASA-TLX will be used to assess cognitive workload in future
+limitations recognized in prior work by Anjum et al. [28]. Future work            evaluations to further strengthen the rigor of the user experience
+will prioritize robust augmentation techniques, optimized inference               assessment.
+pipelines, improved multimodal fusion, and enhanced geometric cali­
+bration methods to address these measurement uncertainties and                    5. Conclusion
+enhance overall system reliability and consistency.
+    Another limitation is the lack of large, diverse datasets specifically            This paper presented the development and evaluation of an inno­
+curated for construction safety applications. The system’s current                vative intelligent assistant built on a hybrid reasoning framework that
+dataset, while sufficient for preliminary testing, may not encompass the          integrates computer vision (CV) and large language models (LLMs) to
+full range of scenarios encountered in global construction projects. The          enhance construction safety management. The system’s core contribu­
+diversity in construction practices across regions suggests the need for a        tion lies in its two-stage architecture, which is specifically designed to
+more comprehensive and contextually relevant dataset, to ensure that              address the well-documented failure of general-purpose Vision-Lan­
+the proposed system performs consistently across varied construction              guage Models to perform the precise, quantitative geometric reasoning
+environments. The computational demands associated with real-time                 required for regulatory compliance. Our framework strategically dele­
+CV and LLM integration are also challenging in some cases. Although               gates tasks: a CV module with custom algorithms first performs reliable,
+the system is designed to operate efficiently on mobile platforms, its            rule-based analysis of on-site conditions, and the structured, factual
+scalability and performance across devices with varying computational             output of this stage is then processed by an LLM for semantic interpre­
+power remain a consideration. Extensive testing across different hard­            tation and interactive, context-aware dialogue.
+ware configurations will be necessary to ensure that the system can be                The system addresses the limitations of traditional safety inspections,
+reliably deployed in diverse on-site conditions. A limitation of the cur­         which rely heavily on predefined regulations and the subjective judg­
+rent framework is also its design of static image capture rather than             ment of inspectors, by presenting a comprehensive framework to
+continuous video streams. As a result, rapid transitions from safe to             develop a tool that automates hazard detection and facilitates real-time
+unsafe conditions may not be detected in real time. Future work will              safety discussions. While the current framework requires inspectors to
+focus on extending the framework to handle real-time video analysis and           capture images and interact with the chatbot, it reduces subjectivity by
+continuous monitoring, enabling faster detection and response in dy­              providing standardized, regulation-based interpretations. The evalua­
+namic construction environments. The system remains sensitive to low-             tion of proposed system demonstrated effectiveness in identifying and
+quality inputs, underscoring a limitation in data robustness that may             classifying safety hazards across various scenarios, including ladder use,
+affect detection accuracy under unfavorable conditions. Additionally,             mobile scaffolding, and fire-related work. The integration of deep
+for the system assessment, the relatively small sample size limits                learning and LLMs enables the generation of detailed scene descriptions
+
+                                                                             15
+R. Hussain et al.                                                                                                     Automation in Construction 182 (2026) 106728
+
+
+and contextual safety insights, bridging the gap between visual data               across organizations. By addressing these areas, the proposed paper can
+capture and actionable safety measures. User feedback and evaluation               establish itself as a cornerstone for smart safety management not only in
+metrics indicate that the system can enhance efficiency and support                construction but also for global industries.
+informed decision-making in safety inspections. Moreover, future en­
+hancements may include automated generation of draft safety reports                CRediT authorship contribution statement
+during safety walks, which inspectors could review and submit to a
+centralized repository for broader project team and stakeholder use.                   Rahat Hussain: Writing – review & editing, Writing – original draft,
+This extension would further streamline inspections, improve consis­               Validation, Data curation, Conceptualization. Doyeop Lee: Writing –
+tency, and preserve human oversight. The deployment of the system on               review & editing, Resources, Methodology, Funding acquisition,
+mobile platforms presents significant potential for the adoption of in­            Conceptualization. Muhammad Sibtain Abbas: Visualization, Valida­
+dustry, providing a user-friendly interface that assists safety inspectors.        tion, Software, Resources, Data curation. Syed Farhan Alam Zaidi:
+This paper highlights the importance of integrating CV and LLM tech­               Writing – review & editing, Visualization, Software, Conceptualization.
+nologies into construction safety, paving the way for advanced multi­              Akeem Pedro: Writing – review & editing, Supervision, Methodology,
+modal information fusion and improved safety outcomes.                             Conceptualization. Chansik Park: Writing – review & editing, Funding
+    Future studies should focus on advancing these systems by                      acquisition, Formal analysis, Conceptualization.
+enhancing their scalability and customizing them for application in
+diverse construction contexts. Enhancing the system’s ability to analyze
+complex and dynamic scenarios, such as heavy equipment operation and               Declaration of competing interest
+multi-worker interactions, would broaden its application scope. Inte­
+grating real-time risk prediction capabilities using predictive analytics              The authors declare that they have no known competing financial
+and temporal data from wearable sensors or IoT devices could enable                interests or personal relationships that could have appeared to influence
+proactive hazard prevention. Furthermore, expanding the multilingual               the work reported in this paper.
+capabilities of the LLM component would facilitate adoption in global
+construction markets. Collaborative validation with industry stake­                Acknowledgements
+holders will be essential to refine the system’s usability and ensure
+alignment with evolving regulatory standards.                                         This research was conducted with the support of the “National R&D
+    Additionally, the incorporation of blockchain technology could be              Project for Smart Construction Technology (No. RS-2020-KA156291)”
+explored to develop an incentive and fine system for promoting safety              funded by the Korea Agency for Infrastructure Technology Advance­
+compliance. Blockchain’s transparent and secure framework could                    ment under the Ministry of Land, Infrastructure and Transport, and
+reward workers and teams for adhering to safety protocols, reporting               managed by the Korea Expressway Corporation. Also, this work was
+hazards, and achieving safety milestones. At the same time, the system             supported by the National Research Foundation of Korea (NRF) grant
+could enforce accountability by issuing fines or penalties for violations          funded     by   the     Korea    Government     (MSIT)     (No.    NRF-
+of safety regulations, such as failing to report hazards or engaging in            2022R1A2B5B02002553). Rahat Hussain and Doyeop Lee both made
+unsafe practices. This dual approach could foster a culture of proactive           equal contributions to this work and are therefore recognized as co-first
+safety practices while ensuring strict adherence to safety standards               authors.
+
+
+
+Appendix A. Appendix 1
+
+
+
+
+                                                                              16
+R. Hussain et al.        Automation in Construction 182 (2026) 106728
+
+
+
+
+                    17
+R. Hussain et al.        Automation in Construction 182 (2026) 106728
+
+
+
+
+                    18
+R. Hussain et al.                                                                                                                          Automation in Construction 182 (2026) 106728
+
+
+
+
+Data availability                                                                                 [9] H. Naveed, A.U. Khan, S. Qiu, M. Saqib, S. Anwar, M. Usman, N. Akhtar, N. Barnes,
+                                                                                                      A. Mian, A comprehensive overview of large language models, ACM Trans. Intell.
+                                                                                                      Syst. Technol. 16 (2025) 1–72, https://doi.org/10.1145/3744746.
+    Data will be made available on request.                                                      [10] X. Duan, D. Tan, L. Fang, Q. Guan, Y. Zhou, X. Huang, Z. Gong, C. Huang, Towards
+                                                                                                      Geometry Problems Solving Employing {GPT}-4 Vision with Few-Shot Prompting:
+                                                                                                      An Empirical Study of What Matters. https://openreview.net/forum?id=0
+References
+                                                                                                      vKokoPKTo, 2024.
+                                                                                                 [11] A.S. Kulinan, M. Park, P.P.W. Aung, G. Cha, S. Park, Advancing construction site
+ [1] C. Park, F.P. Rahimian, N. Dawood, A. Pedro, L. Dongmin, R. Hussain, M. Soltani,                 workforce safety monitoring through BIM and computer vision integration, Autom.
+     Digitalization in construction, in: Digit. Constr., Routledge, London, 2023, p. 11,              Constr. 158 (2024), https://doi.org/10.1016/j.autcon.2023.105227.
+     https://doi.org/10.1201/9781003408949.                                                      [12] N. Khan, S.F.A. Zaidi, J. Yang, C. Park, D. Lee, Construction work-stage-based rule
+ [2] R. Hussain, A. Pedro, S.F.A. Zaidi, M.S. Abbas, M. Soltani, C. Park, Conceptual                  compliance monitoring framework using computer vision (CV) technology,
+     framework for safety training for migrant construction workers using virtual reality             Buildings 13 (2023) 2093, https://doi.org/10.3390/buildings13082093.
+     techniques, Digit. Constr. Recent Trends Adv. (2023) 93–103, https://doi.org/               [13] J. Xue, X. Hou, Y. Zeng, Review of image-based 3D reconstruction of building for
+     10.1201/9781003408949-6.                                                                         automated construction progress monitoring, Appl. Sci. 11 (2021) 7840, https://
+ [3] U.S. Bureau of Labor Statistics, Census of Fatal Occupational Injuries, US BLS,                  doi.org/10.3390/app11177840.
+     2025. https://www.bls.gov/iif/oshcfoi1.htm (accessed May 5, 2025).                          [14] M. Flah, I. Nunez, W. Ben Chaabene, M.L. Nehdi, Machine learning algorithms in
+ [4] P. Liu, J. Xing, R. Xiong, P. Tang, Sharing Construction Safety Inspection                       civil structural health monitoring: a systematic review, Arch. Comput. Methods
+     Experiences and Site-Specific Knowledge through XR-Augmented Visual                              Eng. 28 (2021) 2621–2643, https://doi.org/10.1007/s11831-020-09471-9.
+     Assistance, 2022, https://doi.org/10.22260/icra2022/0008.                                   [15] W.S. Alaloul, K.M. Alzubi, A.B. Malkawi, M. Al Salaheen, M.A. Musarat,
+ [5] M. Zhang, R. Shi, Z. Yang, A critical review of vision-based occupational health and             Productivity monitoring in building construction projects: a systematic review,
+     safety monitoring of construction site workers, Saf. Sci. 126 (2020) 104658,                     Eng. Constr. Archit. Manag. 29 (2022) 2760–2785, https://doi.org/10.1108/
+     https://doi.org/10.1016/j.ssci.2020.104658.                                                      ECAM-03-2021-0211.
+ [6] S.F.A. Zaidi, J. Yang, M.S. Abbas, R. Hussain, D. Lee, C. Park, Vision-based                [16] A. Mueed Hafiz, G. Mohiuddin Bhat, A survey on instance segmentation: state of
+     construction safety monitoring utilizing temporal analysis to reduce false alarms,               the art, Int. J. Multimed. Inf. Retr. 9 (2020) 171–189, https://doi.org/10.1007/
+     Buildings 14 (2024) 1878, https://doi.org/10.3390/buildings14061878.                             S13735-020-00195-X/TABLES/3.
+ [7] L. Zhang, J. Wang, Y. Wang, H. Sun, X. Zhao, Automatic construction site hazard             [17] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-
+     identification integrating construction scene graphs with BERT based domain                      use by a deep learning method from far-field surveillance videos, Autom. Constr.
+     knowledge, Autom. Constr. 142 (2022) 104535, https://doi.org/10.1016/j.                          85 (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.
+     autcon.2022.104535.                                                                         [18] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn
+ [8] Y. Wang, Vision-assisted behavior-based construction safety: integrating computer                by construction personnel: a deep learning approach and benchmark dataset,
+     vision and natural language processing, Univ. Alberta (2023), https://doi.org/                   Autom. Constr. 106 (2019) 102894, https://doi.org/10.1016/j.
+     10.7939/r3-95vf-g173.                                                                            autcon.2019.102894.
+                                                                                                 [19] A. Tohidifar, S. Fatemeh Saffari, D. Kim, Fake it till you make it: training deep
+                                                                                                      neural networks for worker detection using synthetic data, in: Proc. 29th EG-ICE
+
+
+
+                                                                                            19
+R. Hussain et al.                                                                                                                            Automation in Construction 182 (2026) 106728
+
+     Int. Work. Intell. Comput. Eng., EG-ICE, 2022, pp. 386–396, https://doi.org/                [35] H. Wang, Y. Zhang, X. Yu, An overview of image caption generation methods,
+     10.7146/aul.455.c229.                                                                            Comput. Intell. Neurosci. 2020 (2020) 1–13, https://doi.org/10.1155/2020/
+[20] M. Wang, P. Wong, H. Luo, S. Kumar, V. Delhi, J. Cheng, Predicting safety hazards                3062706.
+     among construction workers and equipment using computer vision and deep                     [36] H. Chen, L. Hou, S. Wu, G. Zhang, Y. Zou, S. Moon, M. Bhuiyan, Augmented reality,
+     learning techniques, in: Proc. 36th Int. Symp. Autom. Robot. Constr 2019, ISARC,                 deep learning and vision-language query system for construction worker safety,
+     2019, pp. 399–406, https://doi.org/10.22260/isarc2019/0054.                                      Autom. Constr. 157 (2024) 105158, https://doi.org/10.1016/j.
+[21] N.D. Nath, A.H. Behzadan, S.G. Paal, Deep learning for site safety: real-time                    autcon.2023.105158.
+     detection of personal protective equipment, Autom. Constr. 112 (2020) 103085,               [37] C. Park, M. Soltani, A. Pedro, J. Yang, D. Lee, R. Hussain, Transforming
+     https://doi.org/10.1016/j.autcon.2020.103085.                                                    construction site safety with isafe: an automated safety management platform, in:
+[22] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, C. Li, Computer vision aided inspection on              Digit. Constr. Recent Trends Adv., 2023, pp. 213–234, https://doi.org/10.1201/
+     falling prevention measures for steeplejacks in an aerial environment, Autom.                    9781003408949-12.
+     Constr. 93 (2018) 148–164, https://doi.org/10.1016/j.autcon.2018.05.022.                    [38] Y. Tian, Q. Ye, D. Doermann, YOLOv12: Attention-Centric Real-Time Object
+[23] Z. Wang, Y. Wu, L. Yang, A. Thirunavukarasu, C. Evison, Y. Zhao, Fast personal                   Detectors. http://arxiv.org/abs/2502.12524, 2025.
+     protective equipment detection for real construction sites using deep learning              [39] OSHA, Safety and Health Regulations for Construction, 29 CFR Par, U.S.
+     approaches, Sensors 21 (2021) 3478, https://doi.org/10.3390/s21103478.                           Department of Labor, 2019. https://www.osha.gov/laws-regs/regulations/standa
+[24] D. Kim, M. Liu, S.H. Lee, V.R. Kamat, Remote proximity monitoring between                        rdnumber/1926.
+     mobile construction resources using camera-mounted UAVs, Autom. Constr. 99                  [40] KOSHA, Occupational Safety and Health Act, Ministry of Employment and Labor,
+     (2019) 168–182, https://doi.org/10.1016/j.autcon.2018.12.014.                                    Republic of Korea. https://www.kosha.or.kr/english/legislation/occupationalSafe
+[25] W.-C. Chern, J. Hyeon, T.V. Nguyen, V.K. Asari, H. Kim, Context-aware safety                     tyAndHealth.do, 2021.
+     assessment system for far-field monitoring, Autom. Constr. 149 (2023) 104779,               [41] S.F.A. Zaidi, R. Hussain, M.S. Abbas, J. Yang, D. Lee, C. Park, iSafe Welding
+     https://doi.org/10.1016/j.autcon.2023.104779.                                                    System: Computer Vision-Based Monitoring System for Safe Welding Work, Firenze
+[26] N. Khan, M.R. Saleem, D. Lee, M.-W. Park, C. Park, Utilizing safety rule correlation             University Press, 2023, pp. 669–675, https://doi.org/10.36253/979-12-215-0289-
+     for mobile scaffolds monitoring leveraging deep convolution neural networks,                     3.66.
+     Comput. Ind. 129 (2021) 103448, https://doi.org/10.1016/j.                                  [42] G. Cai, R. Zhang, H. He, Z. Zhang, D. Ergu, Y. Cao, J. Zhao, B. Hu, Z. Liao, Y. Zhao,
+     compind.2021.103448.                                                                             Y. Cai, MSDet: Receptive Field Enhanced Multiscale Detection for Tiny Pulmonary
+[27] Y. Wang, P.-C. Liao, C. Zhang, Y. Ren, X. Sun, P. Tang, Crowdsourced reliable                    Nodule. http://arxiv.org/abs/2409.14028, 2025.
+     labeling of safety-rule violations on images of complex construction scenes for             [43] O. Rainio, J. Teuho, R. Klén, Evaluation metrics and statistical tests for machine
+     advanced vision-based workplace safety, Adv. Eng. Inform. 42 (2019) 101001,                      learning, Sci. Rep. 14 (2024) 6086, https://doi.org/10.1038/s41598-024-56,706-
+     https://doi.org/10.1016/j.aei.2019.101001.                                                       x.
+[28] S. Anjum, N. Khan, R. Khalid, M. Khan, D. Lee, C. Park, Fall prevention from                [44] H. Saadany, C. Orăsan, BLEU, METEOR, BERTScore: evaluation of metrics
+     ladders utilizing a deep learning-based height assessment method, IEEE Access 10                 performance in assessing critical translation errors in sentiment-oriented text,
+     (2022) 36725–36742, https://doi.org/10.1109/ACCESS.2022.3164676.                                 CoRR (2022) 48–56, https://doi.org/10.26615/978-954-452-071-7_006, abs/
+[29] H. Liu, G. Wang, T. Huang, P. He, M. Skitmore, X. Luo, Manifesting construction                  2109.1.
+     activity scenes via image captioning, Autom. Constr. 119 (2020) 103334, https://            [45] T. Zhang, V. Kishore, F. Wu, K.Q. Weinberger, Y. Artzi, Bertscore: evaluating text
+     doi.org/10.1016/j.autcon.2020.103334.                                                            generation with Bert, in: 8th Int. Conf. Learn. Represent 2020, ICLR, 2020. http
+[30] H. Wu, B. Zhong, B. Medjdoub, X. Xing, L. Jiao, An ontological metro accident case               s://openreview.net/forum?id=SkeHuCVFDr.
+     retrieval using CBR and NLP, Appl. Sci. 10 (2020) 5298, https://doi.org/10.3390/            [46] J. Xu, J. Li, X. Chen, Assessment of technology adoption in construction safety
+     app10155298.                                                                                     management: case study in China, Sci. Prog. 107 (2024), https://doi.org/10.1177/
+[31] H. Wu, B. Zhong, H. Li, P. Love, X. Pan, N. Zhao, Combining computer vision with                 00368504241304198.
+     semantic reasoning for on-site safety management in construction, J. Build. Eng. 42         [47] A.E. Roberts, T.A. Davenport, T. Wong, H.W. Moon, I.B. Hickie, H.M. LaMonica,
+     (2021) 103036, https://doi.org/10.1016/j.jobe.2021.103036.                                       Evaluating the quality and safety of health-related apps and e-tools: adapting the
+[32] W. Fang, P.E.D. Love, L. Ding, S. Xu, T. Kong, H. Li, Computer vision and deep                   mobile app rating scale and developing a quality assurance protocol, Internet
+     learning to manage safety in construction: matching images of unsafe behavior and                Interv. 24 (2021) 100379, https://doi.org/10.1016/j.invent.2021.100379.
+     semantic rules, IEEE Trans. Eng. Manag. 70 (2023) 4120–4132, https://doi.org/               [48] Z. Mustapha, B.B. Akomah, S.K. Ansah, Construction projects success: time, cost,
+     10.1109/TEM.2021.3093166.                                                                        quality and safety, Int. J. Res. Innov. Soc. Sci. VII (2023) 680–688, https://doi.org/
+[33] J. Agbaegbu, O.T. Arogundade, S. Misra, R. Damaševičius, Ontologies in cloud                   10.47772/ijriss.2023.70958.
+     computing—review and future directions, Futur. Internet 13 (2021) 302, https://             [49] R.O. Rey, R.R.S. de Melo, D.B. Costa, Design and implementation of a
+     doi.org/10.3390/fi13120302.                                                                      computerized safety inspection system for construction sites using UAS and digital
+[34] A. Pedro, S. Baik, J. Jo, D. Lee, R. Hussain, C. Park, A linked data and ontology-               checklists – smart inspecs, Saf. Sci. 143 (2021) 105430, https://doi.org/10.1016/j.
+     based framework for enhanced sharing of safety training materials in the                         ssci.2021.105430.
+     construction industry, IEEE Access 11 (2023) 105410–105426, https://doi.org/
+     10.1109/ACCESS.2023.3319090.
+
+
+
+
+                                                                                            20
+

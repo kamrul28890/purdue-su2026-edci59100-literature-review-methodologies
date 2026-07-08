@@ -1,0 +1,1099 @@
+                                                                Automation in Construction 166 (2024) 105602
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                             Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Proactive safety hazard identification using visual–text semantic similarity
+for construction safety management
+Yiheng Wang a, b , Bo Xiao c, * , Ahmed Bouferguene d , Mohamed Al-Hussein d
+a
+  National Center of Technology Innovation for Digital Construction, Huazhong University of Science and Technology, Wuhan 430074, China
+b
+  School of Civil and Hydraulic Engineering, Huazhong University of Science and Technology, Wuhan 430074, China
+c
+  Department of Civil, Environmental, and Geospatial Engineering, Michigan Technological University, Houghton 49931, MI, USA
+d
+  Department of Civil and Environmental Engineering, University of Alberta, Edmonton T6C 2R3, Canada
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Automated safety management in construction can reduce injuries by identifying hazardous postures, actions,
+Behavior-based safety                                     and missing personal protective equipment (PPE). However, existing computer vision (CV) methods have limi­
+Computer vision                                           tations in connecting recognition results to text-based safety rules. To address this issue, this paper presents a
+Natural language processing
+                                                          multi-modal framework that bridges the gap between construction image monitoring and safety knowledge. The
+Image captioning
+Automatic safety hazard identification
+                                                          framework includes an image processing module that utilizes CV and dense image captioning techniques, and a
+                                                          text processing module that employs natural language processing for semantic similarity evaluation. Experiments
+                                                          showed a mean average precision of 49.6% in dense captioning and an F1 score of 74.3% in hazard identifi­
+                                                          cation. While the proposed framework demonstrates a promising multi-modal approach towards automated
+                                                          safety hazard identification and reasoning, improvements in dataset size and model performance are still needed
+                                                          to enhance its effectiveness in real-world applications.
+
+
+
+
+1. Introduction                                                                                personal protective equipment [3], and NLP provides insights into safety
+                                                                                               regulations and guidelines [4]. Together, they facilitate comprehensive
+    Construction sites are inherently dangerous, with numerous safety                          monitoring of behavior and interactions, as well as the identification of
+risks that pose significant threats to workers. In the United States, the                      potential safety hazards.
+construction industry reported >1000 deaths and 75,400 nonfatal in­                                Our approach fills the gap in existing systems, which typically focus
+juries in 2020 [1]. These incidents, often due to inadequate safety                            on either visual cues or textual data. By merging CV and NLP, we
+management and hazard identification, highlight the urgent need to                             enhance the contextual understanding gleaned from visual data and
+address challenges such as the reliance on traditional manual observa­                         automate the interpretation of safety rule texts—key for effective safety
+tion methods. These methods are labor-intensive, prone to human error,                         analysis in the dynamic environment of construction sites. The proposed
+and lack the capability for continuous monitoring.                                             framework includes two modules: (1) an image processing module using
+    Our study tackles the crucial issue of enhancing hazard identification                     CV and dense image captioning technologies to recognize behaviors and
+processes at construction sites. Traditional approaches frequently fall                        interactions, and (2) a text processing module employing NLP to extract
+short due to their manual nature and the absence of continuous moni­                           and analyze semantic meanings from safety regulations and guidelines.
+toring. We aim to address these shortcomings by integrating computer                           This synergistic approach promises a more comprehensive and accurate
+vision (CV) and natural language processing (NLP) tools for more                               hazard identification process, potentially reducing the occurrence of
+effective site monitoring and safety rule analysis.                                            fatal and nonfatal injuries in the construction industry.
+    To overcome these challenges, we propose a construction safety
+management framework that leverages CV and NLP technologies. This
+combination offers unique advantages: CV assists in real-time detection
+of unsafe conditions, such as hazardous postures [2] and the absence of
+
+
+ * Corresponding author.
+   E-mail addresses: yihengw@hust.edu.cn (Y. Wang), boxiao@mtu.edu (B. Xiao), ahmed.bouferguene@ualberta.ca (A. Bouferguene), malhussein@ualberta.ca
+(M. Al-Hussein).
+
+https://doi.org/10.1016/j.autcon.2024.105602
+Received 7 April 2023; Received in revised form 17 June 2024; Accepted 2 July 2024
+Available online 12 July 2024
+0926-5805/© 2024 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+Y. Wang et al.                                                                                                          Automation in Construction 166 (2024) 105602
+
+
+2. Related works                                                                   safety efficiency, significantly reducing the risk of accidents and
+                                                                                   enhancing overall project safety performance.
+2.1. Vision-based construction safety management                                       Image Classification involves the process of identifying objects or
+                                                                                   actions within an image. This technique is widely used to recognize
+    Workers' unsafe behaviors significantly result to hazards [5] on               workers, personal protective equipment (PPE), and specific construction
+construction sites. Traditionally, Behavior-Based Safety (BBS) programs            activities. For instance, Zou and Kim [13] applied a classification algo­
+have been implemented to enhance safety performance in construction                rithm to categorize excavator activities for idle time analysis. Similarly,
+projects and organizations [6,7]. BBS is a strategy that fosters a safety          Golparvar-Fard et al. [14] developed a support vector machine classifier
+partnership between management and employees by identifying and                    algorithm for classifying activities involving earth-moving equipment.
+observing unsafe actions, providing direct feedback to those who engage            In image classification, an entire image is analyzed to produce a single
+in unsafe behaviors, and enhancing future safety awareness and per­                label, resulting in a low label density. Typically, the output label is a
+formance through coaching and training [8,9]. Among these steps, the               single keyword, indicating that the semantic richness of image classifi­
+initial identification of unsafe actions is critical as it triggers the sub­       cation is also low.
+sequent interventions. However, in practice, visually observing unsafe                 Object Detection goes a step further by not only recognizing the
+behavior can be labor-intensive, costly, and sometimes subjective.                 presence of objects within an image but also identifying their categories
+Moreover, documenting any potentially hazardous action or event re­                (e.g., worker, PPE, material) and specific locations. This technique is
+quires filling out a Safety Observation Report (SOR), adding to the                more advanced than image classification because it processes subregions
+managerial and administrative burden [10].                                         of an image. Object detection is crucial for construction safety man­
+    Recently, deep learning (DL) techniques have demonstrated                      agement, enabling the identification of workers without helmets [3]; the
+remarkable capabilities in visual recognition [11,12], rivaling or even            presence of small tools at indoor sites [15]; and the safe zones around
+surpassing human performance. These techniques are particularly adept              workers, man lifts, and cranes in aerial images [16]. Object detection
+at automatically identifying hazardous activities [9] on construction              achieves a higher label density compared to image classification but still
+sites, including image classification, object detection, and image                 offers low semantic richness due to its reliance on single keyword labels.
+captioning. A visual representation (Fig. 1) of these tasks, ranked by                 Image Captioning generates textual descriptions for images, moving
+label density and semantic richness, illustrates their effectiveness. Label        beyond mere keywords to sentences that detail objects, activities, and
+density refers to the number of labels or annotations associated with an           interactions. Lu et al. [17] utilized image captioning to generate text
+image or image segment, where a higher density indicates a more                    descriptions for worker activities and interactions, and Wang et al. [18]
+detailed identification of features within the visual data. Semantic               utilized image captioning for heavy equipment working scenarios. This
+richness, on the other hand, pertains to the depth of meaning extracted            method provides greater semantic information about the scene, offering
+from an image, including detailed context and nuances beyond what is               insights into worker activities, interactions, and equipment usage sce­
+merely visible, ensuring a comprehensive understanding of the scene.               narios. Image captioning surpasses image classification in semantic
+    This shift towards automated construction safety management using              richness, although its label density is limited by its focus on whole-image
+CV techniques not only streamlines the process of recognizing hazardous            analysis.
+situations but also reduces the reliance on manual observations and the                A sophisticated vision-based safety management system necessitates
+subjectivity associated with them. By integrating these advanced tech­             CV technologies that deliver both high semantic richness and label
+nologies, construction sites can potentially achieve a higher level of             density. Semantic richness is essential for understanding the dynamics
+
+
+
+
+                               Fig. 1. Comparison of the label density and semantic richness of various visual recognition tasks.
+
+                                                                               2
+Y. Wang et al.                                                                                                        Automation in Construction 166 (2024) 105602
+
+
+within a scene, including how individuals and objects interact, which is          images and then assessing hazard probabilities using a supervised BERT
+critical for identifying safety risks associated with inappropriate actions       model and safety regulations. Despite promising results, this approach
+and complex spatial-temporal relationships [19]. High label density is            faces limitations due to its reliance on keyword pairs with limited se­
+crucial for accuracy, ensuring that important scene details are not               mantic richness and the need for extensive data collection and model
+overlooked. Recent studies have aimed to produce dense and semanti­               training for supervised learning models.
+cally rich labels. For example, Zhang et al. [20] incorporated interaction
+labels into an object detection model to create a scene graph. However,           2.3. Research gaps and objectives
+these labels were keyword-based rather than natural language de­
+scriptions. Dense captioning [21] emerges as a promising solution, of­                The studies highlighted thus far demonstrate a significant focus on
+fering the potential to generate dense and rich annotations within a              utilizing either CV or NLP techniques in the realm of construction safety
+single model, though it has yet to be widely adopted in vision-based              management. While CV techniques are instrumental in monitoring
+safety management programs.                                                       construction sites, NLP techniques excel in analyzing text-based safety
+                                                                                  regulations and case reports. In our current research, we aim to develop
+2.2. Natural language processing in construction safety                           an integrated method that extracts semantic information from site im­
+                                                                                  ages and automatically identifies safety hazards.
+    Data pertinent to construction safety, including safety regulations,              In this research, two gaps were identified:
+guidelines, construction plans, safety reports, incident logs, and worker
+communications, is often stored in various electronic text formats. These         1) Current image captioning methods struggle to efficiently extract
+records play a critical role in tracking construction project progress,              detailed information (with high label density and semantic richness)
+identifying safety hazards, and fostering better communication between               from construction images. Although some methods can label
+workers and managers. Natural Language Processing (NLP) can analyze                  numerous objects or keywords, they fail to capture the full contex­
+vast quantities of text-based data, such as safety reports and incident              tual information, lacking semantic richness. Conversely, methods
+logs, to uncover patterns and potential hazards [22]. This capability                capable of generating captions with richer semantics do not
+enables construction firms to identify and mitigate safety risks more                comprehensively label all pertinent objects and interactions, hin­
+effectively and efficiently, thereby enhancing safety on construction                dering a thorough analysis of construction images for potential safety
+sites [23]. Similar to CV, NLP offers several techniques for processing              issues.
+text data, including document classification, knowledge extraction, and           2) Most existing methods treat image data and text data as separate
+factor analysis, all of which can significantly improve construction                 entities, not leveraging the potential of integrating visual informa­
+safety management.                                                                   tion from construction images with textual data from safety regula­
+    Document Classification involves sorting documents into predefined               tions. This isolated analysis of data sources diminishes the ability to
+categories or labels, which can help organize construction documents                 identify safety hazards, which often requires cross-referencing visual
+like safety reports, incident logs, and progress reports. This categoriza­           contexts with applicable safety rules.
+tion aids in pattern recognition and decision-making. For example,
+Tixier et al. [24] used network analysis and graph clustering algorithms             To address these gaps, the objectives of this research are as follows:
+to identify potential safety conflicts from injury reports. Zhang [25]
+proposed a deep neural network with word embeddings for automati­                 1) To develop an advanced dense image captioning method tailored for
+cally classifying construction accident causes. Fang et al. [26] developed           construction images that can produce multiple descriptive captions,
+a Deep Learning (DL)-based text classification method using BERT to                  achieving both high label density and semantic richness.
+automate the classification of near-miss incidents in safety reports.             2) To develop a prototype framework that integrates construction
+    Knowledge Extraction aims to automatically draw structured infor­                image data and safety regulation texts. By comparing the semantic
+mation from unstructured or semi-structured texts, extracting entities,              information gleaned from images against the textual safety rules, our
+relationships, and events, and recognizing concepts, themes, and senti­              goal is to enable the automatic identification of potential safety
+ments. In construction safety management, knowledge extraction can                   hazards depicted in construction images.
+restructure complex safety accident narratives into more understand­
+able formats [27], extract content from safety documents to verify                    By achieving these objectives, we anticipate not only filling the
+compliance with safety standards early on and automate the extraction             identified research gaps but also significantly enhancing the capability
+of relationships describing safety requirements [28].                             of construction safety management systems to preemptively identify and
+    Text Mining uses statistical methods to find correlations and patterns        mitigate safety risks through an innovative integration of CV and NLP
+in data, helping to identify underlying factors contributing to safety            technologies.
+incidents or patterns in communications that could signal potential
+hazards. For instance, Kim and Kim [29] analyzed news items to identify           3. Methodology
+factors leading to construction fire accidents, while Xu et al. [30]
+extracted safety risk factors from metro construction accident reports                To extract semantic information about objects, activities, and in­
+using text mining.                                                                teractions, and to link this information to a domain knowledge base for
+    While NLP applications in construction safety have traditionally              identifying hazard causes, we integrated dense image captioning with
+relied on text data, the growing use of digital cameras in the industry           NLP into a cohesive framework. A graphical depiction of the modules
+means that images and videos are becoming increasingly important for              and submodules within our proposed framework is provided in Fig. 2.
+site monitoring. Combining CV and NLP offers a powerful tool for                  This framework comprises two main modules:
+managers, providing a comprehensive view of site safety conditions,
+enhancing hazard identification, and improving overall safety.                    3.1. Image-to-text transformation module
+    For instance, Zhong et al. [31] combining image and text data by
+manually tagging construction scenes in images with predefined cate­                 This module converts image data into textual data. It starts by
+gories and using NLP to extract hazard ontologies from documents.                 identifying several target regions within the construction site image,
+However, they did not apply CV techniques for automatic image pro­                which typically include critical safety management elements like
+cessing. Zhang et al. [20] took a more advanced approach by combining             workers, personal protective equipment (PPE), and tools. Following this,
+CV and NLP to detect safety hazards, first identifying keywords from              the module captures the semantic information within each region,
+
+                                                                              3
+Y. Wang et al.                                                                                                       Automation in Construction 166 (2024) 105602
+
+
+
+
+                                                      Fig. 2. Main modules of the proposed method.
+
+
+articulating it in natural language captions. This ensures that essential        it scales to process larger datasets, maintaining its effectiveness across
+safety-related aspects and their interactions within the image are accu­         different scenarios.
+rately documented.                                                                   The computational flow of the proposed framework is illustrated in
+                                                                                 Fig. 3. Fig. 3a and b correspond to the first module and second module,
+                                                                                 respectively. Subsequent sections will delve into the specifics of each
+3.2. Safety hazard reasoning and identification module                           component and their computational processes, providing clarity on how
+                                                                                 our framework systematically approaches the extraction of semantic
+    The next module is dedicated to reasoning about and identifying              information and hazard identification.
+potential safety hazards. It achieves this by evaluating the semantic
+similarity between the captions generated from the first module and the
+domain knowledge base. This module organizes the captions according              3.3. Visual recognition and description generation
+to individual workers, then employs semantic similarity assessments to
+ascertain whether the depicted actions comply with safety regulations.              In this subsection, we describe the calculation process shown in
+    The architecture of our model is designed to facilitate easy adapta­         Fig. 3a. Initially, an image of a construction site is captured and used as
+tion to various construction environments, ensuring versatility. More­           input. This image undergoes processing, during which semantic infor­
+over, the structure of the model is optimized to remain efficient, even as       mation is extracted in the form of text descriptors for various subregions
+
+
+
+
+                                                 Fig. 3. Computational workflow of the proposed method.
+
+                                                                             4
+Y. Wang et al.                                                                                                            Automation in Construction 166 (2024) 105602
+
+
+within the image. Typically, the image data is represented by a three-              the semantic information is recognized and how the region caption is
+dimensional (3D) tensor.:                                                           generated in the LSTM cells. The LSTM cell performs several calculations
+                                                                                    to encode the necessary information as the hidden state. The hidden
+I ∈ ℝ3×W×H .                                                             (1)
+                                                                                    state transfers the information between cells, meaning that the previous
+                                                                                    cell's hidden state is used to calculate the hidden state of the current time
+3.3.1. Feature extraction                                                           step.
+    The image data are first forwarded to a convolutional neural network                The previous hidden state and previous output word are inputted
+(CNN)-based feature extraction network to obtain the image feature                  into the LSTM cell at the current time step. Caption words are repre­
+map. CNNs are a type of neural network designed to process grid-like                sented by one-hot vectors. The initial hidden state is the region feature
+input and have been used to process image data [11]. The CNN breaks                 vector, and the initial input word is a special word token “<start>”
+down the grid data into smaller feature maps to reflect the visual                  indicating the start of the captioning process:
+properties of the image. The deeper the layer in the CNN, the higher the
+representation level of the image feature in the layer's output. For                ht , ct = LSTM(ht− 1 , xt )
+instance, shallow layers of the CNN identify lines and edges in the image             xt = ct− 1 for t > 0
+when processing images, whereas deeper layers identify shapes, such as                                                                                            (5)
+                                                                                        x0 =< start >
+the overall shape of a safety helmet.
+                                                                                             h0 = v
+V = CNN(I), V ∈ ℝC×H ×W .                                                (2)
+                        ʹ     ʹ
+
+                                                                                    where t is the timestep in the LSTM decoding process, ht is the hidden
+where V is the visual feature map, C is the number of channels of the               state of the decoder at time step t, xt is the input of the LSTM at time step
+feature map, Hʹ and Wʹ are the height and width of the feature map.                 t, ct is the vector representation of the output word at time step t, and v is
+                                                                                    the feature vector of an image subregion.
+3.3.2. Region proposal                                                                   As this method is a dense captioning application, all the region fea­
+    The extracted image feature map is forwarded to a region proposal               tures are forwarded to the LSTM cells to obtain the caption text for each
+network (RPN) to generate target regions in the image. RPN is a CNN                 region.
+proposed by Ren et al. [32] and has been used for object detection. RPN
+uses the sliding window approach, wherein the network generates
+                                                                                    3.4. Caption grouping
+multiple subregions of the input image with different locations, sizes,
+and aspect ratios. These subregions have their counterparts called an­
+                                                                                        In the process of grouping, captions are sorted into distinct clusters
+chor boxes on the extracted feature map. The RPN then uses these an­
+                                                                                    based on the worker they describe. Given that a single image might
+chor boxes to predict whether each anchor box contains an object of
+                                                                                    feature multiple workers, captions can become disorganized and not
+interest and, if so, adjusts the size and position of the bounding box to fit
+                                                                                    properly grouped according to the specific workers they refer to. To
+the object more accurately. This is accomplished using a set of regression
+                                                                                    address this challenge, a grouping method is employed to allocate cap­
+coefficients learned during training:
+                                                                                    tions related to the same worker into a unified cluster. This organization
+B, s = RPN(V), B ∈ ℝn×4 , s ∈ ℝn .                                       (3)        ensures that all captions describing a particular worker are consolidated,
+                                                                                    facilitating easier analysis and identification of their safety status. In this
+   After obtaining the subregions' coordinates B and scores s, the final
+                                                                                    study, the method of overlap measurement was selected for the grouping
+target subregions are filtered out by applying a threshold score, whereas
+                                                                                    task.
+the image feature vectors of the subregions are obtained using another
+                                                                                        The procedure begins with the extraction of main captions that
+small CNN:
+                                                                                    describe the worker. During the caption annotation process, the data
+vi = CNN(V, Bi ), vi ∈ ℝd .                                              (4)        annotator is instructed to denote the main object in the target sub-region
+                                                                                    as the sentence subject in the caption. This implies that sub-regions
+3.3.3. Dense captioning                                                             focusing on workers will feature captions with “worker” as the sen­
+   The region features are forwarded to a long short-term memory                    tence subject. Since the model's predictions are influenced by the style of
+(LSTM)-based recurrent neural network (RNN) to realize semantic in­                 the annotated captions, the output for worker sub-regions will similarly
+formation recognition and extraction. Given the constraints of our                  have “worker” as the primary subject of the caption. The main caption
+dataset size and typical captioning output of 5–10 tokens and based on              extraction process involves filtering out captions that contain the subject
+empirical evidence from our prior comparative study [33], we found                  word “worker,” a task readily accomplished by modern NLP tools such
+LSTM to be a more efficient choice in this study. Fig. 4 illustrates how            as Spacy [34].
+                                                                                        Following the extraction, the bounding boxes associated with the
+
+
+
+
+                                                          Fig. 4. Region caption generation process.
+
+                                                                                5
+Y. Wang et al.                                                                                                            Automation in Construction 166 (2024) 105602
+
+
+remaining captions are compared against the main bounding boxes to                  3.5.2. Word embedding
+compute their intersection area:                                                        In contrast to one-hot vectorization, where word vectors are
+                                                                                    orthogonal, the word embedding method represents words as
+               area(box1 ∩ box2 )
+ratio =                                                                   (6)       continuous-valued vectors in a low-dimensional space where words that
+          min(area(box1 ) , area(box2 ) )
+                                                                                    have similar meanings are spatially close together. The vector repre­
+    An overlap ratio threshold λ is used to determine which main caption            sentation for words is typically trained using large datasets and can
+group the current caption belongs to. In this study, the ratio threshold            capture word context as well as word relationships. A common word
+was set as 0.5. Accordingly, when a caption box had an overlap ratio                embedding training method is Word2Vec [35], which produces a vector
+larger than 0.5 with multiple main boxes, the caption was assigned to               space with a dimensionality of several hundred; each unique word in the
+the main group that has the highest overlap ratio. In contrast, when a              corpus is allocated a matching vector in the space, as illustrated in
+caption box had no overlap ratio larger than 0.5 with any main boxes,               Fig. 5b. Thus, each dimension in the vector space can be used to measure
+the caption was regarded as redundant.                                              a semantic or syntactic property of the word, resulting in semantically
+                                                                                    similar words having close representation vectors.
+
+3.5. Word embedding and sentence embedding                                          3.5.3. Static word embedding
+                                                                                       Word embedding based on Word2Vec is a type of static word
+    As illustrated in Fig. 3b, the NLP-based hazard reasoning and iden­             embedding. Word vectors do not change when used with a different
+tification process includes steps called “static word embedding” and                language corpus, and the same word is always represented by the same
+“contextualized word embedding.” The word embedding steps are                       vector no matter which context it appears in, hence the name “static.”
+essential for the second module as they enable understanding the se­                Word vectors are typically pretrained on a large corpus of text and then
+mantic meaning.                                                                     used as a fixed input for downstream tasks. The use of this type of word
+                                                                                    embedding is illustrated in Fig. 6a. The word embedding lookup table is
+3.5.1. One-hot word vectorization                                                   obtained through the training process. Each time a word vector is
+    Traditionally, machine learning (ML) algorithms utilize one-hot                 required, the program indexes the lookup table to query the corre­
+vectorization to represent words. One-hot vectorization is a method                 sponding word vector. In other words, embeddings do not adapt to the
+used for encoding categorical data as numerical data that can be used as            specificity of sentences or datasets for which the model is being called.
+input to ML models, such as words in a lexicon. This method creates a               Thus, static word embedding represents the semantic characteristics of a
+new dimension for each word in the vocabulary and assigns a binary                  word in a large context scenario and may not provide an accurate rep­
+value (1 or 0 to respectively indicate the presence or absence of the               resentation of the semantic relationship in the current context:
+word. This method produces a high-dimensional and sparse represen­
+                                                                                    S = Word2Vec(C), C = [c1 , c2 , …, cn ]T ,                                    (7)
+tation of the words, with most values being zero. The one-hot vectori­
+zation of several words and the two-dimensional and 3D visualization of             where ci is the one-hot vectorization of the i − th word in a sentence, and
+some of the word vectors are illustrated in Fig. 5a. This method is simple
+                                                                                    S = [s1 , s2 , …, sn ]T is the static word embedding matrix containing static
+and efficient for encoding categorical data but cannot represent the se­
+                                                                                    word vectors in it.
+mantic relationship between words. As shown in Fig. 5a, all the word
+vectors are orthogonal to each other, providing no clue regarding the
+                                                                                    3.5.3.1. Contextualized       word     embedding. Contextualized           word
+relationship between words such as synonyms and antonyms.
+
+
+
+
+                                            Fig. 5. Comparison between one-hot word vectorization and word embedding.
+
+                                                                                6
+Y. Wang et al.                                                                                                      Automation in Construction 166 (2024) 105602
+
+
+
+
+Fig. 6. Comparison between the static word embedding method based on Word2Vec and the contextualized word embedding method based on the trans­
+former network.
+
+
+embedding provides contextualized word vectors that adapt to specific            network trained on various NLP tasks, such as sentiment analysis,
+sentences [36]. Contextualized embedding uses more advanced models               paraphrase identification, and natural language inference. One of the
+to create representations that change depending on the context. Several          key features of the USE is its ability to encode the semantic meaning of a
+contextualized word embedding models are available, such as BERT                 sentence rather than just its surface-level syntax. This means that sen­
+[37], universal sentence encoder (USE) [38], and Sentence-BERT [39].             tences with similar meanings are mapped to similar vectors even if they
+These models are based on the Transformer architecture, which is a type          use different words or structures.
+of neural network proposed by Vaswani et al. [40]. As illustrated in                 The USE is based on a deep neural network architecture called the
+Fig. 6b, contextualized word embedding is achieved using a                       Transformer, which was proposed by Vaswani et al. [40] for machine
+Transformer-based language encoder. Generally, the input of the                  translation tasks and has since become a popular choice for various NLP
+Transformer-based encoder is the static word embedding together with             tasks due to its ability to model long-range dependencies and capture
+the positional encoding that gives the position of a word in a sentence.         global context.
+The Transformer-based encoder is trained on a large language corpus to               In the USE architecture, the main component is the encoder, which is
+learn the parameters for encoding word embeddings. During encoding,              a multilayer Transformer network that processes the input sentence and
+the self-attention mechanism allows the model to focus on certain parts          generates a sequence of hidden states, one for each token in the sen­
+of the input while processing it, thus enabling the model to understand          tence. The pooling layer then aggregates the hidden states into a fixed-
+the context in which words appear and generate better context-sensitive          length vector, which serves as the sentence embedding. The
+embeddings for a given sentence input:                                           Transformer-based encoder is illustrated in Fig. 7.
+                                                                                     The USE can generate text embeddings that can be used for various
+D = Transformer(S), S = [s1 , s2 , …, sn ]T ,                         (8)        natural language understanding tasks. To achieve this, the model is
+                                                                                 trained using a multitask learning framework, where it learns to perform
+where si is the static word embedding of the i − th word in a sentence,
+                                                                                 several tasks simultaneously. This approach helps the model learn a
+and D = [d1 , d2 , …, dn ]T is the static word embedding matrix containing       more general understanding of the input text, resulting in embeddings
+static word vectors in it.                                                       that can be used for multiple tasks. The multitask training process is
+    After word embeddings for the words in a sentence are generated, the         illustrated in Fig. 8.
+vector representation of a given sentence can be obtained by applying                In the question-answering task (Fig. 8a), the model is trained to
+average pooling on the word vectors:                                             predict the correct answer to a given question according to the context
+s = S, d = D.                                                         (9)        provided. This task helps the model learn to understand the semantic
+                                                                                 relationship between questions and answers; this can be useful for other
+                                                                                 tasks that involve understanding the meaning of the text.
+3.6. Universal sentence encoder
+                                                                                     The Stanford Natural Language Inference dataset [41] comprises
+                                                                                 sentence pairs, where each pair is labeled as either entailment, contra­
+   In this study, the USE [38] was used as the contextualized sentence
+                                                                                 diction, or neutral (Fig. 8b). The model is trained to predict the correct
+embedding tool because the USE exhibited better performance on the
+                                                                                 label for each sentence pair; this helps the model learn to recognize
+data and implementation in this study. However, the USE does not
+                                                                                 semantic relationships between sentences. This task enhances the
+outperform other methods such as BERT and Sentence-BERT in all sce­
+                                                                                 model's ability to understand the meaning of the text at a sentence level;
+narios; future research is required to explore different embedding
+                                                                                 this can be useful for tasks that involve comparing sentences.
+methods.
+                                                                                     Furthermore, the model is trained on large-scale unsupervised data
+   The USE is a pretrained DL model that can generate contextualized
+                                                                                 from sources such as Wikipedia and news articles (Fig. 8c). This training
+numerical embeddings of sentences. The USE is based on a deep neural
+
+                                                                             7
+Y. Wang et al.                                                                                                            Automation in Construction 166 (2024) 105602
+
+
+
+
+                                                      Fig. 7. Architecture of the transformer-based encoder.
+
+
+
+
+           Fig. 8. Multitask training in the universal sentence encoder [38]; the tasks and task structures share the same encoder layers and parameters.
+
+
+helps the model learn general language understanding and construct a                 classification, sentiment analysis, and semantic textual similarity. This is
+broader knowledge base. Pretraining on such data exposes the model to                also the reason why a pretrained USE model was utilized as the
+diverse topics, writing styles, and vocabulary, thereby enabling it to               contextualized sentence embedding model in this study.
+generate embeddings that can be used for a wide range of tasks.
+    The combination of the aforementioned tasks helps the USE learn a
+rich understanding of text semantics, thereby allowing it to generate                3.7. Rule compliance checking
+embeddings that capture the meaning of the input text. The final pre­
+training of the USE benefits from this multitask learning approach,                     Rule compliance checking is performed by measuring the semantic
+resulting in embeddings that can be used for tasks such as text                      similarity of the embedding vectors of captions and rules. As discussed in
+                                                                                     Section 3.3, word embedding is a technique that represents words in a
+
+
+
+
+                                  Fig. 9. Graphical illustration of rule compliance checking based on semantic similarity match.
+
+                                                                                 8
+Y. Wang et al.                                                                                                          Automation in Construction 166 (2024) 105602
+
+
+continuous, dense vector space, where each dimension represents some
+semantic or syntactic feature of the word. These vectors, which in the
+context of this study describe the region captions and the safety rule
+corpus, constitute a vector space that enables the evaluation of the se­
+mantic similarity between these two textual pieces of information. This
+process is illustrated in Fig. 9 intuitively.
+    Semantic similarity is a measure of how closely related two words,
+phrases, or sentences are in meaning. The most common approach used
+for calculating semantic similarity is to calculate the cosine similarity of
+the word embeddings of the words or phrases in query and target texts.
+Given the contextualized embedding vectors of both image captions set
+      (                 )                     (                )
+C = dC   1 , d2 , …, dm
+              C       C
+                          and rule sets R = dR  1 , d2 , …, dn , a similarity
+                                                     R       R
+
+
+matrix:
+          ⎡                      ⎤
+         s11     s12   ⋯     s1n
+       ⎢ s21     s22   ⋯     s2n ⎥  [ ]
+Sm×n = ⎢
+       ⎣ ⋮
+                                 ⎥ = sij                                (10)
+                  ⋮    ⋱      ⋮ ⎦
+         sm1     sm2   ⋯     smn
+
+can be obtained by calculating the cosine similarity:
+               (         )                     dCi ⋅dR
+                                                     j
+sij = cosin sim dCi , dR
+                       j                   = ⃦ ⃦⃦       ⃦.              (11)
+                           i=1,…,m;j=1,…,n   ⃦dC ⃦⃦    R⃦
+                                                   ⃦dj ⃦
+                                               i
+
+
+    Rule compliance checking can be regarded as evaluating the se­
+mantic similarity between image captions C and related safety rules R .
+The workflow of checking the compliance between region captions and
+                                                                                            Fig. 10. Dense captioning labeling guidelines and examples.
+related safety rules is displayed in Fig. 9. First, the semantic similarity s
+between each of the region captions and safety rules is calculated and a
+similarity matrix Sm×n is obtained:                                                 such as hammers, wrenches, screwdrivers, power drills, and measuring
+               (        )                                                           tapes. Material subregions were labeled with common construction
+S = cosin sim dC , dR                                                   (12)        materials found on sites, like lumber, concrete, bricks, pipes, and steel
+                                                                                    beams. Objects that were not directly involved in the construction tasks,
+    Next, the semantic similarity vector r is calculated by applying
+                                                                                    such as distant background elements, unused construction vehicles, and
+maximum pooling on the similarity matrix:
+                                                                                    unhandled materials, were not included in the labeling process.
+               [ ]
+                                                                                        To facilitate uniformity in the captioning process, a language tem­
+            ) rj
+         (r =                                                   (13)
+rj = max sij i=1,2,…,m , sij ∈ S                                                    plate was established, requiring each caption to detail the subject,
+                                                                                    operation, and object; additional attributes (e.g., color, number) and
+    After obtaining the similarity vector, the safety rules that must be            context (e.g., surrounding environment information) were also encour­
+complied with can be selected according to a given threshold α ∈ [0, 1].            aged. Prior to model input, images were standardized to a resolution of
+If the similarity score is larger than α, then it can be selected as a safety       224 × 224 pixels and underwent RGB channel normalization, ensuring
+rule that has been complied to:                                                     consistency across the dataset for effective model training and
+       { }
+R ʹ = R j , if rj,j=1,2,…,n ⩾α.                                          (14)       evaluation.
+                                                                                        In addition, we developed an online annotation task schema to assist
+                                                                                    the two-step labeling process, as shown in Fig. 11. In the first step, the
+4. Experiments                                                                      labelers were asked to draw bounding boxes for a set of target object
+                                                                                    categories. In the second step, after each bounding box was annotated on
+4.1. Data preparation and model implementation                                      the image, a query popped up asking the labeler to provide a text
+                                                                                    description for the drawn bounding box, providing semantic informa­
+    We compiled a dataset based on 2000 site images provided by Zhang               tion for the subregion.
+et al. [20], collected from a variety of real-world construction scenarios.             As a result, over10,000 image subregions and captions were labeled.
+Each image was annotated with dense image caption labels, following                 As illustrated in the “example” section of Fig. 10, each image in the
+detailed guidelines and examples as shown in Fig. 10. The target image              dataset has an n × 4 bounding box annotation matrix indicating the
+subregions were categorized into four main classes: human, PPE, tool,               subregion coordinates, where n is the number of subregions. Each image
+and construction materials. The annotations targeted image subregions,              also contains a list of strings, which contains n captions indicating the
+which were classified into four main categories: human, PPE (Personal               captions of each of the subregions. Some statistics about the dataset and
+Protective Equipment), tool, and construction materials, in line with the           the data distribution are provided in Table 1.
+standard practice of validating image datasets from diverse realistic                   We implemented the proposed method in a Python environment by
+sources [42–46]. This approach is recognized for its effectiveness in               using the workflow shown in Fig. 12. In addition to the prepared and
+preventing overfitting issues during the training of deep learning                  annotated image dense captions, we prepared several safety rule sets as
+models.                                                                             presented in Table 2. The rules are considered according to the activities
+    For human subregions, labels were applied to depict construction                included in the image dataset, and fellow studies [45,47]. After labeling
+workers and the actions they were performing, such as walking or lift­              the caption dataset for the construction images, the dataset was
+ing. PPE subregions received labels for commonly used safety equipment              randomly split into the training set and validation set in the 9:1 ratio.
+worn by workers, including hard hats, safety vests, protective gloves,              The training set has 1800 images and the validation set has 200 images.
+safety goggles, face masks, and safety harnesses. Tool subregions were              The dense captioning model was then trained and fine-tuned. We
+annotated with various hand tools prevalent in construction settings,
+
+                                                                                9
+Y. Wang et al.                                                                                                         Automation in Construction 166 (2024) 105602
+
+
+
+
+                                                       Fig. 11. Annotation platform and schema.
+
+
+
+Table 1
+Dataset statistics.
+  Statistic Item                              Detail
+
+  Object Numbers                              worker: 7266
+                                              ppe: 3267
+                                              tool: 1212
+                                              material: 790
+                                              other: 107
+  Total Objects/Total Captions                12,642
+  Average length of captions                  4.59 words
+  Most 10 frequent words                      worker: 12,364 occurrences
+                                              by: 8004 occurrences
+                                              worn: 6674 occurrences
+                                              safety: 3153 occurrences
+                                              helmet: 3018 occurrences
+                                              yellow: 2032 occurrences
+                                              gloves: 1421 occurrences
+                                              on: 1379 occurrences
+                                              glove: 1376 occurrences
+                                              the: 1321 occurrences
+  Least 10 Frequent Words                     black: 5 occurrences
+                                              flag: 3 occurrences
+                                              forklift: 7 occurrences
+                                              vests: 2 occurrences
+                                              jacket: 29 occurrences
+                                              camera: 2 occurrences
+                                              tarpoline: 2 occurrences
+                                              drone: 2 occurrences
+                                              machinery: 30 occurrences
+                                              hoe: 3 occurrences
+  Image numbers of a construction task type   bricking: 314 images
+                                              concreting: 284 images
+                                              height working: 714 images
+                                                                                                        Fig. 12. Implementation workflow.
+                                              rebar work: 349 images
+                                              other: 339 images
+
+                                                                                Table 2
+constructed this model based on the proposed method by using Python             Safety rules used in this study.
+libraries such as PyTorch [48] and TorchVision [49]. We used a pre­              Ruleset     Activity Type          Regulations
+trained ResNet-50 network [50] as the image feature extracting network
+                                                                                 1           Working at a height    1. Worker should wear a helmet.
+as ResNet is a commonly utilized feature extractor. The captions and                                                2. Worker should wear fall-prevention device.
+related rules sets were then fed into the NLP part for sentence embed­           2           Concrete               1. Worker should wear foot-protection boots.
+ding and semantic similarity evaluation. For the NLP, we developed the                                              2. Worker should wear gloves.
+                                                                                                                    3. Worker should wear helmet.
+module by using Python libraries such as HuggingFace Transformer [51]
+                                                                                 3           Brick-laying           1. Worker should wear a safety helmet.
+and spaCy [34]. Furthermore, we used Word2Vec as the static word                                                    2. Worker should wear gloves.
+embedding method and the USE as the contextualized word embedding
+model. In addition, Table 3 provides some key hyper-parameters in the
+model:
+
+
+
+                                                                           10
+Y. Wang et al.                                                                                                         Automation in Construction 166 (2024) 105602
+
+
+           Table 3
+           Key hyperparameters used in this model.                                 5. Results and discussion
+
+             Hyperparameter                               Value
+                                                                                   5.1. Model predictions and evaluation results
+             Caption feature size                         4096
+             LSTM hidden size                             1024
+                                                                                       Examples of the dense captioning output obtained using the model
+             Caption maximum length                       12
+             Caption embedding size                       512                      are shown in Fig. 13; only the target subregions with top 10 confidence
+             Learning rate                                0.0001                   are shown, and the regional captions are sorted according to the confi­
+             Batch size                                   4                        dence rate. The evaluation results for mAP are presented in Table 4. The
+                                                                                   inference speed of the model was around 15 images/s on a single RTX
+                                                                                   3080 Laptop GPU. The proposed model exhibited an mAP of 58.9%
+4.2. Evaluation metrics
+                                                                                   when evaluating only the target-region localization. An et al. [54] re­
+                                                                                   ported a benchmark mAP of 50.64% for a Faster R-CNN model
+    Two objectives have to be achieved when generating regional cap­
+                                                                                   (ResNet50) on the MOCS dataset. This means that the object detection
+tions by using the proposed module: (1) generating well-localized target
+                                                                                   performance of the our model is feasible. When the METEOR threshold
+regions (in object detection tasks); and (2) generating accurate de­
+                                                                                   was considered, the proposed model yielded an mAPcap of 49.6%.
+scriptions (in image captioning tasks). In this study, we utilized the same
+                                                                                       The accuracies of activity classification, hazard identification, and
+evaluation metric used in the original dense captioning study [21] to
+                                                                                   rule reasoning were evaluated. As can be seen from the results presented
+text the performance of the proposed captioning module. This metric is
+                                                                                   in Table 5, the precision scores of the activity classification were 97.0%,
+based on mean average precision (mAP) and Metric for Evaluation of
+                                                                                   95.2%, and 56.1% for bricking, height working, and spreading concrete,
+Translation with Explicit Ordering (METEOR).
+                                                                                   whereas for hazard identification, the precision scores were 76.2%,
+    mAP is a common metric used to evaluate the performance of object
+                                                                                   61.4%, and 69.5%, respectively. The rule reasoning accuracy was
+detection models. It is calculated as the mean of the average precision
+                                                                                   evaluated to determine whether the model correctly predicted the safety
+(AP) for different threshold levels. The threshold is defined as inter­
+                                                                                   rule that had been violated. As can be seen from the analysis results, the
+section of union (IoU), which quantifies the overlap between the
+                                                                                   corresponding score was slightly lower than the hazard identification
+ground-truth (GT) detection bounding box and the predicted (PD) box:
+                                                                                   precision. In addition, some examples of safety hazard identification and
+        area(GT ∩ PD)                                                              rule reasoning are provided in Table 6.
+IoU =                .                                                (15)
+        area(GT ∪ PD)                                                                  In conclusion, leveraging image captioning and semantic similarity
+                                                                                   to automatically identify safety hazards in construction images shows
+    An IoU threshold α ∈ [0, 1] is used to distinguish the true positive
+                                                                                   significant promise. However, this approach is not without its limita­
+(TP), false positive (FP), and false negative (FN) detections. For
+                                                                                   tions. Detailed discussions of failure cases and the primary reasons for
+example, if α = 0.5, then a detected bounding box should have an IoU
+                                                                                   errors are explored in subsequent sections, underscoring the need for
+larger than 0.5 with the ground truth to be considered as a correct
+                                                                                   further research and refinement to boost the method's accuracy and
+detection (i.e., TP). Based on the IoU threshold, for each image in the
+                                                                                   efficiency.
+validation dataset, the model's predicted bounding boxes are compared
+                                                                                       Despite these challenges, our evaluation results affirm the viability of
+with the ground truth annotations to create a set of true positive (TP),
+                                                                                   combining image captioning with semantic similarity analysis to
+false positive (FP), and false negative (FN) detections, and the precision
+                                                                                   pinpoint safety hazards effectively. The system has proven capable of
+and recall are calculated accordingly:
+                                                                                   detecting a substantial number of hazards present in the images,
+Precision = TP/(TP + FP)                                              (16)         underscoring its potential to improve safety management practices on
+                                                                                   construction sites. Our assessments further indicate encouraging
+Recall = TP/(TP + FN)                                                 (17)         adaptability across different scenarios, suggesting that with access to
+                                                                                   larger datasets, the model's ability to recognize activities and relation­
+    AP is the mean of the precision at different recall levels:
+                                                                                   ships could be significantly enhanced.
+         1       ∑                                                                     However, it is important to note that for complex safety regulations,
+APα =                        Precisionα (r)                           (18)
+        11 r∈{0.0,0.1,…,1.0}                                                       relying exclusively on semantic similarity might not be entirely suffi­
+                                                                                   cient. This highlights the necessity for incorporating more nuanced
+mAP is the average of AP at different IoU thresholds:                              analytical techniques or supplementary data sources to accurately
+                                                                                   interpret and apply intricate safety rules, ensuring a comprehensive and
+         1         ∑
+mAP =                              APα                                (19)         effective hazard identification process.
+         5 α∈{0.3,0.4,0.5,0.6,0.7}
+
+    METEOR [52] is a metric used to evaluate the quality of image                  5.2. Failure cases
+captioning models. It is a variant of the BLEU [53] metric, which is
+commonly used in machine translation. METEOR is based on n-gram                        We identified three major causes for the errors: (1) false image
+overlap between the predicted and reference captions but also considers            captioning, which occurs when the system generates a caption that does
+synonyms and paraphrases by using a stemming algorithm and Word­                   not accurately describe the contents of the image; (2) missing image
+Net, a large lexical database of English. METEOR is a more sophisticated           captioning, where the system fails to provide a caption for an object; and
+and robust method than BLEU for evaluating image captioning models                 (3) over-similar word embedding, which occurs when the system cannot
+as it considers synonyms, paraphrases, and word order. In this study, we           distinguish between words in the construction domain. Examples of
+also used a METEOR threshold ε ∈ {0, 0.05, 0.1, 0.15, 0.2, 0.25} to                failure cases along with the associated errors that caused these failures
+distinguish TP, FP, and FN. In addition, we used another mAP score                 are presented in Table 7.
+mAPcap to measure the AP across all pairwise settings of IoU thresholds α
+and METEOR thresholds ε.                                                           5.2.1. False image captioning
+    When conducting checking of the result of activity recognition,                    This error arises when the system generates captions that inaccu­
+hazard identification, and hazard reasoning, F1 metric was also used:              rately describe the image content. The implications of such errors vary;
+                                                                                   when inaccuracies pertain to main worker behaviors, they can lead to
+F1 = 2* Precision* Recall/(Precision + Recall).                       (20)         incorrect safety rule applications, significantly contributing to activity
+
+                                                                              11
+Y. Wang et al.                                                                                                               Automation in Construction 166 (2024) 105602
+
+
+
+
+                                                 Fig. 13. Examples of the dense captioning outputs of the site images.
+
+
+                                                                                          5.2.2. Missing image captioning
+Table 4
+                                                                                               Occurs when the system omits captions for crucial objects (e.g., PPE)
+Evaluation scores for the mean average precision of the dense captioning model.
+                                                                                          or significant subregions. This omission is particularly problematic
+  Model                    mAP       mAPcap     Note                                      when it misrepresents compliance with safety protocols as hazards, due
+                           (%)       (%)
+                                                                                          to the absence of relevant captions. Such errors are notably impactful in
+  This Study               58.9      49.6                                                 specific activities, like “spreading concrete,” where they substantially
+  An et al. [54]           50.6                 This model is an object detection
+                                     –
+                                                                                          reduce the accuracy of hazard identification. For example, the low
+                                                model trained on construction-
+                                                related datasets.                         precision and recall for Concreting Hazard Reasoning in Table 5 mainly
+  Johnson et al. [21]’s    25.3      9.4        This model is a dense captioning          due to the failure to caption safety boots worn by a worker and false
+    model, reproduced                           model trained on general image            predictions of foot protection hazards.
+    by [55]                                     dataset. The reproduced version is             The two aforementioned causes of error identified in this study, that
+                                                coded with the same deep learning
+                                                package and evaluation scripts
+                                                                                          is, false image captioning and missing image captioning, are limitations
+                                                with this study.                          of the image captioning module. The occurrence of false image
+                                                                                          captioning and missing image captioning imply that the image
+                                                                                          captioning module may not have been trained on a sufficiently diverse
+                                                                                          set of construction site images containing numerous potential safety
+Table 5
+Activity recognition, hazard identification, and reasoning accuracy.
+                                                                                          hazards. These limitations can be addressed by improving the efficiency
+                                                                                          of the image captioning module through the optimization of the model
+  Task Type                            Precision (%)      Recall (%)       F1 (%)
+                                                                                          architecture or by increasing the size and diversity of the training
+  Overall Activity Recognition         78.9               90.4             84.3           dataset. Incorporating more data instances into the training dataset will
+  Bricking Activity Recognition        97.0               94.1             95.5
+                                                                                          improve the model's ability to accurately describe safety hazards in
+  Concreting Activity Recognition      56.1               95.8             70.8
+  Height Activity Recognition          95.2               80.0             87.0
+                                                                                          various contexts.
+  Overall Hazard Identification        69.03              80.9             74.3
+  Bricking Hazard Identification       76.2               82.8             79.3           5.2.3. Over-similar word embedding
+  Concreting Hazard Identification     69.5               78.1             73.6               This issue arises when the system fails to differentiate between
+  Height Hazard Identification         61.4               81.8             70.1
+                                                                                          semantically similar words, particularly noticeable with words
+  Overall Hazard Reasoning             58.8               76.0             66.0
+  Bricking Hazard Reasoning            76.7               85.0             80.6           describing PPE items. Due to the functional and semantic similarities
+  Concreting Hazard Reasoning          43.0               59.5             49.9           among many PPE items, the model's word embedding module may
+  Height Hazard Reasoning              56.6               83.3             67.4           generate closely aligned word vectors for these terms, complicating se­
+                                                                                          mantic similarity assessments. Addressing this challenge might involve
+                                                                                          fine-tuning the similarity thresholds or, more effectively, training the
+classification errors. Conversely, false captions related to objects or
+                                                                                          word embedding model on a construction-specific corpus. This tailored
+other image regions can distort semantic similarity matching, poten­
+                                                                                          approach would help the model distinguish between closely related
+tially identifying irrelevant hazards or overlooking actual ones. This
+                                                                                          terms within the construction context, such as different types of PPE,
+undermines both the accuracy of safety hazard identification and the
+                                                                                          enhancing the accuracy of semantic similarity matching and reducing
+reasoning behind safety rule applications.
+                                                                                          errors caused by over-similar word embeddings.
+                                                                                              These identified errors underscore the complexity of automatically
+                                                                                          identifying safety hazards in construction images and suggest pathways
+
+
+                                                                                     12
+Y. Wang et al.                                                                                                            Automation in Construction 166 (2024) 105602
+
+
+Table 6                                                                               natural language processing have paved the way for image captioning
+Examples of image captioning and safety hazard identification.                        models to generate accurate textual descriptions from construction
+  Image                     Captions                 Unsafe?   Violated Rule          scenes. Semantic similarity methods further enable the comparison of
+                                                                                      these captions with safety regulations to reliably identify rule violations.
+                            [“worker laying clay     TRUE      [“worker should
+                            bricks on the wall,”               wear a safety          Our framework leverages the strengths of both approaches, creating a
+                            “gloves worn by the                helmet”]               prototype capable of automated safety hazard identification and
+                            worker,” “brick held                                      reasoning. The success of dense captioning models tailored for con­
+                            by the worker”]                                           struction environments, combined with sophisticated context-aware
+                                                                                      similarity matching, underscores the potential of this method for pro­
+                                                                                      active hazard identification, as demonstrated by our experimental re­
+                                                                                      sults in activity recognition, hazard identification, and safety reasoning.
+                            [“worker laying clay     FALSE     []
+                            bricks on the wall,”                                      5.3.2. Inaccuracies
+                            “yellow safety                                                Despite confirmed feasibility, inaccuracies in image captioning sys­
+                            helmet worn by the
+                                                                                      tems, particularly false and missing captions, can significantly affect
+                            worker,” “gloves
+                            worn by the worker,”                                      safety applications in construction. Such errors risk misidentifying
+                            “brick held by the                                        hazards and misinterpreting safety rules, potentially leading to over­
+                            worker”]                                                  looked hazards or unnecessary interventions. Addressing these inac­
+                                                                                      curacies, perhaps through training on a larger dataset or fine-tuning for
+                            [“worker spreading       FALSE     []                     specific scenarios, is crucial for improving the systems' accuracy and
+                            the concrete mix,”                                        reliability, thereby bolstering their contribution to safety standards
+                            “yellow safety
+                                                                                      maintenance.
+                            helmet worn by the
+                            worker,” “rubber
+                            boots worn by the                                         5.3.3. Reliance on dataset
+                            worker,” “rubber                                              The model's efficacy heavily depends on the quality and diversity of
+                            boots worn by the
+                                                                                      its training dataset. A dataset that encompasses a broad spectrum of
+                            worker,” “concrete
+                            spreader held by the
+                                                                                      construction environments, activities, and safety scenarios is vital for
+                            worker,” “gloves                                          the model's ability to accurately recognize and caption diverse real-
+                            worn by the worker,”                                      world situations. Without this diversity, the model's generalization ca­
+                            “rubber boots worn                                        pabilities may be compromised, leading to inaccuracies in unfamiliar
+                            by the worker”]
+                                                                                      settings. The dataset's quality, in terms of image resolution and caption
+                            [“worker spreading       TRUE      [“worker should
+                            the concrete mix,”                 wear a safety          accuracy, is equally critical for developing a dependable system. A lack
+                            “wheelbarrow                       helmet,”               of quality or diversity can result in a biased or limited system, under­
+                            pushed by the                      “worker should         mining its effectiveness in safety monitoring.
+                            worker,” “gloves                   wear safety
+                            worn by the worker”]               boots”]
+                                                                                      5.3.4. Deployment challenges
+                                                                                          Implementing the proposed method in the dynamic, complex set­
+                                                                                      tings of real-world construction sites poses significant challenges. The
+                            [“worker creating a      TRUE      [“worker should        inherent variability and constant evolution of construction environ­
+                            scaffold at a height,”             wear fall-             ments require a highly adaptable and robust system capable of accu­
+                            “yellow safety                     prevention             rately interpreting various scenarios. Moreover, environmental factors
+                            helmet worn by the                 device”]
+                                                                                      such as dust, noise, and weather variations can impact image quality and
+                            worker,” “gloves
+                            worn by the worker”]                                      caption accuracy, necessitating continuous system calibration and an
+                                                                                      up-to-date dataset reflective of construction realities.
+
+                                                                                      5.3.5. Choice of architecture
+                            [“worker creating a      FALSE     []                        The selection of the captioning architecture is influenced by the
+                            scaffold at a height,”                                    specific needs, scenarios, and constraints of the application. Future
+                            “yellow safety
+                            helmet worn by the
+                                                                                      research might explore alternative decoding architectures, such as
+                            worker,” “fall-                                           Transformer, to better meet these specific requirements.
+                            prevention device
+                            worn by the worker”]                                      5.3.6. Novelty of integration
+                                                                                          Our framework presents unique benefits over methods that rely
+                                                                                      solely on computer vision or NLP. While CV techniques lack the ability
+                                                                                      for semantic reasoning, and NLP methods cannot process visual data,
+for refining the system's accuracy and reliability. Implementing these                our integrated approach harnesses both for enhanced activity under­
+improvements could significantly advance the system's capability to                   standing and data processing. The use of unsupervised similarity
+support safety management on construction sites.                                      matching adds flexibility for adapting to changing safety regulations
+                                                                                      without the need for retraining. Nevertheless, challenges remain in
+                                                                                      accurately perceiving highly complex scenes and sparse language,
+5.3. Discussion                                                                       highlighting the potential of multi-modal approaches and areas for
+                                                                                      further improvement.
+5.3.1. Feasibility
+   The integration of image captioning and semantic similarity tech­                  5.4. Methodological and practical contributions
+niques offers a highly promising avenue for automated safety manage­
+ment in the construction sector. Advances in computer vision and                         The proposed method integrates visual and textual semantic
+
+                                                                                 13
+Y. Wang et al.                                                                                                                 Automation in Construction 166 (2024) 105602
+
+
+Table 7
+Examples of failure cases.
+  Cause                        Image                Captions                                                                             Unsafe?     Violated Rule
+
+  False image captioning                            [“fall-prevention device worn by the worker,” “worker creating a scaffold at a       False       N/A
+    (False caption indicated                        height,” “yellow safety helmet worn by the worker”]
+    by underlining)
+
+
+
+
+  Missing captioning                                [“gloves worn by the worker,” “worker spreading the concrete mix,” “yellow safety    TRUE        [“worker should
+   (Missing caption for                             helmet worn by the worker,” “gloves worn by the worker,” “concrete mix vibrator                  wear safety boots”]
+   rubber boots)
+                                                    held by the worker”]
+
+
+
+
+information for the identification of safety hazards, offering several               safety hazard identification, the dense captioning and visual-text se­
+methodological and practical advantages:                                             mantic similarity techniques have potential applications in various
+                                                                                     construction management areas. For instance, regional descriptions
+5.4.1. Methodological advantages                                                     from dense captioning could automate the generation of daily site re­
+                                                                                     ports or serve as metadata for image archives, facilitating advanced
+5.4.1.1. Enhanced semantic information through dense captioning. The                 information retrieval from image databases. Additionally, the visual-
+method utilizes dense captioning to extract detailed regional de­                    text semantic similarity technique could verify the consistency be­
+scriptions from site images, offering a significant improvement over                 tween manual observation reports and image monitoring records,
+traditional visual recognition models. It provides outputs with higher               ensuring accuracy and reliability in construction documentation.
+label density and semantic richness, delivering comprehensive semantic                   These contributions underscore the method's potential to revolu­
+information about objects, actions, and interactions, including their                tionize safety management practices in the construction industry,
+localization, crucial for effective safety management.                               demonstrating its utility not only in enhancing safety but also in
+                                                                                     broadening the scope of automated construction management
+5.4.1.2. Integration of visual and text data. By transforming image data             applications.
+into text-based regional captions containing semantic information and
+utilizing word embeddings to process these captions, the method                      5.5. Limitations and recommendations
+effectively bridges the gap between visual and text data. This integration
+is pivotal in developing vision-based safety management programs that                   The proposed method, while innovative, has certain limitations and
+can seamlessly utilize both types of data.                                           areas for improvement that need to be addressed:
+
+5.4.1.3. Decoupling of visual recognition and safety hazard identification.          5.5.1. Dataset diversity
+Unlike existing methods, this approach allows for the separate optimi­                   The current dataset, though carefully curated, covers only a limited
+zation of the visual and language modules without altering the overall               set of construction activities and scenarios. It lacks representation of
+architecture. The language module, being unsupervised, maintains its                 unique construction practices, environments, or conditions found in
+robustness amidst changes in safety rules or the introduction of new                 different regions, which may limit the model's ability to generalize
+regulations, offering flexibility and adaptability in safety hazard                  across all construction scenarios globally. Expanding the dataset to
+identification.                                                                      include a more diverse range of construction methodologies and envi­
+                                                                                     ronments from various regions could enhance the model's robustness
+5.4.2. Practical contributions                                                       and applicability.
+
+5.4.2.1. Automation of construction safety management. Traditional                   5.5.1.1. Incorporation of construction safety knowledge. The dense image
+safety management, reliant on manual observations, is both costly and                captioning process relies on generic labels and does not specifically
+inefficient. By employing computer vision technologies for automated                 consider construction safety knowledge, such as insights from incident
+site monitoring, this method enhances efficiency and reduces costs                   reports. Incorporating domain-specific information, such as natural
+associated with construction safety management.                                      language processing of regulations and incident reports, could improve
+                                                                                     the accuracy and richness of the generated captions, thereby enhancing
+5.4.2.2. Enhancement of vision-based safety programs. The method's                   hazard recognition capabilities. Future developments should focus on
+ability to automate hazard identification through the integration of se­             integrating advanced multi-modality technologies to embed construc­
+mantic information extraction techniques enables more efficient safety-              tion safety knowledge more deeply.
+related decision-making. This improvement allows managers to address
+complex safety hazards more effectively, enhancing the overall safety                5.5.1.2. Safety rulesets and NLP techniques. The study utilized simplified
+management process.                                                                  safety rulesets, which may not fully capture the complexity of original
+                                                                                     safety regulations. Exploring other NLP techniques to parse complex
+5.4.2.3. Applicability to broader construction management tasks. Beyond              safety regulations into usable rulesets is necessary. Adopting sentence
+                                                                                     simplification tasks (split-and-rephrase) in NLP could aid in this effort,
+
+                                                                                14
+Y. Wang et al.                                                                                                               Automation in Construction 166 (2024) 105602
+
+
+enabling the translation of complex regulatory language into clear,               semantic knowledge analysis promises substantial practical benefits in
+actionable safety rules.                                                          automating safety protocols within the construction industry.
+
+5.5.1.3. Word embedding models. The Word2Vec-based static model                   CRediT authorship contribution statement
+and the BERT-based contextualized model used in this study were
+designed for general purposes and might not capture specific semantic                Yiheng Wang: Writing – review & editing, Writing – original draft,
+meanings and relationships critical in the construction safety context.           Visualization, Validation, Project administration, Data curation,
+Training word embedding models on a construction-related corpus                   Conceptualization. Bo Xiao: Writing – review & editing, Supervision,
+could significantly improve NLP performance in construction scenarios,            Project administration, Data curation, Conceptualization. Ahmed Bou­
+ensuring more accurate semantic analysis and hazard identification.               ferguene: Supervision, Project administration, Methodology, Concep­
+                                                                                  tualization.   Mohamed       Al-Hussein:    Supervision,    Resources,
+5.5.1.4. Logic and reasoning abilities. The current approach is based on          Investigation, Conceptualization.
+simple, unambiguous safety rules and lacks the ability to handle com­
+plex, context-dependent regulations. Future work could involve inte­              Declaration of competing interest
+grating dense image captions with large language models (LLMs) like
+GPT-3, known for their strong reasoning and inference capabilities.                   The authors declare that they have no known competing financial
+This integration could enable the models to assess compliance and                 interests or personal relationships that could have appeared to influence
+identify risks with greater depth and nuance, moving beyond simple                the work reported in this paper.
+similarity matching to a more comprehensive understanding of safety
+regulations in context.                                                           Data availability
+   Addressing these limitations and exploring these areas for improve­
+ment would significantly enhance the effectiveness, accuracy, and                    All data or models that support the methods and findings of this
+applicability of the proposed method for automated construction safety            study are available from the corresponding author upon reasonable
+management.                                                                       request. In addition, the code and corresponding data preparation pro­
+                                                                                  cess are available on: https://github.com/structron/ConDenseCap.
+6. Conclusion
+                                                                                  Acknowledgements
+    This paper introduced an innovative framework designed to auto­
+matically identify potential safety hazards in construction images by                This work was partly supported by the China Scholarship Council
+leveraging the synergy of image captioning and semantic similarity                under Grant CSC202007970002. The authors would like to express
+techniques. Our primary goal was to devise a methodology capable of               appreciation to the volunteers who participated in collecting the dataset,
+processing visual data from construction sites to effectively pinpoint            and Zhang et al. [20] for sharing the worker image collection.
+risky behaviors or unsafe conditions through comparison with textual
+safety knowledge bases.                                                           References
+    The experimental outcomes underscore the efficacy of our approach
+                                                                                   [1] CPWR, Fatal and Nonfatal Injuries in Construction, CPWR |. https://www.cpwr.co
+in extracting detailed semantic information from construction images                   m/research/data-center/data-dashboards/fatal-and-nonfatal-injuries-in-const
+via dense image captioning and in precisely detecting violations of                    ruction/, 2024 (accessed January 3, 2023).
+regulations by assessing the similarity between captions and safety rules.         [2] B. Sherafat, C.R. Ahn, R. Akhavian, A.H. Behzadan, M. Golparvar-Fard, H. Kim, Y.-
+                                                                                       C. Lee, A. Rashidi, E.R. Azar, Automated methods for activity recognition of
+The framework exhibited classification accuracy scores ranging from                    construction workers and equipment: state-of-the-art review, J. Constr. Eng.
+75% to 93% in recognizing hazardous activities, and it achieved over                   Manag. 146 (2020) 03120002, https://doi.org/10.1061/(ASCE)CO.1943-
+80% accuracy in identifying and reasoning about safety hazards across                  7862.0001843.
+                                                                                   [3] S. Du, M. Shehata, W. Badawy, Hard hat detection in video sequences based on face
+most types of activities. Notably, the model demonstrated adaptability
+                                                                                       features, motion and color information, in: 2011 3rd International Conference on
+to diverse construction settings and hinted at potential scalability with              Computer Research and Development, IEEE, 2011, pp. 25–29, https://doi.org/
+the inclusion of larger datasets. Nonetheless, to fully comprehend and                 10.1109/ICCRD.2011.5763846.
+apply complex safety rules, further integration with sophisticated NLP             [4] S. Raaijmakers, Deep Learning for Natural Language Processing, 1st edition,
+                                                                                       Manning, Shelter Island, NY, 2022. ISBN: 978–1–4842-3685-7.
+methodologies is suggested.                                                        [5] P.E.D. Love, P. Teo, J. Morrison, Unearthing the nature and interplay of quality and
+    This research underscores the practicality of merging computer                     safety in construction projects: an empirical study, Saf. Sci. 103 (2018) 270–279,
+vision with natural language processing to forge an automated system                   https://doi.org/10.1016/j.ssci.2017.11.026.
+                                                                                   [6] T.R. Krause, K.J. Seymour, K.C.M. Sloat, Long-term evaluation of a behavior-based
+dedicated to proactive safety management within the construction                       method for improving safety performance: a meta-analysis of 73 interrupted time-
+domain. The proposed method adeptly utilizes a multi-modal under­                      series replications, Saf. Sci. 32 (1999) 1–18, https://doi.org/10.1016/S0925-7535
+standing of both visual and textual data to pinpoint risks potentially                 (99)00007-7.
+                                                                                   [7] E.S. Geller, Behavior-based safety and occupational risk management, Behav.
+overlooked by manual inspections, thereby facilitating early hazard                    Modif. 29 (2005) 539–561, https://doi.org/10.1177/0145445504273287.
+identification to prevent accidents and enhance worker safety in this              [8] F. Ismail, A.E. Hashim, W. Zuriea, W. Ismail, H. Kamarudin, Z.A. Baharom,
+inherently high-risk field.                                                            Behaviour based approach for quality and safety environment improvement:
+                                                                                       Malaysian experience in the oil and gas industry, Procedia Soc. Behav. Sci. 35
+    Although our study lays a significant groundwork and offers a proof-               (2012) 586–594, https://doi.org/10.1016/j.sbspro.2012.02.125.
+of-concept for subsequent research endeavors, it acknowledges limita­              [9] W. Fang, P.E.D. Love, H. Luo, L. Ding, Computer vision for behaviour-based safety
+tions, such as inaccuracies in captioning within complex scenes and a                  in construction: a review and future directions, Adv. Eng. Inform. 43 (2020)
+                                                                                       100980, https://doi.org/10.1016/j.aei.2019.100980.
+deficiency in advanced reasoning for intricate regulations. As the con­
+                                                                                  [10] D. Oswald, F. Sherratt, S. Smith, Problems with safety observation reporting: a
+struction sector progresses, continuous refinement and adaptation of our               construction industry case study, Saf. Sci. 107 (2018) 35–45, https://doi.org/
+deep learning model are crucial to maintain its relevance and effec­                   10.1016/j.ssci.2018.04.004.
+tiveness in addressing the evolving landscape of construction practices           [11] Y. LeCun, Y. Bengio, G. Hinton, Deep learning, Nature 521 (7553) (2015) 436–444,
+                                                                                       https://doi.org/10.1038/nature14539.
+and safety challenges. Future directions include expanding the image              [12] W. Fang, L. Ding, P.E.D. Love, H. Luo, H. Li, F. Peña-Mora, B. Zhong, C. Zhou,
+dataset, enhancing language processing capabilities, and fine-tuning the               Computer vision applications in construction safety assurance, Autom. Constr. 110
+system to better manage the complexities of on-site environments. With                 (2020) 103013, https://doi.org/10.1016/j.autcon.2019.103013.
+
+further advancements, the combined use of image analytics and
+
+
+                                                                             15
+Y. Wang et al.                                                                                                                              Automation in Construction 166 (2024) 105602
+
+[13] J. Zou, H. Kim, Using hue, saturation, and value color space for hydraulic                  [37] J. Devlin, M.-W. Chang, K. Lee, K. Toutanova, Bert: Pre-Training of Deep
+     excavator idle time analysis, J. Comput. Civ. Eng. 21 (2007) 238–246, https://doi.               Bidirectional Transformers for Language Understanding, arXiv Preprint arXiv:
+     org/10.1061/(ASCE)0887-3801(2007)21:4(238).                                                      1810.04805, 2018.
+[14] M. Golparvar-Fard, A. Heydarian, J.C. Niebles, Vision-based action recognition of           [38] D. Cer, Y. Yang, S. Kong, N. Hua, N. Limtiaco, R.St. John, N. Constant,
+     earthmoving equipment using spatio-temporal features and support vector                          M. Guajardo-Cespedes, S. Yuan, C. Tar, B. Strope, R. Kurzweil, Universal sentence
+     machine classifiers, Adv. Eng. Inform. 27 (2013) 652–663, https://doi.org/                       encoder for english, in: Proceedings of the 2018 Conference on Empirical Methods
+     10.1016/j.aei.2013.09.001.                                                                       in Natural Language Processing: System Demonstrations, Association for
+[15] K. Lee, C. Jeon, D.H. Shin, Small tool image database and object detection                       Computational Linguistics, Brussels, Belgium, 2018, pp. 169–174, https://doi.org/
+     approach for indoor construction site safety, KSCE J. Civ. Eng. (2023), https://doi.             10.18653/v1/D18-2029.
+     org/10.1007/s12205-023-1011-2.                                                              [39] N. Reimers, I. Gurevych, Sentence-BERT: sentence embeddings using siamese
+[16] K. Kim, S. Kim, D. Shchur, A UAS-based work zone safety monitoring system by                     BERT-networks, in: Proceedings of the 2019 Conference on Empirical Methods in
+     integrating internal traffic control plan (ITCP) and automated object detection in               Natural Language Processing and the 9th International Joint Conference on
+     game engine environment, Autom. Constr. 128 (2021) 103736, https://doi.org/                      Natural Language Processing (EMNLP-IJCNLP), Association for Computational
+     10.1016/j.autcon.2021.103736.                                                                    Linguistics, Hong Kong, China, 2019, pp. 3982–3992, https://doi.org/10.18653/
+[17] H. Liu, G. Wang, T. Huang, P. He, M. Skitmore, X. Luo, Manifesting construction                  v1/D19-1410.
+     activity scenes via image captioning, Autom. Constr. 119 (2020) 103334, https://            [40] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A.N. Gomez, Ł. Kaiser,
+     doi.org/10.1016/j.autcon.2020.103334.                                                            I. Polosukhin, Attention is all you need, in: Advances in Neural Information
+[18] Y. Wang, B. Xiao, A. Bouferguene, M. Al-Hussein, H. Li, Vision-based method for                  Processing Systems, Curran Associates, Inc., 2017, in: https://proceedings.neurips.
+     semantic information extraction in construction by integrating deep learning                     cc/paper/2017/hash/3f5ee243547dee91fbd053c1c4a845aa-Abstract.html
+     object detection and image captioning, Adv. Eng. Inform. 53 (2022) 101699,                       (accessed January 10, 2023).
+     https://doi.org/10.1016/j.aei.2022.101699.                                                  [41] S.R. Bowman, G. Angeli, Potts Christopher, C.D. Manning, A Large Annotated
+[19] B.H.W. Guo, Y. Zou, Y. Fang, Y.M. Goh, P.X.W. Zou, Computer vision technologies                  Corpus for Learning Natural Language Inference, arXiv preprint arXiv:1508.05326,
+     for safety science and management in construction: a critical review and future                  https://arxiv.org/abs/1508.05326, 2015.
+     research directions, Saf. Sci. 135 (2021) 105130, https://doi.org/10.1016/j.                [42] M. Yang, C. Wu, Y. Guo, R. Jiang, F. Zhou, J. Zhang, Z. Yang, Transformer-based
+     ssci.2020.105130.                                                                                deep learning model and video dataset for unsafe action identification in
+[20] L. Zhang, J. Wang, Y. Wang, H. Sun, X. Zhao, Automatic construction site hazard                  construction projects, Autom. Constr. 146 (2023) 104703, https://doi.org/
+     identification integrating construction scene graphs with BERT based domain                      10.1016/j.autcon.2022.104703.
+     knowledge, Autom. Constr. 142 (2022) 104535, https://doi.org/10.1016/j.                     [43] S. Hong, J. Yoon, Y. Ham, B. Lee, H. Kim, Monitoring safety behaviors of
+     autcon.2022.104535.                                                                              scaffolding workers using gramian angular field convolution neural network based
+[21] J. Johnson, A. Karpathy, L. Fei-Fei, Densecap: fully convolutional localization                  on IMU sensing data, Autom. Constr. 148 (2023) 104748, https://doi.org/
+     networks for dense captioning, in: 2016, IEEE Conf. Comput. Vision Pattern                       10.1016/j.autcon.2023.104748.
+     Recognit. (2016) 4565–4574, https://doi.org/10.1109/CVPR.2016.494.                          [44] J.P. Cheng, P.K.-Y. Wong, H. Luo, M. Wang, P.H. Leung, Vision-based monitoring
+[22] Y. Ding, J. Ma, X. Luo, Applications of natural language processing in construction,             of site safety compliance based on worker re-identification and personal protective
+     Autom. Constr. 136 (2022) 104169, https://doi.org/10.1016/j.                                     equipment classification, Autom. Constr. 139 (2022) 104312, https://doi.org/
+     autcon.2022.104169.                                                                              10.1016/j.autcon.2022.104312.
+[23] C. Wu, X. Li, Y. Guo, J. Wang, Z. Ren, M. Wang, Z. Yang, Natural language                   [45] H. Chen, L. Hou, S. Wu, G. Zhang, Y. Zou, S. Moon, M. Bhuiyan, Augmented reality,
+     processing for smart construction: current status and future directions, Autom.                  deep learning and vision-language query system for construction worker safety,
+     Constr. 134 (2022) 104059, https://doi.org/10.1016/j.autcon.2021.104059.                         Autom. Constr. 157 (2024) 105158, https://doi.org/10.1016/j.
+[24] A.J.-P. Tixier, M.R. Hallowell, B. Rajagopalan, D. Bowman, Construction safety                   autcon.2023.105158.
+     clash detection: identifying safety incompatibilities among fundamental attributes          [46] J. Kim, S. Chi, Graph neural network-based propagation effects modeling for
+     using data mining, Autom. Constr. 74 (2017) 39–54, https://doi.org/10.1016/j.                    detecting visual relationships among construction resources, Autom. Constr. 141
+     autcon.2016.11.001.                                                                              (2022) 104443, https://doi.org/10.1016/j.autcon.2022.104443.
+[25] F. Zhang, A hybrid structured deep neural network with Word2Vec for                         [47] Y. Ding, M. Liu, X. Luo, Safety compliance checking of construction behaviors using
+     construction accident causes classification, Int. J. Constr. Manag. 22 (2022)                    visual question answering, Autom. Constr. 144 (2022) 104580, https://doi.org/
+     1120–1140, https://doi.org/10.1080/15623599.2019.1683692.                                        10.1016/j.autcon.2022.104580.
+[26] W. Fang, H. Luo, S. Xu, P.E.D. Love, Z. Lu, C. Ye, Automated text classification of         [48] A. Paszke, S. Gross, F. Massa, A. Lerer, J. Bradbury, G. Chanan, T. Killeen, Z. Lin,
+     near-misses from safety reports: an improved deep learning approach, Adv. Eng.                   N. Gimelshein, L. Antiga, A. Desmaison, A. Kopf, E. Yang, Z. DeVito, M. Raison,
+     Inform. 44 (2020) 101060, https://doi.org/10.1016/j.aei.2020.101060.                             A. Tejani, S. Chilamkurthy, B. Steiner, L. Fang, J. Bai, S. Chintala, PyTorch: an
+[27] C.L. Yeung, C.F. Cheung, W.M. Wang, E. Tsui, A knowledge extraction and                          imperative style, high-performance deep learning library, in: Advances in Neural
+     representation system for narrative analysis in the construction industry, Expert                Information Processing Systems, Curran Associates, Inc., 2019. https://papers.nips.
+     Syst. Appl. 41 (2014) 5710–5722, https://doi.org/10.1016/j.eswa.2014.03.044.                     cc/paper_files/paper/2019/hash/bdbca288fee7f92f2bfa9f7012727740-Abstract.
+[28] X. Wang, N. El-Gohary, Deep learning-based relation extraction and knowledge                     html (accessed March 25, 2023).
+     graph-based representation of construction safety requirements, Autom. Constr.              [49] S. Marcel, Y. Rodriguez, Torchvision the Machine-Vision Package of Torch, in:
+     147 (2023) 104696, https://doi.org/10.1016/j.autcon.2022.104696.                                 Proceedings of the 18th ACM International Conference on Multimedia, Association
+[29] J.-S. Kim, B.-S. Kim, Analysis of fire-accident factors using big-data analysis                  for Computing Machinery, New York, NY, USA, 2010, pp. 1485–1488, https://doi.
+     method for construction areas, KSCE J. Civ. Eng. 22 (2018) 1535–1543, https://                   org/10.1145/1873951.1874254.
+     doi.org/10.1007/s12205-017-0767-7.                                                          [50] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, in,
+[30] N. Xu, L. Ma, Q. Liu, L. Wang, Y. Deng, An improved text mining approach to                      IEEE Conf. Comput. Vision Pattern Recognit. 2016 (2016) 770–778, https://doi.
+     extract safety risk factors from construction accident reports, Saf. Sci. 138 (2021)             org/10.1109/CVPR.2016.90.
+     105216, https://doi.org/10.1016/j.ssci.2021.105216.                                         [51] T. Wolf, L. Debut, V. Sanh, J. Chaumond, C. Delangue, A. Moi, P. Cistac, T. Rault,
+[31] B. Zhong, H. Li, H. Luo, J. Zhou, W. Fang, X. Xing, Ontology-based semantic                      R. Louf, M. Funtowicz, J. Davison, S. Shleifer, P. von Platen, C. Ma, Y. Jernite,
+     modeling of knowledge in construction: classification and identification of hazards              J. Plu, C. Xu, T. Le Scao, S. Gugger, M. Drame, Q. Lhoest, A. Rush, Transformers:
+     implied in images, J. Constr. Eng. Manag. 146 (2020) 04020013, https://doi.org/                  state-of-the-art natural language processing, in: Proceedings of the 2020
+     10.1061/(ASCE)CO.1943-7862.0001767.                                                              Conference on Empirical Methods in Natural Language Processing: System
+[32] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: towards real-time object detection             Demonstrations, Association for Computational Linguistics, 2020, pp. 38–45,
+     with region proposal networks, IEEE Trans. Pattern Anal. Mach. Intell. 39 (2017)                 https://doi.org/10.18653/v1/2020.emnlp-demos.6, online.
+     1137–1149, https://doi.org/10.1109/TPAMI.2016.2577031.                                      [52] S. Banerjee, A. Lavie, Meteor: an automatic metric for mt evaluation with improved
+[33] B. Xiao, Y. Wang, S.-C. Kang, Deep learning image captioning in construction                     correlation with human judgments, in: Proceedings of the ACL Workshop on
+     management: a feasibility study, J. Constr. Eng. Manag. 148 (2022) 04022049,                     Intrinsic and Extrinsic Evaluation Measures for Machine Translation and/or
+     https://doi.org/10.1061/(ASCE)CO.1943-7862.0002297.                                              Summarization, Association for Computational Linguistics, Ann Arbor, Michigan,
+[34] M. Honnibal, I. Montani, Spacy: Industrial-Strength NLP, GitHub repository, https                2005, pp. 65–72. https://www.aclweb.org/anthology/W05-0909 (accessed August
+     ://github.com/explosion/spaCy (accessed by June 2024), 2024.                                     29, 2020).
+[35] T. Mikolov, K. Chen, G. Corrado, J. Dean, Efficient Estimation of Word                      [53] K. Papineni, S. Roukos, T. Ward, W.-J. Zhu, Bleu: a method for automatic
+     Representations in Vector Space, arXiv Preprint arXiv:1301.3781, https://arxiv.                  evaluation of machine translation, in: Proceedings of the 40th Annual Meeting of
+     org/abs/1301.3781, 2013.                                                                         the Association for Computational Linguistics, 2002, pp. 311–318, https://doi.org/
+[36] V. Hofmann, J. Pierrehumbert, H. Schütze, Dynamic contextualized word                            10.3115/1073083.1073135.
+     embeddings, in: Proceedings of the 59th Annual Meeting of the Association for               [54] A. Xuehui, Z. Li, L. Zuguang, W. Chengzhi, L. Pengfei, L. Zhiwei, Dataset and
+     Computational Linguistics and the 11th International Joint Conference on Natural                 benchmark for detecting moving objects in construction sites, Autom. Constr. 122
+     Language Processing (Volume 1: Long Papers), Association for Computational                       (2021) 103482, https://doi.org/10.1016/j.autcon.2020.103482.
+     Linguistics, 2021, pp. 6970–6984, https://doi.org/10.18653/v1/2021.acl-                     [55] soloist97, Densecap in Pytorch. https://github.com/soloist97/densecap-pytorch,
+     long.542. Online.                                                                                2023 (accessed October 11, 2023).
+
+
+
+
+                                                                                            16
+

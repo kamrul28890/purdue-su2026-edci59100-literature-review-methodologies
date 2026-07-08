@@ -1,0 +1,854 @@
+                                                                 Automation in Construction 146 (2023) 104702
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                          journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Automatic vision-based calculation of excavator earthmoving productivity
+using zero-shot learning activity recognition
+Chen Chen a, Bo Xiao b, *, Yuxuan Zhang c, Zhenhua Zhu d
+a
+  School of Civil Engineering and Architecture, Zhejiang University of Science and Technology, Hangzhou 310023, China
+b
+  Department of Building and Real Estate, The Hong Kong Polytechnic University, Hung Hom, Kowloon, Hong Kong
+c
+  Department of Civil and Environmental Engineering, University of Alberta, Edmonton T6G 2R3, Canada
+d
+  Department of Civil and Environmental Engineering, University of Wisconsin - Madison, Madison, WI 53706, United States
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Recently, vision-based methods have been widely used to analyze the construction productivity based on onsite
+Vision-based method                                       videos owing to their low cost, simple deployment, and easy maintenance. However, existing vision-based
+Earthmoving projects                                      methods rely on supervised learning for activity recognition, which is computationally intensive owing to the
+Productivity analysis
+                                                          necessity of labeling large-scale training datasets. To address this problem, this paper describes a vision-based
+Zero-shot learning
+Activity recognition
+                                                          method for automatically analyzing excavators' productivities in earthmoving tasks by adopting zero-shot
+                                                          learning for activity recognition. The proposed method can identify activities of general construction ma­
+                                                          chines (e.g., excavators and loaders) without pre-training or fine-tuning. To verify the feasibility, the proposed
+                                                          method has been tested on videos recorded from real construction sites. The accuracy values for activity
+                                                          recognition and productivity evaluation are 86% and 87.8%, respectively.
+
+
+
+
+1. Introduction                                                                                cost and time of earthmoving operations by using sampled GPS data.
+                                                                                               Notably, in these methods, sensors must be installed on either the con­
+    Heavy construction machines (e.g., excavators, trucks, and loaders)                        struction sites or individual construction machines, which is not feasible
+play crucial roles in earthworks for intensively transporting soils and                        or desirable for crowded sites and rented construction machines.
+other materials at construction sites [1]. By continuously monitoring                              With the widespread installation of cameras on construction sites for
+earthmoving operations, project managers can acquire machine activity                          surveillance, they have become ubiquitous devices in the construction
+and productivity information (e.g., number of cycles and idling time),                         industry worldwide. Compared with other sensors, cameras are less
+which is essential for productivity analysis and resource allocation [2].                      costly and can be easily deployed and maintained [9]. Therefore, many
+At present, earthmoving operations are typically monitored through                             vision-based methods [10–12] have been developed for automatic ma­
+manual approaches, which are labor-intensive and time-consuming. To                            chine monitoring and productivity analysis in construction tasks. The
+overcome these limitations, information technologies have been intro­                          existing vision-based methods detect and track earthmoving machines
+duced to automatically analyze earthmoving productivities by recog­                            (e.g., excavators) from videos and then recognize machine activities
+nizing the construction machine activities [3].                                                using deep learning methods. For example, Xiao and Kang [13] used
+    Several researchers introduced sensor technologies such as the                             three-dimensional (3D) convolutional neural networks (CNNs) for
+Global Positioning System (GPS) [4], ultra-wide band (UWB) [5], and                            recognizing the activities of excavators to calculate the crew pro­
+inertial measurement units (IMUs) [6] to analyze the construction pro­                         ductivities in earthmoving projects. Roberts and Golparvar-Fard [14]
+ductivity. By processing the data retrieved from the sensors installed on                      proposed an end-to-end framework for calculating the productivities of
+construction machines for tracking their locations and movements in                            earthmoving machines by integrating detection, tracking, and activity
+earthmoving projects, the activities and working cycles of the con­                            analyses. Overall, the development of a robust activity recognition
+struction machines can be estimated. For example, Teizer et al. [7] used                       method is the fundamental step for automatic productivity analysis in
+UWB for the automatic localization of earthmoving machines for pro­                            earthmoving projects
+ductivity analysis. Moreover, Alshibani and Moselhi [8] estimated the                              Most of the existing methods for vision-based productivity analyses
+
+
+    * Corresponding author.
+      E-mail addresses: chen.c@zust.edu.cn (C. Chen), eric.xiao@polyu.edu.hk (B. Xiao), yuxuan.zhang@ualberta.ca (Y. Zhang), zzhu286@wisc.edu (Z. Zhu).
+
+https://doi.org/10.1016/j.autcon.2022.104702
+Received 6 June 2022; Received in revised form 19 November 2022; Accepted 1 December 2022
+Available online 7 December 2022
+0926-5805/© 2022 Elsevier B.V. All rights reserved.
+C. Chen et al.                                                                                                         Automation in Construction 146 (2023) 104702
+
+
+rely on supervised learning to recognize the activities of construction            whether the machine is performing excavations in the working zone.
+machines, which involves two limitations: 1) The performance of the                    To solve this problem, kinematic sensors such as accelerometers and
+construction machine activity recognition depends on the quality and               IMUs have been adopted for automatic productivity analyses in con­
+quantity of human-created datasets. However, the availability of high-             struction sites. Akhavian and Behzadan [22] attached 3D orientation
+quality visual data is limited in construction management. Moreover,               sensors on the bed of a truck and boom of a loader. The activities (e.g.,
+frame-level annotation of the detailed activities of a machine object is           boom raising) were recognized by analyzing the change in the angles.
+labor-intensive. 2) The generalizability of the existing activity recogni­         Mathur et al. [23] mounted IMU sensors inside an excavator cabin to
+tion methods is low because a model trained for a specific type of con­            capture the vibration signals of the engine. Subsequently, the frequency
+struction machine cannot be simply extended to other machines. For                 features of the signals were extracted and classified to determine the
+example, a deep learning model trained to recognize excavator activities           cycle time of the excavator. Similar to RTLS methods, kinematic
+cannot be applied for recognizing the activity of loaders.                         methods necessitate the installation of sensors on construction ma­
+    To overcome the abovementioned limitations, the main objective of              chines, which is not economically feasible in large-scale projects.
+this research is to propose an automatic vision-based method for                       Audio methods recognize machine activities by classifying the fea­
+calculating the excavator earthmoving productivity based on zero-shot              tures of audio signals [24]. For example, Cheng et al. [18] developed a
+learning for activity recognition. Zero-shot learning is an artificial in­         framework to recognize machine activities by installing microphones on
+telligence concept through which models pre-trained on daily life                  excavators, dozers, and loaders and analyzing the audio signals with the
+datasets can perform well in even unfamiliar scenarios (e.g., construc­            support vector machine (SVM) classifier. The authors later extended the
+tion scenarios) without being fine-tuned on domain-specific datasets. In           framework by fine-tuning the software and hardware configurations
+this research, a zero-shot learning method named contrastive language-             [19]. Notably, audio methods may not be effective in noisy and crowed
+image pre-training (CLIP) is used for activity recognition. Different from         construction sites. Therefore, although sensor-based methods can enable
+supervised vision-based methods, CLIP learns directly from raw text                the automatic monitoring of construction sites in a reliable manner, the
+regarding images and reference the learned visual information through              installation, deployment, and maintenance of sensors are challenging,
+natural, thereby leveraging a broader source of supervision. In the                especially in large-scale projects.
+proposed method, first, the excavators are detected and tracked to
+obtain their locations in video frames. The zero-shot learning classifier is       2.2. Vision-based methods in the construction domain
+applied to the tracked excavators to recognize their activities (e.g.,
+excavating and loading) in each frame. According to the tracking and                   Compared with sensor data, video footage is more accessible, given
+activity recognition results, the productivity of the excavators in                the widespread use of cameras in construction sites. Furthermore,
+earthmoving projects can be automatically calculated. The proposed                 cameras are less expensive and can be more easily deployed than sensors
+method can reduce the time and cost required for developing annotated              (e.g., laser scanners and GPS). With the rapid development of computer
+datasets for the vision-based monitoring of construction sites. Further­           vision technologies, the performance of vision-based methods in con­
+more, the proposed method can be easily expanded to analyze the                    struction management contexts has significantly improved. The existing
+productivity of other construction machines (e.g., loaders) without pre-           vision-based methods for monitoring earthmoving operations can be
+training or fine-tuning. To the best of the authors' knowledge, this study         divided into feature-based, tracking-based, and spatial-temporal CNN-
+represents the first attempt at applying the zero-shot learning method in          based methods.
+vision-based monitoring of construction sites.                                         Feature-based methods extract image features from consecutive
+                                                                                   construction videos and encode them to fixed-length vectors to classify
+2. Literature review                                                               the activities of construction machines for productivity analyses. Gong
+                                                                                   et al. [25] used the histogram of optical flow and histogram of oriented
+    Continuous monitoring of construction sites by information tech­               gradients (HOG) methods to extract features from earthmoving videos
+nologies can facilitate construction management in terms of improved               and a Bayesian network to recognize the excavator activity for pro­
+productivity, reduced safety risks, and accelerated project delivery. This         ductivity estimation. Similarly, Golparvar-Fard et al. [12] used the 3D
+section outlines the existing research related to the automatic moni­              HOG technique for feature extraction and the SVM framework as the
+toring of construction sites for activity recognition and productivity             classifier to recognize the digging, swinging, hauling, and dumping ac­
+analyses. First, sensor-based monitoring methods are introduced, and               tivities of excavators in earthmoving projects. Notably, feature-based
+then, vision-based monitoring methods are discussed. Finally, the                  methods are not adequately accurate owing to their sensitivity to illu­
+research gaps are highlighted to clarify the motivation and objectives of          mination condition variations in construction videos.
+this study.                                                                            Tracking-based methods track construction machines from videos to
+                                                                                   obtain their trajectories for activity recognition and productivity ana­
+2.1. Sensor-based monitoring methods                                               lyses. Because these methods explore the contextual information in
+                                                                                   construction videos, they are more robust than feature-based methods.
+    Sensor-based methods monitor construction sites by analyzing the               For instance, Bügler et al. [26] used the Gaussian mixture model to track
+position and movement data of construction machines collected from                 excavators and trucks in earthmoving videos. If the pixel distance be­
+sensors. These methods can be categorized as real-time location systems            tween an excavator and a truck was less than a pre-defined threshold,
+(RTLS) methods [5,7,15,16], kinematic methods [1,17], pr audio                     the excavator activity was recognized as loading, and the productivities
+methods [18,19]. RTLS methods combine the data of positioning sensors              were automatically calculated. Kim et al. [27] applied a HOG-based
+(e.g., GPS and UWB) with the geographical information of the site to               detector to obtain the positions of excavators and trucks. Subse­
+estimate the activity and productivity of a certain construction machine.          quently, the working and idling activities were recognized based on the
+For example, Montaser et al. [20] attached GPS sensors on trucks to                change in the centroid coordinates of the machine objects in continuous
+obtain their trajectories. Subsequently, the hauling and returning ac­             frames. Notably, in this methods, the thresholds must be pre-defined in a
+tivities were identified for calculating the truck productivities in               case-by-case manner for recognizing machine activities, which is
+earthmoving tasks. Vahdatikhaki and Hammad [21] used UWB to esti­                  inconvenient in practice.
+mate the activities of excavators and trucks by dividing construction site             Recently, spatial-temporal CNN-based methods have achieved sig­
+into excavation, hauling, loading, and dumping regions. Notably, RTLS              nificant success in activity recognition and productivity analysis tasks in
+methods cannot accurately estimate the earthmoving productivities                  the construction automation field. Spatial-temporal CNNs are end-to-
+because the positioning information alone cannot be used to confirm                end deep neural networks that learn both spatial and temporal
+
+                                                                               2
+C. Chen et al.                                                                                                       Automation in Construction 146 (2023) 104702
+
+
+information from continuous video frames. Compared with other                      The findings can help demonstrate the feasibility of zero-shot
+methods, spatial-temporal CNNs are more accurate when trained with                 learning in earthmoving productivity analyses.
+human-created activity datasets. Kim and Chi [11] created a 10-layer
+neural network that combined a CNN and long short-term memory                   3. Methodology
+network (LSTM) to recognize the digging, dumping, and hauling activ­
+ities of excavators. Recognition accuracies of 79.8%, 90.9%, and 93.8%              A novel method that integrates object detection, object tracking,
+were obtained for digging, dumping, and hauling, respectively. More­            activity recognition, and productivity evaluation is developed for
+over, Chen et al. [28] integrated a 3D CNN to recognize the digging,            automatically analyzing the productivity in earthmoving operations.
+swinging, and loading activities of excavators and calculate the earth­         Fig. 1 shows the framework of the proposed method. When a video is
+moving productivities. Accuracies of 87.6% and 83% were achieved in             input to the proposed method, the object detection module recognizes
+activity recognition and productivity analysis tasks, respectively.             the excavator objects from each frame by generating the corresponding
+Although spatial-temporal CNN-based methods are highly accurate, the            pixel locations of these objects. These detection results are input to the
+development of training datasets is expensive and time-consuming.               object tracking module for associating the excavator objects across
+                                                                                frames, and a unique identification (ID) number is assigned to each
+                                                                                excavator object that appears in the video. The tracked excavator areas
+2.3. Research gaps and objectives                                               are cropped and fed to the activity recognition module to identify the
+                                                                                excavators' activities from one of the following categories: loading,
+    This discussion highlights that vision-based monitoring is a prom­          excavating, and idling. Activity recognition is performed based on zero-
+ising solution for automatically monitoring earthmoving operations.             shot learning that does not require construction-specific datasets for
+Spatial-temporal CNN-based methods can conduct end-to-end activity              training. The activity recognition results are input to the productivity
+recognition with a high accuracy (i.e., over 80%), thereby out­                 evaluation module to estimate the productivity rate and idling time of
+performing other types of vision-based methods. This subsection sum­            the excavators. Typically, the productivity is calculated based on the
+marizes the existing research gaps and objectives of this study.                results of the three modules, and thus, the calculation accuracy depends
+                                                                                on the detection, tracking, and activity recognition results. This process
+2.3.1. Research gaps                                                            can be used to automatically determine the crew productivity in
+   Vision-based methods encounter the following two limitations in              earthmoving operations. The following subsections describe the object
+analyzing the earthmoving productivity:                                         detection, object tracking, activity recognition, and productivity eval­
+                                                                                uation modules.
+1. The development of datasets for training spatial-temporal CNN-
+   based methods is time-consuming and labor-intensive. Researchers             3.1. Object detection
+   must manually collect construction videos, edit video clips, and
+   annotate clips at the frame-level. According to the authors' experi­             The object detection module detects the excavator objects from the
+   ence [13,28,29], the development of a dataset containing 100 video           input video sequences. To this end, it is necessary to use a robust object
+   clips requires over 500 h of manual work over a period of three              detection method that produces precise bounding boxes of excavator
+   months. Owing to the difficulties in dataset development, the sizes of       objects. In this study, the deep learning object detector You Look Only
+   the existing datasets are inadequate (e.g., within 200 clips), which         Once (YOLO-v5) [30] is used for detecting excavators owing to its
+   limits the performance of spatial-temporal CNNs in construction              reliable performance and high processing speed. The reliably of YOLO-
+   tasks.                                                                       v5 in detecting construction-related objects has been previously
+2. The generalizability of the existing vision-based methods is low. In         demonstrated [31–33].
+   other words, a deep learning model trained for a certain type of                 As shown in Fig. 2, YOLO-v5 has an end-to-end detection architec­
+   construction machine cannot be applied to other machines. For                ture that incorporated a cross-stage partial network (CSPNet), path ag­
+   example, the vision-based methods for monitoring the excavators'             gregation network (PANet), and YOLO layer. The CSPNet is the
+   productivity cannot be directly applied for estimating the loaders'          backbone for YOLO-v5 and helps eliminate the problems of repeated
+   productivity. To overcome this problem, researchers must develop a           gradient information in the training stage. The PANet is a feature pyr­
+   new video dataset for loader activities and re-train the activity            amid network with an enhanced bottom-up path that helps improve the
+   recognition model, which is time-consuming and labor-intensive.              detection performance, especially for small-scale objects. The YOLO
+   Thus, the low generalizability reduces the flexibility of vision-            layer generates three types of feature maps (18 × 18, 36 × 36, 72 × 72)
+   based methods in earthmoving projects.                                       for multiple-scale detection to facilitate detection. Notably, in this study,
+                                                                                the YOLO-v5x model is used, given that it has achieved a mean average
+2.3.2. Research objectives                                                      precision (mAP) of 68.9% on the COCO dataset [34] and a processing
+    To fill the abovementioned gaps, this research is aimed at estab­           speed of 82.6 frames per second (fps) on the Amazon Web Services p3.2
+lishing a novel method to calculate the excavator productivity in               large instance.
+earthmoving tasks based on zero-shot learning for activity recognition.             An annotated dataset is required for training deep learning object
+The two key objectives of this study are as follows:                            detectors for domain tasks. In this study, the Alberta Construction Image
+                                                                                Dataset (ACID [29]) is used for training the YOLO-v5 construction ma­
+1. Perform zero-shot learning for recognizing the activities of excava­         chine detector. The ACID contains 10,000 annotated construction im­
+   tors in earthmoving operations and validate the generalizability of          ages of ten types of machines: excavators, compactors, dozers, graders,
+   zero-shot learning methods applied in construction scenarios. Unlike         dump trucks, concrete mixer trucks, wheel loaders, backhoe loaders,
+   the existing activity recognition methods, zero-shot learning does not       tower cranes, and mobile cranes. These images have been collected from
+   require construction-specific training datasets, and thus, the model         online sources (e.g., YouTube, Google Image, and Naver) and onsite
+   can be easily extended to other types of machines.                           sources (e.g., smartphones, drones, and stationary cameras), thereby
+2. Develop a framework for analyzing excavator productivities in                ensuring data diversity. The YOLO-v5 construction machine detector
+   earthmoving projects by integrating object detection, object                 trained on ACID can detect excavator objects from the images input to
+   tracking, and zero-shot learning for activity recognition. The pro­          the object tracking module.
+   posed framework is expected to automatically determine the pro­
+   ductivity and idling time of excavators with a satisfactory accuracy.
+
+                                                                            3
+C. Chen et al.                                                                                                    Automation in Construction 146 (2023) 104702
+
+
+
+
+                                                      Fig. 1. Framework of the proposed method.
+
+
+
+
+                                            Fig. 2. YOLO-v5 network architecture (image reprint from [35]).
+
+
+3.2. Object tracking                                                           [38], data association, and linear assignment. In the first step, tracking
+                                                                               bounding boxes are generated on a certain frame according to the tra­
+    The object tracking module retrieves the excavator trajectories by         jectory information in previous frames. Moreover, YOLO-v5 produces
+associating the detection results across frames. The tracking module           detection bounding boxes for this frame. In this second step, a matrix is
+assigns a unique and consistent ID for each detected object that appears       built by calculating the intersection over union (IoU) between each pair
+in continuous frames. The activity recognition module can analyze the          of detection and tracking bound boxes. In this manner, the tracking
+changes in the excavator objects in continuous frames to classify their        problem is converted to a linear assignment problem. Finally, the
+activities. In the proposed method, the simple online and real-time            Hungarian algorithm [39] is applied to solve the IoU matrix to produce
+tracking (SORT) method [36] is used for tracking excavators as its             the tracking results for this certain frame. The tracking regions of each
+tracking performance has been noted to be satisfactory on the MOT16            excavator object in continuous frames are input to the activity recog­
+dataset [37]. Furthermore, SORT relies on only the pixel position in­          nition module.
+formation of objects, and thus, it enables rapid tracking (260 fps) for
+even multiple objects.
+    The SORT method consists of three steps: Kalman filtering prediction
+
+                                                                           4
+C. Chen et al.                                                                                                          Automation in Construction 146 (2023) 104702
+
+
+3.3. Activity recognition                                                          locations of the excavators can be used for identifying whether the
+                                                                                   excavator is idling, as reported previously [13,14,28]. In this study, the
+    The activity recognition module classifies the activities of the tracked       centroid point of the tracked excavator object at frame i is denoted as (xi,
+excavator objects in each frame into either loading, digging, or idling.           yi). The change in the centroid point (di) in frame i can be calculated as
+This module involves two steps, the initial inputs of which are the object         the Euclidean distance of the excavator between frames i and i − fr (Eq.
+tracking results: 1) Process all the frames in the video to identify               1), and the average centroid point change (adi) in fr continuous frames
+whether the excavator is idling; and 2) input all non-idling frames into           can be calculated using Eq. 2, where fr is the frame rate of the video. If
+the zero-shot learning neural networks to identify whether the excavator           adi is smaller than the threshold value d′ , the excavator is identified to be
+is loading or digging.                                                             idling at frame i. Otherwise, this frame is identified to be non-idling.
+    When an excavator is idling, the engine is not operating, and the                                                                     )2̅
+                                                                                         √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+                                                                                          2 (                )2 (
+corresponding tracking boxes change only slightly. Therefore, the pixel            di =       xi − xi− fr + yi − yi− fr                                       (1)
+
+
+
+
+                                                                 Fig. 3. CLIP methodology.
+
+                                                                               5
+C. Chen et al.                                                                                                          Automation in Construction 146 (2023) 104702
+
+
+         1 ∑                                                                       majority voting every fr frames to ensure that the excavator has the same
+ad i =                 dn                                                (2)       activity at every second. Typically, fr is determined based on the oper­
+         fr n∈(i− fr,i]
+                                                                                   ating speed of the excavator and fps of the video. In this study, fr is
+    Subsequently, the non-idling frames are input to the zero-shot                 defined as 25 frames, equivalent to a 1 s video, because the excavators
+learning framework (CLIP) [40] for recognizing loading and digging                 are operating continuously and cannot change their activities in a short
+activities. Using the fed image and several text labels, the CLIP can              period. Moreover, according to site surveillance video observations,
+efficiently predict the text label that corresponds to the image, which            each activity lasts at least 1 s during the operation. Fig. 4 shows an
+can then be used for various tasks such as object classification, object           example of the correction of abnormal activity recognition results. The
+detection, activity recognition, and optical character recognition. As             assumptions in this process are reasonable because the excavator
+shown in Fig. 3, CLIP involves two steps: contrastive pre-training and             movement is slow and consecutive in real earthmoving operations.
+zero-shot prediction.                                                                  After correction, the idling time can be calculated as the number of
+    In pre-training, given a batch of N (image, text) pairs, the image             idling frames divided by the video frame rate fr (Eq. 3). The duration of
+encoder ResNet50 [41] and text encoder Vision Transformer (ViT) [42]               one earthmoving cycle can be estimated as the number of frames be­
+retrieve image features IN and text features TN from each pair of image            tween two adjacent loading activities divided by fr, and the number of
+and text, respectively. The text encoder transfers the features of the             earthmoving cycles is equal to the number of loading activities that
+batch into vectors [T1, T2, …Tn] with (N, dt) dimensions, and the images           appear in the video. Therefore, the excavator productivity can be
+are transferred to the vectors [I1, I, …In] with (N, dI) dimensions. The           calculated using Eq. 4, where the bucket payload per cycle is decided by
+text vector is correlated with the vision vector, for example, T1 is               the manufacturer, and LCY refers to the loose cubic yard.
+correlated with I1. These N corelated pairs are termed positive samples,                           number of idling frames
+and the vectors that are not related are termed negative samples. The              idling time =                                                                (3)
+                                                                                                             fr
+number of negative samples is (N2–N). The positive and negative
+samples can be used as labels for training. The text and image can be                               number of cycles bucket payload
+matched by calculating the cosine similarity between Ti and Ii. In the             productivity =                   ×               (LCY)                       (4)
+                                                                                                       time (h)          cycle
+training stage, a multi-modal embedding space is introduced to jointly
+train the image encoder and text encoder by maximizing the cosine                  4. Implementation, experiment, and result analysis
+similarity of the image and text embeddings in each batch. In the zero-
+shot prediction step, one image and several texts are input to the trained             The proposed method is implemented using Python 3.7 with Opencv
+image and text encoder, respectively. Subsequently, the image and text             4.5 for video input/output (I/O). YOLO-v5 and CLIP are implemented
+are transformed to vectors to calculate the cosine similarity. The text            using the Pytorch library, and SORT is implemented using the filterpy
+with the highest cosine similarity with the image is selected as the               and numpy libraries. All the modules are integrated using a Python
+prediction result. Note that CLIP has been trained with 400 million                wrapper, and the proposed method is tested in an Ubuntu 20.04 64-bit
+(image, text) pairs collected from various publicly available sources on           system environment with acceleration via CUDA Toolkit 11.5 and
+the Internet. To cover as broad a set of visual concepts as possible, a base       cuDNN 8.3.3. The hardware setup involved a computer with two NVI­
+query list (500,00 queries) that contains all the words occurring at least         DIA GeForce RTX 3070 GPUs with 8 GB graphic memory, an Intel Core
+100 times in the English version of Wikipedia was prepared. The (image,            i7-10700KF@3.80 GHz CPU, and two 32 GB memory cards.
+text) pairs whose text is included in the base query were added to the                 Two experiments are conducted to validate the proposed method.
+dataset, and approximately 20,000 (image, text) pairs were added per               The first experiment is aimed at evaluating the feasibility of the zero-
+query. The total word count of the dataset is similar to that of the               shot activity recognition module in construction scenarios. A test data­
+WebText dataset, which contains 8 million documents for 40 GB of text.             set containing 50 short video clips of excavators in earthmoving oper­
+    In this study, two texts, “the excavator is loading dirt to the truck”         ations is collected. The proposed activity recognition module is used to
+(representing loading) and “the excavator is digging dirt from the                 identify the excavator activities in the test dataset. The second experi­
+ground” (representing digging), are used as the text inputs for CLIP. The          ment is aimed at validating the automated productivity analysis capa­
+loading and digging activities can be identified by inputting all non-             bility of the proposed method for long earthmoving videos. In this
+idling frames into the CLIP without fine-tuning. Digging and loading               manner, the overall performance of the proposed object detection,
+activities of the excavator are selected for this task because the exca­           tracking, and activity recognition modules can be evaluated. The
+vator's productivity depends on the number of buckets loaded by the                following subsections describe the experimental setup and results.
+excavator to the trucks. The intermediate activity between digging and
+loading, i.e., swinging, is ignored as its duration is too short to be
+                                                                                   4.1. Activity recognition experiment and results
+recognized.
+                                                                                       The first experiment is aimed at evaluating the performance of the
+3.4. Productivity evaluation                                                       zero-shot learning based activity recognition module (CLIP) in earth­
+                                                                                   moving operations, which is important because the performance of ac­
+   The productivity evaluation module calculates the excavator's pro­              tivity recognition directly affects the accuracy of the productivity
+ductivity and idling time using the activity recognition results. Notably,         calculation. An activity recognition dataset of excavators is established
+the activity recognition results may contain systematic errors [28].               with reference to existing studies [11,28]. Fig. 5 shows example videos
+Therefore, we first correct the activity recognition results by applying           frames from the dataset that contains 50 short video clips of the
+
+
+
+
+                                                 Fig. 4. Abnormal correction for activity recognition results.
+
+                                                                               6
+C. Chen et al.                                                                                                                Automation in Construction 146 (2023) 104702
+
+
+
+
+                                                   Fig. 5. Examples of excavator activity recognition dataset.
+
+
+excavator performing two types of activities (i.e., digging and loading)
+                                                                                     Table 1
+in earthmoving operations. To validate the performance of CLIP in
+                                                                                     Statistical information of excavator test dataset.
+different construction scenarios, the test videos are collected from seven
+construction sites under different viewpoints, colors, and light condi­               Number            Digging                           Loading
+tions of the excavators. Table 1 presents the statistical information of the                            Video time      Frame             Video time      Frame
+test dataset. The duration of the videos is between 3 and 9 s, and all                                  (s)             number            (s)             number
+videos have a framerate of 25 fps. In summary, 6750 video frames with a               1                 5               125               4               100
+resolution of 1280 × 720 pixels are used in this experiment.                          2                 6               150               3               75
+    As described in Section 3, CLIP does not require additional fine-                 3                 4               100               4               100
+                                                                                      4                 5               125               4               100
+tuning with domain-specific datasets because training is performed
+                                                                                      5                 6               150               4               100
+using a general and adequately common large-scale dataset. Two labels                 6                 5               125               4               100
+are input to the CLIP: “the excavator is digging dirt from the ground”                7                 3               75                5               125
+(representing digging) and “the excavator is loading dirt to the truck”               8                 9               225               4               100
+(representing loading). For each testing video, CLIP processes all frames             9                 8               200               3               75
+                                                                                      10                6               150               4               100
+and identifies if the excavator in this frame is digging or loading. Sub­             11                7               175               4               100
+sequently, major voting is applied to smooth the recognition results. If              12                9               225               4               100
+two-thirds of the frames in a video correspond to a certain activity, the             13                5               125               2               50
+video clip is annotated as this activity; otherwise, recognition failure is           14                5               125               6               150
+                                                                                      15                9               225               7               175
+considered to have occurred.
+                                                                                      16                3               75                4               100
+    The experimental results are summarized in Table 2. Three in­                     17                3               75                5               125
+dicators, i.e., accuracy, precision (Eq. 5), and recall (Eq. 6) are applied to        18                7               175               5               125
+validate the performance of the CLIP.                                                 19                7               175               6               150
+                                                                                      20                6               150               6               150
+                   TP                                                                 21                5               125               5               125
+Precision =                                                               (5)
+                 TP + FP                                                              22                6               150               7               175
+                                                                                      23                7               175               9               225
+             TP                                                                       24                6               150               6               150
+Recall =                                                                  (6)         25                6               150               7               175
+           TP + FN
+                                                                                      Average           5.92            148               4.88            122
+                                                                                      Total time (s)    148             –                 122             –
+where TP is the number of true positives, FP is the number of false                   Total frames
+positives, and FN is the number of false negatives. More details                        (s)             –               3700              –               3050
+regarding the concepts of accuracy, precision, and recall can be found in
+the work of Kim et al. [27]. In the experiments, 22 digging video clips
+are successfully recognized with an accuracy of 88%. Moreover, 21
+
+
+                                                                                 7
+C. Chen et al.                                                                                                                     Automation in Construction 146 (2023) 104702
+
+
+Table 2                                                                                 ground truth productivity of Excavator 1 is 69.64 LCY/h. The proposed
+Experimental results for activity recognition.                                          method successfully identifies 36 buckets (productivity of 61.14 LCY/h),
+                 Number of    Correctly      Precision      Recall    Accuracy          and the accuracy is 87.8%. The identified idling time is 43 min 32 s. The
+                 activities   detected       (%)            (%)       (%)               test results demonstrate that the proposed framework can accurately
+                              activities                                                calculate the productivity of excavator from construction surveillance
+  Digging        25           22             95.70          88.00                       videos. Fig. 8 presents example images of the productivity analysis re­
+  Loading        25           21             100.00         84.00                       sults, with the activity recognition results presented as pre-defined text
+  Average/                                                                              labels.
+    total        50           43             97.80          86.00     86.00
+
+                                                                                        5. Discussion
+
+loading video clips are correctly identified with an accuracy of 84%.                       The experimental results show that the proposed method can accu­
+Overall, the proposed activity recognition method achieves an accuracy                  rately recognize the activities of the excavators in earthmoving works.
+of 86%, comparable with that of the existing spatial-temporal CNN                       This section discusses the implications of these results and limitations of
+methods. For example, an activity recognition accuracy of 87% was                       this study.
+achieved in a previous study [28] based on the same evaluation method.
+In other words, the proposed zero-shot learning based activity recog­                   5.1. Detection performance of YOLO-v5
+nition method achieves state-of-the-art accuracy with reduced effort of
+annotating construction-specific datasets and reduced use of computa­                       The proposed method integrates object detection, tracking, and ac­
+tional resources for fine-tuning the deep learning model. Fig. 6 shows                  tivity analysis to automatically calculate the productivity in earth­
+the results of activity recognition of excavators in earthmoving work.                  moving operations. Therefore, the backbone object detector is a core
+The types of activities are indicated in each video frame by the pre-                   component of the proposed method, and its effectiveness influences the
+defined text labels.                                                                    accuracy of productivity calculation results. In this study, the YOLO-v5
+                                                                                        model is used for object detection, which can detect ten types of con­
+4.2. Productivity analysis and results                                                  struction machines after training over ACID. The following experiment
+                                                                                        is conducted to validate the backbone detector performance: YOLO-v5 is
+    The objective of this study is to establish a novel productivity anal­              trained on the ACID training set (80%), and the trained models are
+ysis method for earthmoving construction. Therefore, the capability of                  tested over the ACID validation set (20%). The performance is evaluated
+the proposed method in long earthmoving videos must be evaluated. In                    in terms of the mAP (Eqs. 7 and 8).
+this experiment, a construction video (1 h 3 s) is captured from a real                        1          ∑
+                                                                                        AP =                            Precision@recall                                   (7)
+construction site in Montreal City, Quebec, Canada to validate the per­                        11 recall∈{0,0,1,0.2,…,1}
+formance of the proposed method. Fig. 7 shows example frames of the
+testing video. The framerate of the video is 30 fps, and the resolution is                       1∑
+1920 × 1080. In the video, a Deere 300G LC excavator (Excavator 1)                      mAP =       AP                                                                     (8)
+                                                                                                 N
+(bucket payload of 1.7 LCY) is digging dirt and loading it to dump trucks,
+and another excavator (Excavator 2) is digging and idling. Both exca­                   where precision and recall are determined using Eqs. 5 and 6, respec­
+vators are detected and tracked, and their activities are recognized.                   tively. N refers to the number of classes in the object detection process.
+Because Excavator 2 does not perform loading, the productivity of only                  The detection bounding box is considered to be correct when the IoU
+Excavator 1 is evaluated, and the threshold d′ is set as three pixels for the           between the detected and ground truth is larger than 0.5.
+idling analysis. The sensitivity analysis results for selecting the thresh­                 Table 4 summarizes the performance of YOLO-v5 and two other
+olds for the majority voting algorithm and idling recognition are pre­                  state-of-the-art detection methods (YOLO-v3 [43] and Faster-RCNN
+sented in Appendix A.                                                                   [44]) on the ACID dataset for detecting construction machines. YOLO-
+    Table 3 summarizes the experimental results. Excavator 1 processes                  v5 achieves an mAP of 92.4%, which is higher than those of the other
+41 buckets and has an idling period of 40 min 39 s. Therefore, the                      detection methods. Moreover, YOLO-v5 can effectively detect machines
+
+
+
+
+                                                     Fig. 6. Examples of excavator activity recognition test results.
+
+                                                                                    8
+C. Chen et al.                                                                                                        Automation in Construction 146 (2023) 104702
+
+
+
+
+                                             Fig. 7. Example frames of test video for productivity evaluation.
+
+
+                                                                                  5.2. Generalizability of the proposed method
+Table 3
+Productivity calculation results.
+                                                                                      Because the activity module in the proposed method does not require
+                         Number of buckets   Idling time       Productivity       fine-tuning, it is general enough to be extended for the productivity
+                                                               (LCY/h)
+                                                                                  analysis of other construction machines used in earthmoving work. An
+  Ground truth           41                  40 min 39 s       69.64              experiment is conducted to evaluate the performance of the proposed
+  Proposed method        36                  43 min 32 s       61.14
+                                                                                  activity recognition module for loaders. A testing dataset containing
+  Accuracy               87.8%               93%               87.8%
+                                                                                  video clips of loaders in earthmoving work is generated. Fig. 9 shows
+                                                                                  example images of this test dataset. The dataset has 40 video clips of two
+that are widely employed in earthmoving works (e.g., 87.5% AP for                 activities (i.e., digging and loading) of loaders, collected from 14 con­
+dump trucks and 94.2% AP for excavators). Therefore, YOLO-v5 is a                 struction sites. The framerate and resolution of each video clip are 25 fps
+robust module for the proposed method for vision-based earthmoving                and 1280 × 720 pixels. Table 5 summarizes the dataset information.
+productivity analysis.                                                                The same experimental setup as that described in Section 4.1 is used.
+                                                                                  “The loader is loading dirt to the truck” and “the loader is digging dirt
+                                                                                  from the ground” are input to the activity recognition module as pre-
+                                                                                  defined text labels representing the loading and digging activities,
+
+
+
+
+                                                      Fig. 8. Examples of productivity analysis results.
+
+                                                                              9
+C. Chen et al.                                                                                                              Automation in Construction 146 (2023) 104702
+
+
+Table 4
+Performance analysis of object detection methods in construction.
+  Detection          AP (%)                                                                                                                                  mAP
+  method                                                                                                                                                     (%)
+                     Excavator   Compactor    Dozer    Grader   Dump          Concrete mixer      Wheel           Backhoe       Tower         Mobile
+                                                                truck         truck               loader          loader        crane         crane
+
+  YOLO-v5*           94.2        94.2         94.5     98.9     87.5          96.4                92.9            96.1          80.0          89.3           92.4
+  YOLO-v3            93.5        94.8         89.9     95.1     83.3          94.9                84.6            95.6          62.0          84.5           87.8
+  Faster-RCNN        92.5        92.3         95.6     98.7     81.5          92.6                90.6            95.9          64.4          88.4           89.2
+  *
+      Detection method adopted in the present study.
+
+
+
+
+                                                       Fig. 9. Examples of loader activity recognition dataset.
+
+
+respectively. Fig. 10 shows example results for the activity recognition               5.3. Comparison with other methods
+of loaders in earthmoving works. The results are summarized in Table 6.
+The proposed module correctly identifies 17 digging clips and 16                           To demonstrate the novelty of the proposed method, it is compared
+loading clips, achieving an average accuracy of 82.5% in recognizing the               with existing methods for vision-based earthmoving operation moni­
+loader activities in earthmoving work.                                                 toring. Table 7 presents the comparison results in terms of the publi­
+    The proposed zero-shot learning based method achieved an accuracy                  cation year, method description, target machines, training dataset,
+of more than 80% in recognizing the activities of both excavators and                  activity recognition results, and productivity analysis results. The pro­
+loaders, which demonstrates the generalizability of zero-shot learning in              posed method achieves a high accuracy (over 80%) and does not require
+activity recognition in construction scenarios. Compared with super­                   an extensive training process. In contrast, most of the existing methods
+vised learning methods, zero-shot learning methods can be easily                       require manual effort for collecting and annotating large-scale datasets
+extended to other types of construction activities, thereby reducing the               for training (typically, a few hundred video clips) the activity recogni­
+effort required for training dataset development and model fine-tuning.                tion model. Specifically, the development of such video-based machine
+The proposed productivity analysis method that incorporates zero-shot                  activity recognition datasets requires the trimming of video clips and
+learning can be conveniently applied to evaluate the earthmoving pro­                  annotation of the video clips at the frame level, which are expensive and
+ductivities of multiple types of construction machines. Moreover, the                  time-consuming and may involve copyright and privacy issues.
+zero-shot learning methods can be applied to other vision-based appli­                 Furthermore, the proposed method exhibits reliable performance (ac­
+cations in construction management, e.g., for safety control and pro­                  curacy of 87.8%) in the productivity analysis based on an earthmoving
+ductivity analysis, by recognizing worker activities owing to its high                 video with a duration of 1 h 3 s, which demonstrates the feasibility of
+generalizability.                                                                      using it for monitoring actual construction sites. The speed of activity
+                                                                                       recognition of the proposed method is approximately 20 fps in the
+                                                                                       current configuration, which is considerably higher than that of spatial-
+                                                                                       temporal CNN methods (10 fps) [45] in the same environment.
+
+                                                                                  10
+C. Chen et al.                                                                                                                      Automation in Construction 146 (2023) 104702
+
+
+Table 5                                                                                 performed only for excavators. The feasibility of the proposed method
+Statistical information of test dataset for loader activity recognition.                for other earthmoving machines such as bulldozers, backhoes, and road
+  Video            Digging                         Loading                              rollers was not evaluated owing to the limited resources for testing
+  number                                                                                dataset development. More comprehensive experiments must be con­
+                   Video time     Frame            Video time       Frame
+                   (s)            number           (s)              number              ducted to validate the proposed method.
+
+  1                23             575              9                225
+  2                6              150              9                225
+                                                                                        6. Conclusions
+  3                5              125              8                200
+  4                4              100              8                200                     This paper presented a vision-based monitoring method for pro­
+  5                4              100              8                200                 ductivity analysis. The proposed method contains four major modules:
+  6                2              50               7                175
+                                                                                        object detection, object tracking, activity recognition, and productivity
+  7                2              50               6                150
+  8                5              125              7                175                 evaluation. A zero-shot learning method (CLIP) is introduced to recog­
+  9                4              100              4                100                 nize machine activities in earthmoving tasks. The proposed method can
+  10               3              75               9                225                 recognize the activities of an excavator and a loader with average ac­
+  11               5              125              8                200                 curacies of 86% and 82.5%, respectively. The accuracy is 87.8% when
+  12               9              225              7                175
+  13               11             275              7                175
+                                                                                        testing is performed on a 1 h 3 s earthmoving video captured from a real
+  14               7              175              5                125                 construction site.
+  15               5              125              4                100                     The contributions of this study are three-fold: First, a framework that
+  16               6              150              7                175                 integrates vision-based construction machine detection, tracking, and
+  17               20             500              6                150
+                                                                                        activity recognition methods is developed to automatically determine
+  18               23             575              7                175
+  19               15             375              8                200                 the productivity of construction machines. Second, a database-free
+  20               5              125              6                150                 method, CLIP, is used to recognize the activities of multiple types of
+  Average          8.2            205              7                175                 construction machine such as excavators and loaders. Third, the possi­
+  Total time (s)   164            –                140              –                   bility of applying zero-shot-based methods for construction machine
+  Total frames                    4100                              3500
+                                                                                        monitoring is validated. Owing to the generalizability of zero-shot-based
+                   –                               –
+
+                                                                                        methods, construction machine monitoring can be efficiently
+5.4. Limitations of the proposed method                                                 performed.
+                                                                                            Future work can be focused on addressing the following issues. First,
+    The proposed model involves the following three limitations: (1) In                 the idling identification module must be improved by integrating sensor-
+this given configuration, the idling time is analyzed using an intrinsic                based methods. Second, the activity recognition capability for other
+method, and the threshold must be manually set in different construc­                   types of construction machines (e.g., bulldozers, backhoes, and road
+tion scenarios. This aspect is a general limitation of vision-based                     rollers) and longer videos must be tested. Third, the accuracy of the
+monitoring and can be overcome by using sensors for idling analysis.                    proposed method can be enhanced by introducing attention and
+(2) The accuracy of the proposed method in productivity analyses is
+87.8%. Although this value acceptable, it is slightly lower than those of
+the existing methods based on supervised learning owing to the limi­                    Table 6
+tations of CLIP. The CLIP performance can be enhanced by introducing                    Test results for recognizing loader activities in earthmoving.
+the attention mechanism in its text encoder. (3) The productivity is                                  Number of        Correctly          Precision     Recall     Accuracy
+calculated based on the number of buckets of the excavator. However,                                  activities       detected           (%)           (%)        (%)
+the amount of soil in the bucket may not be equal to the standard                                                      activities
+payload and may vary because of other reasons, such as the operators'                    Digging      20               17                 89.50         85.00
+skill. This is also an inherent limitation of vision-based methods and can               Loading      20               16                 88.90         80.00
+be overcome by installing pressure sensors on the buckets. (4) In this                   Average/
+                                                                                           total      40               33                 89.20         82.50      82.50
+study, the zero-shot learning based activity recognition was evaluated
+only for excavators and loaders, and the productivity analysis was
+
+
+
+
+                                                      Fig. 10. Examples of loader activity recognition test results.
+
+                                                                                   11
+C. Chen et al.                                                                                                                            Automation in Construction 146 (2023) 104702
+
+
+Table 7
+Comparison of the proposed method and existing methods for vision-based productivity analysis in earthmoving operations.
+  Reference          Year   Method                                                           Target               Training dataset for        Activity           Productivity analysis
+                                                                                             machines             activity recognition        recognition        accuracy
+                                                                                                                                              accuracy
+
+  Golparvar-Fard     2013   Histogram of gradients for feature extraction and support        Excavator and        600 video clips             86.3% for          N/A
+   et al. [46]              vector machine (SVM) for activity recognition                    dump truck                                       excavator;
+                                                                                                                                              98.3% for dump
+                                                                                                                                              truck
+  Kim et al. [47]    2018   Tracking–learning–detection (TLD) for machine detection          Excavator and        11,513 frames from          89.4% for          N/A
+                            and tracking and rule-based interaction analysis for activity    dump truck           a 150 min video             excavator;
+                            recognition                                                                                                       93.8% for dump
+                                                                                                                                              truck
+  Kim and Chi [11]   2019   Faster R-CNN for machine detection, TLD for machine              Excavator            72,365 frames from          88.1%              N/A
+                            tracking,                                                                             a 121 min video
+                            and CNN-LSTM for activity recognition
+  Roberts and        2019   ResNetx101 for machine detection,                                Excavator and        514 video clips             86.8% for          N/A
+    Golparvar-              FCNT tracker for machine tracking, and hidden Markov             dump truck                                       excavator;
+    Fard [14]               model with SVM for activity recognition                                                                           88.5% for dump
+                                                                                                                                              truck
+  Chen et al. [28]   2020   YoloV3 for machine detection,                                    Excavator            351 video clips             87.6%              83% for a 60.2 min
+                            Deep SORT for machine tracking, and                                                                                                  earthmoving video
+                            3D CNN for activity recognition
+  Proposed           2022   YoloV5 for machine detection,                                    Excavator and        Not needed                  86% for            87.8% for a 60.03 min
+                            SORT for machine tracking, and                                   loader                                           excavator          earthmoving video
+                            CLIP for activity recognition                                                                                     82.5% for loader
+
+
+
+transformer mechanisms for text and image encoders, respectively.                            Data availability
+
+                                                                                                Data will be made available on request.
+Declaration of Competing Interest
+                                                                                             Acknowledgements
+    The authors declare that they have no known competing financial
+interests or personal relationships that could have appeared to influence                       This research was supported by The Hong Kong Polytechnic Uni­
+the work reported in this paper.                                                             versity (Project ID: P0040522).
+
+
+
+Appendix A. Experiments for threshold selection
+
+Threshold selection for majority voting
+
+    In the majority voting process, the activity recognition results of all frames are fed into the majority voting algorithm. Then, the algorithm is
+implemented with a threshold of 2/3 for activity recognition. In other words, the activity recognized in two-thirds of the frames is regarded as the
+activity of the video. In the existing studies, the majority voting method has been used for smoothing the activity recognition results. In general, if over
+half the frames correspond to the same activity, the video considered to correspond the major activity. When this strategy is applied in this study, an
+accuracy of approximately 100% is obtained. However, in several clips, the number of two activities is identical, which means that the activity
+recognition module is sensitive. To overcome this issue, an experiment is conducted to explore the use of different thresholds. Based on the results
+presented in Table A1, a threshold of 2/3 is selected.
+
+                                     Table A1
+                                     Sensitivity analysis for selecting threshold for majority voting.
+
+                                        Major voting threshold                      1/2                      2/3                         5/6
+
+                                        Digging accuracy (%)                        100                      88                          88
+                                        Loading accuracy (%)                        96                       84                          84
+                                        Average accuracy (%)                        98                       86                          86
+
+
+
+
+Threshold selection for idling identification
+
+   The threshold for idling identification is selected based on the sensitivity analysis results presented in Table A2. When the threshold d’ is larger
+than 3, the idling time becomes longer, more loading and digging are misidentified as idling, and the productivity accuracy decreases.
+
+
+
+
+                                                                                        12
+C. Chen et al.                                                                                                                               Automation in Construction 146 (2023) 104702
+
+                    Table A2
+                    Sensitivity analysis for selecting threshold for idling identification.
+
+                      d’ (pixels)                    Recognized/ground truth number of bucket loadings                           Productivity analysis accuracy (%)
+
+                      1                              30/41                                                                       73.2
+                      2                              32/41                                                                       78.0
+                      3                              36/41                                                                       87.8
+                      4                              35/41                                                                       85.4
+                      5                              35/41                                                                       85.4
+
+
+
+
+References                                                                                      [21] F. Vahdatikhaki, A. Hammad, Framework for near real-time simulation of
+                                                                                                     earthmoving projects using location tracking technologies, Autom. Constr. 42
+                                                                                                     (2014) 50–67, https://doi.org/10.1016/j.autcon.2014.02.018.
+ [1] C.R. Ahn, S. Lee, F. Peña-Mora, Application of low-cost accelerometers for
+                                                                                                [22] R. Akhavian, A.H. Behzadan, An integrated data collection and analysis framework
+     measuring the operational efficiency of a construction equipment fleet, J. Comput.
+                                                                                                     for remote monitoring and planning of construction operations, Adv. Eng. Inform.
+     Civ. Eng. 29 (2015) 04014042, https://doi.org/10.1061/(ASCE)CP.1943-
+                                                                                                     26 (2012) 749–761, https://doi.org/10.1016/j.aei.2012.04.004.
+     5487.0000337.
+                                                                                                [23] N. Mathur, S.S. Aria, T. Adams, C.R. Ahn, S. Lee, Automated cycle time
+ [2] E. Rezazadeh Azar, S. Dickinson, B. McCabe, Server-customer interaction tracker:
+                                                                                                     measurement and analysis of excavator’s loading operation using smart phone-
+     computer vision–based system to estimate dirt-loading cycles, J. Constr. Eng.
+                                                                                                     embedded IMU sensors, in: ASCE 2015 International Conference on Computing in
+     Manag. 139 (2013) 785–794, https://doi.org/10.1061/(ASCE)CO.1943-
+                                                                                                     Civil Engineering, 2015, pp. 215–222.
+     7862.0000652.
+                                                                                                [24] S.K. Gaikwad, B.W. Gawali, P. Yannawar, A review on speech recognition
+ [3] J. Yang, M.-W. Park, P.A. Vela, M. Golparvar-Fard, Construction performance
+                                                                                                     technique, Int. J. Comput. Appl. 10 (2010) 16–24, https://doi.org/10.5120/1462-
+     monitoring via still images, time-lapse photos, and video streams: now, tomorrow,
+                                                                                                     1976.
+     and the future, Adv. Eng. Inform. 29 (2015) 211–224, https://doi.org/10.1016/j.
+                                                                                                [25] J. Gong, C.H. Caldas, C. Gordon, Learning and classifying actions of construction
+     aei.2015.01.011.
+                                                                                                     workers and equipment using Bag-of-Video-Feature-Words and Bayesian network
+ [4] H. Li, Z. Chen, L. Yong, S.C.W. Kong, Application of integrated GPS and GIS
+                                                                                                     models, Adv. Eng. Inform. 25 (2011) 771–782, https://doi.org/10.1016/j.
+     technology for reducing construction waste and improving construction efficiency,
+                                                                                                     aei.2011.06.002.
+     Autom. Constr. 14 (2005) 323–331, https://doi.org/10.1016/j.
+                                                                                                [26] M. Bügler, A. Borrmann, G. Ogunmakin, P.A. Vela, J. Teizer, Fusion of
+     autcon.2004.08.007.
+                                                                                                     photogrammetry and video analysis for productivity assessment of earthwork
+ [5] T. Cheng, M. Venugopal, J. Teizer, P.A. Vela, Performance evaluation of ultra
+                                                                                                     processes, Comput. Aid. Civ. Infrastruct. Eng. 32 (2017) 107–123, https://doi.org/
+     wideband technology for construction resource location tracking in harsh
+                                                                                                     10.1111/mice.12235.
+     environments, Autom. Constr. 20 (2011) 1173–1184, https://doi.org/10.1016/j.
+                                                                                                [27] J. Kim, S. Chi, J. Seo, Interaction analysis for vision-based activity identification of
+     autcon.2011.05.001.
+                                                                                                     earthmoving excavators and dump trucks, Autom. Constr. 87 (2018) 297–308,
+ [6] X. Tao, C. Mao, F. Xie, G. Liu, P. Xu, Greenhouse gas emission monitoring system
+                                                                                                     https://doi.org/10.1016/j.autcon.2017.12.016.
+     for manufacturing prefabricated components, Autom. Constr. 93 (2018) 361–374,
+                                                                                                [28] C. Chen, Z. Zhu, A. Hammad, Automated excavators activity recognition and
+     https://doi.org/10.1016/j.autcon.2018.05.015.
+                                                                                                     productivity analysis from construction site surveillance videos, Autom. Constr.
+ [7] J. Teizer, M. Venugopal, A. Walia, Ultrawideband for automated real-time three-
+                                                                                                     110 (2020), 103045, https://doi.org/10.1016/j.autcon.2019.103045.
+     dimensional location sensing for workforce, equipment, and material positioning
+                                                                                                [29] B. Xiao, S. Kang, Development of an image data set of construction machines for
+     and tracking, Transp. Res. Record J. Transp. Res. Board 2081 (2008) 56–64,
+                                                                                                     deep learning object detection, J. Comput. Civ. Eng. 35 (2021) 05020005, https://
+     https://doi.org/10.3141/2081-06.
+                                                                                                     doi.org/10.1061/(ASCE)CP.1943-5487.0000945.
+ [8] A. Alshibani, O. Moselhi, Productivity based method for forecasting cost & time of
+                                                                                                [30] G. Jocher, A. Chaurasia, A. Stoken, J. Borovec, Y. Kwon, Tao Xie, J. Fang, K.
+     earthmoving operations using sampling GPS data, J. Inform. Technol. Construct. 21
+                                                                                                     Michael Imyhxy, A.V. Lorna, D. Montes, J. Nadar, Tkianai Laughing, Y.X. Nong,
+     (2016) 39–56. http://www.itcon.org/2016/3.
+                                                                                                     P. Skalski, Z. Wang, A. Hogan, C. Fati, L. Mammana, Alex Wang, D. Patel, D. Yiwei,
+ [9] B. Xiao, Z. Zhu, Two-dimensional visual tracking in construction scenarios: a
+                                                                                                     F. You, J. Hajek, L. Diaconu, M.T. Minh, Ultralytics/yolov5: v6.1 - TensorRT,
+     comparative study, J. Comput. Civ. Eng. 32 (2018) 04018006, https://doi.org/
+                                                                                                     TensorFlow Edge TPU and OpenVINO export and inference, Zenodo, 2022, https://
+     10.1061/(ASCE)CP.1943-5487.0000738.
+                                                                                                     doi.org/10.5281/ZENODO.6222936.
+[10] H. Kim, S. Bang, H. Jeong, Y. Ham, H. Kim, Analyzing context and productivity of
+                                                                                                [31] M. Zhou, J. Zhu, X. Li, Safety helmet detection system of smart construction site
+     tunnel earthmoving processes using imaging and simulation, Autom. Constr. 92
+                                                                                                     based on YOLOv5S, in: 2022 7th IEEE International Conference on Intelligent
+     (2018) 188–198, https://doi.org/10.1016/j.autcon.2018.04.002.
+                                                                                                     Computing and Signal Processing, xxx, 2021, pp. 1223–1228.
+[11] J. Kim, S. Chi, Action recognition of earthmoving excavators based on sequential
+                                                                                                [32] Z. Jin, P. Qu, C. Sun, M. Luo, Y. Gui, J. Zhang, H. Liu, DWCA-YOLOv5: an improve
+     pattern analysis of visual features and operation cycles, Autom. Constr. 104 (2019)
+                                                                                                     single shot detector for safety helmet detection, J. Sensors 2021 (2021) 1–12,
+     255–264, https://doi.org/10.1016/j.autcon.2019.03.025.
+                                                                                                     https://doi.org/10.1155/2021/4746516.
+[12] M. Golparvar-Fard, A. Heydarian, J.C. Niebles, Vision-based action recognition of
+                                                                                                [33] P. Heitzmann, A computer vision-assisted approach to automated real-time road
+     earthmoving equipment using spatio-temporal features and support vector
+                                                                                                     infrastructure management, arXiv preprint, 2022, https://doi.org/10.48550/
+     machine classifiers, Adv. Eng. Inform. 27 (2013) 652–663, https://doi.org/
+                                                                                                     arXiv.2202.13285, 13285 [cs.CV].
+     10.1016/j.aei.2013.09.001.
+                                                                                                [34] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollár, C.
+[13] B. Xiao, S. Kang, Vision-based method integrating deep learning detection for
+                                                                                                     L. Zitnick, Microsoft COCO: common objects in context, in: 2014 European
+     tracking multiple construction machines, J. Comput. Civ. Eng. 35 (2021)
+                                                                                                     Conference on Computer Vision, Springer, 2014, pp. 740–755.
+     04020071, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000957.
+                                                                                                [35] R. Xu, H. Lin, K. Lu, L. Cao, Y. Liu, A forest fire detection system based on ensemble
+[14] D. Roberts, M. Golparvar-Fard, End-to-end vision-based detection, tracking and
+                                                                                                     learning, Forests. 12 (2021) 217, https://doi.org/10.3390/f12020217.
+     activity analysis of earthmoving equipment filmed at ground level, Autom. Constr.
+                                                                                                [36] A. Bewley, Z. Ge, L. Ott, F. Ramos, B. Upcroft, Simple online and realtime tracking,
+     105 (2019), 102811, https://doi.org/10.1016/j.autcon.2019.04.006.
+                                                                                                     in: 2016 IEEE International Conference on Image Processing, Phoenix, USA, xxx,
+[15] S. Song, E. Marks, N. Pradhananga, Impact variables of dump truck cycle time for
+                                                                                                     2016, pp. 3464–3468.
+     heavy excavation construction projects, J. Construct. Eng. Project Manag. (2017)
+                                                                                                [37] A. Milan, L. Leal-Taixe, I. Reid, S. Roth, K. Schindler, MOT16: A Benchmark for
+     2233–9582, https://doi.org/10.6106/JCEPM.2017.7.2.011.
+                                                                                                     Multi-Object Tracking, arXiv preprint, 2016, https://doi.org/10.48550/
+[16] A. Shahi, A. Aryan, J.S. West, C.T. Haas, R.C.G. Haas, Deterioration of UWB
+                                                                                                     arXiv.1603.00831, 1603.00831 [cs.CV].
+     positioning during construction, Autom. Constr. 24 (2012) 72–80, https://doi.org/
+                                                                                                [38] Y. Huang, Y. Zhang, B. Xu, Z. Wu, J.A. Chambers, A new adaptive extended kalman
+     10.1016/j.autcon.2012.02.009.
+                                                                                                     filter for cooperative localization, IEEE Trans. Aerosp. Electron. Syst. 54 (2018)
+[17] R. Akhavian, A.H. Behzadan, Construction equipment activity recognition for
+                                                                                                     353–368, https://doi.org/10.1109/TAES.2017.2756763.
+     simulation input modeling using mobile sensors and machine learning classifiers,
+                                                                                                [39] H.W. Kuhn, The Hungarian method for the assignment problem, Naval Res. Logist.
+     Adv. Eng. Inform. 29 (2015) 867–877, https://doi.org/10.1016/j.aei.2015.03.001.
+                                                                                                     Quart. 2 (1955) 83–97, https://doi.org/10.1002/nav.3800020109.
+[18] C.-F. Cheng, A. Rashidi, M.A. Davenport, D.V. Anderson, Activity analysis of
+                                                                                                [40] A. Radford, J.W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,
+     construction equipment using audio signals and support vector machines, Autom.
+                                                                                                     A. Askell, P. Mishkin, J. Clark, G. Krueger, I. Sutskever, Learning transferable
+     Constr. 81 (2017) 240–253, https://doi.org/10.1016/j.autcon.2017.06.005.
+                                                                                                     visual models from natural language supervision, arXiv preprint, 2021, https://doi.
+[19] C.-F. Cheng, A. Rashidi, M.A. Davenport, D.V. Anderson, Evaluation of software
+                                                                                                     org/10.48550/arXiv.2103.00020, 2103.00020v1 [cs.CV].
+     and hardware settings for audio-based analysis of construction operations,
+                                                                                                [41] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, in:
+     international, J. Civ. Eng. 17 (2019) 1469–1480, https://doi.org/10.1007/s40999-
+                                                                                                     2016 IEEE Conference on Computer Vision and Pattern Recognition, Las Vegas,
+     019-00409-2.
+                                                                                                     USA, xxx, 2016, pp. 770–778.
+[20] A. Montaser, I. Bakry, A. Alshibani, O. Moselhi, Estimating productivity of
+                                                                                                [42] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner,
+     earthmoving operations using spatial technologies, Can. J. Civ. Eng. 39 (2012)
+                                                                                                     M. Dehghani, M. Minderer, G. Heigold, S. Gelly, J. Uszkoreit, N. Houlsby, An image
+     1072–1082, https://doi.org/10.1139/l2012-059.
+
+
+
+                                                                                           13
+C. Chen et al.                                                                                                                              Automation in Construction 146 (2023) 104702
+
+     is worth 16x16 words: Transformers for image recognition at scale, arXiv preprint,        [46] M. Golparvar-Fard, A. Heydarian, J.C. Niebles, Vision-based action recognition of
+     2020, https://doi.org/10.48550/arXiv.2010.11929, 2010.11929v2[cs.CV].                          earthmoving equipment using spatio-temporal features and support vector
+[43] J. Redmon, A. Farhadi, YOLOv3: An Incremental Improvement, arXiv preprint,                     machine classifiers, Adv. Eng. Inform. 27 (2013) 652–663, https://doi.org/
+     2018, https://doi.org/10.48550/arXiv.1804.02767, 1804.02767v1 [cs.CV].                         10.1016/j.aei.2013.09.001.
+[44] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: Towards Real-Time Object                [47] J. Kim, S. Chi, J. Seo, Interaction analysis for vision-based activity identification of
+     Detection with Region Proposal Networks, arXiv preprint, 2016, https://doi.org/                earthmoving excavators and dump trucks, Autom. Constr. 87 (2018) 297–308,
+     10.48550/arXiv.1506.01497, 1506.01497v3 [cs.CV].                                               https://doi.org/10.1016/j.autcon.2017.12.016.
+[45] K. Hara, H. Kataoka, Y. Satoh, Can spatiotemporal 3D CNNs retrace the history of
+     2D CNNs and imageNet?, in: 2018 IEEE IEEE conference on computer vision and
+     pattern Recognition xxx, 2018, pp. 6546–6555.
+
+
+
+
+                                                                                          14
+

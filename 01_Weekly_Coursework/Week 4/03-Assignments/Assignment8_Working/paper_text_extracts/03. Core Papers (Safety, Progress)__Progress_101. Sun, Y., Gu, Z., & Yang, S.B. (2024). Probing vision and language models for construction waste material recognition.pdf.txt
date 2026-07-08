@@ -1,0 +1,1023 @@
+                                                                Automation in Construction 166 (2024) 105629
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Probing vision and language models for construction waste material
+recognition
+Ying Sun a,b , Zhaolin Gu a , Sean Bin Yang b,c ,∗
+a School of Human Settlement and Civil Engineering, Xi’an Jiaotong University, Xi’an, 710049, China
+b
+    Chongqing University of Posts and Telecommunications, Chongqing 400065, China
+c
+    Department of Computer Science, Aalborg University, Aalborg 9220, Denmark
+
+
+
+ARTICLE                 INFO                              ABSTRACT
+
+Keywords:                                                 Motivated by the critical role of automatic sorting in construction waste management, recent advancements
+Automatic sorting system                                  have leveraged deep learning’s ability to capture powerful features within unimodality-based recognition
+Vision and language models                                approaches. However, existing methods remain limited due to reliance on solely image-based datasets,
+Bidirectional contrastive training
+                                                          restricting feature expression. To solve this, this paper introduces the VL-CSW dataset by considering both
+Construction material recognition
+                                                          image and text modalities. Next, this paper proposes ConCLIP, a vision-and-language model tailored for CSW
+                                                          recognition. ConCLIP incorporates a pre-feature interaction network for enhanced modality-specific feature
+                                                          learning and leverages a bidirectional contrastive training paradigm alongside supervised task training to
+                                                          optimize its performance across both modalities. Evaluation on VL-CSW datasets demonstrates the ConCLIP’s
+                                                          superiority on CSW material classification task, significantly outperforming strong baselines in most settings.
+                                                          Notably, ConCLIP achieves performance improvements of 1.83% and 3.41% compared to unimodality methods
+                                                          in VL-Concrete and VL-Metal classification tasks, respectively, highlighting the efficacy of multi-modality in
+                                                          enhancing automatic sorting system performance.
+
+
+
+1. Introduction                                                                                network (e.g., SVM, decision tree, MLP) leverages these extracted fea-
+                                                                                               tures to generate the corresponding labels for the input CSW image.
+    The emergence of automatic sorting systems for construction waste                          Building upon this paradigm, Zhu et al. employed traditional machine
+(CSW) marks a potential paradigm shift in CSW recycling and man-                               learning algorithms to extract features and textures from segmented im-
+agement strategies, owing to their demonstrably enhanced efficiency                            age regions, enabling concrete mix identification [9]. Son et al. further
+compared to conventional manual methods [1–4]. In contrast, tradi-                             explored the performance of various traditional classifiers for distin-
+tional manual CSW sorting methods remain labor-intensive and finan-                            guishing construction materials like concrete, steel, and wood. Their
+cially burdensome, resulting in automatic CSW sorting has garnered                             findings highlighted the potential of model integration for improved
+increasing attention from the research community, especially for the                           accuracy [10]. Subsequently, Davis et al. pioneered a deep convolu-
+CSW recognition. Driven by recent advances in domains like computer                            tional neural network (CNN)-based algorithm for construction waste
+vision and natural language processing (NLP), multi-modal pre-training
+                                                                                               material recognition, successfully classifying seven common types, both
+powered by self-supervised learning has demonstrably enhanced recog-
+                                                                                               individually and in mixtures [2]. In addition, Lu et al. demonstrated
+nition performance across diverse tasks in these fields. While the multi-
+                                                                                               the potential of semantic segmentation for pixel-level classification
+modal approach shows considerable promise for various prediction
+                                                                                               of waste components [11]. Chen et al. furthered this effort with a
+tasks, its application to CSW recognition in automatic sorting systems
+remains nascent. Exemplified by Fig. 1(a), the prevailing paradigm for                         hybrid framework for automatic composition estimation [12]. Recently,
+CSW recognition falls within the realm of unimodal methods. In this                            Dong et al. introduced a novel Transformer-based model specifically
+paradigm, the input CSW image is ingested by an image encoder - typ-                           tailored for fine-grained mixtures [8]. These efforts reveal a domi-
+ically a convolutional neural network (CNN) [2,5,6] or a Transformer                           nant focus on enhancing recognition accuracy, employing techniques
+architecture [7,8] - tasked with extracting multi-scale CSW features                           ranging from classic support vector machines to state-of-the-art deep
+through diverse CNN kernels. Subsequently, a dedicated recognition                             convolutional neural networks and Transformer architectures. While
+
+
+
+     ∗ Corresponding author at: Chongqing University of Posts and Telecommunications, Chongqing 400065, China.
+       E-mail address: sean.byang@gmail.com (S.B. Yang).
+
+https://doi.org/10.1016/j.autcon.2024.105629
+Received 19 January 2024; Received in revised form 10 July 2024; Accepted 10 July 2024
+Available online 23 July 2024
+0926-5805/© 2024 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+Y. Sun et al.                                                                                                       Automation in Construction 166 (2024) 105629
+
+
+
+
+                                                           Fig. 1. Unimodal v.s. Multi-modality.
+
+
+demonstrating promising recognition accuracy, the conventional end-              and contrastive loss and thus improve the prediction performance of
+to-end deep convolutional neural network approach exhibits limitations           the construction material recognition. This paper shown that ConCLIP
+in fully exploiting the distinct features of construction materials dur-         outperform the CLIP due to the pre-feature fusion strategy, yet with
+ing training. This inherent tendency towards learning overly similar             competitive or better construction mater recognition performance. In
+material representations presents a significant opportunity for further
+                                                                                 conclusion, the contributions are summarized as follows:
+refining the accuracy of construction material recognition through this
+method.                                                                              • A vision and language model for CSW recognition. To address
+    The recent surge in multi-modal (Vision and Language) feature min-                 the challenge of accurate construction waste material recognition,
+ing pipelines, powered by self-supervised learning strategies, has shed
+                                                                                       this paper presents ConCLIP, a novel framework that leverages the
+light on novel opportunities for performance improvement in image
+                                                                                       synergy of vision and language modeling.
+recognition, detection, and semantic segmentation tasks, as exemplified
+                                                                                     • Vision and Language CSW (VL-CSW) Dataset Construction.
+by recent works CLIP [13], ViLT [14], BLIP [15], Vlmo [16], etc. As
+depicted in Fig. 1(b), for a given image 𝑥, the prevailing modality                    To facilitate the development of vision and language models for
+strategy relies on generating a textual description (e.g., ‘‘a photo of                construction waste material recognition, this paper established a
+brick’’). Subsequently, dedicated image and text encoders process the                  novel multimodal dataset. Each image of a material was paired
+image and text, respectively, to extract their corresponding feature rep-              with a corresponding textual description, creating image–text
+resentations. To enhance alignment between these features, contrastive                 pairs that constitute the core of the dataset.
+pre-training (e.g., CLIP [13]) is typically employed, minimizing their               • Pre-feature Interaction Fusion. To further enrich image rep-
+distance in the latent space. Subsequently, a feature fusion network                   resentations, this paper leverages complementary modalities via
+aggregates the image and text features, enriching the input for the                    two encoders: a text encoder capturing features from textual
+recognition network and thereby boosting prediction performance. This
+                                                                                       descriptions associated with each image, and an image encoder
+paradigm enables fine-grained material discrimination through text-
+                                                                                       extracting visual features. This paper then introduce a novel
+guided image recognition. Inspired by existing Vision and Language
+models [13,15–17], this study aims at investigating the vision and                     pre-feature interaction fusion (PFIF) framework for interweav-
+language models for construction material recognition. To this end,                    ing text and image features before contrastive training. This
+this paper proposes vision and language model ConCLIP to accomplish                    PFIF framework fosters interactive learning between modalities,
+accurate construction waste material recognition to further optimize                   demonstrably enhancing the resulting representations.
+performance of the automatic sorting system. Specifically, the proposed              • Supervised and Contrastive Training (SCT). To achieve align-
+model has a similar architecture to the CLIP but a modified feature                    ment between text and image features, this paper employers
+fusion. As a pioneer, ConCLIP first constructs the construct waste ma-                 a hybrid training strategy. This strategy leverages both super-
+terial multi-modality dataset (i.e., image–text dataset) with the help of              vised and contrastive learning paradigms. Supervised training
+high quality construction waste material dataset mentioned in [3]. The                 optimizes feature representations for task-specific prediction ac-
+image encoder is based on the deep convolutional neural networks and
+                                                                                       curacy, while contrastive training enforces alignment through
+the text encoder is based on Transformer mentioned in BERT [18]. To
+                                                                                       direct pairwise matching of text and image features.
+distinguish ConCLIP from CLIP, ConCLIP further propose a pre-feature
+                                                                                     • Empirical Evidence. This paper conducts extensive experiments
+fusion strategy that conduct deep feature interaction before contrastive
+alignment, which promotes the mutual learning of image features and                    on real-world datasets to validate the effectiveness and practical-
+corresponding text features. Finally, the proposal introduces a language               ity of our model. The empirical results demonstrate that ConCLIP
+modality as a supervision signal for each given image to enhance the                   outperforms existing methods consistently on construction waste
+representation learning through jointly optimizing the supervised loss                 datasets.
+
+                                                                             2
+Y. Sun et al.                                                                                                          Automation in Construction 166 (2024) 105629
+
+
+2. Related works                                                                   with DenseNet-169 for robust classification [12]. While object detection
+                                                                                   methods like Faster-R-CNN and Mask-RCNN have demonstrated success
+2.1. Waste construction material management                                        in material recovery, their inability to handle multiple waste materials
+                                                                                   simultaneously restricts their practical applicability [28]. Addressing
+    Building upon the comprehensive CDWM efficacy framework pro-                   this limitation, Lu et al. employed DeepLabv3+ semantic segmentation
+posed by Kabirifar et al. (2021) [19], which integrates stakeholder                for analyzing combined waste materials, highlighting the potential
+attitudes and the waste life cycle, this study delves deeper into the influ-       of this approach for highly unstructured materials, yet requiring fur-
+ence of reduction, reuse, recycling, and disposal strategies on achieving          ther accuracy improvements for real-world deployment [11]. Notably,
+sustainable CDWM practices. Ghafourian et al. [20] paved the way                   Dong et al. introduced a Transformer-based boundary-aware seman-
+by integrating sustainability dimensions into CDWM, and this work                  tic segmentation model, showcasing the effectiveness of alternative
+further illuminates the crucial role of these strategies in optimizing             deep learning architectures like Transformers in accurately delineating
+material resource circularity. Recent advancements in CDWM research                material boundaries [8]. However, current methodologies in construc-
+showcase diverse approaches. Bao et al. [21] present a decision-support            tion waste identification primarily rely on unimodal data processing,
+framework utilizing qualitative methods like case studies and inter-               neglecting the potential performance gains offered by exploiting the
+views to achieve cyclic planning for construction waste, exemplified by            richness of multimodal datasets. Furthermore, the integration and syn-
+a case study in Shenzhen, China. Lu et al. [22] leverage a data-driven             ergistic effects of vision and language models in this domain remain
+approach to analyze the volume density of different construction waste             largely unexplored. To advance the field towards accurate and efficient
+streams in Hong Kong, providing valuable insights for resource man-                waste management, future research should prioritize the optimization
+agement optimization. Hoang et al. [23] offer a financial and economic             of both multimodal data utilization and training strategies. This would
+assessment of CDWM recycling in Hanoi, Vietnam, highlighting the                   pave the way for robust construction waste material classification, a
+cost implications of informal waste disposal methods like landfills. Ma            crucial step towards sustainable waste management practices.
+et al. [1] propose an evolutionary game theory-based model for CDWM
+recycling management, emphasizing the critical role of government                  3. Vision and language CSW datasets
+incentives for construction waste companies. Their findings reveal that
+while subsidies can accelerate successful recycling, producer behav-                   Accurate construction waste material recognition underpins the bur-
+ior significantly influences the system’s dynamics. Notably, increasing            geoning field of automated sorting and sustainable waste management
+landfill costs without subsidies can incentivize cooperation between re-           in construction, rendering it a cornerstone of contemporary construc-
+cyclers and producers. However, existing research has limitations. Long
+                                                                                   tion management. While high-quality, labeled datasets have propelled
+et al. [24] employ an evolutionary game model to analyze producer-
+                                                                                   groundbreaking advances in both computer vision (e.g., the transfor-
+recycler interactions under government rewards and punishments, but
+                                                                                   mative impact of foundation models like InternImage [29]) and natural
+primarily focus on the dynamic evolution of enterprises, neglecting the
+                                                                                   language processing (e.g., GPT-V3 [30]), the field of CSW recognition
+government’s broader influence on stakeholder behavior. Addressing
+                                                                                   currently faces hurdles stemming from limitations in existing datasets.
+this gap, Su [25] proposes a three-party evolutionary game framework
+                                                                                   This paper identifies these critical issues and argue for their urgent
+incorporating government agencies, waste recyclers, and waste pro-
+                                                                                   addressal to ensure continued progress in this nascent domain.
+ducers, revealing the multifaceted roles of government intervention
+across different phases of CDWM recycling. Du et al. [26] further
+                                                                                   3.1. Limitations of existing CSW datasets
+contribute by analyzing the behavior of government, contractors, and
+the public using evolutionary game theory, highlighting the effec-
+                                                                                      Existing construction waste material datasets for model develop-
+tiveness of incentives and punishments in curbing illegal dumping of
+construction waste. Overall, this review underscores the significant               ment often fall short of the multi-modal complexity encountered in real-
+progress made in CDWM research, while also identifying key areas                   world applications. For instance, commonly used datasets in Refs. [2,
+for future investigation. Moving forward, a deeper understanding of                3,10] consist solely of images (Table 1). However, real-world waste
+stakeholder interactions, the interplay between economic and envi-                 materials typically present with at least two modalities, such as image
+ronmental factors, and the efficacy of policy interventions will be                and text, demanding comprehensive analysis. Notably, humans readily
+crucial for optimizing CDWM practices and achieving sustainable waste              recognize such materials through both visual and textual cues; for
+management.                                                                        example, bricks are readily identified both by sight and by descriptive
+                                                                                   text. Unfortunately, models trained solely on limited modalities, pri-
+2.2. Construction waste recognition                                                marily images, often lack generalizability to other modalities, such as
+                                                                                   language, hindering their practical efficacy.
+    Driven by the imperative of green development and sustainability,
+the efficient recycling and management of construction waste ma-                   3.2. The vision and language CSW dataset
+terials emerges as a critical challenge. A pivotal component of this
+endeavor lies in the accurate classification of diverse waste materials.               To formally introduce the proposed vision and language CSW (VL-
+Previous efforts have primarily relied on manually crafted features                CSW) dataset, this section delves into its construction and design,
+and traditional machine learning algorithms, such as Support Vector                specifically focusing on its efficacy in evaluating the accuracy of current
+Machines (SVM) [27] or integrated models [10]. These approaches,                   and future CSW prediction models under multi-modality scenarios. At
+however, often struggle to effectively manage the inherent complexity              its core, the dataset leverages the power of natural language supervision
+and variability of construction waste materials due to the limitations             to learn informative features, transcending the standard image classifi-
+of manually derived features. In recent years, convolutional neural                cation paradigm that relies solely on named or described categories for
+networks (CNNs) have gained significant traction due to their ability to           post-image classification. The core idea behind text supervision signals,
+automatically extract meaningful features through deep learning archi-             also known as text prompts, is to extract supervising information from
+tectures, offering a promising avenue for construction waste material              natural language to construct image–text pairs for enhancing the ex-
+classification. Several studies have leveraged the power of deep CNNs              traction of image of the encoder features through learning. This idea is
+in this domain, with notable examples including Davis et al.’s work on             widely applied in supervised, self-supervised, unsupervised, and weakly
+differentiating seven types of materials, including single and combined            supervised learning, and has driven the development of multi-modal
+types [2], and Chen et al.’s hybrid model integrating physical features            research in the visual field.
+
+                                                                               3
+Y. Sun et al.                                                                                                                 Automation in Construction 166 (2024) 105629
+
+                Table 1
+                Comparisons between multi-modality CSW dataset and other popular datasets. Modality: the number of modality associated with each datase;
+                Label: the number of CSW categories involving in each dataset; Types: different CSW types including in each dataset.
+                 Released source      Dataset            Modality       Label      Types
+                 Son et al. [10]      CSW Material       1              4          Concrete, Metal, and Wood, Mixture
+                 Davis et al. [2]     CSW Material       1              6          Wood, Plastic, Brick, Concrete, Cardboards, Polystyrene
+                 Sun et al. [3]       CSW Material       1              8          Concrete, Brick, Metal, Wood, Stone, Uncertain, Background, Mixture
+                 ConCLIP (Ours)       CSW Material       2              8          Concrete, Brick, Metal, Wood, Stone, Uncertain, Background, Mixture
+
+
+
+
+                                                                     Fig. 2. Overview of ConCLIP.
+
+
+    However, prevalent data annotation practices, typically represented                4.1. Encoders
+by numerical IDs and separate category mapping files, often lack the
+organization and context crucial for effective zero-shot learning. More-               4.1.1. Text encoder
+over, text annotations frequently suffer from ambiguity and lack of                        To capture representational features of supervised natural language
+context, hindering the text encoder’s ability to accurately interpret the              signals, this study leverages the Bidirectional Encoder Representations
+information. For instance, in ImageNet [31], ‘‘construction cranes’’ and               from Transformers (BERT) model [18]. Specifically, BERT employs a
+‘‘cranes’’ refer to distinct entities, highlighting the limitations of single-         bidirectional Transformer encoder for prompt word encoding, orga-
+word labels. Furthermore, images rarely map to single words; instead,                  nized into distinct input, encoding, and output layers (Fig. 3). The
+they necessitate comprehensive sentence descriptions.                                  model architecture incorporates multiple stacked Transformer layers,
+    Therefore, this study adopts the format ‘‘A photo of a [label], or                 each comprising multi-head attention mechanisms, residual and nor-
+a construction waste of a [label]’’ for text sentences, enriching image                malization layers, and feedforward networks. Notably, the multi-head
+descriptions and demonstrably improving performance compared to                        attention layers leverage an attention mechanism to compute per-layer
+traditional label methods. This prompt-based approach achieves a 1.3%                  attention scores for each prompt word, effectively capturing inter-word
+accuracy gain on ImageNet. Notably, while the VL-CSW dataset shares                    dependencies and facilitating feature learning.
+similarities with the one presented in Sun et al. [3], it distinguishes                    As shown in Fig. 3, the input layer of the BERT model first converts
+itself by encompassing both image and text modalities, resulting in                    the input text information into a sequence of word vectors through a
+VL-Concrete, VL-Brick, VL-Metal, VL-Wood, and VL-Stone datasets and                    linear mapping. Then, the respective position encoding and paragraph
+totally 105,000 image–text pairs.                                                      encoding are added to the sequence of word vectors. Among them,
+                                                                                       the position encoding refers to the representation of the position in-
+4. Approach                                                                            formation of each word in the text in vector form, which represents
+                                                                                       the logical order of the text. The position encoding plays a crucial
+    Fig. 2 presents the research framework of the multi-modality con-                  role in capturing the relationship between different word positions for
+struction material recognition through jointly supervised and con-                     the text encoding. The paragraph vector is used to handle questions
+trastive training, which includes input (images, text pairs), encoders                 about different texts. Upon securing an appropriate word vector en-
+(image encoder, text encoder), image–text feature interacitve learning                 coding, the model feeds it into the encoding layer, a multi-layered
+and the training objective. The input module contains the correspond-                  Transformer stack. The Transformer, BERT’s core module, hinges on the
+ing construction waste materials image and its text description, such as               attention mechanism, which, as the diagram illustrates, is the founda-
+‘‘a photo of [brick]’’. Then, the image encoder takes as input an image                tion of BERT’s architecture alongside residual and normalization layers
+and returns the corresponding image features, while the text encoder                   and a forward feed neural network. Notably, the multi-head attention
+takes as input the text description of the given image and returns                     mechanism employs three input vectors: 𝐐(𝑄𝑢𝑒𝑟𝑦), 𝐊(𝐾𝑒𝑦), 𝐕(𝑉 𝑎𝑙𝑢𝑒).
+the corresponding text feature. Subsequently, a pre-feature interaction                Recognizing that a word’s meaning often intertwines with its context,
+fusion network is introduced to interactively learn feature from each                  the mechanism leverages the target word as the 𝐐 vector, representing
+modality and thus enhance the learned representation of each modal-                    context-related words with the 𝐊(𝐾𝑒𝑦) vector, and weighting them
+ity, thereby effectively improving the accuracy of construction waste                  based on the 𝐐 and 𝐊(𝐾𝑒𝑦) similarity. This weighted context is then
+material recognition. Finally, the supervised and contrative training                  integrated into the target word vector 𝐕, enriching its representation.
+strategy are optimized to further improve the learned representation                       The multi-head attention mechanism commences by linearly pro-
+of each modality and thus improve the prediction accuracy.                             jecting 𝐐, 𝐊, and 𝐕 matrices into corresponding vector representations.
+
+                                                                                   4
+Y. Sun et al.                                                                                                     Automation in Construction 166 (2024) 105629
+
+
+
+
+                                                              Fig. 3. Transformer model.
+
+
+Subsequently, it computes the cosine similarity between the 𝐐 vector          and ResNet [34]. This model-agnostic design facilitates the extraction
+and each 𝐊 vector, yielding the respective attention scores.                  of the following image features
+                                 (       )
+             ( (     ))            𝐊𝑇𝑖 𝐐                                      𝐎 = 𝐼𝑚𝐸𝑛𝑐𝑜𝑑𝑒𝑟(𝑌 )                                                           (4)
+𝛼𝑖 = sof tmax 𝑠 𝐊𝑖 𝐐 = sof tmax √                                (1)
+                                       𝑑                                      where, 𝑌 represents the input image of construction waste material,
+               (       )
+                                                                              processed by the image encoder 𝐼𝑚𝐸𝑛𝑐𝑜𝑑𝑒𝑟.
+                 𝐊𝑇 𝐐
+𝐇 = 𝐕 sof tmax √                                                 (2)
+                    𝑑                                                         4.2. Pre-feature interaction network
+Within this framework, a single attention head leverages the
+𝑑-dimensional vectors 𝐐 and 𝐊 vectors, with Q = K, to produce the                  As illustrated in Fig. 4, unlike the approach used in CLIP [13],
+single-head attention output 𝐻. In contrast, the multi-head attention         where direct modality contrast can lead to a feature collapse problem,
+mechanism employs numerous information channels parallelly, each              ConCLIP introduces a pre-interaction network. This modification allows
+governed by its own query vector 𝐐. These dedicated heads selectively         for the learning of interactive representations before engaging in direct
+attend to different facets of the information, their collective output        modality contrastive pre-training. Such a design potentially enhances
+subsequently spliced to form the final representation. Notably, the           feature learning and mitigates the risk of feature collapse. To further
+Transformer architecture augments this multi-head attention module            refine feature representations for construction waste material classifi-
+with a residual connection, layer normalization, and a feed-forward           cation, this paper introduces a novel pre-feature interaction network
+neural network layer. The residual component, inspired by ResNet, mit-        (PFIN) following the text and image encoders (Eqs. (3) and (4)). This
+                                                                              PFIN exploits a unique cross-modal interaction paradigm, where each
+igates overfitting and vanishing gradients prevalent in deep networks.
+                                                                              modality acts as a supervisory signal for the other. This interactive
+Meanwhile, the feed-forward network updates the text vector and
+                                                                              learning enhances modality-specific feature extraction and enriches
+its associated feature representation [CLS] via linear transformations.
+                                                                              representations before inter-modal fusion, leading to demonstrably im-
+This architecture empowers BERT with its defining characteristic: the
+                                                                              proved classification performance. The formal definition of the PFIN is
+simultaneous capture of bidirectional context relevance within text.
+                                                                              as follows:
+    Based on this, the following text features can be obtained.                                     (        )
+                                                                                𝑖      𝑖
+                                                                              𝐼t2i , 𝑇i2t = X − MHA 𝐼 𝑖 , 𝑇 𝑖 , 𝑖 ∈ {0, 1, .., 𝐿 − 1}               (5)
+𝐓 = 𝐵𝐸𝑅𝑇 (𝑋)                                                        (3)
+                                                                                                     (          )
+where, 𝑋 represents the corresponding text description of the given
+                                                                                                            𝑖
+                                                                              𝐼 𝑖+1 = ImEncoderLayer 𝐼 𝑖 + 𝐼𝑡2𝑖   ,   𝐼 = 𝐼𝐿                              (6)
+CSW image. 𝐵𝐸𝑅𝑇 is a text encoder, which takes as input a text
+                                                                                               (           )
+description of given CSW image and returns corresponding feature.                                       𝑖
+                                                                              𝑇 𝑖+1 = BERTLayer 𝑇 𝑖 + 𝑇i2t   ,   𝑇 = 𝑇𝐿                                   (7)
+
+                                                                              where, 𝐼𝑚𝐸𝑛𝑐𝑜𝑑𝑒𝑟𝐿𝑎𝑦𝑒𝑟 and the 𝐵𝐸𝑅𝑇 𝐿𝑎𝑦𝑒𝑟 are image encoder and
+4.1.2. Image encoder                                                          Transformer layers, respectively. 𝐿 represents the number of fusion
+    This work introduces an image encoder dedicated to mapping con-           layers. 𝑇 0 and 𝐼 0 are the features returned by the basic image and
+struction waste material images into corresponding feature vectors.           text encoders, respectively. Cross-modal communication is achieved by
+Notably, the encoder operates independently of specific deep convo-           the cross-modal multi-head attention module (X-MHA), as shown in
+lutional neural network (CNN) architectures, readily supporting estab-        formula (5). Thereafter, single-modal fusion updates the image and
+lished image recognition models like VGGNet [32], GoogleNet [33],             text features through formulas (6) and (7), respectively. If the context
+
+                                                                          5
+Y. Sun et al.                                                                                                                         Automation in Construction 166 (2024) 105629
+
+
+
+
+Fig. 4. CLIP v.s. ConCLIP. CLIP directly conducts the modality interaction through contrastive pre-training. While, ConCLIP conducts the modality interaction after pre-interaction
+network, which are able to learn interactive representations before modality interaction and further enhance the modality feature learning.
+
+
+            𝑖 for visual mode and 𝑇 𝑖 for language mode) are not added,
+vectors (𝐼𝑡2𝑖                                                                                4.3.2. Bidirectional contrastive training
+                                          𝑖2𝑡
+the model degenerates into the late fusion model.                                                Despite its prevalence in supervised deep classification tasks, the
+     Comprising an image encoder (ImEncoderLayer) and BERT layers                            cross-entropy loss function has drawn scrutiny for its vulnerability to
+(BERTLayer), our multimodal fusion network ingests features from the                         noise and limitations in mitigating misclassification errors. These short-
+base image (𝐼 0 ) and text (𝑇 0 ) encoders. Intermodal communication                         comings contribute to suboptimal generalization for models trained
+is facilitated by a cross-modal multi-head attention module (X-MHA)                          with it, even achieving underwhelming performance on benchmark
+(Eq. (5)). Subsequent single-modal fusion updates the features through                       datasets like ImageNet [31]. In response, self-supervised representation
+Eqs. (6) and (7). Notably, omitting context vectors (𝐼𝑡2𝑖      𝑖 for visual and              learning methods like contrastive training have gained traction across
+   𝑖 for language) induces degeneration to a post fusion model.                              domains including visual, natural language, and graph learning. This
+𝑇𝑖2𝑡
+                                                                                             paradigm, often leveraging data augmentation and negative sampling,
+     Within the Cross-modal Multi-head Attention (XMHA) module, each
+                                                                                             essentially minimizes the distance between a data point and its positive
+individual head performs an attention operation, calculating an align-
+                                                                                             counterpart while maximizing separation from negatives, ultimately
+ment vector from each modality towards the remaining modalities.
+                                                                                             aiming to maximize mutual information between samples. Here, this
+                                                   (     )⊤ √                                paper proposes investigating contrastive training applied to both image
+𝐼 (𝑞) = 𝐼𝑊 (𝑞,𝐾) , 𝑇 (𝑞) = 𝑇 𝑊 (𝑞,𝐿) , Attn = 𝐼 (𝑞) 𝑇 (𝑞) ∕ 𝑑,
+                                                                                             and text features, aiming to bring the target image feature closer to its
+𝑇 (𝑣) = 𝑇 𝑊 (𝑣,𝐿) , 𝐼t2i = Sof tMax( Attn )𝑇 (𝑣) 𝑊 (out ,𝐾) ,                 (8)
+                                                                                             corresponding text embedding in the latent space while distancing it
+  (𝑣)        (𝑣,𝐾)
+                                      (      ⊤
+                                               ) (𝑣) (𝑜𝑢𝑡,𝐿)
+𝐼 = 𝐼𝑊             , 𝑇i2t = Sof tMax 𝐴𝑡𝑛 𝐼 𝑊                 ,                               from negative pairs.
+           { (symbol ,𝐾)        (symbol ,𝐿)
+                                                                  }                              To achieve this, ConCLIP embarks on a multi-modal embedding
+where, 𝑊                    ,𝑊              , 𝑠𝑦𝑚𝑏𝑜𝑙 ∈ {𝑞, 𝑣, 𝑜𝑢𝑡} are parameters
+                                                                                             journey, concurrently training an image and text encoder to forge bonds
+that can be learned.                                                                         of maximal cosine similarity between image and text representations
+      Pre-feature interaction network offers two salient advantages. First,                  of 𝑁 true pairs within each batch, while simultaneously severing ties
+it unlocks the synergistic potential of image and text features, enabling                    by minimizing similarity between the 𝑁 2 − 𝑁 incorrect pairings. To
+image classification guided by linguistic cues. This, in turn, paves the                     guide this process, this paper optimizes a symmetric cross-entropy loss
+way for broader application to diverse recognition tasks like object                         function sculpted from these carefully crafted similarity scores. During
+detection and semantic segmentation. Second, the fusion model embeds                         training, a minibatch of 𝑁 input pairs, denoted (𝑥𝐼 , 𝑥𝑇 ), is drawn from
+image features within the language model, leading to a significant                           the training data. Corresponding to each pair, a representation pair
+reduction in the laborious and costly process of image annotation.                           (𝐼, 𝑇 ) is computed. This paper denotes the 𝑖th pair of representations
+                                                                                             as (𝑇𝑖 , 𝑇𝑖 ). The ConCLIP contrastive training objective leverages two
+4.3. Supervised and contrastive training                                                     distinct loss functions. The first, an image-to-text contrastive loss for
+                                                                                             the 𝑖th pair is defined as:
+                                                                                                                       (             )
+4.3.1. Supervised training                                                                                         exp ⟨𝐈𝑖 , 𝐓𝑖 ⟩ ∕𝜏
+                                                                                             (𝐼→𝑇
+                                                                                               𝑖
+                                                                                                     )
+                                                                                                       =  − log ∑        (              )                          (11)
+    Building upon the work of Sun et al. [3], this paper employers                                                𝑁
+                                                                                                                  𝑘=1 exp ⟨𝐈𝑖 , 𝐓𝑘 ⟩ ∕𝜏
+the Large-Margin Softmax (LSoftmax) function as the supervised loss
+for our construction waste materials recognition model. This choice                          where ⟨𝐈𝑖 , 𝐓𝑖 ⟩ denotes the cosine similarity, i.e., ⟨𝐈, 𝐓⟩ = 𝐈⊤ 𝐓∕‖𝐈‖‖𝐓‖;
+facilitates the extraction of task-specific features by virtue of its math-                  and 𝜏 ∈ R+ is a temperature parameter. This paper employers a loss
+                                                                                             function that mirrors the InfoNCE loss (Oord et al. [35]), with its
+ematical formulation, explicitly provided in Eq. (9).
+                                                                                             minimization driving encoders to uphold maximal mutual information
+                               ‖ ‖‖ (𝑖) ‖ ( )
+                               ‖𝐰 ‖‖𝐚 ‖𝜓 𝜃                                                   between true pairs within the representational space. Conceptually, this
+                        𝑒‖ 𝑗 ‖‖ ‖ 𝑗
+ cls
+        = 𝑝(𝑖)
+           𝑗 =
+            ‖ ‖ (𝑖)    ( )                                                        (9)        aligns with the log loss of an 𝑁-way classifier tasked with predicting the
+            ‖𝐰𝑗 ‖‖𝐚 ‖𝜓 𝜃𝑗     ∑
+                           + 𝑙≠𝑗 𝑒‖𝐰𝑙 ‖‖𝐚 ‖ cos(𝜃𝑙 )
+                                         (𝑖)
+           𝑒‖ ‖                                                                              true pair (𝐼𝑖 , 𝑇𝑖 ). Notably, in contrast to prior works that leverage con-
+  ( )            (   )                                                                       trastive loss within a single modality (Chen et al. [36]; He et al. [37]),
+𝜓 𝜃𝑗 = (−1)𝑘 cos 𝑚𝜃𝑗 − 2𝑘, 𝜃𝑗 ∈ [𝑘𝜋∕𝑚, (𝑘 + 1)𝜋∕𝑚]                               (10)
+                                                                                             our approach distinguishes itself through the adoption of asymmetric
+where, 𝑘 ∈ [0, 𝑚 − 1] is an integer, 𝑚 controls the margin among classes.                    image-to-text contrastive loss for each input modality. Consequently,
+When 𝑚 = 1, the L-Softmax loss reduces to the original softmax loss.                         this paper introduces a parallel text-to-image contrastive loss, defined
+Through controlled manipulation of the margin parameter 𝑚 separating                         as:
+                                                                                                                        (             )
+classes, the learning objective is demonstrably rendered more rigorous,                                             exp ⟨𝐓𝑖 , 𝐈𝑖 ⟩ ∕𝜏
+                                                                                             (𝑇
+                                                                                               𝑖
+                                                                                                 →𝐼)
+                                                                                                     = −  log   ∑𝑁        (              )                           (12)
+consequently mitigating the likelihood of overfitting.
+                                                                                                                   𝑘=1 exp ⟨𝐓𝑖 , 𝐈𝑘 ⟩ ∕𝜏
+
+                                                                                         6
+Y. Sun et al.                                                                                                         Automation in Construction 166 (2024) 105629
+
+
+   Leveraging weighted summation, this paper constructs the final                     • Precision: To assess the reliability of model-based identification
+contrastive training objective from the two independent losses. This                    of construction elements within visual data, precision is em-
+composite objective is then averaged across all positive image–text                     ployed. This metric calculates the proportion of images accurately
+pairs within each minibatch, driving the optimization process.                          classified as construction material relative to the overall number
+             𝑁 (
+                                                                                        of such classifications.
+                                            )
+          1 ∑                                                                                             ∑𝑁
+𝑠𝑒𝑙𝑓 =          𝜆𝑖(𝐼→𝑇 ) + (1 − 𝜆)(𝑇
+                                     𝑖
+                                        →𝐼)
+                                                                       (13)                                     𝑇 𝑃𝑖
+          𝑁 𝑖=1                                                                          Precision = ∑𝑁 𝑖=1                                           (15)
+                                                                                                         𝑖=1 𝑇 𝑃𝑖 + 𝐹 𝑃𝑖
+where 𝜆 ∈ [0, 1] represents a scalar weight.
+                                                                                      • Recall (Sensitivity): The metric of recall quantifies the model’s
+                                                                                        ability to accurately identify all relevant construction images
+4.3.3. Final objective function
+                                                                                        within the sample, expressed as the ratio of correctly classified
+    To train the image and text encoders in an end-to-end manner
+                                                                                        examples to the total number of construction images in the test
+described in this study, this paper jointly optimizes the supervised loss
+                                                                                        set.
+𝐿𝑐𝑙𝑠 and contrastive loss 𝐿𝑠𝑒𝑙𝑓 . Specifically, the total objective function                         ∑𝑁
+is defined as shown in Eq. (14).                                                                           𝑇 𝑃𝑖
+                                                                                        Recall = ∑𝐿 𝑖=1                                             (16)
+             ∑
+ = arg max     ⋅self − cls                                           (14)                       𝑖=1 𝑇 𝑃𝑖 + 𝐹 𝑁𝑖
+                   𝑖       𝑖
+                                                                                      • Accuracy: The model’s accuracy was evaluated by quantifying its
+where, 𝑖 represents the training sample in minibatch.
+                                                                                        precision, measured as the ratio of true positives to all predicted
+                                                                                        construction materials within the test set.
+5. Experiments                                                                                          (𝑇 𝑃 + 𝑇 𝑁)
+                                                                                        Accuracy =                                                     (17)
+                                                                                                    (𝑇 𝑃 + 𝐹 𝑁 + 𝑇 𝑁)
+    To rigorously validate the efficacy of the ConCLIP architecture pro-
+posed herein, this paper conducted a battery of experiments leveraging                • F1-score: The F1-score provides a composite evaluation metric,
+                                                                                        balancing precision and recall by incorporating both false pos-
+the newly curated VL-CSW datasets (as detailed in Section 3). This
+                                                                                        itives (FP) and false negatives (FN). As a weighted average of
+section systematically dissects the experimental design, encompassing
+                                                                                        these measures, it effectively assesses the classification system’s
+the training and testing datasets, the chosen evaluation metric, the im-
+                                                                                        accuracy and completeness.
+age encoder architecture, and the meticulous setup employed. Finally,
+                                                                                                           ∑𝑁
+this paper unveils the compelling results and unveils the ConCLIP’s                                           𝑖=1 2𝑇 𝑃𝑖
+                                                                                        F1-Score = ∑𝑁                                                  (18)
+impressive capabilities.                                                                                  2𝑇
+                                                                                                      𝑖=1    𝑃 𝑖 + 𝐹 𝑃𝑖 + 𝐹 𝑁𝑖
+
+
+5.1. Datasets                                                                      5.3. Image encoder
+
+
+   Comprehensive investigations were conducted on five distinct VL-                    The proposed framework is encoder-agnostic; therefore a classic
+                                                                                   deep convolutional image recognition neural network can be selected
+CSW datasets, including VL-Concrete, VL-Brick, VL-Metal, VL-Wood,
+                                                                                   as the image encoder. Follow the Ref. [3], the VGGNet [32], GoogleNet
+and VL-Stone datasets. Further validation was performed on the com-
+                                                                                   [33], ResNet [34], and SqueezeNet [39] are selected as image encoder
+bined VL-CSW dataset to achieve recognition of each primary CSW
+                                                                                   to embed each input image.
+material.
+                                                                                       Leveraging its image encoder-agnostic nature, the proposed frame-
+    1. Evaluate the performance on VL-concrete datasets such as Con-               work readily accommodates a classic deep convolutional image recog-
+       crete, Background, and Uncertain.                                           nition neural network as the image encoder. Building upon the prece-
+    2. Scenario 2: Evaluate the performance on VL-brick datasets such              dent established in Ref. [3], VGGNet [32], GoogleNet [33], ResNet
+       as Brick, Background, and Uncertain.                                        [34], and SqueezeNet [39] were evaluated as candidate image encoders
+    3. Scenario 3: Evaluate the performance on VL-metal datasets such              for embedding each input image.
+       as Metal, Background, and Uncertain.
+    4. Scenario 4: Evaluate the performance on VL-wood datasets such               5.4. Experimental setup
+       as Wood, Background, and Uncertain.
+    5. Scenario 5: Evaluate the performance on VL-stone datasets such                  This study aims to evaluate and compare the classification per-
+       as Stone, Background, and Uncertain.                                        formance of construction waste materials by investigating the role of
+    6. Scenario 6: Evaluate the performance on combined datasets such              multi-modality, represented by the inclusion (𝑤∕𝐿𝑠𝑒𝑙𝑓 ) or exclusion
+       as VL-Concrete, VL-Brick, VL-Metal, VL-Wood, and VL-Stone.                  (𝑤∕𝑜𝐿𝑠𝑒𝑙𝑓 ) of self-learning representations. This paper further optimizes
+                                                                                   the objective function jointly to leverage multi-modality and maximize
+                                                                                   classification accuracy. The work of Sun et al. [3] serves as a reference
+5.2. Evaluation metric                                                             point for the unimodal scenario (i.e., image). All models were trained
+                                                                                   with a learning rate of 1e−3, utilizing the Adam optimizer. A batch size
+    The model’s accuracy was assessed using a confusion matrix, pop-               of 32 was employed during both training and testing. The experiments
+ulated with true positive (TP), true negative (TN), false positive (FP),           were conducted on an Nvidia TITAN-V GPU within a Ubuntu 16.04
+and false negative (FN) values. TP denoted images correctly classified             environment, using PyTorch 1.4 as the deep learning framework.
+as construction materials, while FP represented instances where back-
+ground or uncertainty images were misclassified as construction ma-                5.5. Experiment results
+terials. Conversely, FN represented construction images misclassified
+as background or uncertainty, and TN captured accurate classifications             5.5.1. Effects of PFIN and contrastive learning
+of background or uncertainty images. Performance on the test set was                   This paper investigated the effects of Pre-Feature Interaction Net-
+evaluated using precision, recall, accuracy, and F1-score, calculated via          works (PFIN) and bi-directional contrastive learning on a dataset con-
+the scikit-learn library [38]. The results are presented as follows:               sisting of concrete, brick, metal, wood, and stone materials, using
+
+                                                                               7
+Y. Sun et al.                                                                                                                          Automation in Construction 166 (2024) 105629
+
+
+
+
+                                                                Fig. 5. Effects of PFIN and contrastive learning.
+
+
+                Table 2
+                Comprehensive evaluation of VL-Concrete datasets.
+                 Loss function    Architectures    Categories               Performance evaluation (%)              Average (%)
+                                                                            Accuracy                 F1             Accuracy      Precision    Recall    F1
+                                                   Concrete                 98.14                    99.06
+                                  VGGNet           Background               96.84                    98.40          96.59         96.59        96.59     96.58
+                                                   Uncertainty              94.77                    97.31
+                                                   Concrete                 99.00                    99.50
+                                  GoogleNet        Background               97.27                    98.62          97.28         97.28        97.28     97.27
+                 w/o𝐿𝑠𝑒𝑙𝑓                          Uncertainty              95.56                    97.73
+                                                   Concrete                 98.93                    99.46
+                                  ResNet           Background               97.13                    98.54          97.37         97.37        97.37     97.37
+                                                   Uncertainty              96.06                    97.99
+                                                   Concrete                 98.43                    99.21
+                                  SqueezeNet       Background               96.91                    98.43          96.90         96.90        96.90     96.89
+                                                   Uncertainty              95.34                    97.62
+                                                   Concrete                 99.27                    99.79
+                                  VGGNet           Background               98.35                    99.34          98.40         98.48        98.40     99.12
+                                                   Uncertainty              97.58                    98.23
+                                                   Concrete                 99.87                    99.95
+                                  GoogleNet        Background               98.34                    99.36          98.99         99.15        98.99     99.49
+                 w/𝐿𝑠𝑒𝑙𝑓                           Uncertainty              98.77                    99.17
+                                                   Concrete                 99.97                    99.85
+                                  ResNet           Background               99.18                    99.69          99.13         99.17        99.13     99.47
+                                                   Uncertainty              98.25                    98.88
+                                                   Concrete                 99.62                    100.00
+                                  SqueezeNet       Background               99.35                    99.93          99.15         99.20        99.15     99.52
+                                                   Uncertainty              99.47                    98.63
+
+
+
+
+VGGNet, GoogleNet, ResNet, and SqueezeNet, respectively. Our frame-                         CLIP, confirming the effectiveness of PFIN. Consistently, all four models
+work was compared against three scenarios: (1) Single-modality, rep-                        produced similar results.
+resenting the performance achieved by traditional CNN-based models
+(e.g., VGGNet, GoogleNet) using only image inputs; (2) w/o PFIN,                            5.5.2. Comprehensive evaluation of VL-Concrete datasets
+which excludes the pre-feature interaction network (i.e., CLIP); (3) w/                         Leveraging both visual and textual modalities, this paper explored
+PFIN, incorporating both PFIN and contrastive loss (i.e., ConCLIP). As                      the efficacy of multi-modal contrastive training for concrete mate-
+illustrated in Fig. 5, our findings indicate that multi-modality input en-                  rial classification on the VL-Concrete dataset. As reported in Table 2,
+hances performance in waste type classification, with CLIP outperform-                      unimodal networks (VGGNet, GoogleNet, ResNet, SqueezeNet) trained
+ing the single-modality approach. Moreover, ConCLIP demonstrates                            solely on the classification objective (𝑐𝑙𝑠 ) achieved high accuracy
+superior performance compared to both single-modality and standalone                        for concrete, background, and uncertain classes. GoogleNet (99.00%
+
+                                                                                        8
+Y. Sun et al.                                                                                                          Automation in Construction 166 (2024) 105629
+
+                Table 3
+                Comprehensive evaluation of VL-Brick datasets.
+                 Loss function    Architectures    Categories     Performance evaluation (%)        Average (%)
+                                                                  Accuracy               F1         Accuracy      Precision    Recall    F1
+                                                   Brick          97.71                  98.84
+                                  VGGNet           Background     98.14                  99.06      97.00         97.01        97.00     97.00
+                                                   Uncertainty    95.14                  97.52
+                                                   Brick          97.71                  98.84
+                                  GoogleNet        Background     99.00                  99.50      97.67         97.67        97.67     97.67
+                 w/o𝐿𝑠𝑒𝑙𝑓                          Uncertainty    96.29                  98.12
+                                                   Brick          98.14                  99.06
+                                  ResNet           Background     98.57                  99.28      97.86         97.86        97.86     97.86
+                                                   Uncertainty    96.86                  98.40
+                                                   Brick          98.00                  98.99
+                                  SqueezeNet       Background     98.86                  99.43      97.71         97.72        97.71     97.71
+                                                   Uncertainty    96.29                  98.11
+                                                   Brick          99.18                  99.64
+                                  VGGNet           Background     99.38                  99.77      98.94         98.95        98.94     99.35
+                                                   Uncertainty    98.26                  98.63
+                                                   Brick          99.59                  99.78
+                                  GoogleNet        Background     99.41                  99.64      99.45         99.45        99.45     99.64
+                 w/𝐿𝑠𝑒𝑙𝑓                           Uncertainty    99.35                  99.49
+                                                   Brick          99.58                  99.91
+                                  ResNet           Background     99.14                  99.32      99.03         99.03        99.03     99.34
+                                                   Uncertainty    98.38                  98.79
+                                                   Brick          99.27                  99.55
+                                  SqueezeNet       Background     99.19                  99.41      99.06         99.06        99.06     99.30
+                                                   Uncertainty    98.71                  98.94
+
+
+
+concrete, 97.27% background) excelled for concrete and background,               Table 3, all four CNNs exhibited significant performance gains across
+while ResNet (96.06%) led for uncertain. Overall, ResNet emerged as              all brick categories when incorporating the multimodal contrastive
+the top performer with an average accuracy of 97.37%.                            training objective. This compelling empirical evidence underscores the
+    However, incorporating the contrastive training objective 𝑠𝑒𝑙𝑓              effectiveness of the proposed vision and language models in leveraging
+alongside supervised classification objective 𝑐𝑙𝑠 further boosted per-          multimodal data for improved brick classification accuracy.
+formance by exploiting the rich semantic information within both
+images and associated text descriptions. Notably, ResNet attained a
+remarkable 99.97% accuracy for concrete, while SqueezeNet achieved               5.5.4. Comprehensive evaluation of VL-Metal datasets
+outstanding scores for background (99.35%) and uncertain (99.47%)                    To validate the efficacy of our multi-modal contrastive training
+classes, propelling it to the overall lead with an average accuracy of           framework, this paper conducted experiments on the VL-Metal dataset.
+99.15%. This represents a significant 1.83% improvement compared                 Focusing solely on the classification objective 𝑐𝑙𝑠 , this paper observed
+to the unimodal best average. These findings demonstrate the effec-              that VGGNet, GoogleNet, ResNet, and SqueezeNet could perform metal
+tiveness of multi-modal contrastive training in mining richer semantic           material classification ( Table 4). GoogleNet achieved the highest ac-
+features for concrete material classification and highlight its potential        curacy (96.14%) for metal identification, while SqueezeNet excelled
+for enhancing the performance of related material classification tasks.          in classifying background and uncertain classes (99.71% and 92.00%,
+                                                                                 respectively). Notably, GoogleNet also attained the best overall aver-
+5.5.3. Comprehensive evaluation of VL-Brick datasets                             age classification accuracy (95.52%). Despite achieving some level of
+    This section presents the analysis of experiments conducted on the           classification, VGGNet, GoogleNet, ResNet, and SqueezeNet exhibited
+VL-Brick dataset using the proposed multimodal contrastive training              underwhelming performance. This suggests that these deep convolu-
+framework. As detailed in Table 3, even without the contrastive train-           tional models struggled to effectively extract and leverage the diverse
+ing objective 𝑠𝑒𝑙𝑓 and solely relying on the supervised classification          features inherent in the metal material dataset, ultimately leading to
+objective 𝑐𝑙𝑠 , classic deep convolutional neural networks (CNNs) like          suboptimal classification accuracy.
+VGGNet, GoogleNet, ResNet, and SqueezeNet can achieve decent per-
+                                                                                     Leveraging both contrastive and classification losses, ConCLIP effec-
+formance on the brick classification task. Notably, ResNet attained
+                                                                                 tively harnessed the rich semantic information encoded in both metal
+the highest accuracy for brick material classification (98.14%), while
+                                                                                 images and their corresponding text descriptions. This multimodal
+GoogleNet excelled in identifying the background class (99.00%). For
+                                                                                 synergy markedly enhanced the performance of VGGNet, GoogleNet,
+the challenging uncertain brick category, ResNet again emerged as the
+                                                                                 ResNet, and SqueezeNet in metal material classification. Notably, VG-
+best performer with 96.86% accuracy. Overall, ResNet achieved the
+highest average accuracy at 97.86%. These results confirm the ability            GNet attained a peak accuracy of 99.83% for metal materials, while
+of these established CNNs to recognize bricks, while also highlighting           SqueezeNet and GoogleNet excelled in classifying background and
+potential for further improvement, particularly in specific category             uncertain categories, achieving 100.00% and 97.38% accuracy, re-
+discrimination.                                                                  spectively. GoogleNet emerged as the overall champion, averaging
+    Motivated by this observation, the proposed multimodal contrastive           98.78% accuracy, representing a 3.41% improvement over the best
+training framework was introduced to enhance the learning perfor-                average attainable without the multimodal contrastive objective. This
+mance of these deep CNNs. This framework jointly optimizes the super-            suggests that the inclusion of language supervision signals empowered
+vised classification objective 𝑐𝑙𝑠 and the contrastive training objective       the selected deep CNNs to exploit the subtle features of similar classes
+𝑠𝑒𝑙𝑓 , allowing for more comprehensive utilization of the semantic              within the metal dataset, ultimately leading to a substantial boost in
+information embedded in both image and text modalities. As evident in            classification accuracy for both metal materials and related categories.
+
+                                                                             9
+Y. Sun et al.                                                                                                         Automation in Construction 166 (2024) 105629
+
+                Table 4
+                Comprehensive evaluation of VL-Metal datasets.
+                 Loss function    Architectures    Categories    Performance evaluation (%)        Average (%)
+                                                                 Accuracy                F1        Accuracy      Precision    Recall    F1
+                                                   Metal         95.29                   97.59
+                                  VGGNet           Background    99.00                   99.50     94.91         94.96        94.91     94.90
+                                                   Uncertainty   90.43                   94.97
+                                                   Metal         96.14                   98.03
+                                  GoogleNet        Background    99.14                   99.57     95.52         95.59        95.52     95.52
+                 w/o𝐿𝑠𝑒𝑙𝑓                          Uncertainty   91.29                   95.44
+                                                   Metal         96.00                   97.96
+                                  ResNet           Background    99.14                   99.57     95.24         95.30        95.24     95.23
+                                                   Uncertainty   90.57                   95.05
+                                                   Metal         93.86                   96.83
+                                  SqueezeNet       Background    99.71                   99.86     95.19         95.18        95.19     95.18
+                                                   Uncertainty   92.00                   95.83
+                                                   Metal         99.83                   100.00
+                                  VGGNet           Background    99.49                   99.78     98.46         98.46        98.46     99.02
+                                                   Uncertainty   96.13                   97.29
+                                                   Metal         99.44                   99.89
+                                  GoogleNet        Background    99.53                   99.62     98.78         98.80        98.78     99.21
+                 w/𝐿𝑠𝑒𝑙𝑓                           Uncertainty   97.38                   98.11
+                                                   Metal         98.33                   98.97
+                                  ResNet           Background    99.51                   99.73     97.69         97.70        97.69     98.35
+                                                   Uncertainty   95.23                   96.35
+                                                   Metal         98.23                   99.14
+                                  SqueezeNet       Background    100.00                  100.00    98.47         98.48        98.47     99.11
+                                                   Uncertainty   97.19                   98.21
+
+
+                Table 5
+                Comprehensive evaluation of VL-Wood datasets.
+                 Loss function    Architectures    Categories    Performance evaluation (%)        Average (%)
+                                                                 Accuracy                F1        Accuracy      Precision    Recall    F1
+                                                   Wood          99.71                   99.86
+                                  VGG16            Background    97.08                   98.52     97.89         97.89        97.89     97.89
+                                                   Uncertainty   96.87                   98.41
+                                                   Wood          99.79                   99.90
+                                  GoogleNet        Background    98.01                   98.99     97.93         97.94        97.93     97.93
+                 w/o𝐿𝑠𝑒𝑙𝑓                          Uncertainty   96.01                   97.97
+                                                   Wood          99.93                   99.96
+                                  ResNet           Background    97.08                   98.52     98.15         98.15        98.15     98.15
+                                                   Uncertainty   97.44                   98.70
+                                                   Wood          99.64                   99.82
+                                  SqueezeNet       Background    97.08                   98.52     97.67         97.67        97.67     97.67
+                                                   Uncertainty   96.30                   98.11
+                                                   Wood          100.00                  100.00
+                                  VGGNet           Background    100.00                  100.00    99.68         99.70        99.68     99.90
+                                                   Uncertainty   99.04                   99.71
+                                                   Wood          100.00                  100.00
+                                  GoogleNet        Background    99.27                   99.81     99.11         99.11        99.11     99.57
+                 w/𝐿𝑠𝑒𝑙𝑓                           Uncertainty   98.09                   98.91
+                                                   Wood          100.00                  100.00
+                                  ResNet           Background    99.17                   99.52     99.41         99.41        99.41     99.65
+                                                   Uncertainty   99.06                   99.43
+                                                   Wood          100.00                  100.00
+                                  SqueezeNet       Background    100.00                  100.00    99.71         99.73        99.71     99.95
+                                                   Uncertainty   99.14                   99.84
+
+
+
+5.5.5. Comprehensive evaluation of VL-Wood datasets                              a 98.01% accuracy rate, while ResNet achieved the best results in the
+    Similar to the other three construction waste material datasets, this        uncertain category with a 97.44% accuracy rate.
+paper also conducts the experiments on VL-Wood dataset. As seen in                   Following the evaluation protocol established for the other con-
+Table 5, when only considering the classification objective function             struction waste material datasets, this paper explored the performance
+𝑐𝑙𝑠 , VGGNet, GoogleNet, ResNet and SqueezeNet demonstrate good                 of various deep learning models on the VL-Wood dataset. As detailed
+classification performance on the VL-Wood material dataset. Particu-             in Table 5, when focusing solely on classification accuracy (mea-
+larly, for the classification of wood materials, ResNet achieved the best        sured by the objective function 𝑐𝑙𝑠 , VGGNet, GoogleNet, ResNet,
+classification results with 99.93% recognition rate, which is mainly             and SqueezeNet all exhibited strong performance on the VL-Wood
+due to the more obvious texture features of wood compared to that of             dataset). Notably, ResNet achieved the highest classification accuracy
+other materials. For other categories in the VL-Wood material dataset,           for wood materials with a remarkable 99.93% recognition rate. This
+GoogleNet achieved the best results in background classification with            likely stems from the more pronounced texture features inherent in
+
+                                                                            10
+Y. Sun et al.                                                                                                          Automation in Construction 166 (2024) 105629
+
+                Table 6
+                Comprehensive evaluation of VL-Stone datasets.
+                 Loss function    Architectures    Categories    Performance evaluation (%)         Average (%)
+                                                                 Accuracy                F1         Accuracy      Precision    Recall    F1
+                                                   Stone         97.29                   98.62
+                                  VGGNet           Background    98.71                   99.35      97.81         97.81        97.81     97.81
+                                                   Uncertainty   97.43                   98.70
+                                                   Stone         97.71                   98.84
+                                  GoogleNet        Background    99.14                   99.57      98.33         98.34        98.33     98.33
+                 w/o𝐿𝑠𝑒𝑙𝑓                          Uncertainty   98.14                   99.06
+                                                   Stone         97.57                   98.77
+                                  ResNet           Background    99.14                   99.57      98.10         98.10        98.10     98.09
+                                                   Uncertainty   97.57                   98.77
+                                                   Stone         97.29                   98.62
+                                  SqueezeNet       Background    99.29                   99.64      98.00         98.00        98.00     98.00
+                                                   Uncertainty   97.43                   98.70
+                                                   Stone         99.53                   99.91
+                                  VGGNet           Background    99.17                   99.65      99.22         99.24        99.22     99.48
+                                                   Uncertainty   98.95                   99.18
+                                                   Stone         98.99                   99.49
+                                  GoogleNet        Background    100.00                  100.00     99.40         99.41        99.40     99.72
+                 w/𝐿𝑠𝑒𝑙𝑓                           Uncertainty   99.22                   99.67
+                                                   Stone         99.21                   100.00
+                                  ResNet           Background    100.00                  100.00     99.46         99.48        99.46     99.85
+                                                   Uncertainty   99.18                   99.54
+                                                   Stone         99.19                   99.95
+                                  SqueezeNet       Background    100.00                  100.00     99.42         99.42        99.42     99.84
+                                                   Uncertainty   99.07                   99.57
+
+
+
+wood compared to other materials in the dataset. For other cate-                 with an accuracy of 99.53% for the ‘‘stone’’ category. For background
+gories within the VL-Wood dataset, GoogleNet emerged as the top                  classification, GoogleNet, ResNet, and SqueezeNet achieved perfect
+performer in background classification with a 98.01% accuracy rate,              accuracy (100.00%). Finally, GoogleNet outperformed all other models
+while ResNet secured the highest accuracy (97.44%) for the uncertain             in the uncertain category, securing an impressive accuracy of 99.22%.
+category. Among tested architectures, ResNet emerged as the cham-                Remarkably, ResNet emerged as the most accurate classifier under
+pion, achieving a stellar average classification accuracy of 98.15%. In          the multi-modal setting, achieving an average score of 99.46%. No-
+comparison, when leveraging both classification and contrastive train-           tably, this performance represents a 1.15% improvement over the best
+ing objectives, ConCLIP efficaciously exploits the semantic resonance            unimodal result, highlighting the efficacy of incorporating language
+between wood and textual descriptions. Intriguingly, the inclusion               modalities.
+of the contrastive objective propelled VGGNet, GoogleNet, ResNet,
+and SqueezeNet to near-perfect performance on the wood category,                 5.5.7. Comprehensive evaluation of VL-Combined datasets
+all attaining 100.00% accuracy. Moreover, VGGNet and SqueezeNet                      To further elucidate the comparative performance of our approach,
+replicated this feat for the background category. For the uncertain              this paper not only evaluated its efficacy on individual datasets for con-
+category, SqueezeNet reigned supreme with an impressive 99.14%                   crete, brick, metal, wood, and stone (VL-Concrete, VL-Brick, etc.), but
+accuracy. In a crowning achievement, SqueezeNet secured the overall              also conducted experiments on a unified VL-Combined dataset encom-
+accuracy throne, with a remarkable 99.71%, a 1.59% boost over the                passing these main categories. Importantly, the VL-Combined dataset
+                                                                                 preserved the inherent characteristics of each material category to fa-
+best unimodal performance. These findings underscore the efficacy of
+                                                                                 cilitate targeted analysis. As detailed in Table 7, when only considering
+incorporating language modalities to unlock rich semantic features and,
+                                                                                 the classification objective function, deep CNN models like VGGNet,
+consequently, elevate classification accuracy across diverse categories
+                                                                                 GoogleNet, ResNet, and SqueezeNet demonstrated strong performance
+within the wood dataset.
+                                                                                 across individual material categories within the combined dataset.
+                                                                                 Notably, VGGNet, GoogleNet, and SqueezeNet achieved a 99.86% clas-
+5.5.6. Comprehensive evaluation of VL-Stone datasets
+                                                                                 sification accuracy for concrete, surpassing other models. SqueezeNet
+    This paper further validated ConCLIP’s performance on the VL-Stone           excelled in brick classification with a perfect 100% accuracy. For
+dataset (see Table 6). Focusing on the classification objective function         metal, GoogleNet and ResNet tied for first place with a 99.71% ac-
+𝑐𝑙𝑠 , analysis of Table 6 reveals that VGGNet, GoogleNet, ResNet, and           curacy. The triumvirate of VGGNet, GoogleNet, and SqueezeNet again
+SqueezeNet exhibit comparable capabilities in recognizing stones, back-          dominated wood classification, reaching a 99.71% accuracy. Finally,
+grounds, and uncertain categories. Notably, GoogleNet achieved the               ResNet claimed the top spot for stone classification with a 99.71%
+highest stone material classification accuracy with 97.71%, SqueezeNet           accuracy. Remarkably, GoogleNet emerged as the overall champion for
+excelled in background recognition with 99.29%, and GoogleNet again              the combined dataset, achieving an impressive average classification
+dominated the uncertain category with 98.14%.                                    accuracy of 99.66%.
+    Among unimodal models, GoogleNet emerged as the top performer,                   While all four models (VGGNet, GoogleNet, ResNet, and
+achieving an average classification accuracy of 98.33%. Notably, Con-            SqueezeNet) achieved perfect (100.00%) classification accuracy for the
+CLIP leveraged both supervised classification and contrastive learning           mixture soil and brick, GoogleNet and ResNet attained the same feat for
+objectives, effectively exploiting the semantic features encoded within          metal and wood. ResNet and SqueezeNet further demonstrated flawless
+both image and text information. This dual-objective approach demon-             identification of stone materials. Consequently, ResNet emerged as
+strably augmented the classification accuracy of VGGNet, GoogleNet,              the top performer with an absolute average accuracy of 100.00%,
+ResNet, and SqueezeNet across diverse stone types within the dataset.            signifying its ability to distinguish all material types within the com-
+Specifically, for stone material classification, VGGNet reigned supreme          bined VL dataset. Importantly, compared to unimodal approaches, this
+
+                                                                            11
+Y. Sun et al.                                                                                                               Automation in Construction 166 (2024) 105629
+
+                Table 7
+                Comprehensive evaluation of VL-Combined datasets.
+                 Loss function   Architectures   Categories         Performance evaluation (%)       Average (%)
+                                                                    Accuracy               F1        Accuracy      Precision    Recall      F1
+                                                 Concrete           99.86                  99.93
+                                                 Brick              99.86                  99.93
+                                 VGGNet          Metal              99.57                  99.79     99.60         99.60        99.60       99.60
+                                                 Wood               99.71                  99.86
+                                                 Stone              99.00                  99.50
+                                                 Concrete           99.86                  99.93
+                                                 Brick              99.86                  99.93
+                                 GoogleNet       Metal              99.71                  99.86     99.66         99.66        99.66       99.66
+                                                 Wood               99.71                  99.86
+                 w/o𝐿𝑠𝑒𝑙𝑓                        Stone              99.14                  99.57
+                                                 Concrete           99.57                  99.86
+                                                 Brick              99.71                  99.86
+                                 ResNet          Metal              99.71                  99.86     99.46         99.46        99.46       99.46
+                                                 Wood               99.57                  99.79
+                                                 Stone              99.71                  99.35
+                                                 Concrete           99.86                  99.93
+                                                 Brick              100.00                 100.00
+                                 SqueezeNet      Metal              99.57                  99.79     99.60         99.60        99.60       99.60
+                                                 Wood               99.71                  99.86
+                                                 Stone              98.86                  99.43
+                                                 Concrete           100.00                 100.00
+                                                 Brick              100.00                 100.00
+                                 VGGNet          Metal              99.79                  99.91     99.83         99.84        99.83       99.97
+                                                 Wood               99.93                  100.00
+                                                 Stone              99.43                  99.96
+                                                 Concrete           100.00                 100.00
+                                                 Brick              100.00                 100.00
+                                 GoogleNet       Metal              100.00                 100.00    99.91         99.92        99.91       99.98
+                                                 Wood               100.00                 100.00
+                 w/𝐿𝑠𝑒𝑙𝑓                         Stone              99.53                  99.89
+                                                 Concrete           100.00                 100.00
+                                                 Brick              100.00                 100.00
+                                 ResNet          Metal              100.00                 100.00    100.00        100.00       100.00      100.00
+                                                 Wood               100.00                 100.00
+                                                 Stone              100.00                 100.00
+                                                 Concrete           100.00                 100.00
+                                                 Brick              100.00                 100.00
+                                 SqueezeNet      Metal              99.87                  99.94     99.97         99.98        99.97       99.99
+                                                 Wood               100.00                 100.00
+                                                 Stone              100.00                 100.00
+
+
+
+multi-modal strategy yielded a noteworthy 0.34% improvement in per-                 from Table 7, this paper first calculates the average accuracy for each
+formance. These findings underscore the effectiveness of incorporating              class using four different models. Next, this paper determines the ratio
+multi-modality scenarios for comprehensively capturing image and text               of each class based on these average accuracies. Accordingly, this
+features of diverse construction waste materials, ultimately leading to             paper assigns complexity weights to concrete, brick, metal, wood, and
+enhanced classification accuracy.                                                   stone as [0.1, 0.1, 0.2, 0.1, 0.5], reflecting the relative difficulty of
+                                                                                    classification. Consequently, the average accuracy of VGGNet using
+6. Discussion                                                                       a traditional approach is 99.60%. However, when incorporating the
+                                                                                    classification difficulty through weighted accuracy, the result improves
+    In this phase, this paper aims to discuss the unified evaluation                to 99.67%. This demonstrates that considering weighted accuracy is
+                                                                                    crucial in scenarios with imbalanced classes and varying recognition
+framework for different waste types. Compared with other single-metric
+                                                                                    difficulties.
+evaluations (e.g., accuracy alone), the confusion matrix provides a
+                                                                                        In addition, as shown in Fig. 6, although confusion matrix provides
+richer, more nuanced view of model performance. This makes it partic-
+                                                                                    detailed information on true positives, false positives/negatives, etc.,
+ularly valuable in real-world applications where understanding the be-
+                                                                                    offering deeper insights into the classification errors across different
+havior of a classification model in detail is crucial for making informed
+                                                                                    waste types. For example, consider the stone classification using VG-
+decisions about its deployment and further development. Therefore,
+                                                                                    GNet, with a total of 1400 testing samples: there are instances where
+this paper presents the confusion matrices for VGGNet and ResNet
+                                                                                    stone is mistakenly recognized as concrete (5 cases), brick (1 case),
+applied to our VL-Combined Datasets to provide a clearer understand-                and metal (2 cases). This analysis helps us identify specific causes
+ing of the models’ performance. As depicted in Fig. 6, these matrices               of accuracy loss. Although the multi-modality method has improved
+facilitate the identification of true positives, false positives/negatives,         the model’s overall performance, there is significant room for further
+and other outcomes. With this information, this paper can calculate                 enhancement.
+various evaluation metrics such as precision, recall, and F1-score. Thus,
+by using confusion matrices as our unified evaluation metric, this paper            7. Conclusions and future work
+simplifies the understanding of model performance for others.
+    This paper also introduces the Weighted Accuracy (WA) for the                       To address the lack of fully investigated data modalities in construc-
+varying complexity of different waste types. According to the results               tion waste management, this paper introduces ConCLIP, a vision and
+
+                                                                               12
+Y. Sun et al.                                                                                                             Automation in Construction 166 (2024) 105629
+
+
+
+
+                                                             Fig. 6. Unified evaluation metric.
+
+
+language model for material recognition. ConCLIP leverages the CSW               References
+dataset, comprising paired high-resolution construction waste images
+and descriptive text annotations. Key to its success is a bidirectional           [1] L. Ma, L. Zhang, Evolutionary game analysis of construction waste recycling
+contrastive objective with supervised task co-training, aligning image                management in China, Resour. Conserv. Recy. 161 (2020) 104863, http://dx.
+                                                                                      doi.org/10.1016/j.resconrec.2020.104863.
+representations with their corresponding text descriptions. This strategy
+                                                                                  [2] P. Davis, F. Aziz, M.T. Newaz, W. Sher, L. Simon, The classification of construc-
+surpasses competitive in-domain initialization methods, yielding pow-                 tion waste material using a deep convolutional neural network, Autom. Constr.
+erful multimodal representations and compelling recognition results.                  122 (2021) 103481, http://dx.doi.org/10.1016/j.autcon.2020.103481.
+Notably, ConCLIP achieves a 1.83% improvement in concrete recog-                  [3] Y. Sun, Z. Gu, Using computer vision to recognize construction material: A
+nition and a 3.41% boost in metal classification. Extending beyond                    trustworthy dataset perspective, Resour. Conserv. Recy. 183 (2022) 106362,
+                                                                                      http://dx.doi.org/10.1016/j.resconrec.2022.106362.
+image–text pairs, ConCLIP’s innovative cross-modal training framework
+                                                                                  [4] Y. Sun, Z. Gu, Implementation of construction waste recycling under construction
+paves the way for incorporating additional data modalities, such as                   sustainability incentives: A multi-agent stochastic evolutionary game approach,
+sensor data or material composition reports, crucial for advancing auto-              Sustainability 14 (6) (2022) 3702, http://dx.doi.org/10.3390/su14063702.
+mated construction waste management. This paper anticipates ConCLIP               [5] S. Hong, J. Yoon, Y. Ham, B. Lee, H. Kim, Monitoring safety behaviors of
+                                                                                      scaffolding workers using Gramian angular field convolution neural network
+to inspire future research towards making more efficient use of multi-
+                                                                                      based on IMU sensing data, Autom. Constr. 148 (2023) 104748, http://dx.doi.
+modal data for sustainable waste management solutions. In the future,                 org/10.1016/j.autcon.2023.104748.
+this paper plans to investigate prompt engineering more closely, aiming           [6] Z. Liu, X. Gu, J. Chen, D. Wang, Y. Chen, L. Wang, Automatic recognition of
+to provide more accurate descriptions of each waste type to reduce the                pavement cracks from combined GPR B-scan and C-scan images using multiscale
+incidence of false positives and negatives during prediction.                         feature fusion deep neural networks, Autom. Constr. 146 (2023) 104698, http:
+                                                                                      //dx.doi.org/10.1016/j.autcon.2022.104698.
+                                                                                  [7] S.B. Yang, J. Hu, C. Guo, B. Yang, C.S. Jensen, LightPath: Lightweight and
+CRediT authorship contribution statement                                              scalable path representation learning, in: Proceedings of the 29th ACM SIGKDD
+                                                                                      Conference on Knowledge Discovery and Data Mining, 2023, pp. 2999–3010,
+    Ying Sun: Writing – original draft, Methodology. Zhaolin Gu:                      http://dx.doi.org/10.1145/3580305.3599415.
+                                                                                  [8] Z. Dong, J. Chen, W. Lu, Computer vision to recognize construction waste
+Writing – review & editing, Conceptualization. Sean Bin Yang: Writing
+                                                                                      compositions: A novel boundary-aware transformer (BAT) model, J. Environ.
+– review & editing, Supervision.                                                      Manag. 305 (2022) 114405, http://dx.doi.org/10.1016/j.jenvman.2021.114405.
+                                                                                  [9] Z. Zhu, I. Brilakis, Parameter optimization for automated concrete detection in
+Declaration of competing interest                                                     image data, Autom. Constr. 19 (7) (2010) 944–953, http://dx.doi.org/10.1016/
+                                                                                      j.autcon.2010.06.008.
+                                                                                 [10] H. Son, C. Kim, N. Hwang, C. Kim, Y. Kang, Classification of major construction
+    The authors declare that they have no known competing finan-
+                                                                                      materials in construction environments using ensemble classifiers, Adv. Eng.
+cial interests or personal relationships that could have appeared to                  Inform. 28 (1) (2014) 1–10, http://dx.doi.org/10.1016/j.aei.2013.10.001.
+influence the work reported in this paper.                                       [11] W. Lu, J. Chen, F. Xue, Using computer vision to recognize composition of con-
+                                                                                      struction waste mixtures: A semantic segmentation approach, Resour. Conserv.
+                                                                                      Recy. 178 (2022) 106022, http://dx.doi.org/10.1016/j.resconrec.2021.106022.
+Data availability
+                                                                                 [12] J. Chen, W. Lu, F. Xue, ‘‘Looking beneath the surface’’: A visual-physical feature
+                                                                                      hybrid approach for unattended gauging of construction waste composition, J.
+    The data that has been used is confidential.                                      Environ. Manag. 286 (2021) 112233, http://dx.doi.org/10.1016/j.jenvman.2021.
+                                                                                      112233.
+                                                                                 [13] A. Radford, J.W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,
+Acknowledgments
+                                                                                      A. Askell, P. Mishkin, J. Clark, et al., Learning transferable visual models
+                                                                                      from natural language supervision, in: Proceedings of the 38th International
+    This research is financially sponsored by the Chongqing Munic-                    Conference on Machine Learning, 2021, pp. 8748–8763, http://proceedings.mlr.
+ipal Education Commission Key Research Base Project for Humani-                       press/v139/radford21a.html.
+ties and Social Sciences (23SKJD071)—Research on the Identity Phe-               [14] ViLT: Vision-and-language transformer without convolution or region supervi-
+                                                                                      sion, in: Proceedings of the 38th International Conference on Machine Learning,
+nomenon of Dazu Rock Carving Traditional Art and Culture in Network
+                                                                                      2021, pp. 5583–5594, http://proceedings.mlr.press/v139/kim21k.html.
+City Communication, Scientific and Technological Research Program                [15] BLIP: Bootstrapping language-image pre-training for unified vision-language
+of Chongqing Municipal Education Commission (KJQN2024xxxxx)—                          understanding and generation, in: International Conference on Machine Learning,
+Research on Key Technologies for General Multimodal Spatiotemporal                    2022, pp. 12888–12900, https://proceedings.mlr.press/v162/li22n.html.
+Data Analysis of Moving Objects for Open Scenes and Chongqing                    [16] H. Bao, W. Wang, L. Dong, Q. Liu, O.K. Mohammed, K. Aggarwal, S. Som,
+                                                                                      S. Piao, F. Wei, Vlmo: Unified vision-language pre-training with mixture-of-
+University of Posts and Telecommunications Research Start-up Funding                  modality-experts, in: Advances in Neural Information Processing Systems 35:
+(A2024031)—Research on Key technologies of Spatiotemporal Data                        Annual Conference on Neural Information Processing Systems 2022, Vol. 35,
+Analysis from a Multimodal Perspective.                                               2022, pp. 32897–32912, https://openreview.net/forum?id=bydKs84JEyw.
+
+
+                                                                            13
+Y. Sun et al.                                                                                                                          Automation in Construction 166 (2024) 105629
+
+
+[17] W. Wang, H. Bao, L. Dong, J. Bjorck, Z. Peng, Q. Liu, K. Aggarwal, O.K.                  [28] Z. Wang, H. Li, X. Zhang, Construction waste recycling robot for nails and screws:
+     Mohammed, S. Singhal, S. Som, et al., Image as a foreign language: BEIT                       Computer vision technology and neural network approach, Autom. Constr. 97
+     pretraining for vision and vision-language tasks, in: IEEE/CVF Conference on                  (2019) 220–228, http://dx.doi.org/10.1016/j.autcon.2018.11.009.
+     Computer Vision and Pattern Recognition, 2022, pp. 19175–19186, http://dx.               [29] W. Wang, J. Dai, Z. Chen, Z. Huang, Z. Li, X. Zhu, X. Hu, T. Lu, L.
+     doi.org/10.1109/CVPR52729.2023.01838.                                                         Lu, H. Li, et al., InternImage: Exploring large-scale vision foundation models
+[18] J. Devlin, M.-W. Chang, K. Lee, K. Toutanova, BERT: Pre-training of deep                      with deformable convolutions, in: IEEE/CVF Conference on Computer Vision
+     bidirectional transformers for language understanding, in: Proceedings of the                 and Pattern Recognition, 2023, pp. 14408–14419, http://dx.doi.org/10.1109/
+     2019 Conference of the North American Chapter of the Association for Com-                     CVPR52729.2023.01385.
+     putational Linguistics: Human Language Technologies, 2018, pp. 4171–4186,                [30] A. Radford, K. Narasimhan, T. Salimans, I. Sutskever, et al., Improving language
+     http://dx.doi.org/10.18653/v1/n19-1423.                                                       understanding by generative pre-training, 2018, pp. 1–12, https://openai.com/
+[19] K. Kabirifar, M. Mojtahedi, C.C. Wang, V.W. Tam, Effective construction and                   index/language-unsupervised/.
+     demolition waste management assessment through waste management hierarchy;               [31] O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh, S. Ma, Z. Huang, A.
+     a case of Australian large construction companies, J. Clean. Prod. 312 (2021)                 Karpathy, A. Khosla, M. Bernstein, A.C. Berg, L. Fei-Fei, ImageNet large scale
+     127790, http://dx.doi.org/10.1016/j.jclepro.2021.127790.                                      visual recognition challenge, Int. J. Comput. Vis. 115 (3) (2015) 211–252,
+[20] K. Ghafourian, K. Kabirifar, A. Mahdiyar, M. Yazdani, S. Ismail, V.W. Tam,                    http://dx.doi.org/10.1007/s11263-015-0816-y.
+     A synthesis of express analytic hierarchy process (EAHP) and partial least               [32] K. Simonyan, A. Zisserman, Very deep convolutional networks for large-scale
+     squares-structural equations modeling (PLS-SEM) for sustainable construction and              image recognition, in: Proceedings of the 3rd International Conference on
+     demolition waste management assessment: The case of Malaysia, Recycling 6 (4)                 Learning Representations, 2015, http://arxiv.org/abs/1409.1556.
+     (2021) 73, http://dx.doi.org/10.3390/recycling6040073.                                   [33] C. Szegedy, W. Liu, Y. Jia, P. Sermanet, S. Reed, D. Anguelov, D. Erhan, V.
+[21] Z. Bao, W. Lu, A decision-support framework for planning construction waste                   Vanhoucke, A. Rabinovich, Going deeper with convolutions, in: Proceedings of
+     recycling: A case study of Shenzhen, China, J. Clean. Prod. 309 (2021) 127449,                the IEEE Conference on Computer Vision and Pattern Recognition, 2015, pp.
+     http://dx.doi.org/10.1016/j.jclepro.2021.127449.                                              1–9, http://dx.doi.org/10.1109/CVPR.2015.7298594.
+[22] W. Lu, L. Yuan, F. Xue, Investigating the bulk density of construction waste:            [34] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, in:
+     A big data-driven approach, Resour. Conserv. Recy. 169 (2021) 105480, http:                   Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+     //dx.doi.org/10.1016/j.resconrec.2021.105480.                                                 2016, pp. 770–778, http://dx.doi.org/10.1109/CVPR.2016.90.
+[23] N.H. Hoang, T. Ishigaki, R. Kubota, T.K. Tong, T.T. Nguyen, H.G. Nguyen,                 [35] S.B. Yang, C. Guo, J. Hu, B. Yang, J. Tang, C.S. Jensen, Weakly-supervised
+     M. Yamada, K. Kawamoto, Financial and economic evaluation of construction                     temporal path representation learning with contrastive curriculum learning, in:
+     and demolition waste recycling in Hanoi, Vietnam, Waste Manage. 131 (2021)                    38th IEEE International Conference on Data Engineering, 2022, pp. 2873–2885,
+     294–304, http://dx.doi.org/10.1016/j.wasman.2021.06.014.                                      http://dx.doi.org/10.1109/ICDE53745.2022.00260.
+[24] H. Long, H. Liu, X. Li, L. Chen, An evolutionary game theory study for construc-         [36] S.B. Yang, C. Guo, J. Hu, J. Tang, B. Yang, Unsupervised path representation
+     tion and demolition waste recycling considering green development performance                 learning with curriculum negative sampling, in: Proceedings of the Thirtieth
+     under the Chinese government’s reward–penalty mechanism, Int. J. Environ. Res.                International Joint Conference on Artificial Intelligence, 2021, pp. 3286–3292,
+     Public Health 17 (2020) 6303, http://dx.doi.org/10.3390/ijerph17176303.                       http://dx.doi.org/10.24963/ijcai.2021/452.
+[25] Y. Su, Multi-agent evolutionary game in the recycling utilization of construction        [37] K. He, H. Fan, Y. Wu, S. Xie, R. Girshick, Momentum contrast for unsupervised
+     waste, Sci. the Total Environ. 738 (2020) 139826, http://dx.doi.org/10.1016/j.                visual representation learning, in: Proceedings of the IEEE/CVF Conference on
+     scitotenv.2020.139826.                                                                        Computer Vision and Pattern Recognition, 2020, pp. 9729–9738, http://dx.doi.
+[26] L. Du, Y. Feng, W. Lu, L. Kong, Z. Yang, Evolutionary game analysis of                        org/10.1109/CVPR42600.2020.00975.
+     stakeholders’ decision-making behaviours in construction and demolition waste            [38] F. Pedregosa, G. Varoquaux, A. Gramfort, V. Michel, B. Thirion, O. Grisel, M.
+     management, Environ. Impact Assess. Rev. 84 (2020) 106408, http://dx.doi.org/                 Blondel, P. Prettenhofer, R. Weiss, V. Dubourg, et al., Scikit-learn: Machine
+     10.1016/j.eiar.2020.106408.                                                                   learning in Python, J. Mach. Learn. Res. 12 (2011) 2825–2830, https://dl.acm.
+[27] M. Toğaçar, B. Ergen, Z. Cömert, Waste classification using AutoEncoder network               org/doi/10.5555/1953048.2078195.
+     with integrated feature selection method in convolutional neural network mod-            [39] F.N. Iandola, S. Han, M.W. Moskewicz, K. Ashraf, W.J. Dally, K. Keutzer,
+     els, Measurement 153 (2020) 107459, http://dx.doi.org/10.1016/j.measurement.                  SqueezeNet: AlexNet-level accuracy with 50x fewer parameters and <1MB model
+     2019.107459.                                                                                  size, 2016, CoRR abs/1602.07360, http://arxiv.org/abs/1602.07360.
+
+
+
+
+                                                                                         14
+

@@ -1,0 +1,1507 @@
+                                                                    Automation in Construction 171 (2025) 106005
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                                 Automation in Construction
+                                                            journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Towards worker-centric construction scene understanding: Status quo and
+future directions
+Huimin Li a , Hui Deng a, Yichuan Deng a,b,*
+a
+    School of Civil Engineering and Transportation, South China University of Technology, Guangzhou, China
+b
+    Pazhou Lab, Guangzhou 510335, China
+
+
+
+
+A R T I C L E I N F O                                        A B S T R A C T
+
+Keywords:                                                    Construction scene understanding is the process of perceiving, analyzing, and interpreting three-dimensional
+Scene understanding                                          dynamic scenes observed through sensor networks, which is usually real-time. The purpose is to understand
+Construction site                                            the construction scene by analyzing the geometric and semantic features of the objects and their relationships.
+Computer vision
+                                                             Construction scene understanding is a basic technology for construction automation and Human-Robot Inter­
+Image captioning
+Construction worker
+                                                             action. Although there are several reviews on this topic, existing reviews do not cover the latest technological
+                                                             advances and lack systematic elaboration for construction scene understanding. Therefore, this paper reviews
+                                                             research on construction scene understanding conducted over the past fifteen years, summarizing five key scene
+                                                             elements: signals, pixels, objects, relationships, and events, along with the richness of semantic information. It
+                                                             also outlines advancements in perception and reasoning abilities in this domain. In addition, this review proposes
+                                                             five research trends and seven future directions to provide some inspiration for researchers.
+
+
+
+
+1. Introduction                                                                                        In construction, the scene refers to a specific situation, place, and
+                                                                                                  series of actions that workers complete tasks, involving objects such as
+    Scene understanding plays a pivotal role in the construction in­                              materials and machinery, as well as background such as space and
+dustry, supporting vision-based automation tasks and facilitating in­                             environment. Workers are the core of the construction scene, with
+formation management workflows, such as safety monitoring and                                     subjective initiative, constantly moving and evolving. They are impor­
+facilities management. The goal of scene understanding is to help                                 tant in construction safety, progress, and quality management. Most
+computers fully understand real-world scenes as humans do. In recent                              importantly, workers are constantly interacting with the ever-changing
+years, the urgent need to address practical problems in construction and                          construction scene and producing dynamic results. Moreover, worker
+the increasing maturity of deep learning have driven the rapid devel­                             safety is crucial to ensuring overall construction safety. Therefore,
+opment of computer vision in this field. Artificial Intelligence (AI),                            worker-centric scene understanding is a key challenge in this field.
+especially deep learning, has become the dominant approach in com­                                Addressing this issue will advance construction robots and scene un­
+puter vision and is increasingly applied in construction to process visual                        derstanding focused on machines and materials.
+data, with the use of photos and videos on construction sites growing                                  Due to the small and numerous objects and complex relationships on
+steadily [1]. The rapid development of computer vision and abundant                               construction sites, construction scene understanding is a complex
+visual data of construction provide opportunities for developing con­                             problem and researchers have spent a lot of effort on related research.
+struction scene understanding, which helps to improve construction                                There are several reviews on construction scene understanding
+safety [2–7], productivity [8–12], progress [13,14], quality [15], and                            [1,11,19–21]. From a technical perspective for scene understanding, in
+resource management [16–18]. The rise of Large Language Models                                    2021, Arashpour et al. [1] conducted a review based on underlying
+(LLM) also brings new opportunities for scene understanding, promoting                            features (such as color, texture, and shape) for classical image process­
+the fusion of language and vision, and facilitating tasks such as Image                           ing. In 2022, Dang et al. [19] reviewed AI-based sound perception
+Captioning (IC), Visual Question Answering (VQA), visual reasoning,                               methods, highlighting that research on auditory situational awareness is
+cross-modal learning.                                                                             still in progress. Rao et al. [11] reviewed sensors, methods, and
+
+
+
+    * Corresponding author at: School of Civil Engineering and Transportation, South China University of Technology, Guangzhou, China.
+      E-mail address: ctycdeng@scut.edu.cn (Y. Deng).
+
+https://doi.org/10.1016/j.autcon.2025.106005
+Received 12 September 2024; Received in revised form 15 January 2025; Accepted 20 January 2025
+Available online 24 January 2025
+0926-5805/© 2025 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+H. Li et al.                                                                                                         Automation in Construction 171 (2025) 106005
+
+
+applications for construction site monitoring, focusing on technologies          development of construction scene understanding, detailing perception
+for real-time mapping, scene understanding, positioning, and tracking            ability and reasoning ability. In Section 4, this study analyzes five major
+construction activities in both indoor and outdoor environments. In              trends in construction scene understanding. Finally, in Section 5, current
+2023, Mahmoudi et al. [20] reviewed and compared deep learning                   research challenges are discussed and future research directions are
+models related to Action Recognition (AR), focusing on accuracy,                 given.
+interpretability, computation time, memory size, and flexibility. Zhou
+et al. [21] comprehensively reviewed construction safety management              2. Research approach
+from three perspectives: dataset, machine learning approach, and
+research topic. However, existing reviews do not cover the latest tech­          2.1. Material and methods
+nological advances. There is no universally accepted definition of scene
+understanding, nor a systematic elaboration of the concept. New tech­                This study employs a content analysis-based review method, which is
+nological advances provide new possibilities for advancing construction          a well-established approach widely used in engineering and construc­
+scene understanding. With the development of computer vision, the                tion management research. Relevant articles in the target area were
+techniques used for scene understanding have gradually shifted from              identified through Web of Science and Scopus. Topics, research fields,
+classical image processing [22] to deep learning [23]. For scene un­             and journals were screened to ensure the relevance and quality of the
+derstanding, most studies are limited to a specific subtask such as object       selected research literature. Specifically, there are three stages, as shown
+detection [22], semantic segmentation [18], depth estimation [23], or            below (Fig. 2):
+relationship detection [17], which only involves the perception ability
+of scene understanding. Only a few studies have addressed the reasoning            (1) An exhaustive search was conducted using both the Web of Sci­
+ability of scene understanding [4]. Besides, most current reviews on                   ence and Scopus databases, covering the period from 2005 to
+construction scene understanding focus on a single subtask.                            2024. To ensure comprehensive access to relevant literature,
+    In recent years, Large Language Models (LLM) and generative AI                     various search keywords were applied: scene understanding,
+have flourished. The rapid iteration of related technologies has impacted              relationship detection, event detection, image caption, visual
+traditional research paradigms such as computer vision and natural                     semantics, scene perception, situation awareness, situational
+language processing. In this context, research on construction scene                   awareness, construction, and worker. The search focused on ti­
+understanding from the perspective of workers remains valuable in the                  tles, abstracts, and keywords to identify and extract relevant ar­
+following two aspects. First, technical difficulties such as multi-view                ticles. To refine the scope of the results, a screening process was
+fusion, small object detection, and Situation Awareness (SA) constrain                 applied based on two criteria: 1) documents written in English,
+the development of computer vision. Although generic Large Language                    and 2) studies included in the Web of Science Core Collection
+Models (LLM) can solve some of these problems, the embedding of                        (WOSCC) or Scopus. A total of 218 documents were extracted,
+industry-specific knowledge plays a crucial role in overcoming these                   including journal papers and conference papers.
+technical difficulties and improving the accuracy and stability of the             (2) In the second stage, documents that did not include the above
+models. Secondly, this research can provide a new research paradigm for                keywords in the title or abstract were manually screened. This
+understanding the causal chain of construction accidents, offering a                   phase focused on a thorough review of abstracts to identify arti­
+fresh perspective for comprehending worker behavior, assessing worker                  cles specifically related to construction scene understanding,
+safety knowledge, and automatically detecting the evolving process of                  resulting in the final selection of 169 articles for further analysis.
+accident occurrence.                                                               (3) In the third stage, after reviewing the article content, irrelevant
+    Due to the development of scene understanding and large language                   papers were filtered out, leaving a total of 125 publications for
+models in recent years, it is necessary to conduct a new review on this                further analysis. The two criteria for content review during this
+topic. The paper provides a comprehensive review of worker-centric                     phase were: 1) a focus on worker-centric construction scene un­
+construction scene understanding. It identifies research hotspots and                  derstanding, and 2) an emphasis on relationships and events in
+challenges, analyzes development trends, and addresses gaps in current                 construction, with attention to high-level semantics.
+research, offering new insights into understanding worker behavior and
+accident causation. The paper is organized as follows, as illustrated in            While the search method may not guarantee comprehensive
+Fig. 1: Section 2 presents the research methodology and an overview of           coverage of all relevant papers, it is sufficient to provide a substantial
+construction scene understanding, while Section 3 outlines research              number of significant state-of-the-art works, from which the review can
+
+
+
+
+                                                              Fig. 1. Structure of the paper.
+
+                                                                             2
+H. Li et al.                                                                                                         Automation in Construction 171 (2025) 106005
+
+
+
+
+                                                    Fig. 2. Framework for content analysis-based review.
+
+
+draw general conclusions and recommend future research.                          to autonomous systems quickly, accurately, and systematically, without
+                                                                                 human intervention, supporting the automation of systems such as
+                                                                                 construction robots [26].
+2.2. Overview of construction scene understanding
+                                                                                     Scenes can involve many different types of physical objects (such as
+                                                                                 workers, materials, and equipment) interacting with each other or their
+    Construction scene understanding refers to the real-time process of
+                                                                                 environment. They may last only a few moments (such as a person
+perceiving, analyzing, and interpreting three-dimensional dynamic
+                                                                                 falling) or stretch over months (such as the construction of a building),
+scenes captured by sensor networks. The data sources typically include
+                                                                                 and they can range from a single wall to an area that spans an entire city.
+images, text, point clouds, and others. Data processing often involves
+                                                                                 Sensors include not only cameras (such as omnidirectional cameras and
+steps such as feature extraction, relationship identification, semantic
+                                                                                 infrared cameras) but also microphones and other types of sensors (such
+feature integration, and multimodal data fusion. The ultimate goal is to
+                                                                                 as RGB–D, LIDAR, radar, IMU, and GPS). Integrating multiple types of
+gain a comprehensive understanding of the construction scene by
+                                                                                 sensors is usually more effective than relying on single-type sensors, as it
+analyzing both the geometric and semantic features of objects and their
+                                                                                 helps overcome the limitations of single-type sensors. Scene under­
+relationships, thereby supporting engineers in addressing practical
+                                                                                 standing combines three key domains: computer vision, cognition, and
+construction tasks. A complete and mature scene understanding
+                                                                                 software engineering. It is widely applied in areas such as autonomous
+framework needs to have two basic abilities [24,25]: (1) Perception
+                                                                                 driving, assistive robotics, intelligent transport, smart cities, entertain­
+abilities: the ability to automatically extract key information (such as
+                                                                                 ment, and healthcare. However, compared to other industries, con­
+objects, attributes, relationships, and events) from multimodal signals
+                                                                                 struction scenes have unique characteristics (such as unknown objects,
+(such as visible or infrared images, videos, point clouds, sounds, radar,
+                                                                                 dynamic objects, background clutter, occlusion, pose variations, and
+GPS) for scene understanding. (2) Reasoning abilities: based on the
+                                                                                 scale variations), which can severely hinder the efficiency and accuracy
+extracted scene information, combine it with expertise specific to the
+                                                                                 of scene understanding.
+construction scene to guide the decision-making of the autonomous
+                                                                                     Elements in scene understanding are represented through five levels:
+system. Scene understanding frameworks deliver valuable information
+
+
+
+
+                                                Fig. 3. Framework for construction scene understanding.
+
+                                                                             3
+H. Li et al.                                                                                                          Automation in Construction 171 (2025) 106005
+
+
+signals, pixels, objects, relationships, and events. The five elements are         behavior recognition, and state perception. With the advancement of
+related through a process of representation, as illustrated in Fig. 3.             deep learning, convolutional neural networks can effectively extract
+Signals can be derived from sensors and combinations of sensors. After             high-level semantics from images and are widely used in construction to
+data processing, the signals can be represented as interpreted ele­                identify unsafe behaviors [30]. Feature extraction allows for the
+ments—namely objects, relationships, and events—that can be under­                 perception of objects, relationships, and events. However, these alone
+stood by humans. Specifically, for visual signals, pixels serve as the basic       are insufficient to enable reasoning ability for scene understanding.
+units that form an image. The aggregation of pixels forms visual objects,          Scene semantics, such as objects, relationships, and events, need to be
+relationships, and events in the image. Additionally, pixels carry a               combined with domain-specific knowledge [31] to further achieve scene
+limited amount of interpreted semantic information, such as RGB values             understanding and support decision-making in construction.
+that represent color. Within the context of semantics, objects represent               In recent years, construction scene understanding has been a hot
+distinct entities in a scene, relationships describe the interactions be­          topic for practitioners and researchers. Scene perception units have
+tween these objects, and events capture the dynamics or changes                    gradually developed from pixels to objects, relationships, events, and
+occurring within the scene. These three elements are interconnected and            scenes. Perception methods have gradually developed from classical
+form a semantic hierarchy: objects serve as the fundamental building               image processing and machine learning to deep learning and end-to-end
+blocks, while relationships and events provide contextual meaning to               learning, and scene understanding has gradually developed from
+the interactions between objects. Prior studies, such as those by Clowes           perception ability to reasoning ability. However, the existing perception
+[27], have offered perspectives on the semantics of pictures. “The                 methods have many defects (such as insufficient interpretability and
+interpretation of pictures involves a further syntactic structure of the           difficulty in applying rules), which cannot meet the increasingly com­
+event being pictorially depicted which constitutes the semantics of the            plex engineering needs. This is because existing methods do not fully
+picture […] we should regard the semantics of pictures as concerned                account for the interdependence between scenes and objects, or between
+with the exhibition of relationships of a non-pictorial kind. These re­            objects within the construction environment. There are three problems:
+lationships must be regarded as defining the character of the ‘physical            (1) The scene-object coupling mechanism is unclear, the relationships
+world’. Pictures express events in this physical world.” [27] Informed by          between objects are not well understood, and there is a lack of high-level
+advancements in technology and a synthesis of relevant literature, this            feature extraction, making it difficult to model semantics and accurately
+study categorizes semantics into three levels according to the richness of         perceive construction scenes. (2) Knowledge modeling is inadequate,
+semantic information: low-level semantics, which pertains to basic                 making it challenging to embed rule constraints and perform knowledge
+features (such as color or shape); middle-level semantics, which involves          reasoning during the perception process, which leads to poor inter­
+more complex information, such as objects and their relationships; and             pretability of the perception ability. (3) The self-learning mechanism of
+high-level semantics, which encompasses the interpretation of events               the perception algorithm is unclear, and it is not well integrated with
+within a scene. This structure facilitates the progressive representation          application requirements. As a result, the algorithm has low reusability,
+of raw signals into more meaningful concepts.                                      weak adaptability, and poor scene flexibility, making it difficult to
+    The low-level semantics focus on pixel-level features, usually general         support perception in complex and varied construction environments.
+features such as color, texture, and shape. In computer vision tasks               The above issues have become bottlenecks that limit construction scene
+relying on visible light, it is indeed true that both color and shape fea­         perception. They are key challenges that must be addressed to improve
+tures at the pixel level are affected by lighting conditions. For instance,        construction scene understanding.
+insufficient illumination can increase image noise, reduce contrast, and
+diminish color fidelity, impairing the reliability of these features.              2.3. Contents of the review
+Conversely, excessive illumination may cause overexposure, loss of
+detail, and color saturation artifacts, further complicating their detec­             Given the characteristics of construction scenes, the contents of this
+tion and representation. However, transformations such as rotation,                review is shown in Fig. 4. The focus is on the two abilities of scene
+scaling, and perspective changes are common in data acquisition pro­               understanding, with further discussion on research trends and future
+cesses due to variations in camera angles and object orientations. For 2D          directions.
+images, color features are more stable and robust than shape features
+under such transformations. Assuming consistent lighting and camera                3. Research development of scene understanding
+parameters, an object’s color remains unchanged during such trans­
+formations, unlike shape-related features. Due to its advantages, color is             Scene understanding includes a series of tasks on perception ability,
+used as a key feature in vision-based applications in construction. Bril­          which can be classified according to different elements, such as object
+akis et al. [28] accomplished work in image processing by using filters to         detection, semantic segmentation, object tracking, depth estimation,
+decompose an image into several types of basic features (such as color             gesture estimation, relationship detection, and event detection. Ac­
+and texture). The pixels of each image are grouped into meaningful                 cording to the needs and characteristics of construction scenes, con­
+clusters and then matched with pre-classified material samples. Through            struction scene understanding can be broadly classified into perception
+these operations, the detection, retrieval, and indexing of materials              ability and reasoning ability at the application level, as outlined in
+within an image can be achieved. The information obtained from low-                Fig. 5. Perception ability includes entity-based scene understanding,
+level feature extraction is generalized. While basic image retrieval and           relationship-based scene understanding, and event-based scene under­
+classification can be achieved using these features, relying solely on             standing. Firstly, entity-based scene understanding needs to identify
+them reduces the accuracy of retrieval and classification and limits               specific entities in static or dynamic construction scenes, such as
+complex scene understanding, such as the unsafe behavior of workers.               workers, helmets, PPEs, and trucks. Various advanced object detection
+Middle-level semantics focuses on objects and relationships, including             algorithms are widely used to identify entities in construction sites. In
+tasks such as image classification, object detection, semantic segmen­             addition, object-tracking algorithms are used to detect the positions and
+tation, and relationship detection. However, the limited information is            dynamic trajectories of various entities in videos. Second, relationship-
+insufficient for autonomous systems, which require a more compre­                  based scene understanding builds on entity-based scene understand­
+hensive understanding of their surroundings [29]. High-level semantics             ing, focusing on the semantic representation of relationships between
+focuses on complex information such as events, environments, and                   workers, materials, and machinery on construction sites. Thirdly, event-
+states. High-level semantic extraction incorporates methods like pattern           based scene understanding focuses mainly on the recognition of
+recognition to establish semantic associations between different objects.          workers’ behaviors or events in construction sites. Reasoning ability
+This enables the completion of specific tasks such as event recognition,           relies on perception ability and combines specific expertise [31] to
+
+                                                                               4
+H. Li et al.                                                                                                             Automation in Construction 171 (2025) 106005
+
+
+
+
+                                                                  Fig. 4. Contents of the review.
+
+
+
+
+                          Fig. 5. Research development in construction scene understanding: from perception ability to reasoning ability.
+
+
+analyze and make judgments about the perceived information, ulti­                    on construction sites by combining Scale Invariant Feature Transform
+mately guiding the decision-making of autonomous systems in con­                     (SIFT) with Nearest Neighbors (NN). This approach retrieves the most
+struction. Fig. 6 presents the progression of key research methods in                relevant images from the database and then transfers the labels of these
+construction scene understanding.                                                    images to the query image. Research at this stage has begun to integrate
+                                                                                     machine learning with image processing and gradually expand appli­
+3.1. Perception ability                                                              cations in machine learning. In 2017, Lundeen et al. [33] used Clus­
+                                                                                     tering and Iterative Closest Point (CICP) and Generalized Resolution
+3.1.1. Entity-based perception                                                       Correlative Scan Matching (GRCSM) to perceive construction objects, so
+    Entity-based perception is the earliest research focus and serves as             that construction robots could adapt to unexpected situations and
+the foundation for more complex perception tasks that follow. As early               perform high-quality work. Based on hybrid kinematic shape and key
+as 2008, Doerr et al. [32] proposed a 3D feature tracking method for                 node features, Yuan et al. [34] adopted stereo cameras and stereo
+detecting and tracking object features during seismic events, addressing             triangulation to achieve 3D tracking of excavators. With the increasing
+the limitations of 2D tracking approaches. In early research, deep                   maturity of deep learning, scene understanding based on deep learning
+learning has not yet received much attention from researchers, and                   has gained more and more attention. In 2018, Asadi et al. [29] proposed
+image processing remains the primary technical tool for related studies.             a system that can detect both static and dynamic objects, but better
+In 2016, Kim et al. [22] developed a method to identify various objects              strategies are needed to deal with dynamic objects to improve the
+
+                                                                                 5
+H. Li et al.                                                                                  Automation in Construction 171 (2025) 106005
+
+
+
+
+               Fig. 6. Progression of key research methods in construction scene understanding.
+
+
+
+
+                                                      6
+H. Li et al.                                                                                                      Automation in Construction 171 (2025) 106005
+
+
+accuracy and robustness of SLAM. In 2020, Atkinson et al. [35] used            based learning algorithm to enable continuous model adaptation
+Mask R-CNN with Transfer Learning for the segmentation of underfloor           without catastrophic forgetting. In 2024, Cai et al. [49] proposed the
+scenes. In 2021, Han et al. [36] developed a mobile robotic system using       LSTM-MTL model for human intention prediction, and the LSTM-MTL
+LNS-Net for the pixel-level semantic segmentation of objects. To eval­         model takes the worker’s current pose and the manipulated object as
+uate the productivity of rebar tying, Zhao et al. [10] developed a de­         inputs. This means that accurate perception of the current scene is
+tector based on CenterNet to detect five types of objects (worker,             required before predicting intentions, and the accuracy of scene un­
+Lguardrail, Rguardrail, beam, and column) and their coordinates in real        derstanding will directly impact the accuracy of the subsequent inten­
+time. Ning et al. [37] segmented wall contours from point clouds and           tion prediction. Cai et al. [26] proposed an unsupervised method for
+then reconstructed the wall elevation with detailed openings (door and         segmenting dynamic objects, to improve the accuracy of real-time
+window). 2D scene understanding has limitations in analyzing spatial           localization by reducing the influence of the scene’s dynamics. Khan
+relationships. Developing algorithms that handle 3D data and spatial           et al. [50] focuses on multi-worker tracking using a framework that
+relationships can significantly improve the robustness and accuracy of         integrates pose estimation, ReID models, and data association tech­
+construction scene understanding. In 2022, Mascaro et al. [38] used            niques. Kumar et al. [51] focuses on workers and helmets using Faster R-
+Mask R-CNN for 2D semantic segmentation of RGB images and instance-            CNN and data collected by UAVs. Liu et al. [52] focuses on real-time
+level depth segmentation of depth maps. These results were then                worker detection in complex construction scenes, employing a head-
+matched with objects detected in the RGB images, enabling 3D semantic          integrated detecting method that adds a head-detecting branch to the
+segmentation. Xue et al. [13] utilize Learning Deeply Supervised Object        Keypoint R-CNN model. Ma et al. [53] focuses on reflective clothing
+Detectors from Scratch (DSOD) to identify unfinished building compo­           using an improved YOLOv7‑tiny algorithm that incorporates omni-
+nents from the top view. To solve the problem of manual monitoring of          dimensional dynamic convolution and partial convolution. Soleymani
+helmet-wearing, Yan [39] proposed a helmet-wearing detection algo­             et al. [54] developed a lightweight approach for small tools detection
+rithm based on face localization. To achieve visual contextual aware­          (LSTD). They adopted a deep neural network with Dynamic Feature
+ness, Zamani et al. [18] adopted Deeplabv3+ to segment the scene               Extraction (DFE), Integrated Feature Fusion (IFF), and Attention
+containing soil. Most research focuses on visual data and point clouds         Mechanism to enhance the detection of small construction tools in real
+while ignoring the beneficial effects of other modal data such as audi­        time. Xiang et al. [55] focused on detecting safety helmets using a
+tory. In 2023, Alhebrawi et al. [15] used Random Forest (RF), Gradient         multiscale Swin Transformer architecture. Kim et al. [56] developed an
+Boosted Trees (GBT), and Support Vector Machine (SVM) to analyze the           improved YOLOv8 model for real-time detection of personal protective
+sound waves of an impact hammer, thus identifying crack characteristics        equipment (PPE) on edge devices. The summary of research on entity-
+such as width, depth, and location. Chen et al. [25] proposed a hybrid         based perception is shown in Fig. 7.
+visual information analysis framework that trained three types of                  The construction scene has a long time span, during which many
+instance segmentation models (Mask R-CNN, Cascade Mask R-CNN, and              changes occur. It involves various objects, such as workers, materials,
+YOLACT) to detect the boundary between the worker and the handrail.            and machines, with complex interactions among them. Worker-centric
+They also adopted Lightweight OpenPose to estimate the worker’s pose.          construction scene understanding pays more attention to downstream
+To avoid collision accidents, Lee et al. [40] detected workers and             tasks such as construction safety [25,39–43,46,57] and work efficiency
+moving equipment (such as carts, trucks, and forklifts) both indoors and       [10,12]. Therefore, most entity-based perception in the construction
+outdoors based on YOLOv4. Zhao et al. [12] trained a Faster R-CNN              scene focuses on workers, personal protective equipment, and heavy
+model to identify workers and four high-frequency activities (transfer,        machinery. In terms of modal, most research on construction scene
+process, straighten, and check) in steel reinforcement processing.             understanding focuses on images and point clouds and a few studies
+Among these, recognition of workers is entity-based scene understand­          have addressed auditory data.
+ing, while recognition of the four high-frequency activities is event-
+based scene understanding. Park et al. [41] reconstructed the single-          3.1.2. Relationship-based perception
+stage object detector YOLOv5 using attention mechanism to enhance                  The relationships between entities are crucial for representing and
+the performance of detecting workers, ladders, and PPE. They estimated         reasoning in scene understanding. Interpreting the interactions and re­
+the workers’ body poses based on YOLO-Pose and determined whether              lationships between workers, materials, machinery, and structures on
+helmets were being worn correctly based on human keypoints. Seong              construction sites is vital for complex construction scene understanding.
+et al. [42] developed an object detection model based on YOLOv5 for            Scene understanding requires not only recognizing entities and
+detecting workers, excavators, trucks, mobile cranes, and bulldozers.          capturing their locations but also describing the semantic interactions
+Shen et al. [23] proposed a priori information-based method that does          between them.
+not require additional sensors. This method recovers the unknown scale             In 2015, Park et al [58] developed a helmet recognition model by
+and predicts the absolute depth of each pixel in monocular vision. Tran        using background subtraction to identify workers, extracting HOG fea­
+et al. [43] used yolov8 to detect people entering hazardous areas on           tures of the helmet, and feeding these features into an SVM. They then
+construction sites. Yin et al. [44] proposed a large-scale point cloud         defined a candidate region for the helmet and analyzed the relationship
+segmentation method using weakly supervised learning to tackle the             between workers and helmets based on a predefined template. In 2019,
+challenge of labor-intensive labeling. They employed a self-training           Cai et al [8] used positional and attentional cues to identify complex
+strategy to generate high-quality pseudo-labels, which expanded the            interactions and entities in videos containing various activities. They
+training set and improved segmentation performance. You et al. [45]            developed long short-term memory networks (LSTM) to determine
+proposed a novel data enhancement and voting method for stacked                whether two entities belong to the same workgroup and to identify the
+object detection using only low-cost sparse sensors. This approach ad­         activities in which the workgroup is involved. The method adopts LSTM
+dresses the issue of ambiguous geometric features extracted from raw           to learn positional and attentional cues in interactions among multiple
+scan data in stacked object recognition. Zhao et al. [46] used a con­          objects and to model temporal dependencies between features, instead
+volutional neural network to detect workers’ locations, thus deter­            of relying on predefined, hand-crafted rules and patterns. Compared
+mining if a worker is entering a hazardous area and providing an early         with traditional hand-crafted rules and templates, this approach better
+warning. WÓJCIK et al. [47] used a Generalized Region-based Con­              captures the complex and dynamic interaction patterns of construction
+volutional Neural Network to detect workers and helmets. Xiong et al.          sites. Fang et al. [59] used a Mask Region-Based Convolutional Neural
+[48] introduces a lifelong learning framework for detecting and un­            Network (R-CNN) to automatically detect three types of entities (person,
+derstanding construction resources. They leverage a unified dataset            steel support, and concrete support) and further identified the rela­
+(OpenConstruction), a common taxonomy, and an informativeness-                 tionship between person and concrete/steel supports, namely unsafe
+
+                                                                           7
+H. Li et al.                                                             Automation in Construction 171 (2025) 106005
+
+
+
+
+               Fig. 7. Summary of research on entity-based perception.
+
+
+
+
+                                          8
+H. Li et al.                                                                                                           Automation in Construction 171 (2025) 106005
+
+
+behavior recognition. Kim et al. [60] constructed a unique DNN archi­               estimation, providing a more effective representation of scene infor­
+tecture that can detect entities and their locations as well as describe the        mation than methods relying on either approach alone. Additionally, a
+semantic relationships between entities. Xiong et al. [24] developed a              scene graph is a computable structure that intuitively represents entities
+visual relationship detection module using deep learning to capture                 and their relationships in a rich and organized way. Xiong et al. [5]
+entities and their relationships. It represents these relationships as visual       developed a scene perception framework for multi-class PPE detection.
+triplets in the form (a, b, c), where a and c are the categories of object1         They used OpenPose to estimate worker poses, integrated the detected
+and object2, and b is the relationship predicate. In 2020, Yan et al. [6]           2D key points as spatial anchors to identify part attention regions, and
+reconstructed 3D bounding boxes of objects using video captured from a              employed a CNN-based classifier to determine whether PPE in those
+monocular 2D camera. Then, they estimated the 3D spatial relationship               regions was correctly used. This study leverages the inherent relation­
+between workers and heavy vehicles and evaluated the proximity and                  ships between PPE and local body parts (such as head-helmet and upper
+congestion in the construction scene accordingly. Zhang et al. [61]                 body-vest) to determine whether PPE is being worn correctly, without
+developed a visual extraction module based on R-CNN to identify                     requiring a detailed analysis of the spatial relationships between the
+workers and equipment. Then, they extract centroid coordinates from                 objects. In 2022, Kim et al. [17] proposed a semantic graph neural
+the detection box, and calculated proximity and crowdedness to repre­               network approach that represented construction resources and their
+sent the spatial relationship between mobile equipment and workers.                 interactions as graphs. They used a neural message-passing mechanism
+Based on entity recognition, Zhang et al. [62] further analyzed scene               to simulate propagation effects within the graph. In this study, visual
+semantics, including object semantics, logical attribute semantics, and             relationship detection focuses on three key features: spatial, visual, and
+spatial semantics. In 2021, Chen et al. [3,4] proposed a scene perception           operational context. The construction scene graph generation model
+module for detecting improper use of personal protective equipment.                 proposed by Zhang et al. [7] uses a transformer-based network to cap­
+They used YOLOv3 to detect various entities (such as hardhats, dust                 ture entities and relationships and format them into a construction scene
+masks, safety glasses, safety belts, and tools) and used OpenPose to                graph. In 2024, Kim et al. [63] detects four types of relationships be­
+extract the joint positions of workers to represent the workers’ posture.           tween workers and heavy construction machinery (guiding, adjusting,
+Geometric relationship analysis was used to achieve individual-object               filling, and not working with) by employing a DNN architecture, Pix­
+association, triples were used to represent the relationship between                el2Graph. Xie et al. [64] explores 3D human–object interaction (HOI)
+workers and PPE, and structured scene graphs were built based on                    detection on construction sites through a novel context-guided graph
+perceived scene information (entities, relationships). This study’s visual          neural network, integrating transferable contextual knowledge and
+information extraction module combines object detection and pose                    optimizing interaction detection via bipartite matching loss. The
+
+
+
+
+                                                Fig. 8. Summary of research on relationship-based perception.
+
+                                                                                9
+H. Li et al.                                                                                                          Automation in Construction 171 (2025) 106005
+
+
+summary of research on relationship-based perception is shown in                   3.1.3.2. Event classification. Previous research focused on individual
+Fig. 8.                                                                            hazardous events rather than a variety of potential risks. For example,
+                                                                                   studies have examined issues such as workers not wearing PPE, scattered
+3.1.3. Event-based perception                                                      screws on construction sites, or undocumented workers performing
+                                                                                   specific tasks. However, the construction scene is a complex collection.
+3.1.3.1. Single event. An event is a perceptible, dynamic occurrence that          Focusing on a single event is insufficient. To achieve comprehensive
+exists independently and is inherently non-static. Typically, an event             scene understanding, it is essential to perceive multiple events simul­
+involves a sequence of actions or a series of state changes, representing a        taneously. The summary of research on event classification is shown in
+specific fact that evolves over time. In cognitive science, Zacks [65] of          Fig. 10.
+Stanford University proposed that events are behaviors observed by                     In 2018, Antwi-Afari et al. [73,74] developed a supervised machine
+bystanders in the real world and can be understood through spatio-                 learning method to detect and classify normal walking and four loss of
+temporal structures. In construction, researchers primarily focus on               balance events (slip, trip, unexpected step-down, twisted ankle) using
+events that could lead to safety accidents, such as collisions, slips, and         plantar pressure distribution data from wearable insole pressure sensors.
+falls from heights, as shown in Fig. 9.                                            In 2019, Cai et al. [8] used a multi-classification model based on LSTM
+    In 2016, Wang et al. [66] introduced two innovative four-                      to identify specific activities of a workgroup on construction sites,
+dimensional models, the time-sphere model and the time-cuboid                      including road paving, spotting, and others. Zhang et al. [75] used ac­
+model, to effectively prevent collisions between workers and equip­                celerometers and gyroscopes embedded in smartphones to collect three-
+ment or between pieces of equipment during construction. The four-                 axis acceleration and angle. Then, they applied artificial neural net­
+dimensional model analyzes time-series sensor data to capture the                  works to analyze these data and distinguish normal walking from three
+state of entities, including 3D position, direction, and speed. It uses a          near-miss falls: (1) slip and trip, (2) sudden body sway, arm swing, and
+sphere or cuboid to represent the hazardous area around equipment or               unsteady footsteps, and (3) entering dangerous zones. In 2020, Li et al.
+workers. The warning distance is adjusted and updated according to the             [76,77] used a wearable insole pressure system to measure subjects’ gait
+collected entity state information, and collision accidents are identified         patterns. They then calculated five gait variability parameters to
+and predicted based on information such as relative position, movement             distinguish between normal gait, slip hazard, trip hazard, and unex­
+direction, and speed. In 2017, to address collision accidents in road              pected stepdown hazard. Chen et al. [9] proposed a semantic region
+construction, Park et al. [67] developed and tested a BLE-based short-             detection method with transfer learning and saliency calculation. This
+range sensing and alarm system to overcome inconsistencies and delays              method detects semantic regions of different levels, classifying them into
+in proximity warning systems. In 2019, Jo et al. [68] used ultra-                  primary activity-active region, secondary activity-active region, mate­
+wideband (UWB) sensing technologies to identify construction re­                   rials and tools region, and main component region. Semantic regions
+sources, perceive collision accidents, and provide real-time warnings. In          highlight the areas that contain the most relevant information, revealing
+2021, Golovina et al. [69] studied data-driven approaches for managing             key objects and events. This new method can be used to represent event
+close-call incidents on construction sites and enhancing event response.           regions (such as construction activity), crop image size, reduce storage
+Shakerian et al. [70] proposed a method based on wearable biosensors               space, and add semantic annotations for improving image retrieval. Lee
+and machine learning to perceive the heat strain risk of workers on                et al. [78] developed an audio-based event detection system that used K-
+construction sites. In 2022, Fang et al. [71] developed a content-based            Nearest Neighbor (KNN) to classify sounds in construction. The system
+image retrieval approach (CBIR) that fused four features (deep                     identified ten construction activities: excavating, concrete mixing,
+learning, color, texture, and shape-based features) with certain weights           compacting, bulldozing, hammering, piling, concrete pumping, drilling,
+to retrieve images containing workers’ unsafe behaviors. In 2024, Mei              and operating a crane and a chainsaw. In 2021, Jeelani et al. [79] uti­
+et al. [72] combined an environment-based detection module using                   lized visual SLAM and semantic segmentation with Mask R-CNN to
+Mask-R-CNN with a posture-based detection module employing skeleton                detect worker proximity to six pre-defined static hazards and six dy­
+detection. They also introduced a data fusion module to automate the               namic hazards. In 2022, Lee et al. [80] used a waist-worn IMU sensor to
+detection of guardrail climbing behavior on construction sites.                    record waist movement and applied the Mahalanobis distance (MD)
+                                                                                   metric to detect slip, trip, and fall (STF) events, including risky
+
+
+
+
+                                                  Fig. 9. Summary of research on single-event perception.
+
+                                                                              10
+H. Li et al.                                                                                                             Automation in Construction 171 (2025) 106005
+
+
+
+
+                                                     Fig. 10. Summary of research on event classification.
+
+
+movement, inattentive walking, and risky environment. In 2023, Duan                   multiple objects, relationships, attributes, and environmental factors).
+et al. [81] proposed a method for two material handling tasks, which                  Image captioning is a multimodal task that combines computer vision
+used built-in sensors in smartphones to collect acceleration and angular              and natural language processing, allowing computers to “speak for
+velocity. They then used supervised machine learning to identify and                  themselves by looking at pictures”. For image captioning, the computer
+classify four types of risk events, including collision, physical instability,        must not only identify elements in images but also describe them in
+unstable load, and dropping. Li et al. [12] used on-site video and Faster             natural language. By fusing text and visual features, the computer can
+R-CNN to identify four construction activities (straighten, transfer,                 extract rich contextual information from the visual background.
+process, and check) in the steel processing scene. Liu et al. [82] proposed               In 2020, Kim et al. [16] proposed a method for generating spatio-
+a method for detecting near-miss falls using computer vision and ma­                  temporal and visual contextual information from image data collected
+chine learning. First, VideoPose3D was used to extract the 3D coordinate              by drones. This method combines Faster R-CNN, soft attention mecha­
+matrix of workers’ joints from 2D RGB images, and then Principal                      nism, and long short-term memory (LSTM) to generate textual infor­
+Component Analysis (PCA) was used to downscale the high-dimensional                   mation about location, status, motion, color, and quantity of
+matrix. Finally, KNN was used to divide the worker’s pose state into                  construction resources. Liu et al. [85] proposed an image captioning
+three stages: steady, unsteady, and falling. In 2024, Dzeng et al. [83]               method, integrating a CNN encoder (VGG-16 or ResNet-50) for image
+developed a new algorithm based on recurrent neural networks, which                   representation and an RNN decoder (LSTM) for sentence generation.
+outperformed the existing hierarchical threshold model in detecting                   The model was established to describe five construction scenes: cart
+stumble and fall events. The new algorithm demonstrated higher                        transportation, masonry work, rebar work, plastering, and tiling. In
+sensitivity, lower false alarm rates, and a significant reduction in false            2022, Liu et al. [86] developed a visual grounding approach to detect
+alarms for coma events. Bonyani et al. [84] introduced the Optimized                  and locate six unsafe behaviors. This study uses pre-trained YOLOv3 as
+Positioning (OP-Net) architectures and an attention-based spatiotem­                  image encoder to extract visual features and BERT as a text encoder to
+poral sampling approach to detect seven worker behaviors in the CMA                   extract text features. It also employs recursive sub-query to extract
+dataset.                                                                              contextual information related to unsafe behavior. Wang et al. [87]
+                                                                                      proposed an integrated information extraction method to extract se­
+3.1.4. Image captioning                                                               mantic information such as objects, activities, and interactions in con­
+    Before 2020, research primarily focused on identifying individual                 struction images. They used Mask R-CNN as encoder and two-layer
+elements (such as objects, attributes, and relationships) from visual                 LSTM with attention units as decoder, namely Attention LSTM and
+signals or detecting single events (such as falls, and collisions) from               Language LSTM. Xiao et al. [88] explored the feasibility of image
+sensor signals. These methods can automatically identify objects, re­                 captioning in construction, selected six deep learning algorithms, and
+lationships, and events, but they fail to extract deeper information about            tested them on a construction captioning dataset. In 2023, Zhai et al. [2]
+construction scenes, such as quantities, environmental factors, and other             developed an attention-based image captioning model to extract
+relevant details. Only a few studies consider the construction scene as a             worker-centric semantic information in construction scenes. Zhong et al.
+whole, cohesively incorporating deep semantic information (such as                    [89] proposed an image captioning model for identifying semantic
+
+
+                                                                                 11
+H. Li et al.                                                                                                        Automation in Construction 171 (2025) 106005
+
+
+information such as multiple objects, relationships, and attributes from         in construction, thus improving management of safety, productivity, and
+construction videos. They integrated the ResNet101 encoder with the              progress. There are various technical means, such as expert systems,
+LSTM-Attention decoder and tested the model in five construction                 computer programs, and 3D or 4D building information systems (BIM).
+scenes: formwork, masonry, rebar work, cart transport, and plastering.               In 2020, Zhang et al. [61] used fuzzy inference to conduct worker
+In 2024, Chen et al. [14] further developed a Visual Construction Safety         safety assessments on construction sites. The input of the fuzzy inference
+Query (VCSQ) system based on image captioning for construction                   system is the proximity and crowding of workers, and the output is the
+scenes. Song et al. [90] proposed a style-enhanced Transformer model             safety level of workers. In 2021, Li et al. [10] determined the number of
+for image captioning based on the characteristics of construction scenes.        workers involved in a task by analyzing the positional relationship be­
+This study not only used a semantic encoder to extract image semantic            tween detected objects and workers. They then calculated the produc­
+information but also used a style encoder to extract style information.          tion efficiency of reinforcement binding based on the number of workers
+Additionally, a sentence-style loss was incorporated into the total loss         and the duration of the task. In 2022, Xue et al [13] registered the
+function. Gil et al. [91] utilized the ClipCap model to generate image           detected building components into BIM, and inferred construction
+captions for cropped body images of construction workers. The sum­               progress by calculating the number of built components. In 2023, Chen
+mary of research on image captioning is shown in Fig. 11.                        et al. [25] proposed a geometric relationship analysis algorithm for
+    Visual Language models combine visual and textual information to             analyzing stairway safety on construction sites. Based on stairway safety
+process and interpret multimodal data. Therefore, they can effectively           regulations, which state “always use handrails when going up and down
+analyze images and generate natural language descriptions, providing a           stairs,” the study defines a worker as safe if their wrist keypoints are
+more accurate representation of complex relationships between dy­                within the handrail’s detection box. If not, the situation is flagged as
+namic objects in the construction environment.                                   dangerous. Using YOLOv4 to detect entities like workers, materials, and
+                                                                                 equipment, Lee et al. [40] set four rules and developed a fixed computer
+                                                                                 program to assess whether a dangerous situation exists. Li et al. [12]
+3.2. Reasoning ability                                                           calculated the overlap rate between worker detection boxes and activity
+                                                                                 detection boxes to identify each worker’s construction activities, thus
+    The research mentioned above focuses solely on perception ability,           monitoring their work status. Based on detected entities such as workers,
+specifically the identification of semantic information such as objects,         PPE, and portable ladders, Park et al. [41] set corresponding safety rules
+attributes, relationships, and events. However, the ultimate goal of             according to different working heights. Then, they developed corre­
+scene understanding is to make inferences and decisions based on this            sponding hazard detection algorithms based on safety rules to monitor
+perceived information, which requires integrating domain-specific rules          workers’ safety status when using portable ladders. Seong et al. [42]
+and knowledge from the construction field. With the development of               defined “danger areas” and proposed a method to assess collision risk
+knowledge engineering, rule reasoning in construction has also experi­           based on the position and speed of mobile equipment. Tran et al. [43]
+enced the development process: simple rule-based reasoning, ontology-            defined danger zones in 4D BIM based on predefined safety rules and
+based reasoning, scene graph-based reasoning, and NLP-based                      transferred these danger zones to the first frame image captured by the
+reasoning.                                                                       camera. Then, the YOLOv8-based model reported an unsafe event
+                                                                                 whenever it detected a worker entering the danger zone. Wójcik et al.
+3.2.1. Simple rule-based reasoning                                               [47] developed an algorithm to detect helmet compliance, which ana­
+   Simple rules are mainly defined by humans. Inference rules based on           lyzes the spatial relationship between the helmet and the head’s center
+expert knowledge are then used to evaluate key management indicators
+
+
+
+
+                                                   Fig. 11. Summary of research on image captioning.
+
+                                                                            12
+H. Li et al.                                                                                                          Automation in Construction 171 (2025) 106005
+
+
+to determine if the helmet is worn correctly. This study uses a simple,           diverse construction scenes, combining ontology with deep learning is
+interpretable rule-based algorithm, avoiding the intraclass similarity            particularly valuable for enhancing scene understanding.
+issue on wearer/non-wearer detection. Zhao et al. [46] categorized                    In 2019, Xiong et al. [24] developed an ontology model for con­
+hazardous areas into three types: civil construction hazards, machinery           struction safety. This model was used to convert visual triples extracted
+movement hazards, and power leakage hazards. They also defined the                from images and safety rules from documents into logical clauses. They
+attribute information of workers. If the CNN-based object detection               then built an inference engine using the Prolog programming language
+model detected a worker without required attributes entering a haz­               to automatically identify potential risks in construction scenes. In 2020,
+ardous area, it was flagged as unsafe. In 2024, Yang et al. [92] assessed         Zhang et al. [62] developed an ontology semantic network for founda­
+the proper use of PPE by analyzing the positions of PPE on workers and            tion pit excavation scenes. They used the ontology’s logical language to
+the corresponding coordinates of workers’ keypoints. The summary of               translate low-level image semantics into high-level event descriptions
+research on simple rule-based reasoning is shown in Fig. 12.                      and converted construction risk rules into ontology rules. Finally, they
+    It can be found that simple rule-based reasoning is only applicable to        employed the Pellet inference engine to detect potential high-risk situ­
+a specific scenario. It has advantages such as simplicity and strong              ations on construction sites. In 2022, Shen et al. [97] proposed an
+interpretability, as well as defects such as narrow application range and         automatic safety risk identification and prevention mechanism for the
+poor robustness. It struggles to handle the complexity, dynamics, and             construction process, integrating a safety rule library based on ontology
+variability of construction scenes effectively.                                   and natural language processing. In 2024, Johansen et al. [98] used an
+                                                                                  ontology to formalize the components and attributes of guardrail sys­
+3.2.2. Ontology-based reasoning                                                   tems as logical facts and established rules to evaluate their compliance.
+   Previous studies have significantly improved the accuracy and effi­            The summary of research on ontology-based reasoning is shown in
+ciency of object detection and relationship recognition. However, these           Fig. 13.
+tasks remain focused on low-level information extraction, making it                   Manually extracting regulatory documents and encoding them into a
+challenging to automatically detect and identify complex events solely            computer-readable format is time-consuming, costly, and prone to er­
+through feature extraction and image processing. Construction hazard­             rors. Additionally, for more complex and diverse construction scenes,
+ous events involve high-level semantic information that deep learning             establishing a more detailed ontology semantic network and expanding
+algorithms alone cannot extract from images. Therefore, a method                  the corresponding rule base is essential. However, this lack of scalability
+capable of delivering robust semantic understanding is essential.                 significantly limits the method’s practicality in engineering.
+Ontology is a knowledge representation structure that offers unambig­
+uous, standardized terminology, enabling effective communication                  3.2.3. Scene graph-based reasoning
+among all participants in the reasoning process [93]. Ontology can                    The scene graph, defined by Johnson et al. [99], is a computable
+formalize concepts and their relationships in a specific domain [94].             graph structure that intuitively represents numerous entities and their
+Using ontology as a tool for event description helps bridge the gap be­           relationships. In this graph, nodes represent entities, while edges denote
+tween low-level and high-level semantics [95,96]. For complex and                 the pairwise relationship. Computer vision is used to automatically
+
+
+
+
+                                              Fig. 12. Summary of research on simple rule-based reasoning.
+
+                                                                             13
+H. Li et al.                                                                                                         Automation in Construction 171 (2025) 106005
+
+
+
+
+                                                Fig. 13. Summary of research on ontology-based reasoning.
+
+
+extract entities from images and analyze their relationships, trans­              ontologies are formal specifications of a conceptual domain, structured
+forming objective visual information into graph structures for a more             to systematically represent shared knowledge in a reusable manner
+effective representation of scene details. Additionally, by generating            [100]. They consist of concepts, relationships, and axioms, enabling
+syntactic features and performing semantic analysis, construction rule            reasoning and interoperability across applications. For instance, ontol­
+texts can be automatically processed, transforming natural language               ogies have been utilized in construction safety planning to integrate
+sentences into computable graph structures. Furthermore, reasoning                safety knowledge with Building Information Models (BIM) [93] and in
+analysis can be conducted by comparing the scene graph of on-site im­             knowledge retrieval systems to enhance information discovery [94]. In
+ages with the scene graph of relevant regulatory rules to perform                 contrast, scene graphs are graph-based representations that describe the
+compliance checks.                                                                spatial and semantic structure of a scene in terms of objects, attributes,
+    In 2021, to address the limitation of traditional scene graphs in             and relationships, primarily supporting tasks like image retrieval and
+representing conditional scenarios (such as the use of safety belts when          scene understanding [99].
+working at heights), Chen et al. [3] proposed a hierarchical scene graph              From the perspective of structure and scope, ontologies emphasize
+structure for automatic reasoning about improper PPE usage. In the                hierarchical structures and logical constraints, enabling domain-
+visual information extraction module, entity detection and relationship           independent reasoning and rule-checking. For example, Zhang et al.
+analysis are conducted on on-site images, with a focus on the worker.             [93] demonstrated the use of ontologies to automate hazard identifi­
+The resulting visual semantic triples are then converted into computable          cation by integrating safety information within BIM. Scene graphs,
+scene graphs. In the linguistic information extraction module, a method           however, are inherently visual and domain-specific, focusing on object-
+is proposed to represent and convert text information by encoding reg­            centric details to provide granular descriptions of visual data [99].
+ulatory rules into a hierarchical scene graph. Safety rules are decom­                Despite their differing origins, ontologies and scene graphs overlap
+posed into semantic phrases and represented as triples (object 1,                 in their graph-like structures and ability to represent relationships.
+relationship, object 2). To capture the conditional relationships between         Ontologies can enhance scene graphs by formalizing domain knowledge,
+the semantic phrases, the triples are classified into conditional triplets        thereby enriching their semantic and inferential capabilities. For
+and instructed triplets. A hierarchical scene graph of regulatory rules is        instance, embedding an ontology within a scene graph framework can
+then generated based on these semantic phrase triples. In the automatic           standardize object attributes and contextual relationships, as seen in
+reasoning module, the scene graphs generated by the linguistic and vi­            ontology developed by Zhang et al. [93] for safety planning, which vi­
+sual information extraction modules are used as input to analyze and              sualizes safety information through BIM. By leveraging their comple­
+reason about dangerous situations through graph structure analysis.               mentary strengths, integrating ontologies with scene graphs offers
+However, due to the vast number of regulatory documents, inconsistent             significant potential for improving reasoning and retrieval in both visual
+formats, and the complexity of semantic information, manually pro­                and non-visual domains.
+cessing these rules is time-consuming, costly, and prone to errors. In
+2022, based on the previous research [3], Chen et al. [4] improved the            3.2.4. NLP-based reasoning
+linguistic information extraction module and proposed a semantic                     The goal of natural language processing (NLP) is to achieve effective
+analysis method based on natural language processing (NLP) and                    communication between humans and computers, allowing computers to
+ontology. Through syntactic feature generation and semantic analysis,             understand natural language and express intentions in natural language.
+linguistic information is automatically extracted from regulatory rules,          Generally, NLP involves two main aspects: natural language under­
+converting natural language sentences into computable graph struc­                standing and natural language generation. Its research spans multiple
+tures. The summary of research on scene graph-based reasoning is                  levels of granularity, including characters, words, phrases, sentences,
+shown in Fig. 14.                                                                 paragraphs, and chapters. With the advancement of natural language
+    Ontologies and scene graphs share conceptual similarities, yet their          processing and large-scale pre-trained corpus models, NLP-based
+core emphases differ. From the perspective of definition and purpose,             methods have attracted significant attention from researchers in
+
+
+
+
+                                              Fig. 14. Summary of research on scene graph-based reasoning.
+
+                                                                             14
+H. Li et al.                                                                                                          Automation in Construction 171 (2025) 106005
+
+
+construction and hold great application potential [101]. However,                 incur high development costs. Moreover, both visual perception models
+research on using NLP to understand domain knowledge to enhance                   and language reasoning models have limited generalization and transfer
+construction scene understanding is still limited. In 2022, Zhang et al.          capabilities, making it challenging to quickly adapt them to new
+[7] developed a hazard inference module based on the pre-trained                  application scenarios.
+language model C-BERT. Visual facts from the construction scene                       According to Microsoft Research, GPT-4 excels in answering ques­
+graph model, along with external domain knowledge such as construc­               tions across diverse fields, including mathematics, programming, vision,
+tion regulations, are combined into a unified vector representation and           medicine, law, and psychology, without requiring specific design in­
+encoded by C-BERT for hazard inference in construction. Specially, Liu            structions. Its performance significantly surpasses ChatGPT and ap­
+et al. [86] combined computer vision and natural language processing to           proaches human-level capabilities, making it a reasonable candidate for
+develop an end-to-end model for detecting and locating unsafe behav­              an early, albeit incomplete, general artificial intelligence system [103].
+iors on construction sites. This model integrates the perception ability              The emergence of ChatGPT demonstrates that a general generative
+and reasoning ability of scene understanding, which is more conducive             architecture can handle a wide range of natural language processing
+to global optimization. In 2024, Chen et al. [14] developed a visual              tasks. Compared to task-specific architectures, general architectures
+construction safety query (VCSQ) system by integrating image                      leverage task diversity, enable efficient knowledge sharing across tasks,
+captioning (IC), safety-centric visual question answering (VQA), and              and utilize training data more effectively. This shift significantly impacts
+keyword-based image-text retrieval (ITR). The system utilizes pre-                the traditional paradigm of task-specific architectures. Based on the
+trained visual object detectors and large language models (LLMs) to               above research, developing general artificial intelligence systems
+explore new applications in construction safety, serving as a valuable            tailored to the construction field is expected to become a future research
+tool for enhancing on-site situational awareness. Gil et al. [91] utilizes        trend, as illustrated in Fig. 16.
+cosine similarity to compare text embeddings of automatically gener­
+ated image captions with predefined prompts based on OSHA PPE reg­                4.2. Perception from single object and relationship to comprehensive
+ulations, evaluating workers’ compliance with PPE. Wen et al. [102]               objects and relationships
+employed a visual question answering (VQA) model to verify PPE
+compliance and generate safety inspection reports. The summary of                     Research on construction scene understanding has evolved from
+research on NLP-based reasoning is shown in Fig. 15.                              perceiving entities to perceiving relationships, from single objects to
+    Natural language processing and large language models have made               complex ones, and from single relationships to complex ones, as illus­
+significant progress over time. In 2020, OpenAI released GPT-3, a                 trated in Fig. 17.
+generative pre-trained language model with 175 billion parameters.                    For example, in 2015, Park et al. [58] determined whether a worker
+Subsequently, Google developed the Switch Transformer, the first model            was wearing a helmet correctly by analyzing the geometric and spatial
+to exceed one trillion parameters. These large language models, often             relationship between the worker and the helmet. As an early exploration
+called “large models,” have demonstrated exceptional performance in               of computer vision in construction, this study has some limitations. First,
+text generation, few-shot learning, zero-shot learning, and inference             it used a template to detect workers, which only allowed detection of
+tasks. The release of ChatGPT and GPT-4 has propelled large language              standing workers and failed to identify workers in other postures, such
+model (LLM) research into large-scale applications, sparking a new wave           as squatting, bending over, or sitting. Second, this method relies on the
+of advancements in natural language processing. For construction scene            spatial and geometric relationship between the worker and the helmet to
+understanding, research leveraging NLP focuses on converting rules and            match them, using specific parameters that only work for standing
+expert knowledge stored in natural language into computer-readable                workers. If the worker adopts a different posture, these parameters need
+information. This transformation enhances the perception and                      to be adjusted accordingly. Early studies used template-based ap­
+reasoning abilities of construction scene understanding. Recently, the            proaches to detect entities and their relationships in construction scenes.
+rise of pre-trained LLM has opened new avenues for advancing con­                 However, these methods are sensitive to scale and rotation, requiring a
+struction scene understanding.                                                    redesign of the template or matching rules each time a type of entity or
+                                                                                  relationship is identified. This limitation makes it difficult to detect
+4. Analysis and research trends                                                   complex entities and relationships.
+                                                                                      With the rise of deep learning, research on construction scene un­
+4.1. From application-driven neural networks to general artificial                derstanding has progressed significantly. In 2022, Kim et al. [17]
+intelligence in construction                                                      introduced a semantic graph neural network (semantic GNN) to classify
+                                                                                  visual relationships between multiple resources, covering thirteen
+    Currently, artificial intelligence algorithms in construction are             relationship types. Their research discovers underlying domain-specific
+designed for specific tasks and application scenarios. However, due to            natures of visual relationships (semantic features and propagation ef­
+the data dependency of deep learning, creating training datasets and              fects) and integrates various semantic features, including spatial, visual,
+fine-tuning model parameters for specific scenarios and applications              and operational contexts. Unlike methods relying on if-then rules, this
+
+
+
+
+                                                   Fig. 15. Summary of research on NLP-based reasoning.
+
+                                                                             15
+H. Li et al.                                                                                                            Automation in Construction 171 (2025) 106005
+
+
+
+
+Fig. 16. Evolution from application-driven neural networks to general artificial intelligence in construction ((a)Object Detection [47]; (b)Semantic Segmentation
+[18]; (c)Relationship Detection [17]; (d)Image Captioning [16]; (e) Visual Question Answering [14]).
+
+
+approach offers greater scalability and applicability. Given the appro­             both the construction resources and their spatial and semantic re­
+priate training data, it can be easily extended to classify various types of        lationships. Describing the scene using various elements such as objects,
+visual relationships.                                                               relationships, and attributes is key to capturing the complexity of con­
+   Construction scenes contain numerous objects that interact in com­               struction environments.
+plex ways. To fully understand these scenes, it is essential to recognize
+
+                                                                               16
+H. Li et al.                                                                                                           Automation in Construction 171 (2025) 106005
+
+
+
+
+Fig. 17. Evolution of perception: from single object and relationship to comprehensive objects and relationships ((a)Worker [46]; (b)Excavator [104]; (c)Helmet
+[105]; (d)Vehicle [104]; (e)Welding [7]; (f)Scaffolding [7]; (g)Excavating [7]; (h)Bricking [7]; (i)Between workers and vehicles [6]; (j)Between workers and
+handrails [25]; (k)Between workers and structural supports [59]; (l)One-to-one interactions [17]; (m)One-to-many interactions [17]; (n)Many-to-many in­
+teractions [17]).
+
+
+4.3. From rule-based learning to end-to-end learning                               semantic relationships between multiple objects. This limitation
+                                                                                   affected the accuracy, robustness, and scalability of scene understand­
+   For the perception ability of scene understanding, early studies relied         ing. Since these models were designed based on specific rules, the al­
+on manual feature extraction methods, which often overlooked the rich              gorithms performed well in scenes that followed those rules. However,
+
+
+                                                                              17
+H. Li et al.                                                                                                             Automation in Construction 171 (2025) 106005
+
+
+the model’s effectiveness was limited in more diverse and complex                    reducing the interpretability of the framework. Previously, researchers
+scenarios, especially when it came to transferring to other construction             spent significant time on feature extraction and feature engineering for
+scenes. Additionally, the manual feature extraction process is time-                 specific machine learning tasks, but deep neural networks, supported by
+consuming, costly, and prone to errors. For the reasoning ability of                 large labeled datasets, have introduced a new paradigm for these tasks.
+scene understanding, the reasoning module often relies on third-party                For natural language processing tasks, in 2021, Chen et al. [3] used a
+software (such as fuzzy inference [61], ontology reasoning engine                    manual method to extract information from regulatory documents and
+[62]) or adopts additional natural language processing models (such as               generate a hierarchical scene graph. However, this process is time-
+C-BERT [7]) to extract rules. These factors affect the practicality and              consuming and prone to errors, especially with large volumes of regu­
+scalability of these methods.                                                        latory documents. In 2022, Chen et al. [4] improved the process by using
+    End-to-end frameworks have the potential to greatly improve the                  an NLP and ontology-based approach, which automatically processes
+practicality of scene understanding. While these approaches are chal­                input regulatory rules and converts natural language sentences into
+lenging, they offer several key advantages. First, they can fully leverage           computable graph structure representations.
+the data, eliminating the need for expert knowledge, as long as enough                   For the reasoning ability of scene understanding, most existing
+data is available. Second, they require fewer manually designed com­                 studies still require a separate reasoning module based on perception to
+ponents, simplifying the design workflow. Researchers can focus less on              achieve reasoning ability [3,4,7,24,61,62]. However, as an exception,
+manually designing functions or intermediate representations. Third,                 Liu et al. [86] took a different approach by unifying perception and
+end-to-end neural network training reduces error propagation, which                  reasoning abilities. They used an end-to-end visual grounding method to
+can enhance the performance of downstream tasks. Fig. 19 illustrates the             identify unsafe behaviors on construction sites. For example, in 2020,
+learning paradigms from rule-based learning to end-to-end learning.                  Cao et al. [61] used fuzzy inference to assess the safety level of con­
+    For the perception ability of scene understanding, related research              struction scenes by analyzing proximity and crowdedness within the
+has evolved from rule-based methods [22,34,58] to end-to-end learning                scene. Zhu et al. [62] developed a semantic web rule language (SWRL)
+[18,35], as illustrated in Fig. 18. For instance, in 2016, Kim et al. [22]           rule base and utilized the Pellet inference engine to assess risks in con­
+applied Nearest Neighbors and Scale Invariant Feature Transform Flow                 struction scenes. These studies aim to combine ontologies to create se­
+Matching for segmentation. The method retrieved relevant images and                  mantic models and leverage rules from text to enhance the
+passed the label to the query image to segment various objects on con­               understanding of unsafe behaviors [24,62]. While unsafe behaviors can
+struction sites. However, it relies on having similar images in the data­            be identified from images, they cannot be intuitively located in images.
+base. If the database lacks construction images similar to the query                 In contrast, in 2022, Liu et al. [86] introduced an end-to-end, single-
+image, the accuracy of segmentation will significantly decrease. This is             stage visual grounding method to identify and locate multiple unsafe
+particularly challenging for construction scenes, which are diverse,                 behaviors in images based on query text related to unsafe behaviors.
+complex, and constantly changing, with a wide range of workers, ma­                  This end-to-end model reduces error propagation and enhances the
+terials, and machinery. Therefore, even within the same type of con­                 overall performance of the task.
+struction project, it is challenging to find similar scenes. This
+characteristic limits the effectiveness of segmentation using this method.
+                                                                                     4.4. From data dependency to transfer learning and self-supervised
+In 2020, Atkinson et al. [35] used Mask-RCNN to segment enclosed
+                                                                                     learning
+space scenes under the floor. In 2022, Zamani et al. [18] employed
+Deeplabv3+ to segment various soils in the scene. This end-to-end
+                                                                                        Deep learning has significantly advanced construction scene under­
+segmentation approach prioritizes robustness, even at the cost of
+                                                                                     standing, but gathering training data for diverse scenes and tasks
+
+
+
+
+Fig. 18. Evolution from rule-based learning to end-to-end learning ((a)Classical NLP; (b)Classical image processing [106]; (c)Artificial Neural Network (ANN); (d)
+Convolutional Neural Networks (CNN)).
+
+                                                                                18
+H. Li et al.                                                                                                             Automation in Construction 171 (2025) 106005
+
+
+
+
+                                         Fig. 19. Learning paradigms: from rule-based learning to end-to-end learning.
+
+
+
+
+      Fig. 20. Evolution from data dependency to transfer learning and transformer ((a)Data dependency; (b)Transfer learning [111]; (c)Transformer [112]).
+
+
+remains a major challenge. These algorithms typically require large                 involves leveraging a model trained on one task and adapting it to a
+datasets for effective training, particularly in supervised learning                different task. By transferring relevant knowledge from the pre-trained
+models. The required data often include various sensor types, such as               model and fine-tuning it with a small amount of domain-specific data,
+RGB images [107], point clouds [108], IMU [109], and depth images                   transfer learning helps address data scarcity while enhancing model
+[23]. Obtaining construction datasets often faces challenges related to             performance in new tasks. In recent years, transfer learning has gained
+data confidentiality and commercial sensitivity. As a result, many re­              significant attention in machine learning and deep learning. Transfer
+searchers must create their own datasets, a process involving data                  learning is essential in construction, where several challenges arise in
+collection, cleaning, annotation, verification, and evaluation. This pro­           training deep learning models:
+cess is not only time-consuming but also labor-intensive, significantly
+impacting research efficiency. While large public datasets are common                • Big Data vs. Few Annotations: While datasets are large, the number
+in general fields, compiling similar datasets for deep learning in the                 of labeled samples is limited, and data annotation is costly.
+construction domain is exceptionally difficult. Online image datasets                • Big Data vs. Limited Computing Power: Computing platforms often
+contain far fewer images of built environments compared to everyday                    fall short of meeting the training demands of large datasets, neces­
+objects. Additionally, due to safety and security concerns, construction               sitating the use of model migration.
+sites are typically closed to the public, making it harder to gather site-           • Universal Models vs. Personalized Needs: A single model cannot
+specific images.                                                                       cater to the diverse requirements of different scenarios, making
+    Transfer learning offers a promising solution to the challenges of data            adaptation difficult.
+dependency and distribution bias in deep learning, facilitating the
+broader application of computer vision in construction. This approach                  To address these challenges, researchers can leverage transfer
+
+                                                                               19
+H. Li et al.                                                                                                            Automation in Construction 171 (2025) 106005
+
+
+
+
+       Fig. 21. Techniques for mitigating data dependency ((a)Transfer Learning [9]; (b)Self-supervised Learning [23]; (c)Weakly Supervised Learning [44]).
+
+
+learning, which provides an effective approach to overcoming these                   role of source domain data transparent, interpretable transfer learning
+contradictions. In 2020, Atkinson et al. [35] proposed a two-stage                   enhances the rational improvement of model performance.
+transfer learning method to tackle the challenge of capturing training                   Additionally, weakly supervised, self-supervised, and semi-
+images with specific entities like pipes and wires. In the first stage, they         supervised learning are effective techniques for addressing deep learn­
+trained a model using the New York University (NYU) dataset, which                   ing’s dependency on large datasets. To reduce the need for manual an­
+includes a variety of general classes. This step allowed the model to learn          notations, active learning strategy can be employed to select a small
+general features from classes with more examples of pipes and wires. In              subset of data for labeling. This approach leverages the model’s uncer­
+the second stage, they fine-tuned the model using an underfloor scene                tainty to identify the most informative samples. For example, in 2023,
+dataset. Importantly, only the output layer was trained during this stage,           Yin et al. [44] introduced a novel weakly supervised semantic seg­
+while the region proposal network and backbone model remained un­                    mentation (WSSS) framework based on semantic query net (SQN), for
+changed. This ensured that the knowledge (such as network weights)                   large-scale industrial point clouds. This framework incorporates a self-
+gained in the first stage was effectively transferred and remained rele­             training strategy to fully exploit the potential of unlabeled data. Simi­
+vant for the second stage. Chen et al. [9] also applied a transfer learning          larly, Shen et al. [23] developed a new self-supervised learning para­
+approach to detect semantic regions in construction scenes. By using a               digm for monocular depth estimation. They further transferred the pre-
+pre-trained model as the starting point, they were able to reduce the                trained self-supervised model to other downstream tasks in construction
+amount of data needed for training and enhance the model’s final per­                scene understanding. Fig. 20 presents the development from data de­
+formance. In 2023, Shen et al. [23] applied transfer learning to depth               pendency to transfer learning and transformer, and Fig. 21 presents
+estimation models. For relative depth estimation, they pre-trained the               several techniques for mitigating data dependency.
+DepthLP model on large-scale unlabeled datasets like KITTI and DDAD.
+The model was then fine-tuned for downstream tasks using a new loss
+                                                                                     4.5. From single-modal data and single technology to multi-modal fusion
+function and only a small set of labeled images. In 2024, Luo et al. [110]
+                                                                                     and multi-technology integration
+proposed a novel interpretable transfer learning method for tunnel en­
+gineering risk prediction. This method identifies the source domain data
+                                                                                       (1) From single-modal data to multi-modal fusion
+that contributes most to transfer learning and quantifies its impact on
+improving prediction accuracy. By making the training process and the
+                                                                                        Although various types of data are collected from construction sites,
+
+                                                                                20
+H. Li et al.                                                                                                           Automation in Construction 171 (2025) 106005
+
+
+
+
+Fig. 22. Evolution from single-modal data to multi-modal fusion and from single technology to multi-technology integration ((a)Image [26]; (b)Sound [15]; (c)
+Sensor [75]; (d)Point cloud [44]; (e)Image Captioning [16]; (f)Visual Grounding [86]; (g)Visual Question Answering [14]; (h)Only image processing [113]; (i)Only
+deep learning [114]; (j)Integration of deep learning and image processing [106]; (k)Integration of computer vision and natural language processing [7]).
+
+
+
+
+                                                                               21
+H. Li et al.                                                                                                          Automation in Construction 171 (2025) 106005
+
+
+few studies have focused on multimodal data. The construction industry             processing feature extraction methods, namely color-based, texture-
+gathers and stores data in different formats, such as text, numerical data,        based, and shape-based methods, and fused the four extracted features
+images, videos, and audio, and applies machine learning to analyze data            according to certain weights. In 2024, He et al. [106] proposed a hybrid
+[21]. However, most studies tend to extract features from a single mo­             crack segmentation method that combines the strengths of CNN-based
+dality or data type. By combining multimodal features from different               object detection and image processing-based segmentation. First, DO-
+data sources, complementary information can be obtained, which can be              YOLOv4 is used to locate the crack area, and then image processing
+integrated to enhance the performance of both shallow learning and                 techniques detect the crack pixels within that area. This approach re­
+deep learning. Current research often relies on two main types of devices          duces labeling costs while improving both the efficiency and accuracy of
+for data collection, in addition to data from text or BIM. The first type          crack segmentation. Additionally, the integration of computer vision
+includes sensors like accelerometers [75], gyroscopes [75], and IMUs               with technologies such as BIM, ontology, and natural language pro­
+[80], which capture physical or motion-related data. The second type               cessing has gained increasing attention from researchers. In 2019, Xiong
+involves various cameras, such as RGB, depth, stereo, and standard 2D              et al. [24] integrated visual relationship detection with ontology to
+cameras, which are typically installed on drones or fixed locations at             automatically identify hazards on construction sites. In 2020, Zhang
+construction sites. Image processing and computer vision are commonly              et al. [62] combined object detection and ontology to identify risks in
+used to analyze photos and videos. However, each sensor has its limi­              construction. In 2022, Zhang et al. [7] proposed an automatic hazard
+tations. For instance, depth cameras have a restricted range, ground-              inference method that combines relationship detection and natural
+based laser scanners struggle to map horizontal surfaces at the same               language processing, using scene graphs and C-BERT. In 2024, Chen
+level as the sensor, and ordinary cameras face challenges such as line-of-         et al. [14] proposed the Visual Construction Safety Query (VCSQ) sys­
+sight (LoS) issues, occlusion, and poor lighting conditions.                       tem. This system integrates real-time image captioning (IC), safety-
+    To overcome the limitations of a single sensor, combining different            centric visual question answering (VQA), and keyword-based image-
+types of sensors can be a solution. However, this introduces added                 text retrieval (ITR) with head-mounted augmented reality (AR) devices.
+complexity in data processing and feature fusion. Compared to single-                  Data from different modalities represent various types of information
+modal perception and reasoning, the use of multimodal perception                   in real-world scenes and require different processing technologies. Each
+and reasoning is still relatively limited. Image captioning                        technology also has its own strengths and limitations. For example, deep
+[2,16,85,87–90], visual grounding [86], and visual question answering              learning for image data can automatically learn complex features but
+[14] are all typical multimodal tasks. Unlike a single visual feature map,         requires significant computing resources and time. In contrast, tradi­
+natural language can convey high-level abstract concepts and richer                tional image processing can reduce data labeling costs and lower
+semantic information. Since 2020, the fusion of vision and text has                computing power requirements. To enhance the intelligence of con­
+gained increasing attention from researchers, driving the shift from               struction scene understanding, scholars need to explore how to effec­
+single-modal to multimodal. However, aside from vision and text fusion,            tively integrate the advantages of these different technologies. Fig. 22
+there are relatively few studies exploring other modalities. In the future,        presents the development from single-modal data and single technology
+the feasibility and potential applications of combining vision with other          to multi-modal fusion and multi-technology integration.
+modalities should be explored, such as RGB images with depth images
+[36,38], images with BIM [43], images with point clouds, or vision with            5. Challenges and future directions
+hearing [19]. Therefore, conducting research based on multimodal data
+is crucial to enhancing construction scene understanding. Future studies           5.1. Situation awareness (SA)
+should focus on extracting multimodal features and developing effective
+feature fusion mechanisms to improve the performance of deep learning                  Situation Awareness is the ability to perceive elements in the envi­
+in this field.                                                                     ronment, understand their meaning, and predict their state in the near
+                                                                                   future [115]. Construction sites are full of hidden dangers, and workers’
+    (2) From single technology to multi-technology integration                     inability to accurately perceive risks can lead to missed or misidentified
+                                                                                   hazards, increasing the likelihood of accidents. For example, if workers
+    The technologies used in construction scene understanding include,             fail to recognize changes in road conditions, they may not adjust their
+but are not limited to, image processing, machine learning, deep                   movements accordingly, further raising the risk of accidents [116]. This
+learning, building information modeling, ontology, and natural lan­                ability to detect, perceive, and understand a changing environment in
+guage processing. Early studies mostly relied on a single technology to            real-time is called “situation awareness” [117]. An important factor
+achieve scene understanding. However, each technology has its limita­              affecting situation awareness is the limited capacity of the attention
+tions, and using only one cannot provide a comprehensive understand­               system [117]. To maintain situation awareness in hazardous environ­
+ing of the scene. With advancements in computer technology and                     ments, construction workers must visually scan for potential hazards,
+hardware, the integration of multiple technologies has increasingly                gather feedforward information about risks, and detect impending
+gained the attention of researchers.                                               dangers [118]. However, in a dynamic construction environment,
+    Traditional image processing typically relies on manually designed             human attention is limited. Excessive demands on attention can prevent
+algorithms to extract features and process images, whereas deep                    workers from fully maintaining situation awareness, increasing the risk
+learning automatically learns features and patterns by training neural             of construction accidents [117]. In 2016, Hasanzadeh et al. [119] pio­
+networks. The main advantage of deep learning is its ability to learn              neered the use of mobile eye-tracking technology to measure the situ­
+features and patterns without manual design. Additionally, deep                    ation awareness levels of construction workers. In 2018, Hasanzadeh
+learning models often achieve higher accuracy and performance, mak­                et al. [118] used mobile eye-tracking technology to investigate the
+ing them suitable for more complex tasks. However, deep learning also              relationship between construction workers’ visual attention allocation
+faces several challenges, including poor interpretability, limited                 and their level of situation awareness in the presence of fall and trip
+controllability, high computational resource demands, limited general­             hazards. In 2020, a study by Choi et al. [120] found that forklift oper­
+ization ability, and data privacy concerns. In 2021, Arashpour et al. [1]          ators’ situation awareness of other workers was significantly influenced
+suggested that combining image processing with deep learning could                 by the complexity of the subtask they were performing at the time. In
+optimize performance indicators such as time, cost, and quality in                 2022, Han et al. [121] studied the factors influencing the situation
+construction scene understanding tasks. In 2022, Fang et al. [71] pro­             awareness levels of highway workers, providing a foundation for
+posed a method for retrieving images of unsafe worker behaviors. This              designing human-centered hazard warning methods tailored to different
+study used a deep learning feature extraction method and three image               work environments.
+
+                                                                              22
+H. Li et al.                                                                                                           Automation in Construction 171 (2025) 106005
+
+
+    In the era of big data, construction sites generate vast amounts of            the scene and the workers’ behavior. To advance related technologies
+information, and the fast-changing conditions pose significant chal­               and facilitate practical applications, further research is needed in areas
+lenges to situation awareness. However, advancements in computer                   like segmentation of construction scene point clouds with limited an­
+science have greatly enhanced computers’ ability to process large                  notations, shape and texture completion for large-scale construction
+datasets and reason within set rules. This improvement helps shorten the           scenes, and understanding and modeling worker behavior in 3D
+observe-orient-decide-act (OODA) cycle, enabling humans to better                  environments.
+perceive their environment, make decisions, and mitigate risks. In 2020,
+Zhu [122] combined convolutional neural networks, situation aware­                 5.3. Enhancing dynamic scene understanding using time series analysis
+ness, and database technologies to study road traffic situation awareness
+systems. The research focused on the processes of information collec­                  Construction scenes are dynamic, with constant changes in people,
+tion, processing, and analysis within such systems. However, there is              materials, machinery, and the working environment. These dynamic
+limited research on the application of situation awareness in construc­            characteristics present technical challenges for computer vision, such as
+tion using digital technologies. In 2008, Katz et al. [123] suggested using        dynamic object segmentation, occlusion, and camera positioning. While
+a camera network to track on-site equipment and materials, helping to              current research can handle static objects, more effective strategies are
+enhance situation awareness in construction scenes. Later, in 2018, Fang           needed to manage dynamic objects. For example, ORB-SLAM [126] may
+et al. [124] introduced a new operator assistance system designed to               lose track when moving objects are present. Additionally, an action or
+improve mobile crane operators’ situation awareness of safety risks. In            event often involves a sequence of actions with temporal relationships.
+2023, Zhang et al. [125] reviewed the role of situation awareness and              The use of time series analysis offers a more accurate way to describe
+digital technology in construction safety management, offering a theo­             construction events. For instance, the actions of “carrying” and
+retical foundation for developing a situation awareness system for                 “handling” may appear similar in terms of spatial and visual charac­
+construction sites. Based on the above research, it is clear that situation        teristics in a static image. However, to distinguish whether a worker is
+awareness in construction scenes is still at a theoretical stage, with             “carrying” or “handling” an object, time series analysis—such as
+significant potential for further exploration. In the future, situation            tracking spatial distance and Interaction over Union (IoU) over time­
+awareness in construction scenes, driven by digital technology and deep            —can be useful [17].
+learning, is expected to be a key research trend.                                      In 2019, Cai et al. [8] used long short-term memory networks (LSTM)
+                                                                                   to analyze work groups in construction activities. Given the dynamic
+5.2. Three-dimensional (3D) scene understanding                                    nature of construction sites, the grouping results change over time,
+                                                                                   making this study a more accurate representation of real-world con­
+    Previous studies have highlighted the limitations of using 2D geo­             struction scenes. In 2023, Chen et al. [25] applied time series analysis to
+metric distances for relationship analysis [4]. As a result, 3D object             reduce misidentifications caused by environmental factors or occlusion,
+detection [6], 3D pose estimation [82], and 3D semantic segmentation               enhancing hazard identification performance. In 2024, Dzeng et al. [83]
+[38,44,45] have emerged as key research trends. Future research on                 used a recurrent neural network to classify IMU time series data,
+scene understanding will focus on collecting 3D data from construction             reducing false alarms for events like tripping, falling, and coma. To
+scenes, creating training datasets for 3D deep learning, and developing            improve the accuracy of dynamic object segmentation, Yang et al. [26]
+algorithms that process 3D data and spatial relationships to improve the           applied bi-directional propagation to the fused mask, enhancing the
+robustness and accuracy of construction scene understanding. In 2020,              consistency of the dynamic object mask in the temporal context. Future
+Yan et al. [6] proposed a method to reconstruct 3D candidate boxes for             research on construction scene understanding could incorporate time
+detected objects, such as workers and heavy vehicles, using monocular              series analysis models to extract deeper semantic information, offering
+2D camera videos. In 2022, Mascaro et al. [38] combined RGB images                 more comprehensive support for downstream tasks like safety man­
+with depth information to develop a 3D instance segmentation algo­                 agement and hazard prediction.
+rithm. In 2023, Yin et al. [44] introduced a large-scale industrial point
+cloud segmentation algorithm based on weakly supervised learning. You              5.4. Data generation for construction scene understanding
+et al. [45] proposed an enhanced object segmentation method that uses
+a low-resolution LiDAR scanner for high-precision object boundary                     Current datasets for construction scene understanding are usually
+recognition. Liu et al. [82] applied 3D posture estimation to detect               limited to specific stages or scenarios, leading to several issues:
+workers at risk of falling.
+    Thanks to the development of long-range sensors like LiDAR and                  • Models trained on static images from a single stage may struggle to
+short-range sensors such as structured light, acquiring 3D point cloud                understand the dynamic nature of construction sites, where elements
+data has become increasingly convenient. Compared to 2D images, point                 change as work progresses.
+cloud data is less affected by external lighting and distance, and more             • The complexity of construction sites and the limited coverage of
+accurately reflects the spatial structure of the real world. It provides              cameras can result in many objects being obstructed, making it
+richer geometric, shape, and scale information. With these advantages,                difficult to label or detect them.
+3D scene understanding and reconstruction technologies allow com­                   • Site conditions (such as inaccessibility to dangerous areas) or regu­
+puters to record and comprehend the 3D world, which is crucial for                    lations (such as drone restrictions) can make it challenging to capture
+industrial production automation and management informatization.                      images from specific camera angles.
+These technologies have broad applications in areas like scene recon­               • Due to practical limitations in data collection, relying solely on real-
+struction, SLAM, and robot perception. As a result, numerous studies                  world images may not capture the full range of construction object
+have focused on key issues such as point cloud feature extraction,                    characteristics (such as varying postures, textures, and colors).
+matching fusion, semantic segmentation, and point cloud completion,                 • Real images may also raise concerns about personal privacy and
+achieving significant progress.                                                       sensitive information.
+    However, there are still challenges, such as significant gaps in
+scanning scenes and high computational costs for high-precision 3D                     In this context, image synthesis methods can be used to generate data
+scenes, which impact the accuracy of applications. First, point cloud              for construction scene understanding. Virtual reality technologies, such
+data is unstructured, and real objects come in various shapes, meaning             as Building Information Modeling (BIM), can simulate real-world scenes,
+the completion method must be robust and generalizable. Second, for                allowing virtual cameras to capture images from any perspective and
+workers in 3D scenes, it’s essential to explore the connection between             synthesize training datasets for specific needs. Additionally, data
+
+                                                                              23
+H. Li et al.                                                                                                            Automation in Construction 171 (2025) 106005
+
+
+generation techniques like generative adversarial networks (GANs) can                • Trusted hardware-based technologies, represented by trusted
+help address issues arising from insufficient datasets. In 2021, Hong                  execution environments (TEE).
+et al. [127] proposed a high-quality synthetic data generation method
+with automatic annotation for infrastructure scenes. First, CycleGAN                    Secure multi-party computation (MPC) enables multiple participants
+was used to convert BIM images into real-world images. Then, the                    in a network, without the need for a trusted third party, to collaborate on
+spatial information in BIM was used to automatically annotate the im­               computing a function and obtain verifiable results. Each participant
+ages, creating various synthetic datasets. Finally, the selected synthetic          holds private input data, and the computation process uses interactive,
+datasets were combined to form the final synthetic dataset. In 2022, Kim            irreversible encryption to ensure that participants can only access the
+et al. [128] explored the potential of using synthetic data for developing          output related to their own data. This method prevents any participant
+visual models. They trained a deep neural network (DNN) using only                  from inferring the private input data or output results of others. Feder­
+synthetic data and evaluated its performance on a worker detection task.            ated Learning (FL) is an emerging machine learning approach that en­
+Wei et al. [129] used BIM semantics and progress information, along                 ables training across multiple distributed clients with local datasets,
+with the Unreal Engine, to generate image datasets for construction                 while aggregating the results on a centralized server. By allowing ma­
+under varying environmental conditions (seasons, lighting, weather)                 chine learning tasks to be performed collaboratively without trans­
+and different construction stages. In 2023, Kim et al. [130] proposed a             mitting the original data, federated learning offers a promising solution
+construction worker-centric image synthesis method that automatically               to the conflict between user privacy and data sharing. A Trusted
+generates and labels synthetic images of workers in various poses, per­             Execution Environment (TEE) is a security architecture that combines
+forming different activities, and under different outdoor conditions.               both software and hardware to create a secure computing environment
+Tang et al. [131] proposed a method to automatically generate synthetic             isolated from the outside world. It achieves this by utilizing the central
+point clouds from BIM and evaluated their potential for improving in­               processing unit (CPU) or allocating a portion of memory as a secure area.
+door scene understanding. Ying et al. [132] proposed a method for                   Sensitive data is processed within this secure area, and without autho­
+generating synthetic images based on BIM. This method captures real­                rized access, no external attacker—including system admin­
+istic images of various scenes from BIM and automatically generates                 istrators—can control the operations or access the sensitive data. The
+annotations for 12 building scene understanding (BSU) tasks, including              hardware isolation ensures the complete security of privacy-sensitive
+pose estimation, scene recognition, depth estimation, object detection,             computations within the environment.
+semantic segmentation, instance segmentation, and panoptic                              In construction, in 2020, Cheng et al. [133] proposed an encryption
+segmentation.                                                                       key distribution strategy for construction projects. This strategy enables
+    Currently, construction datasets are mainly used for academic pur­              project participants to authenticate their identities and securely share
+poses. In contrast, synthetic image datasets can help avoid issues related          sensitive information between parties. In 2021, Kochovski et al. [134]
+to data confidentiality and licensing, while also promoting the appli­              integrated blockchain into smart construction applications to provide
+cation of scene understanding technology in construction. Future                    trusted access to artificial intelligence methods, while also supporting
+research can further explore the potential of synthetic images in con­              privacy protection regulations. Li et al. [135] used federated learning to
+struction, addressing challenges posed by the dynamic and complex                   aggregate the gradient parameters of image data from each smart work
+nature of construction sites.                                                       packaging (SWP) and developed a more personalized model through
+                                                                                    transfer learning. In this approach, each SWP trains its local model on a
+5.5. Ethical issues of data collection and privacy computing                        local dataset, without sharing the data itself. Instead, only the updated
+                                                                                    parameters of the local model are submitted to the cloud. In 2022, Xu
+    Data privacy is a critical concern in the age of the Internet of Things.        et al. [136] proposed a blockchain-based framework for occupational
+Researchers and practitioners collect various types of data, such as                health and safety (OSH) management that protects workers’ privacy.
+materials, equipment and worker locations, and worker health status,                This framework minimizes the risk of privacy violations while ensuring
+using different sensors. While some advocate for automated workplace                that OSH management is not disrupted. In 2023, MOE et al. [137]
+monitoring to serve organizational interests, others argue that it can              proposed a worker safety prediction method using federated learning.
+increase worker stress by invading their privacy. It is essential that in­          This approach aims to reduce the risk of accidents and fatalities while
+dividuals are informed about the existence of monitoring, the reasons               ensuring the security of sensitive data. Saah et al. [138] used Hyper­
+behind data collection, and their rights in managing their personal in­             ledger Fabric blockchain to store personal and security data of con­
+formation. Moreover, clear policies and procedures should be in place to            struction workers. Their work not only showcased blockchain’s
+address potential privacy issues, including obtaining informed consent              potential in addressing construction data security challenges but also
+from workers, anonymizing data whenever possible, and ensuring the                  highlighted its practical applicability through extensive testing. In 2024,
+secure storage and processing of collected information.                             Cai et al. [49] applied federated learning to a human intention predic­
+    Privacy computing refers to technologies that enable multiple parties           tion model for human-computer interaction. The study demonstrated
+to jointly analyze and compute data without compromising its confi­                 that, while protecting data privacy, federated learning achieves pre­
+dentiality. It involves the description, measurement, evaluation, and               diction accuracy comparable to centralized training and significantly
+integration of privacy-related information when processing various                  outperforms local training. Gugssa et al. [139] used edge computing to
+types of data, including video, audio, images, graphics, and text. This             enhance the real-time performance of PPE detection while protecting
+process forms a set of formalized privacy computing theories, algo­                 the data privacy of construction workers. Their results showed that edge
+rithms, and applications, with quantitative evaluation standards, to                computing not only reduces latency but also ensures data security by
+support the protection of privacy in multi-system environments. As a key            eliminating the need to transmit all data to the cloud server.
+approach to balancing data sharing and privacy protection, privacy                      Data security is a crucial factor in determining whether a technology
+computing can effectively overcome “data island” barriers, allowing for             can be successfully implemented in engineering practice. However, in
+data openness and sharing while ensuring security. There are three main             the field of intelligent construction, there is limited focus on data pri­
+technologies driving privacy computing:                                             vacy and security. Future research should explore ways to better protect
+                                                                                    data privacy and security, thereby improving the efficiency of infor­
+ • Cryptography-based methods, represented by secure multi-party                    mation management in construction.
+   computation (MPC);
+ • The integration of Artificial intelligence and privacy protection,
+   represented by federated learning (FL);
+
+                                                                               24
+H. Li et al.                                                                                                                Automation in Construction 171 (2025) 106005
+
+
+5.6. Interpretability level of deep learning frameworks                             level semantics. Additionally, the research background, technical
+                                                                                    approach, and progress in each sub-field of these two aspects are dis­
+    Deep learning is a subset of machine learning, distinguished by its             cussed, highlighting the significant potential of scene understanding
+ability to mimic the structure and mechanism of the human brain’s                   applications in construction.
+neural network. Through multi-level neuron interconnections and in­                     This paper provided a comprehensive review of relevant literature,
+formation transmission, it can learn, represent, and predict complex                analyzing five key research trends in construction scene understanding.
+data patterns. However, the highly nonlinear and high-dimensional                   First, with the advancement of artificial intelligence and large language
+nature of deep learning models often turns their prediction process                 models, algorithms have evolved from being tailored for specific engi­
+into a “black box,” making it difficult to understand the underlying                neering tasks and application scenarios to more general AI models
+decision-making logic. In computer science, the term “black box” refers             applicable to construction. Second, scene understanding has progressed
+to a data-driven algorithm that generates useful information without                from perceiving entities to perceiving relationships, from single object to
+revealing its internal workings [140]. Data-driven machine learning and             complex objects, and from single relationship to complex relationships.
+deep learning models excel at identifying patterns and associations in              Third, scene understanding algorithms have evolved from rule-based
+data, but they cannot guarantee causality. Relying on a system that                 learning to end-to-end learning. Fourth, to address the data de­
+cannot explain its decisions is risky for decision-makers [141]. There­             pendency challenges in deep learning, researchers are increasingly
+fore, the inherent complexity and lack of transparency in deep learning             focusing on techniques like transfer learning and self-supervised
+models limit their credibility and usability, especially in critical appli­         learning. Finally, the fusion of multi-modal data and the integration of
+cations where decision-making must be explained and verified, such as               multi-technology is expected to enhance key performance indicators,
+medical diagnosis, financial risk assessment, and industrial system                 such as time, cost, and quality, in construction scene understanding
+monitoring. As a result, researchers have begun exploring ways to                   tasks.
+improve the interpretability of these models, enabling a better under­                  Although the research on construction scene understanding has
+standing of their logical rules, decision-making processes, and internal            made significant progress, many challenges remain. Based on the review
+mechanisms, ultimately enhancing trust in the models.                               of relevant literature, this paper proposed six future development di­
+    Explainable Artificial Intelligence (XAI) can be classified into two            rections, aiming to inspire further research. These include (1) Situation
+methods: ante-hoc interpretability and post-hoc interpretability                    awareness of construction scenes; (2) Three-dimensional scene under­
+[142,143]. Ante-hoc interpretability refers to built-in methods that                standing; (3) Time series analysis of dynamic scenes; (4) Data generation
+provide explanations before model training, such as decision trees,                 for construction scene understanding; (5) Privacy computing; (6)
+linear regression, and rule-based models. In contrast, post-hoc inter­              Interpretability level of deep learning frameworks and explainable
+pretability involves analyzing the model’s key features after training to           artificial intelligence.
+understand its behavior and decision-making processes.                                  In summary, construction scene understanding needs overall
+    In the field of civil engineering, in 2023, Gao et al. [144] proposed an        improvement to effectively address the dynamic and ever-changing
+explainable spatiotemporal graph convolutional network for clogging                 nature of construction sites and the complexity of downstream tasks.
+detection. This network is used to assess the risk level of clogging for            Given the rapid advancement of related technologies in artificial intel­
+each ring. By incorporating complex network indices, the model pro­                 ligence, it is expected that these challenges will be overcome in future
+vides more detailed explanations, demonstrating the potential value of              research, ultimately enhancing the intelligence of construction scene
+learning from explainable AI. Wang et al. [145] developed the causal                understanding and improving the automated management of construc­
+explainable gated recurrent unit (CX-GRU) for real-time prediction of               tion safety, progress, quality, productivity, and resources.
+TBM parameters, addressing the black box problem in AI. The study
+found that the causal discovery component improved the computational                CRediT authorship contribution statement
+efficiency of model training by an average of 8.8 %. In 2024, Luo et al.
+[110] proposed a novel interpretable transfer learning method for risk                 Huimin Li: Writing – original draft. Hui Deng: Writing – review &
+prediction in tunnel construction. This method identifies the source                editing. Yichuan Deng: Writing – review & editing.
+domain data that contributes most to transfer learning and quantifies its
+impact on improving prediction accuracy.
+    Although explainable AI is gaining attention in fields such as law and          Declaration of competing interest
+medicine, it has received relatively limited focus in the construction
+industry. However, the introduction of explainable AI could open new                    The authors declare that they have no known competing financial
+research directions and help address practitioners’ concerns and hesi­              interests or personal relationships that could have appeared to influence
+tations about AI applications [146]. In future research, AI development             the work reported in this paper.
+is likely to shift towards decision-making, and the focus should move
+from model accuracy to model interpretability.                                      Acknowledgments
+
+6. Conclusions                                                                         The authors would like to acknowledge the support by National
+                                                                                    Science Foundation of China (52308314), and the support by Guang­
+    Over the past two decades, scene understanding has become a                     dong     Basic   and    Applied   Basic    Research    Foundation
+growing research focus in construction, achieving significant progress.             (2023A1515030169).
+However, there is still a lack of a systematic definition of the concept in
+academia. To address this gap, this paper provided a comprehensive                  Data availability
+review of construction scene understanding, with a focus on construc­
+tion workers. It analyzed development trends and highlighted the gaps                  No data was used for the research described in the article.
+and limitations in current research.
+    Through the content-based review, the paper outlined the develop­               References
+ment of construction scene understanding into two key aspects: (1)
+perception ability and (2) reasoning ability. This outline is based on five           [1] Arashpour Mehrdad, Ngo Tuan, Li Heng, Scene understanding in construction
+                                                                                          and buildings using image processing methods: a comprehensive review and a
+scene elements—signals, pixels, objects, relationships, and events—and                    case study[J/OL], Journal of Building Engineering 33 (2021) 101672, https://
+the richness of semantic information, ranging from low-level to high-                     doi.org/10.1016/j.jobe.2020.101672.
+
+
+                                                                               25
+H. Li et al.                                                                                                                             Automation in Construction 171 (2025) 106005
+
+  [2] Zhai Peichen, Wang Junjie, Zhang Lite, Extracting worker unsafe behaviors from            [23] Shen Jie, Yan Wenjie, Qin Shengxian, Zheng Xiaoyu, A self-supervised monocular
+      construction images using image captioning with deep learning–based attention                  depth estimation model with scale recovery and transfer learning for construction
+      mechanism[J/OL], Journal of Construction Engineering and Management 149                        scene analysis[J/OL], Computer-Aided Civil and Infrastructure Engineering 38
+      (2) (2023) 04022164, https://doi.org/10.1061/JCEMD4.COENG-12096.                               (9) (2023) 1142–1161, https://doi.org/10.1111/mice.12938.
+  [3] Chen Shi, Demachi Kazuyuki, Towards on-site hazards identification of improper            [24] Xiong Ruoxin, Song Yuanbin, Li Heng, Wang Yuxuan, Onsite video mining for
+      use of personal protective equipment using deep learning-based geometric                       construction hazards identification with visual relationships[J/OL], Advanced
+      relationships and hierarchical scene graph[J/OL], Automation in Construction                   Engineering Informatics 42 (2019) 100966, https://doi.org/10.1016/j.
+      125 (2021) 103619, https://doi.org/10.1016/j.autcon.2021.103619.                               aei.2019.100966.
+  [4] Chen Shi, Demachi Kazuyuki, Dong Feiyan, Graph-based linguistic and visual                [25] Chen Shi, Dong Feiyan, Demachi Kazuyuki, Hybrid visual information analysis for
+      information integration for on-site occupational hazards identification[J/OL],                 on-site occupational hazards identification: a case study on stairway safety[J/
+      Automation in Construction 137 (2022) 104191, https://doi.org/10.1016/j.                       OL], Safety Science 159 (2023) 106043, https://doi.org/10.1016/j.
+      autcon.2022.104191.                                                                            ssci.2022.106043.
+  [5] Xiong Ruoxin, Tang Pingbo, Pose guided anchoring for detecting proper use of              [26] Yang Liu, Cai Hubo, Unsupervised video object segmentation for enhanced SLAM-
+      personal protective equipment[J/OL], Automation in Construction 130 (2021)                     based localization in dynamic construction environments[J/OL], Automation in
+      103828, https://doi.org/10.1016/j.autcon.2021.103828.                                          Construction 158 (2024) 105235, https://doi.org/10.1016/j.
+  [6] Yan Xuzhong, Zhang Hong, Li Heng, Computer vision-based recognition of 3D                      autcon.2023.105235.
+      relationship between construction entities for monitoring struck-by accidents[J/          [27] Michael L. Baird, Michael D. Kelly, A paradigm for semantic picture recognition
+      OL], Computer-Aided Civil and Infrastructure Engineering 35 (9) (2020)                         [J/OL], Pattern Recognition 6 (1) (1974) 61–74, https://doi.org/10.1016/0031-
+      1023–1038, https://doi.org/10.1111/mice.12536.                                                 3203(74)90008-9.
+  [7] Zhang Lite, Wang Junjie, Wang Yanbo, Sun Hai, Zhao Xuebing, Automatic                     [28] Brilakis Ioannis, Soibelman Lucio, Content-based search engines for construction
+      construction site hazard identification integrating construction scene graphs with             image databases[J/OL], Automation in Construction 14 (4) (2005) 537–550,
+      BERT based domain knowledge[J/OL], Automation in Construction 142 (2022)                       https://doi.org/10.1016/j.autcon.2004.11.003.
+      104535, https://doi.org/10.1016/j.autcon.2022.104535.                                     [29] Asadi Khashayar, Ramshankar Hariharan, Pullagurla Harish,
+  [8] Cai Jiannan, Zhang Yuxi, Cai Hubo, Two-step long short-term memory method                      Bhandare Aishwarya, Shanbhag Suraj, Mehta Pooja, Kundu Spondon, Han Kevin,
+      for identifying construction activities through positional and attentional cues[J/             Wu Lobaton Edgar, Tianfu., Vision-based integrated mobile robotic system for
+      OL], Automation in Construction 106 (2019) 102886, https://doi.org/10.1016/j.                  real-time applications in construction[J/OL], Automation in Construction 96
+      autcon.2019.102886.                                                                            (2018) 470–482, https://doi.org/10.1016/j.autcon.2018.10.009.
+  [9] Chen Ling, Wang Yuhong, Siu Ming-Fung Francis, Detecting semantic regions of              [30] Fang Weili, Peter E. Love, D., Luo Hanbin, Ding Lieyun., Computer vision for
+      construction site images by transfer learning and saliency computation[J/OL],                  behaviour-based safety in construction: a review and future directions[J/OL],
+      Automation in Construction 114 (2020) 103185, https://doi.org/10.1016/j.                       Advanced Engineering Informatics 43 (2020) 100980, https://doi.org/10.1016/j.
+      autcon.2020.103185.                                                                            aei.2019.100980.
+ [10] Li Jiaqi, Zhao Xuefeng, Zhou Guangyi, Zhang Mingyuan, Li Dongfang,                        [31] Xu Deng Hui, Deng Yichuan Yiwen, Lin Jiarui, Transforming knowledge
+      Zhou Yaochen, Evaluating the work productivity of assembling reinforcement                     management in the construction industry through information and
+      through the objects detected by deep learning[J/OL], Sensors 21 (16) (2021)                    communications technology: a 15-year review[J/OL], Automation in
+      5598, https://doi.org/10.3390/s21165598.                                                       Construction 142 (2022) 104530, https://doi.org/10.1016/j.
+ [11] Aravinda S. Rao, Radanovic Marko, Hu Liu Yuguang, Fang Yihai Songbo,                           autcon.2022.104530.
+      Khoshelham Kourosh, Palaniswami Marimuthu, Ngo Tuan, Real-time monitoring                 [32] Doerr Kai-Uwe, Kuester Falko, Nastase Derek, Tara C. Hutchinson, Development
+      of construction sites: sensors, methods, and applications[J/OL], Automation in                 and evaluation of a seismic monitoring system for building interiors—part II:
+      Construction 136 (2022) 104099, https://doi.org/10.1016/j.                                     image data analysis and results[J/OL], IEEE Transactions on Instrumentation and
+      autcon.2021.104099.                                                                            Measurement 57 (2) (2008) 345–354, https://doi.org/10.1109/
+ [12] Li Jiaqi, Zhou Guangyi, Li Dongfang, Zhang Mingyuan, Zhao Xuefeng,                             TIM.2007.908640.
+      Recognizing workers’ construction activities on a reinforcement processing area           [33] Kurt M. Lundeen, Vineet R. Kamat, Carol C. Menassa, McGee Wes, Scene
+      through the position relationship of objects detected by faster R-CNN[J/OL],                   understanding for adaptive manipulation in robotized construction work[J/OL],
+      Engineering Construction and Architectural Management 30 (4) (2023)                            Automation in Construction 82 (2017) 16–30, https://doi.org/10.1016/j.
+      1657–1678, https://doi.org/10.1108/ECAM-04-2021-0312.                                          autcon.2017.06.022.
+ [13] Xue Jingguo, Hou Xueliang, High-rise building construction Progress                       [34] Yuan Chenxi, Li Shuai, Cai Hubo, Vision-based excavator detection and tracking
+      measurement from top view based on component detection[J/OL], Buildings 12                     using hybrid kinematic shapes and key nodes[J/OL], Journal of Computing in
+      (2) (2022) 106, https://doi.org/10.3390/buildings12020106.                                     Civil Engineering 31 (1) (2017) 04016038, https://doi.org/10.1061/(ASCE)
+ [14] Chen Haosen, Wu Hou Lei, Zhang Guomin Shaoze, Zou Yang, Moon Sungkon,                          CP.1943-5487.0000602.
+      Bhuiyan Muhammed, Augmented reality, deep learning and vision-language                    [35] Gary A. Atkinson, Zhang Wenhao, Mark F. Hansen, Mathew L. Holloway, Ashley
+      query system for construction worker safety[J/OL], Automation in Construction                  A. Napier, Image segmentation of underfloor scenes using a mask regions
+      157 (2024) 105158, https://doi.org/10.1016/j.autcon.2023.105158.                               convolutional neural network with two-stage transfer learning[J/OL],
+ [15] Alhebrawi Mohamad Najib, Wu Huang Huang, Zhishen., Artificial intelligence                     Automation in Construction 113 (2020) 103118, https://doi.org/10.1016/j.
+      enhanced automatic identification for concrete cracks using acoustic impact                    autcon.2020.103118.
+      hammer testing[J/OL]. Journal of civil, Structural Health Monitoring 13 (2–3)             [36] Asadi Khashayar, Varun R. Haritsa, Han Kevin, Ore John-Paul, Automated object
+      (2023) 469–484, https://doi.org/10.1007/s13349-022-00651-8.                                    manipulation using vision-based Mobile robotic system for construction
+ [16] Bang Seongdeok, Kim Hyoungkwan, Context-based information generation for                       applications[J/OL], Journal of Computing in Civil Engineering 35 (1) (2021)
+      managing UAV-acquired data using image captioning[J/OL], Automation in                         04020058, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000946.
+      Construction 112 (2020) 103116, https://doi.org/10.1016/j.                                [37] X. Ning, M. Wang, J. Tang, H. Zhang, Y. Wang, Structural wall facade
+      autcon.2020.103116.                                                                            reconstruction of scanned scene in point clouds[J/OL], Advances in Electrical and
+ [17] Kim Jinwoo, Chi Seokho, Graph neural network-based propagation effects                         Computer Engineering 21 (4) (2021) 11–20, https://doi.org/10.4316/
+      modeling for detecting visual relationships among construction resources[J/OL],                AECE.2021.04002.
+      Automation in Construction 141 (2022) 104443, https://doi.org/10.1016/j.                  [38] Mascaro Ruben, Teixeira Lucas, Chli Margarita, Volumetric instance-level
+      autcon.2022.104443.                                                                            semantic mapping via multi-view 2D-to-3D label diffusion[J/OL], IEEE Robotics
+ [18] Zamani Vahid, Taghaddos Hosein, Gholipour Yaghob, Pourreza Hamidreza, Deep                     and Automation Letters 7 (2) (2022) 3531–3538, https://doi.org/10.1109/
+      semantic segmentation for visual scene understanding of soil types[J/OL],                      LRA.2022.3146502.
+      Automation in Construction 140 (2022) 104342, https://doi.org/10.1016/j.                  [39] Pu Yan, Chen Chong, A helmet wearing detection algorithm based on based on
+      autcon.2022.104342.                                                                            face localization[C/OL], in: 2022 International Conference on Big Data,
+ [19] Dang Khang, Elelu Kehinde, Le Tuyen, Le Chau, Augmented hearing of auditory                    Information and Computer Network (BDICN), IEEE, Sanya, China, 2022,
+      safety cues for construction workers: a systematic literature review[J/OL],                    pp. 88–92 [2024-03-27], https://ieeexplore.ieee.org/document/9758499/,
+      Sensors 22 (23) (2022) 9135, https://doi.org/10.3390/s22239135.                                https://doi.org/10.1109/BDICN55575.2022.00024.
+ [20] Mahmoudi Sidi Ahmed, Amel Otmane, Stassin Sédrick, Liagre Margot,                        [40] Lee Taejun, Woo Keanseb, Kim Panyoung, Jung Hoekyung, Design and
+      Benkedadra Mohamed, Mancas Matei, A review and comparative study of                            implementation of industrial accident detection model based on YOLOv4[J/OL],
+      explainable deep learning models applied on action recognition in real time[J/                 Applied Sciences 13 (18) (2023) 10163, https://doi.org/10.3390/
+      OL], Electronics 12 (9) (2023) 2027, https://doi.org/10.3390/                                  app131810163.
+      electronics12092027.                                                                      [41] Park Minsoo, Tran Dai Quoc, Bak Jinyeong, Kulinan Almo Senja, Park Seunghee,
+ [21] Zhou Zhipeng, Wei Lixuan, Yuan Jingfeng, Cui Jianqiang, Zhang Ziyao,                           Real-time monitoring unsafe behaviors of portable multi-position ladder worker
+      Zhuo Wen, Lin Dong, Construction safety management in the data-rich era: a                     using deep learning based on vision data[J/OL], Journal of Safety Research 87
+      hybrid review based upon three perspectives of nature of dataset, machine                      (2023) 465–480, https://doi.org/10.1016/j.jsr.2023.08.018.
+      learning approach, and research topic[J/OL], Advanced Engineering Informatics             [42] Seong Jaehwan, Kim Hyung-soo, Jung Hyung-Jo, The detection system for a
+      58 (2023) 102144, https://doi.org/10.1016/j.aei.2023.102144.                                   danger state of a collision between construction equipment and workers using
+ [22] Kim Hongjo, Kim Kinam, Kim Hyoungkwan, Data-driven scene parsing method                        fixed CCTV on construction sites[J/OL], Sensors 23 (20) (2023) 8371, https://
+      for recognizing construction site objects in the whole image[J/OL], Automation                 doi.org/10.3390/s23208371.
+      in Construction 71 (2016) 271–282, https://doi.org/10.1016/j.                             [43] Tran Si Van-Tien, Lee Doyeop, Bao Quy Lan, Yoo Taehan, Khan Muhammad,
+      autcon.2016.08.018.                                                                            Jo Junhyeon, Park Chansik, A human detection approach for intrusion in
+                                                                                                     hazardous areas using 4D-BIM-based spatial-temporal analysis and computer
+
+
+                                                                                           26
+H. Li et al.                                                                                                                             Automation in Construction 171 (2025) 106005
+
+      vision[J/OL], Buildings 13 (9) (2023) 2313, https://doi.org/10.3390/                      [63] Kim Daeho, Goyal Ankit, Lee SangHyun, Vineet R. Kamat, Liu Meiyin, Single-shot
+      buildings13092313.                                                                             visual relationship detection for the accurate identification of contact-driven
+ [44] Yin Chao, Yang Bo, C.P. Cheng Jack, J.L. Gan Vincent, Wang Boyu, Yang Ji,                      hazards in sustainable digitized construction[J/OL], Sustainability 16 (12) (2024)
+      Label-efficient semantic segmentation of large-scale industrial point clouds using             5058, https://doi.org/10.3390/su16125058.
+      weakly supervised learning[J/OL], Automation in Construction 148 (2023)                   [64] Xie Liuyue, Misra Shreyas, Suresh Nischal, Soza-Soto Justin, Furuhata Tomotake,
+      104757, https://doi.org/10.1016/j.autcon.2023.104757.                                          Shimada Kenji, Learning 3D human–object interaction graphs from transferable
+ [45] Xu You Hengxu, Fang Du Jing, Improved boundary identification of stacked                       context knowledge for construction monitoring[J/OL], Computers in Industry
+      objects with sparse LiDAR augmentation scanning[J/OL], Journal of Construction                 164 (2025) 104171, https://doi.org/10.1016/j.compind.2024.104171.
+      Engineering and Management 149 (11) (2023) 04023104, https://doi.org/                     [65] J.M. Zacks, B. Tversky, Event structure in perception and conception[J/OL],
+      10.1061/JCEMD4.COENG-13626.                                                                    Psychological Bulletin 127 (1) (2001) 3–21, https://doi.org/10.1037//0033-
+ [46] Xu Zhao Jinyu, Zhu Weina Yinghui, Liu Mei, Zhao Jing, Real-time early safety                   2909.127.1.3.
+      warning for personnel intrusion behavior on construction sites using a CNN                [66] Wang Jun, Razavi Saiedeh, Two 4D models effective in reducing false alarms for
+      model[J/OL], Buildings 13 (9) (2023) 2206, https://doi.org/10.3390/                            struck-by-equipment hazard prevention[J/OL], Journal of Computing in Civil
+      buildings13092206.                                                                             Engineering 30 (6) (2016) 04016031, https://doi.org/10.1061/(ASCE)CP.1943-
+ [47] Wójcik Bartosz, Żarski Mateusz, Książek Kamil, Jarosław A. Miszczak, Mirosław               5487.0000589.
+      J. Skibniewski, A deep learning method for hard-hat-wearing detection based on            [67] Park JeeWoong, Yang Xiaoyu, Yong K. Cho, Seo Jongwon, Improving dynamic
+      head center localization[J/OL], Bulletin of the Polish Academy of Sciences                     proximity sensing and processing for smart work-zone safety[J/OL], Automation
+      Technical Sciences (2023) 147340, https://doi.org/10.24425/                                    in Construction 84 (2017) 111–120, https://doi.org/10.1016/j.
+      bpasts.2023.147340.                                                                            autcon.2017.08.025.
+ [48] Xiong Ruoxin, Yuansheng Zhu, Yanyu Wang, Liu Pengkun, Tang Pingbo,                        [68] Jo Byung-Wan, Lee Yun-Sung, Khan Rana Muhammad Asad, Kim Jung-Hoon,
+      Facilitating construction scene understanding knowledge sharing and reuse via                  Kim Do-Keun, Robust construction safety system (RCSS) for collision accidents
+      lifelong site object detection[C/OL], in: Karlinsky Leonid, Michaeli Tomer,                    prevention on construction sites[J/OL], Sensors 19 (4) (2019) 932, https://doi.
+      Nishino Ko. Computer Vision – ECCV 2022 Workshops, Springer Nature                             org/10.3390/s19040932.
+      Switzerland, Cham, 2023, pp. 228–243, https://doi.org/10.1007/978-3-031-                  [69] Golovina Olga, Teizer Jochen, Karsten W. Johansen, König Markus, Towards
+      25082-8_15.                                                                                    autonomous cloud-based close call data management for construction equipment
+ [49] Cai Jiannan, Gao Zhidong, Guo Yuanxiong, Wibranek Bastian, Li Shuai, FedHIP:                   safety[J/OL], Automation in Construction 132 (2021) 103962, https://doi.org/
+      federated learning for privacy-preserving human intention prediction in human-                 10.1016/j.autcon.2021.103962.
+      robot collaborative assembly tasks[J/OL], Advanced Engineering Informatics 60             [70] Shakerian Shahrad, Habibnezhad Mahmoud, Ojha Amit, Lee Gaang, Liu Yizhi,
+      (2024) 102411, https://doi.org/10.1016/j.aei.2024.102411.                                      Jebelli Houtan, Lee SangHyun, Assessing occupational risk of heat stress at
+ [50] Khan Nasrullah, Zaidi Syed Farhan Alam, Abbas Muhammad Sibtain, Lee Doyeop,                    construction: a worker-centric wearable sensor-based approach[J/OL], Safety
+      Lee Dongmin, Tracking multiple construction workers using pose estimation and                  Science 142 (2021) 105395, https://doi.org/10.1016/j.ssci.2021.105395.
+      feature-assisted re-identification model[J/OL], Automation in Construction 168            [71] Fang Weili, E.D. Love Peter, Xu Luo Hanbin, Shuangjie., A deep learning fusion
+      (2024) 105771, https://doi.org/10.1016/j.autcon.2024.105771.                                   approach to retrieve images of People’s unsafe behavior from construction sites
+ [51] Kumar Sourav, Poyyamozhi Mukilan, Murugesan Balasubramanian,                                   [J/OL], Developments in the Built Environment 12 (2022) 100085, https://doi.
+      Rajamanickam Narayanamoorthi, Alroobaea Roobaea, Nureldeen Waleed,                             org/10.1016/j.dibe.2022.100085.
+      Investigation of unsafe construction site conditions using deep learning                  [72] Mei Xinyu, Xu Ma Wendi, Zhang Zhipeng Feng, Vision-based detection of unsafe
+      algorithms using unmanned aerial vehicles[J/OL], Sensors 24 (20) (2024) 6737,                  worker guardrail climbing based on posture and instance segmentation data
+      https://doi.org/10.3390/s24206737.                                                             fusion[J/OL], Journal of Construction Engineering and Management 150 (11)
+ [52] Liu Yongyue, Zhou Zhenzong, Wang Yaowu, Sun Chengshuang, Head-integrated                       (2024) 4024156, https://doi.org/10.1061/JCEMD4.COENG-14266.
+      detecting method for workers under complex construction scenarios[J/OL],                  [73] Antwi-Afari Maxwell Fordjour, Li Heng, Seo JoonOh, Wong Arnold Yu Lok,
+      Buildings 14 (4) (2024) 859, https://doi.org/10.3390/buildings14040859.                        Automated detection and classification of construction workers’ loss of balance
+ [53] Ma Wenbi, Guan Zheng, Wang Xue, Zhang Zhuqing, Cao Jinde, Research on                          events using wearable insole pressure sensors[J/OL], Automation in Construction
+      reflective clothing recognition algorithm based on combining omni-dimensional                  96 (2018) 189–199, https://doi.org/10.1016/j.autcon.2018.09.010.
+      dynamic convolution and partial convolution[J/OL], Engineering Applications of            [74] Antwi-Afari Maxwell Fordjour, Li Heng, Seo JoonOh, Lee SangHyun, Edwards
+      Artificial Intelligence 137 (2024) 109180, https://doi.org/10.1016/j.                          David John, Lok Wong Arnold Yu, Wearable insole pressure sensors for
+      engappai.2024.109180.                                                                          automated detection and classification of slip-trip-loss of balance events in
+ [54] Soleymani Maryam, Bonyani Mahdi, Wang Chao, Lightweight detection of small                     construction workers[C/OL], in: Construction Research Congress 2018, American
+      tools for safer construction[J/OL], Automation in Construction 167 (2024)                      Society of Civil Engineers, New Orleans, Louisiana, 2018, pp. 73–83 [2024-03-
+      105701, https://doi.org/10.1016/j.autcon.2024.105701.                                          14], http://ascelibrary.org/doi/10.1061/9780784481288.008, https://doi.
+ [55] Xiang Changcheng, Yin Duofen, Yu Song Fei, Jian Xu Zaixue, Gong Huaming,                       org/10.1061/9780784481288.008.
+      A fast and robust safety helmet network based on a mutilscale swin transformer            [75] Zhang Mingyuan, Cao Tianzhuo, Zhao Xuefeng, Using smartphones to detect and
+      [J/OL], Buildings 14 (3) (2024) 688, https://doi.org/10.3390/                                  identify construction workers’ near-miss falls based on ANN[J/OL], Journal of
+      buildings14030688.                                                                             Construction Engineering and Management 145 (1) (2019) 04018120, https://
+ [56] Kim Doil, Xiong Shuping, Enhancing worker safety: real-time automated                          doi.org/10.1061/(ASCE)CO.1943-7862.0001582.
+      detection of personal protective equipment to prevent falls from heights at               [76] Antwi-Afari Maxwell Fordjour, Li Heng, Anwer Shahnawaz, Yevu Sitsofe Kwame,
+      construction sites using improved YOLOv8 and edge devices[J/OL], Journal of                    Wu Zezhou, Antwi-Afari Prince, Kim Inhan, Quantifying workers’ gait patterns to
+      Construction Engineering and Management 151 (1) (2025) 4024187, https://doi.                   identify safety hazards in construction using a wearable insole pressure system[J/
+      org/10.1061/JCEMD4.COENG-14985.                                                                OL], Safety Science 129 (2020) 104855, https://doi.org/10.1016/j.
+ [57] Seo JoonOh, Han SangUk, Lee SangHyun, Kim Hyoungkwan, Computer vision                          ssci.2020.104855.
+      techniques for construction safety and health monitoring[J/OL], Advanced                  [77] Antwi-Afari Maxwell Fordjour, Li Heng, Seo JoonOh, Anwer Shahnawaz, Yevu
+      Engineering Informatics 29 (2) (2015) 239–251, https://doi.org/10.1016/j.                      Sitsofe Kwame, Wu Zezhou, Validity and reliability of a wearable insole pressure
+      aei.2015.02.001.                                                                               system for measuring gait parameters to identify safety hazards in construction
+ [58] Park Man-Woo, Elsafty Nehad, Zhu Zhenhua, Hardhat-wearing detection for                        [J/OL], Engineering Construction and Architectural Management 28 (6) (2021)
+      enhancing on-site safety of construction workers[J/OL], Journal of Construction                1761–1779, https://doi.org/10.1108/ECAM-05-2020-0330.
+      Engineering and Management 141 (9) (2015) 04015024, https://doi.org/                      [78] Lee Yong-Cheol, Shariatfar Moeid, Rashidi Abbas, Lee Hyun Woo, Evidence-
+      10.1061/(ASCE)CO.1943-7862.0000974.                                                            driven sound detection for prenotification and identification of construction
+ [59] Fang Weili, Zhong Botao, Zhao Neng, E.D. Love Peter, Luo Hanbin, Xu Xue                        safety hazards and accidents[J/OL], Automation in Construction 113 (2020)
+      Jiayue, Shuangjie., A deep learning-based approach for mitigating falls from                   103127, https://doi.org/10.1016/j.autcon.2020.103127.
+      height with computer vision: convolutional neural network[J/OL], Advanced                 [79] Jeelani Idris, Asadi Khashayar, Ramshankar Hariharan, Han Kevin, Albert Alex,
+      Engineering Informatics 39 (2019) 170–177, https://doi.org/10.1016/j.                          Real-time vision-based worker localization & hazard detection for construction
+      aei.2018.12.005.                                                                               [J/OL], Automation in Construction 121 (2021) 103448, https://doi.org/
+ [60] Kim Daeho, Goyal Ankit, Newell Alejandro, Lee SangHyun, Deng Jia, Vineet                       10.1016/j.autcon.2020.103448.
+      R. Kamat, Semantic relation detection between construction entities to support            [80] Lee Hoonyong, Lee Gaang, Lee SangHyun, Ahn Changbum Ryan, Assessing
+      safe human-robot collaboration in construction[C/OL], in: Computing in Civil                   exposure to slip, trip, and fall hazards by measuring construction worker loss of
+      Engineering 2019, American Society of Civil Engineers, Atlanta, Georgia, 2019,                 balance[C/OL], in: Computing in Civil Engineering 2021, American Society of
+      pp. 265–272 [2024-03-10], https://ascelibrary.org/doi/10.1061/97807844824                      Civil Engineers, Orlando, Florida, 2022, pp. 66–73 [2024-03-17], http://asceli
+      38.034, https://doi.org/10.1061/9780784482438.034.                                             brary.org/doi/10.1061/9780784483893.009, https://doi.org/10.106
+ [61] Zhang Mingyuan, Cao Zhiying, Yang Zhen, Zhao Xuefeng, Utilizing computer                       1/9780784483893.009.
+      vision and fuzzy inference to evaluate level of collision safety for workers and          [81] Duan Pinsheng, Zhou Jianliang, Tao Shiwei, Risk events recognition using
+      equipment in a dynamic environment[J/OL], Journal of Construction                              smartphone and machine learning in construction workers’ material handling
+      Engineering and Management 146 (6) (2020) 04020051, https://doi.org/                           tasks[J/OL], Engineering Construction and Architectural Management 30 (8)
+      10.1061/(ASCE)CO.1943-7862.0001802.                                                            (2023) 3562–3582, https://doi.org/10.1108/ECAM-10-2021-0937.
+ [62] Zhang Mingyuan, Zhu Mi, Zhao Xuefeng, Recognition of high-risk scenarios in               [82] Liu Xiaoyu, Xu Feng, Zhang Zhipeng, Sun Kaiyu. Fall-portent detection for
+      building construction based on image semantics[J/OL], Journal of Computing in                  construction sites based on computer vision and machine learning[J/OL].
+      Civil Engineering 34 (4) (2020) 04020019, https://doi.org/10.1061/(ASCE)                       Engineering Construction and Architectural Management, 2023, ahead-of-print
+      CP.1943-5487.0000900.
+
+
+                                                                                           27
+H. Li et al.                                                                                                                             Automation in Construction 171 (2025) 106005
+
+      (ahead-of-print)[2025-01-23]. https://www.emerald.com/insight/content/doi/              [104] Xu Guo Yapeng, Li Shunlong Yang, Dense construction vehicle detection based on
+      10.1108/ecam-05-2023-0458/full/html. 10.1108/ECAM-05-2023-0458.                               orientation-aware feature fusion convolutional neural network[J/OL],
+ [83] Dzeng Ren-Jye, Watanabe Keisuke, Fu Hsueh Hsien-Hui, Chien-Kai., A GRU-based                  Automation in Construction 112 (2020) 103124, https://doi.org/10.1016/j.
+      model for detecting common accidents of construction workers[J/OL], Sensors 24                autcon.2020.103124.
+      (2) (2024) 672, https://doi.org/10.3390/s24020672.                                      [105] Zhou Fangbo, Zhao Huailin, Nie Zhen, Safety helmet detection based on YOLOv5
+ [84] Bonyani Mahdi, Soleymani Maryam, Wang Chao, Construction workers’ unsafe                      [C/OL], in: 2021 IEEE International Conference on Power Electronics, Computer
+      behavior detection through adaptive spatiotemporal sampling and optimized                     Applications (ICPECA), IEEE, Shenyang, China, 2021, pp. 6–11 [2024-06-05], htt
+      attention based video monitoring[J/OL], Automation in Construction 165 (2024)                 ps://ieeexplore.ieee.org/document/9362711/, https://doi.org/10.1109/ICPEC
+      105508, https://doi.org/10.1016/j.autcon.2024.105508.                                         A51329.2021.9362711.
+ [85] Liu Huan, Wang Guangbin, Huang Ting, He Ping, Skitmore Martin, Luo Xiaochun,            [106] Su He Zengsheng, Deng Yichuan Cheng, A novel hybrid approach for concrete
+      Manifesting construction activity scenes via image captioning[J/OL], Automation               crack segmentation based on deformable oriented-YOLOv4 and image processing
+      in Construction 119 (2020) 103334, https://doi.org/10.1016/j.                                 techniques[J/OL], Applied Sciences 14 (5) (2024) 1892, https://doi.org/
+      autcon.2020.103334.                                                                           10.3390/app14051892.
+ [86] Liu Jiajing, Fang Weili, E.D. Love Peter, Hartmann Timo, Luo Hanbin, Wang Lulu,         [107] Duan Rui, Deng Hui, Tian Mao, Deng Yichuan, Lin Jiarui, SODA: a large-scale
+      Detection and location of unsafe behaviour in digital images: a visual grounding              open site object detection dataset for deep learning in construction[J/OL],
+      approach[J/OL], Advanced Engineering Informatics 53 (2022) 101688, https://                   Automation in Construction 142 (2022) 104499, https://doi.org/10.1016/j.
+      doi.org/10.1016/j.aei.2022.101688.                                                            autcon.2022.104499.
+ [87] Wang Yiheng, Xiao Bo, Bouferguene Ahmed, Al-Hussein Mohamed, Li Heng,                   [108] Kim Seongyong, Kim Yeseul, Yong K. Cho, Construction scene segmentation using
+      Vision-based method for semantic information extraction in construction by                    3D point clouds: a dataset and challenges[C/OL], in: Construction Research
+      integrating deep learning object detection and image captioning[J/OL],                        Congress 2024, American Society of Civil Engineers, Des Moines, Iowa, 2024,
+      Advanced Engineering Informatics 53 (2022) 101699, https://doi.org/10.1016/j.                 pp. 378–385 [2024-04-22], https://ascelibrary.org/doi/10.1061/978078448526
+      aei.2022.101699.                                                                              2.039, https://doi.org/10.1061/9780784485262.039.
+ [88] Xiao Bo, Wang Yiheng, Kang Shih-Chung, Deep learning image captioning in                [109] Mäkela Satu-Marja, Lämsä Arttu, Janne S. Keränen, Liikka Jussi, Ronkainen Jussi,
+      construction management: a feasibility study[J/OL], Journal of Construction                   Peltola Johannes, Häikiö Juha, Järvinen Sari, Bordallo López Miguel, Introducing
+      Engineering and Management 148 (7) (2022) 04022049, https://doi.org/                          VTT-ConIot: a realistic dataset for activity recognition of construction workers
+      10.1061/(ASCE)CO.1943-7862.0002297.                                                           using IMU devices[J/OL], Sustainability 14 (1) (2021) 220, https://doi.org/
+ [89] Zhong Botao, Shen Luoxin, Pan Xing, Lei Lei, Visual attention framework for                   10.3390/su14010220.
+      identifying semantic information from construction monitoring video[J/OL],              [110] Luo Hanbin, Chen Jialin, Love Peter, Fang Weili, Explainable transfer learning for
+      Safety Science 163 (2023) 106122, https://doi.org/10.1016/j.ssci.2023.106122.                 modeling and assessing risks in tunnel construction[J/OL], IEEE Transactions on
+ [90] Song Kani, Chen Linlin, Wang Hengyou, Style-enhanced transformer for image                    Engineering Management (2024) 1–51, https://doi.org/10.1109/
+      captioning in construction scenes[J/OL], Entropy 26 (3) (2024) 224, https://doi.              TEM.2024.3369231.
+      org/10.3390/e26030224.                                                                  [111] Torrey Lisa, Shavlik Jude, Transfer learning[M/OL], in: Handbook of Research on
+ [91] Gil Daeyoung, Lee Ghang, Zero-shot monitoring of construction workers’                        Machine Learning Applications and Trends: Algorithms, Methods, and
+      personal protective equipment based on image captioning[J/OL], Automation in                  Techniques, IGI Global, 2010, pp. 242–264 [2024-06-05], https://www.igi-glo
+      Construction 164 (2024) 105470, https://doi.org/10.1016/j.                                    bal.com/chapter/transfer-learning/www.igi-global.com/chapter/transfer-learn
+      autcon.2024.105470.                                                                           ing/36988, https://doi.org/10.4018/978-1-60566-766-9.ch011.
+ [92] Yang Bin, Xiao Hongru, Zhang Binghan, A unified object and keypoint detection           [112] Vaswani Ashish, Shazeer Noam, Parmar Niki, Uszkoreit Jakob, Jones Llion,
+      framework for personal protective equipment use[J/OL], Developments in the                    N. Gomez Aidan, Kaiser Lukasz, Polosukhin Illia, Attention Is All You Need[A/
+      Built Environment 20 (2024) 100559, https://doi.org/10.1016/j.                                OL], arXiv, 2023 [2025-01-15], http://arxiv.org/abs/1706.03762, 10.4855
+      dibe.2024.100559.                                                                             0/arXiv.1706.03762.
+ [93] Zhang Sijie, Boukamp Frank, Teizer Jochen, Ontology-based semantic modeling             [113] Iyer Shivprakash, Sunil K. Sinha, A robust approach for automatic detection and
+      of construction safety knowledge: towards automated safety planning for job                   segmentation of cracks in underground pipeline images[J/OL], Image and Vision
+      hazard analysis (JHA)[J/OL], Automation in Construction 52 (2015) 29–41,                      Computing 23 (10) (2005) 921–933, https://doi.org/10.1016/j.
+      https://doi.org/10.1016/j.autcon.2015.02.005.                                                 imavis.2005.05.017.
+ [94] Dhingra Vandana, Bhatia Komal Kumar, Development of ontology in laptop                  [114] Vu Dung Cao, Anh Le Duc, Autonomous concrete crack detection using deep fully
+      domain for knowledge representation[J/OL], Procedia Computer Science 46                       convolutional neural network[J/OL], Automation in Construction 99 (2019)
+      (2015) 249–256, https://doi.org/10.1016/j.procs.2015.02.018.                                  52–58, https://doi.org/10.1016/j.autcon.2018.11.028.
+ [95] Hernandez-Leal Pablo, Escalante Hugo Jair, Sucar L. Enrique, Towards a generic          [115] Paul M. Salmon, Neville A. Stanton, Guy H. Walker, Jenkins Daniel,
+      ontology for video surveillance[C/OL], in: Sucar Enrique, Mayora Oscar, Munoz                 Ladva Darshna, Rafferty Laura, Young Mark, Measuring situation awareness in
+      de Cote Enrique. Applications for Future Internet, Springer International                     complex systems: comparison of measures study[J/OL], International Journal of
+      Publishing, Cham, 2017, pp. 3–7, https://doi.org/10.1007/978-3-319-49622-1_1.                 Industrial Ergonomics 39 (3) (2009) 490–500, https://doi.org/10.1016/j.
+ [96] Kazi Tani Mohammed Yassine, Ghomari Abdelghani, Lablack Adel, Bilasco                         ergon.2008.10.010.
+      Ioan Marius, OVIS: ontology video surveillance indexing and retrieval system[J/         [116] Bentley Tim, The role of latent and active failures in workplace slips, trips and
+      OL], International Journal of Multimedia Information Retrieval 6 (4) (2017)                   falls: an information processing approach[J/OL], Applied Ergonomics 40 (2)
+      295–316, https://doi.org/10.1007/s13735-017-0133-z.                                           (2009) 175–180, https://doi.org/10.1016/j.apergo.2008.04.009.
+ [97] Wu Shen Qiyu, Deng Yichuan Songfei, Deng Hui, Jack C.P. Cheng, BIM-based                [117] Mica R. Endsley, Toward a theory of situation awareness in dynamic systems[J/
+      dynamic construction safety rule checking using ontology and natural language                 OL], Human Factors 37 (1) (1995) 32–64, https://doi.org/10.1518/
+      processing[J/OL], Buildings 12 (5) (2022) 564, https://doi.org/10.3390/                       001872095779049543.
+      buildings12050564.                                                                      [118] Hasanzadeh Sogand, Esmaeili Behzad, Michael D. Dodd, Examining the
+ [98] K.W. Johansen, J. Teizer, C. Schultz, Automated rule-based safety inspection and              relationship between construction workers’ visual attention and situation
+      compliance checking of temporary guardrail systems in construction[J/OL],                     awareness under fall and tripping Hazard conditions: using Mobile eye tracking
+      Automation in Construction 168 (2024) 105849, https://doi.org/10.1016/j.                      [J/OL], Journal of Construction Engineering and Management 144 (7) (2018)
+      autcon.2024.105849.                                                                           04018060, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001516.
+ [99] Johnson Justin, Krishna Ranjay, Stark Michael, Li Li-Jia, David A. Shamma,              [119] Hasanzadeh Sogand, Esmaeili Behzad, Michael D. Dodd, Measuring construction
+      Michael S. Bernstein, Fei-Fei Li, Image retrieval using scene graphs[C/OL], in:               workers’ real-time situation awareness using mobile eye-tracking[C/OL], in:
+      2015 IEEE Conference on Computer Vision and Pattern Recognition (CVPR),                       Construction Research Congress 2016, American Society of Civil Engineers, San
+      2015, pp. 3668–3678 [2024-04-17], https://ieeexplore.ieee.org/documen                         Juan, Puerto Rico, 2016, pp. 2894–2904 [2024-04-27], http://ascelibrary.org/
+      t/7298990, https://doi.org/10.1109/CVPR.2015.7298990.                                         doi/10.1061/9780784479827.288, https://doi.org/10.1061/9780784479827.
+[100] Thomas R. Gruber, Toward principles for the design of ontologies used for                     288.
+      knowledge sharing?[J/OL], International Journal of Human-Computer Studies 43            [120] Choi Minji, Ahn Seungjun, Seo JoonOh, VR-based investigation of forklift
+      (5) (1995) 907–928, https://doi.org/10.1006/ijhc.1995.1081.                                   operator situation awareness for preventing collision accidents[J/OL], Accident;
+[101] Baek Seungwon, Jung Wooyong, Seung H. Han, A critical review of text-based                    Analysis and Prevention 136 (2020) 105404, https://doi.org/10.1016/j.
+      research in construction: data source, analysis method, and implications[J/OL],               aap.2019.105404.
+      Automation in Construction 132 (2021) 103915, https://doi.org/10.1016/j.                [121] Han Wenjun, Roofigari-Esfahan Nazila, Nayyar Ginny, Investigation of factors
+      autcon.2021.103915.                                                                           impacting situation awareness of highway workers and applicable warning
+[102] Wen Shihao, Park Minsoo, Tran Dai Quoc, Lee Seungsoo, Park Seunghee,                          methods[C/OL], in: Construction Research Congress 2022, American Society of
+      Automated construction safety reporting system integrating deep learning-based                Civil Engineers, Arlington, Virginia, 2022, pp. 780–789 [2024-04-27], http://
+      real-time advanced detection and visual question answering[J/OL], Advances in                 ascelibrary.org/doi/10.1061/9780784483985.079, https://doi.org/10.106
+      Engineering Software 198 (2024) 103779, https://doi.org/10.1016/j.                            1/9780784483985.079.
+      advengsoft.2024.103779.                                                                 [122] Zhu Qing, Research on road traffic situation awareness system based on image big
+[103] Bubeck Sébastien, Chandrasekaran Varun, Eldan Ronen, Gehrke Johannes,                        data[J/OL], IEEE Intelligent Systems 35 (1) (2020) 18–26, https://doi.org/
+      Horvitz Eric, Kamar Ece, Peter Lee, Lee Yin Tat, Li Yuanzhi, Lundberg Scott,                  10.1109/MIS.2019.2942836.
+      Nori Harsha, Palangi Hamid, Ribeiro Marco Tulio, Zhang Yi, Sparks of Artificial         [123] Katz Itai, Saidi Kamel, Lytle Alan, The role of camera networks in construction
+      General Intelligence: Early Experiments with GPT-4[A/OL], arXiv, 2023 [2024-                  automation[C/OL], in: E.K. Zavadskas, A. Kaklauskas, M.J. Skibniewski (Eds.),
+      04-19], http://arxiv.org/abs/2303.12712, 10.48550/arXiv.2303.12712.                           25th International Symposium on Automation and Robotics in Construction -
+                                                                                                    Isarc-2008, Vilnius-40: Vilnius Gediminas Technical Univ Press, Technika, 2008,
+
+
+                                                                                         28
+H. Li et al.                                                                                                                              Automation in Construction 171 (2025) 106005
+
+      pp. 324–329 [2025-01-15], https://www.webofscience.com/wos/alldb/full-reco                      personal image information of construction worker[J/OL], Automation in
+      rd/WOS:000258743700047, https://doi.org/10.3846/isarc.20080626.324.                             Construction 128 (2021) 103738, https://doi.org/10.1016/j.
+[124] Fang Yihai, Yong K. Cho, Durso Frank, Seo Jongwon, Assessment of operator’s                     autcon.2021.103738.
+      situation awareness for smart operation of mobile cranes[J/OL], Automation in             [136] Lu Xu Jinying, Weisheng Liupengfei Wu, Lou Jinfeng, Li Xiao, Balancing privacy
+      Construction 85 (2018) 65–75, https://doi.org/10.1016/j.autcon.2017.10.007.                     and occupational safety and health in construction: a blockchain-enabled P-OSH
+[125] Zhang Zhe, H.W. Guo Brian, Chang-Richards Alice, Feng Zhenan, Jin Ruoyu,                        deployment framework[J/OL], Safety Science 154 (2022) 105860, https://doi.
+      Zou Yang, Miang Goh Yang, Digital technology enhanced situation awareness for                   org/10.1016/j.ssci.2022.105860.
+      construction safety: systematic review and future research directions[J/OL],              [137] Moe Sa Jim Soe, Kim Bong Wan, Khan Anam Nawaz, Xu Rongxu, Tuan
+      Safety Science 167 (2023) 106280, https://doi.org/10.1016/j.ssci.2023.106280.                   Nguyen Anh, Kim Kwangsoo, Kim Do Hyeun, Collaborative worker safety
+[126] Mur-Artal Raúl, J.M.M. Montiel, Juan D. Tardós, ORB-SLAM: a versatile and                      prediction mechanism using federated learning assisted edge intelligence in
+      accurate monocular SLAM system[J/OL], IEEE Transactions on Robotics 31 (5)                      outdoor construction environment[J/OL], IEEE Access 11 (2023)
+      (2015) 1147–1163, https://doi.org/10.1109/TRO.2015.2463671.                                     109010–109026, https://doi.org/10.1109/ACCESS.2023.3320716.
+[127] Hong Yeji, Park Somin, Kim Hongjo, Kim Hyoungkwan, Synthetic data generation              [138] Saah Alvina Ekua Ntefua, Yee Jurng-Jae, Choi Jae-Ho, Securing construction
+      using building information models[J/OL], Automation in Construction 130                         workers’ data security and privacy with blockchain technology[J/OL], Applied
+      (2021) 103871, https://doi.org/10.1016/j.autcon.2021.103871.                                    Sciences 13 (24) (2023) 13339, https://doi.org/10.3390/app132413339.
+[128] Kim Jinwoo, Kim Daeho, Shah Julianne, Lee SangHyun, Training a visual scene               [139] Gugssa Mikias, Pu Li Long, Gurbuz Ali Lina, Yu Luo, Wang Jun, Enhancing the
+      understanding model only with synthetic construction images[C/OL], in:                          time efficiency of personal protective equipment (PPE) detection in real
+      Computing in Civil Engineering 2021, American Society of Civil Engineers,                       implementations using edge computing[C/OL], in: Computing in Civil
+      Orlando, Florida, 2022, pp. 221–229 [2024-03-11], http://ascelibrary.org/doi/                   Engineering 2023, American Society of Civil Engineers, Corvallis, Oregon, 2024,
+      10.1061/9780784483893.028, https://doi.org/10.1061/9780784483893.028.                           pp. 532–540 [2024-05-06], https://ascelibrary.org/doi/10.1061/978078448524
+[129] Wei Yujie, Akinci Burcu, Synthetic image data generation for semantic                           8.064, https://doi.org/10.1061/9780784485248.064.
+      understanding in everchanging scenes using BIM and unreal engine[C/OL], in:               [140] Sokol Kacper, Flach Peter, Explainability is in the mind of the beholder:
+      Computing in Civil Engineering 2021, American Society of Civil Engineers,                       establishing the foundations of explainable artificial intelligence[A/OL], arXiv,
+      Orlando, Florida, 2022, pp. 934–941 [2024-03-04], http://ascelibrary.org/doi/                   2022 [2025-01-15], http://arxiv.org/abs/2112.14466, 10.48550/arXiv.2112
+      10.1061/9780784483893.115, https://doi.org/10.1061/9780784483893.115.                           .14466.
+[130] Kim Jinwoo, Kim Daeho, Lee SangHyun, Chi Seokho, Hybrid DNN training using                [141] Adadi Amina, Berrada Mohammed, Peeking inside the black-box: a survey on
+      both synthetic and real construction images to overcome training data shortage                  explainable artificial intelligence (XAI)[J/OL], IEEE Access 6 (2018)
+      [J/OL], Automation in Construction 149 (2023) 104771, https://doi.org/                          52138–52160, https://doi.org/10.1109/ACCESS.2018.2870052.
+      10.1016/j.autcon.2023.104771.                                                             [142] Gunning David, Stefik Mark, Choi Jaesik, Miller Timothy, Stumpf Simone,
+[131] Tang Shengjun, Huang Hongsheng, Zhang Yunjie, Yao Mengmeng, Li Xiaoming,                        Yang Guang-Zhong, XAI-explainable artificial intelligence[J/OL], Science
+      Xie Linfu, Wang Weixi, Skeleton-guided generation of synthetic noisy point clouds               robotics 4 (37) (2019) eaay7120, https://doi.org/10.1126/scirobotics.aay7120.
+      from as-built BIM to improve indoor scene understanding[J/OL], Automation in              [143] Samek Wojciech, Müller Klaus-Robert, Towards explainable artificial intelligence
+      Construction 156 (2023) 105076, https://doi.org/10.1016/j.                                      [M/OL], in: Samek Wojciech, Montavon Grégoire, Vedaldi Andrea, Hansen
+      autcon.2023.105076.                                                                             Lars Kai, Müller Klaus-Robert (Eds.), Explainable AI: Interpreting, Explaining and
+[132] Ying Huaquan, Sacks Rafael, Degani Amir, Synthetic image data generation using                  Visualizing Deep Learning, Springer International Publishing, Cham, 2019,
+      BIM and computer graphics for building scene understanding[J/OL], Automation                    pp. 5–22 [2024-05-08], https://doi.org/10.1007/978-3-030-28954-6_1.
+      in Construction 154 (2023) 105016, https://doi.org/10.1016/j.                             [144] Gao Yuyue, Chen Rui, Qin Wenbo, Wei Linchun, Zhou Cheng, Learning from
+      autcon.2023.105016.                                                                             explainable data-driven tunneling graphs: a spatio-temporal graph convolutional
+[133] C.P. Cheng Jack, Tao Xingyu, Das Moumita, An encryption key distribution                        network for clogging detection[J/OL], Automation in Construction 147 (2023)
+      strategy for secure sharing of sensitive information using blockchain platforms in              104741, https://doi.org/10.1016/j.autcon.2023.104741.
+      construction projects[C/OL], in: 37th CIB W78 Conference 2020, 2020,                      [145] Wang Kunyu, Fu Zhang Limao, Xianlei., Time series prediction of tunnel boring
+      pp. 363–373 [2024-05-09], https://itc.scix.net/paper/w78-2020-paper-026, 10                     machine (TBM) performance during excavation using causal explainable artificial
+      .46421/2706-6568.37.2020.paper026.                                                              intelligence (CX-AI)[J/OL], Automation in Construction 147 (2023) 104730,
+[134] Kochovski Petar, Stankovski Vlado, Building applications for smart and safe                     https://doi.org/10.1016/j.autcon.2022.104730.
+      construction with the DECENTER fog computing and brokerage platform[J/OL],                [146] E.D. Love Peter, Fang Weili, Matthews Jane, Porter Stuart, Luo Hanbin,
+      Automation in Construction 124 (2021) 103562, https://doi.org/10.1016/j.                        Ding Lieyun, Explainable artificial intelligence (XAI): precepts, models, and
+      autcon.2021.103562.                                                                             opportunities for research in construction[J/OL], Advanced Engineering
+[135] Li Xiao, Lu Chi Hung-lin, Xue Fan Weisheng, Zeng Jianhuan, Li Clyde Zhengdao,                   Informatics 57 (2023) 102024, https://doi.org/10.1016/j.aei.2023.102024.
+      Federated transfer learning enabled smart work packaging for preserving
+
+
+
+
+                                                                                           29
+

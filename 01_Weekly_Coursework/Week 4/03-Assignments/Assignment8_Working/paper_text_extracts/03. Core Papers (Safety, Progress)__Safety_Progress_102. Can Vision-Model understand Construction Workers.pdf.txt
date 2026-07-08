@@ -1,0 +1,634 @@
+                                                  Can Vision-Language Models Understand
+                                                 Construction Workers? An Exploratory Study
+                                                                                   Hieu Bui                                                    Nathaniel E. Chodosh
+                                                            Department of Electrical and Computer Engineering                            Department of Computing Sciences
+                                                                           Villanova University                                                Villanova University
+                                                                           Villanova, PA, USA                                                  Villanova, PA, USA
+                                                                          hbui01@villanova.edu                                           nathaniel.chodosh@villanova.edu
+
+                                                             Arash Tavakoli
+                                         Department of Civil and Environmental Engineering
+                                                       Villanova University
+arXiv:2601.10835v1 [cs.CV] 15 Jan 2026
+
+
+
+
+                                                       Villanova, PA, USA
+                                                   arash.tavakoli@villanova.edu
+
+
+                                            Abstract—As robotics become increasingly integrated into          agents must navigate complex, unstructured environments
+                                         construction workflows, their ability to interpret and respond to    while collaborating with human workers. However, for effec-
+                                         human behavior will be essential for enabling safe and effective     tive collaboration, robots must go beyond obstacle avoidance
+                                         collaboration. Vision-Language Models (VLMs) have emerged
+                                         as a promising tool for visual understanding tasks and offer         or object recognition to understand human behavior [20], [40],
+                                         the potential to recognize human behaviors without extensive         [58], [59], [70].
+                                         domain-specific training. This capability makes them particularly       This understanding encompasses not only worker actions
+                                         appealing in the construction domain, where labeled data is          but also their physiological and emotional states, whether dur-
+                                         scarce and monitoring worker actions and emotional states is         ing tasks or in isolation [6], [18], [30], [37]. Much like physical
+                                         critical for safety and productivity. In this study, we evaluate
+                                         the performance of three leading VLMs-GPT-4o, Florence 2,            activities, cognitive states such as fatigue or anxiety critically
+                                         and LLaVa-1.5-in detecting construction worker actions and           influence safety, decision-making, and site coordination [5],
+                                         emotions from static site images. Using a curated dataset of 1,000   [18]. Consequently, recent research has increasingly focused
+                                         images annotated across ten action and ten emotion categories,       on automating state detection using wearable sensors [3], [17],
+                                         we assess each model’s outputs through standardized inference        [31], [65] and computer vision [41], [44], [56] to support real-
+                                         pipelines and multiple evaluation metrics. GPT-4o consistently
+                                         achieved the highest scores across both tasks, with an average       time monitoring and adaptive decision-making.
+                                         F1-score of 0.756 and accuracy of 0.799 in action recognition,          While traditional computer vision models rely on large
+                                         and an F1-score of 0.712 and accuracy of 0.773 in emotion            labeled datasets and lack generalizability [38], [69], Vision-
+                                         recognition. Florence 2 performed moderately, with F1-scores         Language Models (VLMs) offer a robust alternative. For
+                                         of 0.497 (action) and 0.414 (emotion), while LLaVa-1.5 showed        instance, task-specific architectures like YOLO [35] often
+                                         the lowest overall performance (F1-scores of 0.466 for action
+                                         and 0.461 for emotion). Confusion matrix analyses revealed that      require extensive retraining to adapt to new contexts. Con-
+                                         all models struggled to distinguish semantically close categories-   versely, VLMs such as GPT-4o integrate visual and linguistic
+                                         such as “Collaborating in teams” versus “Communicating with          processing to interpret complex scenes through natural lan-
+                                         supervisors,” or “Focused” versus “Determined”-highlighting          guage reasoning [69]. Although these models excel in general
+                                         limitations in current VLMs when applied to visually nuanced,        multimodal tasks, their ability to understand human behavior
+                                         domain-specific tasks. While the results indicate that general-
+                                         purpose VLMs can offer a baseline capability for human behavior      in safety-critical construction environments remains largely
+                                         recognition in construction environments, further improvements-      unexplored [6], [12].
+                                         such as domain adaptation, temporal modeling, or multimodal             This study is an explanatory approach to investigating
+                                         sensing-may be needed for real-world reliability. This study pro-    whether general-purpose VLMs, without fine-tuning for the
+                                         vides an initial benchmark and practical insights for deploying      construction domain, can accurately detect both the actions
+                                         human-aware AI systems in complex, safety-critical settings.
+                                            Index Terms—Large Language Model, Construction Automa-
+                                                                                                              and emotional states of construction workers from still images,
+                                         tion, Robotics, Human Robot Interaction                              compared to labels generated by a human annotator. Our
+                                                                                                              work paves the way for integrating VLMs into real-time
+                                                                                                              monitoring systems that support human-robot collaboration
+                                                               I. I NTRODUCTION
+                                                                                                              in complex and safety-critical environments. By examining
+                                            The construction industry is transforming rapidly with the        the performance of three state-of-the-art models on a curated
+                                         introduction of robotic systems-from drones and autonomous           dataset of labeled construction site images, we aim to evaluate
+                                         vehicles to quadruped robots-designed to improve job site            their ability to serve as a foundation for human-aware robotic
+                                         efficiency, safety, and monitoring [46], [49], [58], [59]. These     systems in real-world job sites. The rest of the paper is
+organized as follows: we begin by reviewing related work on           that supervised learning models (specifically SVM) can clas-
+worker state monitoring and vision-language modeling. We              sify fatigue levels with up to 85% accuracy [42]. Similar
+then describe our dataset, labeling process, and experimental         approaches were taken for understanding worker actions using
+pipeline, followed by an evaluation of model performance. Fi-         computer vision [32], [56], [60]. For instance, Roberts et al.
+nally, we discuss the implications of our findings, limitations,      developed a deep learning–based framework that uses 2D pose
+and directions for future research.                                   estimation and RGB video footage to automatically classify
+                                                                      worker activities during tasks such as bricklaying and plas-
+              II. BACKGROUND I NFORMATION                             tering, achieving over 78% accuracy in activity recognition.
+                                                                      Their work demonstrates how worker posture, derived from
+   Automating site monitoring is a growing priority in the            vision-based pose tracking, can serve as a key input for activity
+architecture, engineering, and construction (AEC) industry            classification and ergonomic assessment on construction sites
+[48], [53]. Given the dynamic and hazardous nature of con-            [56].
+struction environments, non-intrusive tracking of worker be-             Despite these advances, the deployment of computer vision
+havior, equipment, and site progress is essential for enhancing       on construction sites still faces several limitations, including
+safety, productivity, and real-time decision-making [11], [27],       environmental variability, occlusion, and the high cost of
+[55]. In line with the automation goals, robotics adoption in         labeled data. Among these, the issue of acquiring labeled data
+construction is gaining momentum due to their potential to            is particularly challenging [69]. Traditional computer vision
+enhance productivity, efficiency, and worker safety by taking         models require large volumes of task-specific annotations-
+on hazardous tasks [45]. As the interaction level between the         an impractical requirement given the diversity and nuance
+robot and the human increases, the communication of needs,            of construction worker activities and conditions [69]. The
+states, and expectations between the two entities become more         integration of vision and language understanding-enabled by
+necessary [1]. In line with this expectation, studies have started    Vision-Language Models (VLMs)-offers a promising alter-
+to propose various methods to understand and predict workers’         native. Large Language Models (LLMs) are deep learning
+states in real time.                                                  models trained on vast amounts of textual data to perform
+   Worker state can be broadly defined as the physical, cogni-        tasks such as language generation, translation, summarization,
+tive, and emotional condition of a worker at any given time,          and question answering [15]. These models, such as GPT-4
+encompassing aspects such as fatigue, stress, attentiveness,          [2], and BERT [22], have demonstrated strong generalization
+workload, and overall well-being [8], [17], [30]. Accurately          capabilities and the ability to perform reasoning and inference
+assessing these states is critical in high-risk construction          through natural language prompts.
+environments, where lapses in attention or physical exhaustion           Vision Large Language Models (VLMs) extend traditional
+can result in accidents or decreased performance [1], [45],           capabilities by incorporating visual inputs alongside text [69],
+[49], [58]. In this regard, prior studies collectively show that      [72]. Trained on large-scale image-text pairs, these multimodal
+worker’s physiological measures, facial expression, actions,          models align visual features with language representations
+and contextual metrics can be used as an input for predicting         to jointly interpret both data types [69]. This enables them
+various states such as cognitive workload, performance metrics        to perform diverse tasks-such as visual question answering
+(e.g., attention level), or stress when collaborating with or         (VQA), image captioning, and multimodal dialogue-without
+without a robotic agent [1], [26], [45], [49], [58], [68]. On the     explicit re-training [14], [24], [25], [69]. By leveraging natu-
+physiological side, studies have demonstrated the utility of car-     ral language prompts and contextual reasoning, VLMs offer
+diovascular metrics, eye tracking, and brain activity measures        a flexible, generalizable approach for interpreting complex
+for recognizing worker states such as fatigue [9], [11], [39],        human behaviors on dynamic construction sites, potentially
+[42], stress [33], [34], [50], [63], and cognitive load [16], [28],   reducing the dependence on extensive labeled datasets [69].
+[29]. While these physiological indicators are valuable, they            Various VLMs have been proposed in recent years. Initial
+often require the use of additional wearable sensors, which           VLM work by [54] used image-text pairs to align the feature
+may interfere with workers’ comfort or freedom of movement            spaces of an image and text encoder. They showed surprising
+on-site.                                                              success on zero-shot image classification by simply comparing
+   To address these limitations, researchers are increasingly         image features to the text encoding of potential labels. Subse-
+exploring vision-based approaches that rely solely on video           quent work developed algorithms for generating better prompts
+data to predict worker states without intrusive sensors [42],         and other improvements in inference (see [47], [51], [57]).
+[68]. These studies demonstrate the potential of computer             However, new chat-based models such as GPT-4o ( [69]),
+vision to assess both physical actions and cognitive conditions.      Florence 2 ( [66]), and LLaVa-1.5 ( [43]) integrate image,
+For instance, Yu et al. monitored physical fatigue using a            audio, and text modalities in a unified interface, enabling them
+vision-based 3D motion capture system and biomechanical               to answer questions about visual content. When evaluated
+modeling; they demonstrated that joint-level fatigue can be           through the chat interface rather than through feature-space
+assessed automatically using only RGB video, eliminating the          classification, [19] and [71] found that these models generally
+need for wearables [68]. Similarly, Li et al. investigated mental     perform worse than previous VLMs. However, the simplicity
+fatigue in equipment operators using eye-tracking, showing            of the chat interface makes it likely to be used in real-world
+construction monitoring where machine-learning expertise is
+not available. Therefore, we aim to study the performance of
+these models when used in their most user-friendly form.
+                III. R ESEARCH Q UESTIONS
+   Current VLMs are trained on broad, general-purpose
+datasets and lack optimization for task-specific applications
+like construction site monitoring. This study assesses the
+generalizability of these models for behavior recognition in
+high-risk, high-variability construction environments. Specifi-
+cally, we explore whether general-purpose VLMs can detect
+both physical actions and emotional states from static images
+without fine-tuning, benchmarking their performance against
+human annotators. We evaluate three state-of-the-art models-
+GPT-4o, Florence 2, and LLaVa-1.5-on a curated dataset
+labeled with diverse worker behaviors, ranging from actions
+(e.g., operating machinery) to emotions (e.g., focused, tired,
+anxious). Using standard classification metrics (precision,
+recall, F1-score, per-class accuracy) and confusion matrix
+analyses, we examine each model’s ability to interpret complex
+visual and contextual cues relevant to worker states. Specifi-
+cally, we investigate the following research questions:
+   • Can      general-purpose     VLMs      accurately    detect
+      construction-related worker actions from static images
+      without task-specific training?
+   • Can these models recognize emotional and cognitive
+      states-such as being focused, tired, or cooperative-based
+      solely on visual information?                                                Fig. 1: Framework of the study
+   • How do GPT-4o, Florence 2, and LLaVa-1.5 compare in
+      their performance across these recognition tasks?
+   • What patterns of misclassification emerge, and what do
+                                                                   as emotions, we considered being focused, determined, tired,
+      they reveal about model limitations in domain-specific       alert, satisfied, anxious, proud, frustrated, cooperative, and
+      behavioral interpretation?                                   relieved.
+                                                                      We begin the process by collecting 1000 images of con-
+   Rather than aiming for definitive performance benchmarks,
+                                                                   struction scenes, using a mix of online open-source image
+this exploratory work seeks to probe the current capabilities
+                                                                   repositories (e.g. Unsplash [64]) as well as using Roboflow
+of VLMs in a real-world, safety-critical domain. The findings
+                                                                   construction images dataset [4], [7], [10], [21], [36], [52], [61],
+are intended to inform future research on adapting multimodal
+                                                                   [62]. We note that we intentionally used images from prior
+AI for human-centered monitoring and robotic collaboration
+                                                                   available datasets as our goal was not to create a new dataset,
+in construction and similar applied settings.
+                                                                   but rather to build on those commonly used in the field.
+                        IV. M ETHODS
+                                                                   B. Data Labeling
+   We designed a multi-step experimental pipeline that in-
+cludes data collection, manual annotation, model selection,           While the data may have had specific labels, we are specif-
+inference, and quantitative evaluation using standard classi-      ically focusing on actions and emotions in the images, hence
+fication metrics (Fig. 1). Below we detail out each part of the    we needed to relabel all the images. For each category, we
+pipeline.                                                          labeled data using the one-hot coding technique. If an image
+                                                                   has a specific action or emotion, it will be labeled as “1”,
+A. Data Collection                                                 “0” if it does not. Subsequently, we processed the results as
+  As stated, we focus specifically on workers actions as a         a binary matrix of 1000 x 10, where each row is an array
+behavioral metric and emotional situations as a state metric.      containing the data of each photo. The labeled categories as
+We considered the following actions: operating heavy machin-       well as a sample of the images in each category can be seen
+ery, lifting and carrying materials, measuring and marking         on Fig. 2.
+surfaces, mixing cement or concrete, using hand tools such as
+hammers and drills, inspecting completed work, collaborating       C. Model Selection
+in teams, communicating with supervisors, following safety          For this study, three specific VLMs were considered:
+protocols, and taking breaks. For the states herein referred to    GPT4o, LLaVa-1.5 [43], and Microsoft Florence 2 models
+        Fig. 2: Examples of labeled construction site images for the action and emotion categories used in this study.
+
+
+[67]. They are relatively strong models with outstanding          E. Evaluation
+performance on object detection [2].
+                                                                     After collecting and organizing the evaluation matrices for
+                                                                  each model, we begin by performing a thorough comparison
+D. Inference Pipeline                                             using key performance metrics, such as Precision, Recall, F1-
+   After constructing the labeled dataset, we developed a         Score, and Accuracy. Each model’s output is evaluated against
+standardized inference pipeline to evaluate the performance of    the ground-truth data, which consists of hand-labeled matrices
+each model. Florence 2 and LLaVa-1.5 were retrieved from the      representing the true classifications. More specifically, preci-
+Hugging Face Transformers library [23], while GPT-4o was          sion measures the proportion of correct positive predictions
+accessed through the OpenAI API. Each model was adapted           made by the model out of all predicted positive cases. In
+to perform binary classification on the ten action categories     contrast, recall measures the proportion of actual positive cases
+and ten emotion categories.                                       correctly identified by the model. Both metrics are calculated
+   We follow the “Direct Generation” inference strategy from      for each class (i.e., action or emotion labels), providing a
+[71] for zero-shot classification. For each model, images were    detailed insight into how well the model handles false positives
+processed through customized inference scripts that prompted      and false negatives.
+the model to predict the presence or absence of each action or       Mathematically, Precision and Recall for each class are
+emotion by asking Does the action/emotion of XXXX appear          computed as follows:
+in the photo?. The model outputs were collected in structured
+JSON files, where each image was associated with a list of                                         TP
+“Yes” or “No” responses for all categories. These outputs were                       Precision =
+                                                                                                 TP + FP
+subsequently converted into binary matrices of size 1000 × 10                                      TP
+for both actions and emotions, where “Yes” responses were                               Recall =
+                                                                                                 TP + FN
+encoded as 1 and “No” responses as 0.
+   The same conversion was applied to the manually labeled
+ground truth data, resulting in two reference matrices for          Where:
+comparison. Model outputs were then quantitatively evaluated
+against the ground truth using standard metrics, including          • TP (True Positives): Correctly identified positive in-
+Precision, Recall, F1-score, and Accuracy, calculated indepen-        stances.
+                                                                    • FP (False Positives): Incorrectly predicted as positive.
+dently for each category. All inference scripts and data pro-
+                                                                    • FN (False Negatives): Incorrectly predicted as negative.
+cessing pipelines were standardized across models to ensure
+fair comparison. The full source code and dataset are available     The F1-Score is a harmonic mean of Precision and Recall,
+at [13].                                                          providing a single metric to balance both the false positives
+and false negatives in the model’s predictions. This is partic-
+ularly useful when the class distribution is imbalanced. The
+F1-score for each class is computed as:                                                                Category   Label                GPT-4o   Florence 2   LLaVa-1.5
+                                                                                                                  Heavy machinery        0          1            1
+                                                                                                                  Carrying materials     0          1            1
+                                                                                                       Action     Marking surfaces       0          1            1
+                                                                                                                  Mixing concrete        0          1            0
+                                                                                                                  Team collaboration     1          1            1
+                                                                                                                  Focused                1          1            1
+                                                                                                                  Determined             1          0            1
+                         2 · (Precision · Recall)                                                      Emotion    Tired
+                                                                                                                  Alert
+                                                                                                                                         1
+                                                                                                                                         0
+                                                                                                                                                    0
+                                                                                                                                                    0
+                                                                                                                                                                 1
+                                                                                                                                                                 1
+              F1-Score =                                                                                          Satisfied              1          0            1
+
+                           Precision + Recall
+                                                                                                      (b) Model predictions for se-
+                                                                                                      lected actions and emotions.
+   This score allows us to measure the model’s overall ability
+to correctly identify the positive instances while minimizing        (a) Sample construction image.
+errors, making it a robust evaluation metric. In addition to
+Precision, Recall, and F1-Score, Accuracy serves as a base-          Fig. 3: Qualitative illustration of model predictions: (Left)
+line metric, representing the proportion of correct predictions      sample construction image; (Right) corresponding predictions
+across all classes. While useful, accuracy might not always          from GPT-4o, Florence 2, and LLaVa-1.5.
+provide a comprehensive picture, especially in cases with
+imbalanced class distributions. By considering these metrics
+together, we gain a comprehensive understanding of each              B. Quantitative Analysis
+model’s strengths and weaknesses. For example, a model with
+high accuracy but low recall might be overfitting to certain
+classes, whereas a model with a high F1-score likely strikes a          Figure 4 presents an overall performance comparison across
+better balance between precision and recall.                         the key metrics of precision, recall, F1-score, and accuracy for
+                                                                     the action recognition task. As shown, GPT-4o achieved the
+                                                                     highest overall scores, with a precision of 0.7854, recall of
+                                                                     0.7648, F1-score of 0.7560, and accuracy of 0.7988. Florence
+                          V. R ESULTS                                2 showed moderate performance, with a precision of 0.5279,
+                                                                     recall of 0.5356, F1-score of 0.4971, and accuracy of 0.5681.
+                                                                     LLaVa-1.5 performed the weakest, attaining a precision of
+A. Qualitative Analysis
+                                                                     0.5017, recall of 0.4980, F1-score of 0.4664, and accuracy of
+                                                                     0.4996. These results confirm that GPT-4o maintained a strong
+   To better illustrate model behavior, we conducted a qual-         balance between precision and recall, while the other models,
+itative analysis on a representative construction site image.        particularly LLaVa-1.5, struggled with consistent classification
+Figure 3 displays the image alongside model predictions for          across the action dataset.
+ten action categories and ten emotion categories, compared to
+the ground truth (GT) labels.                                           Table I provides a detailed breakdown of each model’s
+                                                                     accuracy across specific construction-related action categories.
+   For action recognition, all three models correctly identified
+                                                                     GPT-4o demonstrated robust performance across nearly all
+collaborative tasks such as “Team collaboration,” “Using hand
+                                                                     categories, with especially high accuracy in “Following safety
+tools,” and “Inspecting completed work.” However, Florence 2
+                                                                     protocols” (0.915), “Mixing cement or concrete” (0.884), and
+and LLaVa-1.5 both incorrectly predicted the presence of “Op-
+                                                                     “Taking breaks/resting” (0.880). These results suggest GPT-4o
+erating heavy machinery,” “Carrying materials,” and “Marking
+                                                                     is particularly effective at recognizing actions with distinctive
+surfaces,” where no such activities were present, suggesting a
+                                                                     visual cues or contextual markers.
+tendency to over-detect active construction behaviors. GPT-
+4o showed more conservative predictions, correctly avoiding             Interestingly, Florence 2, despite its overall lower perfor-
+these false positives but missing the true instance of “Mixing       mance, achieved competitive results in several classes-for
+concrete,” resulting in a false negative.                            instance, it closely followed GPT-4o in identifying “Taking
+   For emotion recognition, all models accurately detected           breaks/resting” (0.834 vs. 0.880) and showed solid accuracy
+“Focused,” reflecting the strong visual cues associated with         in “Mixing cement or concrete” (0.830). This indicates that
+concentration. However, both GPT-4o and LLaVa-1.5 incor-             Florence 2 may still be effective in capturing certain well-
+rectly predicted the presence of “Tired” despite the ground          structured physical activities, albeit with lower consistency
+truth label being negative, suggesting difficulty in differentiat-   overall.
+ing subtle affective states based on static imagery. LLaVa-1.5,         LLaVa-1.5, while slightly outperforming Florence 2 in
+in particular, tended to overpredict emotions such as “Alert,”       isolated tasks such as “Using hand tools” (0.522 vs. 0.486),
+“Anxious,” and “Frustrated,” demonstrating less discrimina-          generally trailed in most categories. Its limited accuracy in
+tion between distinct emotional/cognitive states. Florence 2         classes like “Measuring and marking surfaces” (0.459) and
+appeared more conservative but missed several correct positive       “Collaborating in teams” (0.490) highlights its weaker gener-
+labels, including “Determined” and “Satisfied.”                      alization and potential confusion across visually similar tasks.
+TABLE I: Per-Class Accuracy by Model and Action Category                            lieved” (0.886). These results suggest that GPT-4o is especially
+ Action Category                                GPT4o     Florence 2    LLaVa-1.5   effective at identifying emotions that are more visually distinct
+ Operating heavy machinery                      0.762       0.533         0.510     or contextually grounded.
+ Lifting and carrying materials                 0.786       0.594         0.523        Florence 2, while generally trailing GPT-4o, delivered
+ Measuring and marking surfaces                 0.718       0.632         0.459
+ Mixing cement or concrete                      0.884       0.830         0.476     competitive results in several categories-most notably “Re-
+ Collaborating in teams                         0.833       0.641         0.490     lieved” (0.829), “Proud” (0.656), and “Cooperative” (0.637)-
+ Using hand tools (e.g., hammering, drilling)   0.628       0.486         0.522
+ Inspecting completed work                      0.753       0.223         0.491     demonstrating its potential to detect certain positive or con-
+ Communicating with supervisors                 0.829       0.649         0.506     textually consistent emotional states. LLaVa-1.5 displayed
+ Following safety protocols                     0.915       0.259         0.505
+ Taking breaks/resting                          0.880       0.834         0.514     relatively flat performance across categories, with most class
+                                                                                    accuracies hovering around 0.50. Its best result, “Frustrated”
+TABLE II: Action Evaluation Metrics for GPT-4o, Florence                            (0.531), still fell noticeably short of GPT-4o’s accuracy,
+2, and LLaVa-1.5                                                                    suggesting a need for targeted improvements in emotional
+                                                                                    disambiguation.
+ Model               Precision         Recall      F1 Score            Accuracy
+                                                                                    TABLE III: Per-Class Accuracy by Model and Emotion Cat-
+ GPT-4o                0.7854          0.7648           0.7560          0.7988      egory
+ Florence 2            0.5279          0.5356           0.4971          0.5681
+ LLaVa-1.5             0.5017          0.4980           0.4664          0.4996       Emotion Category         GPT4o        Florence 2   LLaVa-1.5
+                                                                                     Focused                    0.698        0.403        0.509
+                                                                                     Determined                 0.691        0.400        0.514
+                                                                                     Tired                      0.943        0.690        0.512
+                                                                                     Alert                      0.470        0.480        0.494
+                                                                                     Satisfied                  0.786        0.654        0.519
+                                                                                     Anxious                    0.851        0.625        0.514
+                                                                                     Proud                      0.764        0.656        0.509
+                                                                                     Frustrated                 0.967        0.448        0.531
+                                                                                     Cooperative                0.673        0.637        0.488
+                                                                                     Relieved                   0.886        0.829        0.508
+
+
+                                                                                               TABLE IV: Emotion Evaluation Metrics
+
+                                                                                     Model          Precision     Recall     F1 Score    Accuracy
+               Fig. 4: Actions-evaluation Performance
+                                                                                     GPT-4o          0.7254       0.7496       0.7124     0.7729
+                                                                                     Florence 2      0.4247       0.4977       0.4140     0.5822
+   We also evaluated the models on their ability to recognize                        LLaVa-1.5       0.5088       0.4985       0.4606     0.5098
+worker emotional and cognitive states from construction site
+images. The evaluation was conducted on a dataset of 1000
+images annotated across ten emotion categories. Figure 5
+presents the overall performance of the three models using
+precision, recall, F1-score, and accuracy as evaluation metrics.
+   GPT-4o outperformed the other models, achieving the high-
+est scores across all four metrics: precision of 0.7254, re-
+call of 0.7496, F1-score of 0.7124, and accuracy of 0.7729.
+These results indicate strong and consistent performance in
+identifying emotional states from visual input. Florence 2
+showed moderate performance, with a precision of 0.4247,
+recall of 0.4977, F1-score of 0.4140, and accuracy of 0.5822,
+suggesting difficulty in distinguishing between subtle emo-
+tional expressions. LLaVa-1.5, while slightly outperforming
+Florence 2 in terms of precision (0.5088), lagged behind in
+recall (0.4985) and accuracy (0.5098), pointing to inconsistent                               Fig. 5: Emotions-evaluation Performance
+emotional classification.
+   Table III provides a more detailed view of per-class accu-                       C. Confusion Matrix Analysis
+racy across the ten emotion categories. GPT-4o achieved the                            In addition to aggregate metrics, we visualized the confusion
+highest accuracy in nearly all categories, including standout                       matrices for each model and task to better understand the
+performance in “Frustrated” (0.967), “Tired” (0.943), and “Re-                      distribution of predictions across categories (Fig. 6). These
+visualizations reveal substantial misclassification trends, but    data augmentation, or supervised fine-tuning on construction-
+also expose clear differences in each model’s capacity for         specific datasets.
+class-specific resolution.                                            GPT-4o consistently showed higher performance across
+    For the action recognition task, GPT-4o displayed a stronger   metrics and confusion matrices, suggesting that its larger-
+concentration of predictions along the diagonal, particularly      scale training and multimodal alignment may support better
+excelling at identifying “Following safety protocols” and “Tak-    generalization, even without domain-specific fine-tuning. Its
+ing breaks/resting” with dense and focused predictions. De-        strength in identifying visually distinct behaviors-such as
+spite this, some confusion remained between visually overlap-      “Taking breaks” or “Following safety protocols”-may reflect
+ping tasks such as “Operating heavy machinery” and “Follow-        the model’s ability to recognize clear visual anchors. However,
+ing safety protocols”. Florence 2’s confusion matrix appeared      similar to the other models, GPT-4o still showed confusion
+more diffusely populated, showing significant overlap across       between semantically close classes, which are difficult to
+classes and indicating broader uncertainty in its predictions.     distinguish without temporal or contextual cues.
+LLaVa-1.5 showed the most dispersed pattern, lacking clear            Florence 2 and LLava-1.5 both showed strong patterns
+class-specific focus and frequently distributing predictions       of misclassifications. LLaVa-1.5 exhibited the most frequent
+across semantically related activities, which corresponds with     misclassifications and comparatively lower accuracy, particu-
+its lower class accuracies.                                        larly in emotion recognition. This can point to a less refined
+    In the emotion recognition task, GPT-4o again demon-           alignment between visual and linguistic modalities or limited
+strated superior focus, especially in identifying “Tired,” “Re-    pretraining exposure to emotionally nuanced imagery. While it
+lieved,” and “Frustrated,” with sharp peaks along the diagonal.    captured some general features, its flat accuracy across classes
+However, confusion still arose between affectively similar         suggests that improvements may require more targeted training
+emotions-such as “Focused” and “Determined,”-highlighting          or architectural adaptation.
+the difficulty of parsing subtle emotional cues in static im-         Across all models, confusion matrices revealed that classes
+ages. Florence 2 struggled more significantly in maintain-         involving social interaction (e.g., collaborating in teams, and
+ing class separability, with notable misclassifications among      communication) and subtle emotional distinctions (e.g., “Anx-
+the core emotional states. LLaVa-1.5, in particular, exhibited     ious” vs. “Frustrated”) were more prone to error. This under-
+widespread dispersion across nearly all emotion classes, with      scores the difficulty of interpreting human behavior from still
+little evidence of dominant correct predictions, suggesting a      images, where temporal dynamics and additional modalities
+lack of effective internal representations for emotional cate-     (e.g., voice, motion, physiological cues) may be essential for
+gories.                                                            disambiguation.
+    These confusion matrices reinforce the challenges of fine-        While this study provides valuable insights into the use
+grained behavior and emotion recognition in real-world visual      of Vision-Language Models (VLMs) for detecting actions
+contexts. While GPT-4o shows promise in distinguishing both        and emotions in construction site imagery, several limitations
+actions and emotional states, even it occasionally confuses        must be acknowledged. Recognizing these limitations provides
+classes with overlapping visual or contextual signals. These       essential context for interpreting the findings and highlights
+findings highlight the need for more contextual reasoning,         clear opportunities for future work.
+temporal dynamics, and task-specific fine-tuning to enable            First, although the dataset used in this work comprises 1000
+robust interpretation of complex worker states on construction     images-substantially larger than earlier small-scale efforts-it
+sites                                                              may still not fully capture the breadth and variability of real-
+                                                                   world construction environments. Certain actions and emo-
+   VI. D ISCUSSION , L IMITATIONS , AND F UTURE W ORK              tions, particularly rare, subtle, or context-dependent ones, may
+   This study examined how three general-purpose Vision-           remain underrepresented. This uneven class distribution could
+Language Models (VLMs)-GPT-4o, Florence 2, and LLaVa-              introduce biases in model evaluation, potentially favoring more
+1.5-performed in recognizing construction worker actions and       common behaviors and limiting the generalizability of the
+emotional states from static imagery. Our goal was to under-       findings across different construction scenarios, environmental
+stand off-the-shelf model performance, and in comparison to        conditions, or cultural contexts.
+a human annotator. In summary, we find that while all models          Second, all annotations were derived from one-hot encoded
+exhibited some level of competency, performance varied across      labels based on static images, thereby omitting valuable tem-
+models and categories, with several noteworthy trends and          poral information that could enrich behavioral interpretation.
+limitations.                                                       Many construction-related actions and emotional expressions
+   The static-image input format is a fundamental bottle-          are inherently dynamic, evolving through sequences of motion,
+neck for interpreting dynamic human behavior. Time-series          posture transitions, or facial changes. Restricting the analysis
+data (e.g., video) or multimodal signals (e.g., audio, physi-      to single frames risks overlooking these temporal dependen-
+ological sensors) are likely necessary to resolve ambiguities      cies and may limit the models’ ability to detect fine-grained
+between lookalike categories. Our exploratory analysis can         behavioral cues.
+indicate that even advanced models benefit from domain-               Furthermore, the absence of multimodal data-such as au-
+specific adaptation-whether through prompt tuning, curated         dio signals, physiological measurements, or motion capture-
+constrains the models’ perceptual depth and hampers their           dataset of 1000 construction site images, we found that while
+capacity to differentiate complex worker states. Human an-          all models demonstrated some degree of generalization to this
+notation also introduces potential sources of error, including      applied context, their performance varied substantially across
+misinterpretation of subtle emotions or incorrect labeling. In      tasks and categories. This work provides an initial benchmark
+some cases, an image may plausibly convey multiple simulta-         and offers critical insights for future research at the inter-
+neous actions or emotional states, which are not captured by        section of computer vision, human-robot collaboration, and
+a one-hot encoding scheme.                                          construction safety management using vision large language
+   Third, while GPT-4o, Florence 2, and LLaVa-1.5 represent         models.
+state-of-the-art in general-purpose vision-language modeling,
+none were fine-tuned for construction-specific semantics, be-                           VIII. ACKNOWLEDGMENTS
+haviors, or emotional cues. Their performance in this study            The authors would like to thank the College of Engineering
+reflects out-of-the-box capabilities and may not represent          at Villanova University for their support through the Sports and
+their true potential if subjected to domain-specific fine-tuning.   Performance Engineering grant as well as the John Hennessy
+Additionally, to maintain fairness across models, prompt en-        Undergraduate Research Fund.
+gineering was deliberately kept minimal and consistent, but
+this conservative strategy may have limited the possibility of                                   R EFERENCES
+extracting optimal performance from models individually.             [1] Iina Aaltonen, Timo Salmi, and Ilari Marstio. Refining levels of
+                                                                         collaboration to support the design and evaluation of human-robot
+   While we note that our work was an exploratory approach               interaction in the manufacturing industry. Procedia CIRP, 72:93–98,
+to current off-the-shelf models, a major part of our future              2018.
+work lies on expanding the dataset to include a larger and           [2] Josh Achiam, Steven Adler, Sandhini Agarwal, Lama Ahmad, Ilge
+                                                                         Akkaya, Florencia Leoni Aleman, Diogo Almeida, Janko Altenschmidt,
+more diverse collection of annotated images-captured across              Sam Altman, Shyamal Anadkat, et al. Gpt-4 technical report. arXiv
+a broader range of construction environments, lighting con-              preprint arXiv:2303.08774, 2023.
+ditions, weather variations, and worker demographics-which           [3] Changbum R Ahn, SangHyun Lee, Cenfei Sun, Houtan Jebelli,
+                                                                         Kanghyeok Yang, and Byungjoo Choi. Wearable sensing technology
+enables more robust model training and evaluation. Incorporat-           applications in construction safety and health. Journal of Construction
+ing time-series image sequences or video data could provide              Engineering and Management, 145(11):03119007, 2019.
+essential temporal context, improving the models’ ability to         [4] Akfa. Safety-rd-v1 dataset, 2023. Accessed: 2025-04-28.
+recognize both dynamic actions and evolving emotional states.        [5] Gilles Albeaino, Patrick Brophy, Idris Jeelani, Masoud Gheisari, and
+                                                                         Raja RA Issa. Psychophysiological impacts of working at different
+   Integrating additional sensing modalities-such as audio sig-          distances from drones on construction sites. Journal of Computing in
+nals, worker speech, body posture from skeleton tracking, or             Civil Engineering, 37(5):04023026, 2023.
+physiological data-could significantly enrich model inputs and       [6] Hemaid Alsulami, Suhail H Serbaya, Ali Rizwan, Muhammad Saleem,
+                                                                         Yassine Maleh, and Zobia Alamgir. Impact of emotional intelligence
+enhance emotion recognition capabilities. These modalities               on the stress and safety of construction workers’ in saudi arabia.
+would help disambiguate subtle affective states that are visu-           Engineering, construction and architectural management, 30(4):1365–
+ally similar but contextually distinct, leading to more nuanced          1378, 2023.
+                                                                     [7] amitslonimski111@gmail.com. Ppe detection dataset, 2022. Accessed:
+and reliable predictions.                                                2025-04-28.
+   Moreover, fine-tuning large models on construction-specific       [8] Shahnawaz Anwer, Heng Li, Maxwell Fordjour Antwi-Afari, Waleed
+datasets or leveraging domain-adapted embeddings could im-               Umer, and Arnold Yu Lok Wong. Evaluation of physiological metrics
+                                                                         as real-time measurement of physical fatigue in construction workers:
+prove classification precision and reduce confusion between              state-of-the-art review. Journal of Construction Engineering and Man-
+overlapping action and emotion categories. Future work could             agement, 147(5):03121001, 2021.
+also explore the development of lightweight or hybrid multi-         [9] Shahnawaz Anwer, Heng Li, Waleed Umer, Maxwell Fordjour Antwi-
+                                                                         Afari, Imran Mehmood, Yantao Yu, Carl Haas, and Arnold Yu Lok
+modal architectures optimized for real-time deployment on-               Wong. Identification and classification of physical fatigue in con-
+site, such as wearable devices, mobile platforms, or smart               struction workers using linear and nonlinear heart rate variability mea-
+surveillance systems.                                                    surements. Journal of Construction Engineering and Management,
+                                                                         149(7):04023057, 2023.
+   Finally, calibrating and correcting model predictions can        [10] APD Detection. Ppe detection dataset, 2024. Accessed: 2025-04-28.
+be performed through incorporating human-in-the-loop frame-         [11] Ashrant Aryal, Ali Ghahramani, and Burcin Becerik-Gerber. Monitor-
+works within such critical decision-making contexts. This                ing fatigue in construction workers using physiological measurements.
+                                                                         Automation in Construction, 82:154–165, 2017.
+approach would help ensure that VLM outputs remain inter-           [12] Rafael Gomes Braga, Muhammad Owais Tahir, Ivanka Iordanova,
+pretable, reliable, and actionable in high-stakes environments           and David St-Onge.         Robotic deployment on construction sites:
+such as construction, where worker safety and operational                considerations for safety and productivity impact. arXiv preprint
+                                                                         arXiv:2404.13143, 2024.
+efficiency are paramount.                                           [13] Hieu Bui. Construction , 2023. Accessed: 2025-04-28.
+                                                                    [14] Qingxing Cao, Junhao Cheng, Xiaodan Liang, and Liang Lin. Visdi-
+                      VII. C ONCLUSION                                   ahalbench: A visual dialogue benchmark for diagnosing hallucination
+                                                                         in large vision-language models. In Proceedings of the 62nd Annual
+   This study explored the capability of general-purpose                 Meeting of the Association for Computational Linguistics (Volume 1:
+Vision-Language Models (VLMs) to recognize construction                  Long Papers), pages 12161–12176, 2024.
+worker actions and emotional states from static imagery with-       [15] Yupeng Chang, Xu Wang, Jindong Wang, Yuan Wu, Linyi Yang, Kaijie
+                                                                         Zhu, Hao Chen, Xiaoyuan Yi, Cunxiang Wang, Yidong Wang, et al. A
+out domain-specific fine-tuning. Through systematic evalua-              survey on evaluation of large language models. ACM transactions on
+tion of GPT-4o, Florence 2, and LLaVa-1.5 on a curated                   intelligent systems and technology, 15(3):1–45, 2024.
+[16] Jiayu Chen, Ryan Qi Wang, Zhenghang Lin, and Xiaoyang Guo.                   [36] Kwon Soonbin. Detect worker dataset, 2025. Accessed: 2025-04-28.
+     Measuring the cognitive loads of construction safety sign designs during     [37] Rebecca R Langdon and Sukanlaya Sawang. Construction workers’
+     selective and sustained attention. Safety science, 105:9–21, 2018.                well-being: What leads to depression, anxiety, and stress? Journal of
+[17] Baoquan Cheng, Chaojie Fan, Hanliang Fu, Jianling Huang, Huihua                   construction engineering and management, 144(2):04017100, 2018.
+     Chen, and Xiaowei Luo. Measuring and computing cognitive statuses of         [38] Hugo Laurençon, Léo Tronchon, Matthieu Cord, and Victor Sanh. What
+     construction workers based on electroencephalogram: a critical review.            matters when building vision-language models? Advances in Neural
+     IEEE Transactions on Computational Social Systems, 9(6):1644–1659,                Information Processing Systems, 37:87874–87907, 2024.
+     2022.                                                                        [39] Wonil Lee, Ken-Yu Lin, Edmund Seto, and Giovanni C Migliaccio.
+[18] Dan Chong, Anni Yu, Hao Su, and Yue Zhou. The impact of                           Wearable sensors for monitoring on-duty and off-duty worker physio-
+     emotional states on construction workers’ recognition ability of safety           logical status and activities in construction. Automation in Construction,
+     hazards based on social cognitive neuroscience. Frontiers in psychology,          83:341–353, 2017.
+     13:895929, 2022.                                                             [40] Guofa Li, Weijian Lai, Xiaoxuan Sui, Xiaohang Li, Xingda Qu, Tingru
+[19] Avi Cooper, Keizo Kato, Chia-Hsien Shih, Hiroaki Yamane, Kasper                   Zhang, and Yuezhi Li. Influence of traffic congestion on driver behavior
+     Vinken, Kentaro Takemoto, Taro Sunagawa, Hao-Wei Yeh, Jin Ya-                     in post-congestion driving. Accident Analysis & Prevention, 141:105508,
+     manaka, Ian Mason, and Xavier Boix. Rethinking VLMs and LLMs                      2020.
+     for image classification. Scientific Reports, 15(1):19692, June 2025.        [41] Jiaqi Li, Qi Miao, Zheng Zou, Huaguo Gao, Lixiao Zhang, Zhaobo
+[20] Borja Garcia de Soto and Miroslaw J Skibniewski. Future of robotics               Li, and Nan Wang. A review of computer vision-based monitoring
+     and automation in construction. In Construction 4.0, pages 289–306.               approaches for construction workers’ work-related behaviors. IEEE
+     Routledge, 2020.                                                                  Access, 12:7134–7155, 2024.
+[21] Deul Saha. Soda dataset, 2023. Accessed: 2025-04-28.                         [42] Jue Li, Heng Li, Waleed Umer, Hongwei Wang, Xuejiao Xing, Shukai
+[22] Jacob Devlin, Ming-Wei Chang, Kenton Lee, and Kristina Toutanova.                 Zhao, and Jun Hou. Identification and classification of construction
+     Bert: Pre-training of deep bidirectional transformers for language un-            equipment operators’ mental fatigue using wearable eye-tracking tech-
+     derstanding. In Proceedings of the 2019 conference of the North                   nology. Automation in Construction, 109:103000, 2020.
+     American chapter of the association for computational linguistics:           [43] Haotian Liu, Chunyuan Li, Qingyang Wu, and Yong Jae Lee. Visual
+     human language technologies, volume 1 (long and short papers), pages              instruction tuning, 2023.
+     4171–4186, 2019.                                                             [44] Wenyao Liu, Qingfeng Meng, Zhen Li, and Xin Hu. Applications
+[23] Hugging Face. Transformers, 2024. Accessed: 2025-04-28.                           of computer vision in monitoring the unsafe behavior of construction
+[24] Chao Fan, Qipei Mei, and Xinming Li. Assisting in the identification of           workers: Current status and challenges. Buildings, 11(9):409, 2021.
+     ergonomic risks for workers: a large vision-language model approach.         [45] Yizhi Liu, Amit Ojha, Shayan Shayesteh, Houtan Jebelli, and SangHyun
+     In ISARC. Proceedings of the International Symposium on Automation                Lee. Human-centric robotic manipulation in construction: Generative ad-
+     and Robotics in Construction, volume 41, pages 1010–1017. IAARC                   versarial networks based physiological computing mechanism to enable
+     Publications, 2024.                                                               robots to perceive workers’ cognitive load. Canadian Journal of Civil
+[25] Haoxiang Gao and Yu Zhao. Application of vision-language model to                 Engineering, 50(3):224–238, 2022.
+     pedestrians behavior and scene understanding in autonomous driving.          [46] Marina Marinelli. Human–robot collaboration and lean waste elimi-
+     arXiv preprint arXiv:2501.06680, 2025.                                            nation: Conceptual analogies and practical synergies in industrialized
+[26] Yifan Gao, Vicente A González, Tak Wing Yiu, Guillermo Cabrera-                  construction. Buildings, 12(12):2057, 2022.
+     Guerrero, Nan Li, Anouar Baghouz, and Anass Rahouti. Immersive               [47] Sachit Menon and Carl Vondrick. Visual classification via description
+     virtual reality as an empirical research tool: exploring the capability of        from large language models. In The Eleventh International Conference
+     a machine learning model for predicting construction workers’ safety              on Learning Representations (ICLR), 2023.
+     behaviour. Virtual Reality, 26(1):361–383, 2022.                             [48] Muhammad Ali Musarat, Abdul Mateen Khan, Wesam Salah Alaloul,
+[27] Umberto C Gatti, Suzanne Schneider, and Giovanni C Migliaccio.                    Noah Blas, and Saba Ayub. Automated monitoring innovations for effi-
+     Physiological condition monitoring of construction workers. Automation            cient and safe construction practices. Results in Engineering, 22:102057,
+     in Construction, 44:227–233, 2014.                                                2024.
+[28] Yu Han, Zhenzhen Yin, Jingjie Zhang, Ruoyu Jin, and Tong Yang. Eye-          [49] Yara Nassar, Gilles Albeaino, Idris Jeelani, Masoud Gheisari, and
+     tracking experimental study investigating the influence factors of con-           Raja RA Issa. Human-robot collaboration levels in construction:
+     struction safety hazard recognition. Journal of construction engineering          Focusing on individuals’ cognitive workload. In Construction Research
+     and management, 146(8):04020091, 2020.                                            Congress 2024, pages 639–648, 2024.
+[29] Sogand Hasanzadeh, Bac Dao, Behzad Esmaeili, and Michael D Dodd.             [50] Alan Patching and Rick Best. An investigation into psychological stress
+     Measuring the impact of working memory load on the safety perfor-                 detection and management in organisations operating in project and
+     mance of construction workers. In Computing in civil engineering 2017,            construction management. Procedia-Social and Behavioral Sciences,
+     pages 158–166. 2017.                                                              119:682–691, 2014.
+[30] Sungjoo Hwang, Houtan Jebelli, Byungjoo Choi, Minji Choi, and                [51] Sarah Pratt, Ian Covert, Rosanne Liu, and Ali Farhadi. What does a
+     SangHyun Lee. Measuring workers’ emotional state during construction              platypus look like? generating customized prompts for zero-shot image
+     tasks using wearable eeg. Journal of Construction Engineering and                 classification. In Proceedings of the IEEE/CVF International Conference
+     Management, 144(7):04018050, 2018.                                                on Computer Vision (ICCV), pages 15691–15701, October 2023.
+[31] Sungjoo Hwang and SangHyun Lee. Wristband-type wearable health               [52] Qatrunnadas. Health and safety ppe compliance dataset, 2023. Accessed:
+     devices to measure construction workers’ physical demands. Automation             2025-04-28.
+     in Construction, 83:330–340, 2017.                                           [53] Abdul Hannan Qureshi, Wesam Salah Alaloul, Wong Kai Wing, Syed
+[32] Hiroaki Ishioka, Xinshuo Weng, Yunze Man, and Kris Kitani. Single                 Saad, Syed Ammad, and Muhammad Ali Musarat. Factors impacting the
+     camera worker detection, tracking and action recognition in construc-             implementation process of automated construction progress monitoring.
+     tion site. In ISARC. Proceedings of the International Symposium on                Ain Shams Engineering Journal, 13(6):101808, 2022.
+     Automation and Robotics in Construction, volume 37, pages 653–660.           [54] Alec Radford, Jong Wook Kim, Chris Hallacy, Aditya Ramesh, Gabriel
+     IAARC Publications, 2020.                                                         Goh, Sandhini Agarwal, Girish Sastry, Amanda Askell, Pamela Mishkin,
+[33] Houtan Jebelli, Byungjoo Choi, and SangHyun Lee. Application                      Jack Clark, Gretchen Krueger, and Ilya Sutskever. Learning transferable
+     of wearable biosensors to construction sites. i: Assessing work-                  visual models from natural language supervision. In Proceedings of the
+     ers’ stress. Journal of Construction Engineering and Management,                  38th International Conference on Machine Learning (ICML), volume
+     145(12):04019079, 2019.                                                           139 of Proceedings of Machine Learning Research, pages 8748–8763.
+[34] Houtan Jebelli, Sungjoo Hwang, and SangHyun Lee. Eeg signal-                      PMLR, 2021.
+     processing framework to obtain high-quality brain waves from an off-         [55] Aravinda S Rao, Marko Radanovic, Yuguang Liu, Songbo Hu, Yihai
+     the-shelf wearable eeg device. Journal of Computing in Civil Engineer-            Fang, Kourosh Khoshelham, Marimuthu Palaniswami, and Tuan Ngo.
+     ing, 32(1):04017070, 2018.                                                        Real-time monitoring of construction sites: Sensors, methods, and ap-
+[35] Peiyuan Jiang, Daji Ergu, Fangyao Liu, Ying Cai, and Bo Ma. A review              plications. Automation in Construction, 136:104099, 2022.
+     of yolo algorithm developments. Procedia computer science, 199:1066–         [56] Dominic Roberts, Wilfredo Torres Calderon, Shuai Tang, and Mani
+     1073, 2022.                                                                       Golparvar-Fard. Vision-based construction worker activity analysis
+     informed by body posture. Journal of Computing in Civil Engineering,
+     34(4):04020017, 2020.
+[57] Karsten Roth, Jae Myung Kim, A. Sophia Koepke, Oriol Vinyals,
+     Cordelia Schmid, and Zeynep Akata. Waffling around for performance:
+     Visual classification with random words and broad concepts. In
+     Proceedings of the IEEE/CVF International Conference on Computer
+     Vision (ICCV), October 2023.
+[58] Shayan Shayesteh and Houtan Jebelli. Investigating the impact of
+     construction robots autonomy level on workers’ cognitive load. In
+     Canadian Society of Civil Engineering Annual Conference, pages 255–
+     267. Springer, 2021.
+[59] Shayan Shayesteh and Houtan Jebelli. Enhanced situational awareness
+     in worker-robot interaction in construction: Assessing the role of visual
+     cues. In Construction Research Congress 2022, pages 422–430, 2022.
+[60] Behnam Sherafat, Changbum R Ahn, Reza Akhavian, Amir H Behzadan,
+     Mani Golparvar-Fard, Hyunsoo Kim, Yong-Cheol Lee, Abbas Rashidi,
+     and Ehsan Rezazadeh Azar. Automated methods for activity recognition
+     of construction workers and equipment: State-of-the-art review. Journal
+     of Construction Engineering and Management, 146(6):03120002, 2020.
+[61] testcasque. Ppe detection dataset, 2024. Accessed: 2025-04-28.
+[62] testttt. Output merge dataset, 2025. Accessed: 2025-04-28.
+[63] Waleed Umer. Simultaneous monitoring of physical and mental stress
+     for construction tasks using physiological measures. Journal of Building
+     Engineering, 46:103777, 2022.
+[64] Unsplash Contributors. Construction workers, 2025. Accessed: 2025-
+     04-28.
+[65] Mingzhu Wang, Jiayu Chen, and Jun Ma. Monitoring and evaluating
+     the status and behaviour of construction workers using wearable sensing
+     technologies. Automation in Construction, 165:105555, 2024.
+[66] Bin Xiao, Haiping Wu, Weijian Xu, Xiyang Dai, Houdong Hu, Yumao
+     Lu, Michael Zeng, Ce Liu, and Lu Yuan. Florence-2: Advancing a
+     unified representation for a variety of vision tasks. In Proceedings of
+     the IEEE/CVF Conference on Computer Vision and Pattern Recognition,
+     pages 4818–4829, 2024.
+[67] Bin Xiao, Haiping Wu, Weijian Xu, Xiyang Dai, Houdong Hu, Yumao
+     Lu, Michael Zeng, Ce Liu, and Lu Yuan. Florence-2: Advancing a
+     unified representation for a variety of vision tasks. In CVPR 2024, June
+     2024.
+[68] Yantao Yu, Heng Li, Xincong Yang, Liulin Kong, Xiaochun Luo, and
+     Arnold YL Wong. An automatic and non-invasive physical fatigue as-
+     sessment method for construction workers. Automation in construction,
+     103:1–12, 2019.
+[69] Jingyi Zhang, Jiaxing Huang, Sheng Jin, and Shijian Lu. Vision-
+     language models for vision tasks: A survey. IEEE Transactions on
+     Pattern Analysis and Machine Intelligence, 2024.
+[70] Ming Zhang, Rui Xu, Haitao Wu, Jia Pan, and Xiaowei Luo. Human–
+     robot collaboration for on-site construction. Automation in Construction,
+     150:104812, 2023.
+[71] Yuhui Zhang, Alyssa Unell, Xiaohan Wang, Dhruba Ghosh, Yuchang Su,
+     Ludwig Schmidt, and Serena Yeung-Levy. Why are visually-grounded
+     language models bad at image classification? In Advances in Neural
+     Information Processing Systems (NeurIPS), volume 37, 2024.
+[72] Kaiyang Zhou, Jingkang Yang, Chen Change Loy, and Ziwei Liu.
+     Learning to prompt for vision-language models. International Journal
+     of Computer Vision, 130(9):2337–2348, 2022.
+                      (a) GPT-4o (Action)                                           (b) GPT-4o (Emotion)
+
+
+
+
+                     (c) Florence 2 (Action)                                      (d) Florence 2 (Emotion)
+
+
+
+
+                     (e) LLaVa-1.5 (Action)                                       (f) LLaVa-1.5 (Emotion)
+Fig. 6: Confusion matrices for GPT-4o, Florence 2, and LLaVA-1.5 across action and emotion recognition tasks.
+Action classes: (1) Operating heavy machinery, (2) Lifting and carrying materials, (3) Measuring and marking surfaces,
+(4) Mixing cement or concrete, (5) Collaborating in teams, (6) Using hand tools (e.g., hammering, drilling), (7) Inspecting
+completed work, (8) Communicating with supervisors, (9) Following safety protocols, (10) Taking breaks/resting.
+Emotion classes: (1) Focused, (2) Determined, (3) Tired, (4) Alert, (5) Satisfied, (6) Anxious, (7) Proud, (8) Frustrated, (9)
+Cooperative, (10) Relieved.
+

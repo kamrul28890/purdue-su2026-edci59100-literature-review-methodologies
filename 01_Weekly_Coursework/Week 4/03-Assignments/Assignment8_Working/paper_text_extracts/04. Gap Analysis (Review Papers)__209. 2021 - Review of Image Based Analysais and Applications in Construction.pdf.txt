@@ -1,0 +1,895 @@
+                                                                Automation in Construction 122 (2021) 103516
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                             Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+Review
+
+Review of image-based analysis and applications in construction
+Kareem Mostafa a, b, *, Tarek Hegazy a, c
+a
+  Civil and Environmental Engineering Department, University of Waterloo, Waterloo, Ontario N2L 3G1, Canada
+b
+  S. M, ASCE, USA
+c
+  M. ASCE, USA
+
+
+
+
+A R T I C L E I N F O                                    A B S T R A C T
+
+Keywords:                                                Image-based analysis techniques offer a robust way to solve engineering problems due to the availability of visual
+Image-based analysis                                     data (e.g., surveillance cameras). Hence, research efforts have focused on applying Image-based techniques in the
+Computer vision                                          construction industry to improve the safety and productivity of construction operations as well as the resilience
+Construction
+                                                         and sustainability of the construction assets. This paper explores the state-of-the-art in Image-based analysis
+Artificial intelligence
+                                                         techniques and their applications in construction. Over 100 journal papers were retrieved from the Scopus
+Safety
+Damage assessment                                        database for an in-depth review of major applications, benefits, and areas of future research potential.
+Progress monitoring                                      Accordingly, Three main research directions were identified that utilize image-based technologies: (1) con­
+Convolutional neural networks (CNNs)                     struction safety; (2) progress monitoring; and (3) damage assessment. It is observed that most research efforts
+                                                         focused on object detection (e.g., hardhats, defects) for safety inspection and repair planning. Potential future
+                                                         developments include integrating object detection with quantification and sizing techniques to develop more
+                                                         comprehensive applications.
+
+
+
+
+1. Introduction                                                                               matured to allow for computers to automatically analyze images and
+                                                                                              videos. Computer vision techniques have been introduced since the
+    The construction industry is the main contributor to developing and                       1960s [8] and have attracted various researchers in multiple other fields
+maintaining the civil infrastructure, with billions of dollars spent every                    because images are easy to collect and, in some cases, readily available
+year. However, the construction industry has been deemed to be rela­                          (e.g., security CCTV cameras). Currently, many researchers are investi­
+tively conservative in terms of adopting data-driven technology in­                           gating the use of advanced image-based methods in the construction
+novations to improve safety and productivity [1]. In contrast to other                        industry with potential applications to improve workers’ safety, monitor
+industries, productivity in construction has not improved over the past                       activities progress and facilitate project management, assess structural
+decades [2,3]. The U.S. construction-sector productivity is lower today                       damages (e.g., crack detection) for structural health monitoring and
+than it was in 1968 [4]. Improving construction productivity worldwide,                       rehabilitation purposes, among others.
+however, has the potential to increase the added value by 1.6 trillion                            A major area image-based analysis can address is construction site
+dollars, which corresponds to a global GDP increase of 2% [5]. The                            safety. The construction process itself is very challenging due to the
+construction industry is currently one of the least digitized industries in                   extensive interactions among workers, equipment, site spaces, mate­
+the world according to MGI’s digitization index [6]. For example, it is                       rials, and the environment, which exposes participants to multiple
+estimated that current site managers consume almost half their time                           hazardous situations on a daily basis, making them prone to injuries or
+manually collecting and processing progress monitoring data before                            even deaths. Injuries in the construction industry constituted 7% of non-
+making a decision [7]. Hence there is a clear need for “automation” to                        fatal injuries and 14% of workplace deaths in the United States in 2018
+achieve maximum efficiency. Among the most promising automation                               [9]. In Canada, incidents in the construction industry have constituted
+technologies is Image-based analysis as it offers not only a faster and                       around 10% of lost-time claims and 20% of workplace fatalities over the
+more consistent way to obtain more in-depth information than obtained                         past three years [10]. In Great Britain, 54,000 injuries are happening to
+from manual visual analysis.                                                                  construction workers each year, the second-highest number of injuries
+    Computer vision and image-based learning techniques have recently                         among all industries [11]. Such accidents have cost the British economy
+
+
+
+    * Corresponding author.
+      E-mail addresses: ktmostafa@uwaterloo.ca (K. Mostafa), tarek@uwaterloo.ca (T. Hegazy).
+
+https://doi.org/10.1016/j.autcon.2020.103516
+Received 20 March 2020; Received in revised form 12 October 2020; Accepted 30 November 2020
+Available online 15 December 2020
+0926-5805/© 2020 Elsevier B.V. All rights reserved.
+K. Mostafa and T. Hegazy                                                                                             Automation in Construction 122 (2021) 103516
+
+
+1.2 Billion pounds in 2017/18 [11]. It is estimated that 80% of accidents         three hours are spent in the office to generate the reports [17]. As an
+on construction sites can be attributed to the workers’ behavior [12].            example of how time-consuming inspection is (using current methods)
+This includes not wearing protective equipment such as hardhats and               Ontario ministry of education has issued a bid in 2010 seeking a com­
+safety harness, being struck by vehicles and construction equipment,              pany to inspect a total of 4800 schools over a five-year period [18].
+maintaining unhealthy postures, and others. Hence, monitoring the                 Errors and gaps produced by in manual assessments not only waste time
+construction site to limit such unsafe behavior is of extreme importance.         and money, but can also lead to catastrophic events, such as the collapse
+However, the current monitoring methods are inefficient as they depend            of I-35 W highway bridge in Minneapolis, MN which caused 13 deaths
+on manual observations and data collection.                                       and 145 injuries [19]. or the failure of Oroville dam spillways which
+    Another area that could potentially benefit from image-based anal­            took place in February 2017, forcing around 200,000 Californians to
+ysis technology is productivity and progress monitoring. Out of every             evacuate [20,21].
+ten construction projects, five are behind schedule and six are over­                 With image-based analysis being a potential key tool in enhancing
+budget [13]. Among the major reasons for such poor performance is the             the construction industry, this paper reviews previous works regarding
+flawed progress monitoring and reporting which leads to improper                  the use of image-based analysis in the construction industry, following
+management and decision making [14]. Traditional worksite moni­                   the research methodology in Fig. 1. It highlights current research trends
+toring practices are conducted manually through visual observations               and innovative works, challenges and limitations, and future research
+and using paper-based drawings or, at best, tablets that require specific         potential. The first step of the research technology (section 2) presents
+views of drawings to be manually generated and rendered in advance for            the approach used in collecting the journal papers to be analyzed. The
+each inspection task [15]. This process is very time-consuming, given             second step (section 3) is presenting a general overview of the findings,
+thousands of elements and hundreds of construction activities on the              including a thorough explanation of the most commonly used computer
+site, as well as prone to errors. For example, large constructions, such as       vision techniques. Finally, the papers were further analyzed according to
+highways, require traveling between the different work areas to gather            their different applications to highlight notable achievements and major
+information or attend specific issues which translates to a misuse of time        research gaps (sections 4, 5).
+and transportation costs which makes the monitoring efforts infrequent
+and untimely enough for effective decision making. In contrast, image-            2. Survey methodology
+based methods can be used to provide real-time information about the
+status of various operations throughout the construction site through                An extensive literature review was conducted using the Scopus
+documenting work progress as well as worker’s and equipment’s                     journal database as it automatically aggregates the search results from
+behavior and productivity. This allows project managers to identify               multiple academic databases, including: the American Society of Civil
+delays in the construction plans and make better and more timely de­              Engineers (ASCE) library, Elsevier (ScienceDirect), Wiley, IeeeXplore,
+cisions concerning the project progress moving forward.                           and others. Only high-level keywords ((“Computer vision” OR “Image*”
+    Image-based analysis is not only useful during construction, but also         OR “Video*”) AND (“Construction”)) were used so that a wide search
+after construction as well as all infrastructure components need to be            area can be covered. To highlight recent technical advances, the search
+continuously monitored to ensure they are physically fit and viable for           was only limited to journal papers published in or after 2015. Results
+usage. Even after the structure is fully constructed, frequent monitoring         from the search query (9000 papers) were further filtered by manually
+is required to help with decision making and resource allocation                  going through the papers’ titles and abstracts to determine the relevancy
+regarding the structure’s rehabilitation and upgrades. Traditional                of the articles. Resulting articles (total 100) were quantitatively
+methods involve sending inspectors to assess the asset conditions and             analyzed in terms of country of origin, the technique used and the
+file reports that estimate any required maintenance work. While visual            application for which it was used. Finally, the papers were further
+inspections are widely used for preliminary and regular inspections               analyzed based on their application areas to highlight the comments,
+because of its effectiveness in detecting external defects such as cracks         notable contributions, and discussions brought forward by the authors.
+and spalling which could be evaluated as symptoms of potential struc­
+tural degradation, subjectivity and inconsistency are inevitable in visual        3. General survey results
+inspections as different inspectors may evaluate the same structure
+differently [16]. Furthermore, some parts of the structure are not                    Analyzing the 100 papers found in the construction literature related
+accessible for inspectors, making an overall assessment sometimes                 to image-based analysis, Fig. 2 illustrates an overview analysis of the
+impractical [16]. An inspection site visit typically takes 4 h to be              main research areas and their applications. Main applications of image-
+completed and for each hour spent in the field for inspection, additional         based analysis in construction can be grouped into three main
+
+
+
+
+                                                         Fig. 1. Outline of the research framework.
+
+                                                                              2
+K. Mostafa and T. Hegazy                                                                                                Automation in Construction 122 (2021) 103516
+
+
+
+
+                                    Fig. 2. Main research areas and applications of image-based analysis in construction.
+
+
+categories; (1) construction safety; (2) progress monitoring; and (3)
+damage assessment. A number of related review papers were also
+investigated (right-hand-side of Fig. 2).
+    Before undergoing further analysis, the number of publications per
+year, both in total and according to each of the three main categories
+shown in Fig. 2, is shown in Fig. 3. It can be seen that there is an
+increasing trend in using Image-based analysis techniques in all three
+main categories over the past years, except in 2019 which has seen a
+drop in the papers tackling damage assessment issues which in turn
+affected the overall count. Papers published in 2020 have not been part
+of creating this chart as the comparison would be unfair since, at the
+time of writing this paper, only two months of the year have passed.
+    Grouping the papers by the country of origin based on the affiliation
+of the first author is shown in the heat map in Fig. 4. All 100 papers come
+from a total of 16 countries with almost 50% being contributed by China
+(24%) and the United States (23%) alone. The next major contributor is            Fig. 4. Geographic heat map representing the number of publications
+Canada (13%), followed by Korea (11%) and Hong Kong (10%).                        per country.
+    In terms of the range of the available image-based analysis tech­
+niques, a mind map highlighting the major techniques used in the
+                                                                                  detection and classification techniques where the most focused on by
+reviewed papers is shown in Fig. 5, representing four categories: Object
+                                                                                  researchers, with convolutional neural networks (CNNs), an advanced
+detection/Classification (identify object and its condition); Quantifica­
+                                                                                  variation of artificial neural networks (ANNs), being the most commonly
+tion (object size); Object tracking (object movement over time); and
+                                                                                  used (50 times). This has been followed by feature extraction algorithms
+Edge detectors (object boundary lines). Out of the four categories, object
+                                                                                  (20 times), and support vector machines (10 times). Object
+
+
+
+
+                                       Fig. 3. Number of publications addressing a certain research category by year.
+
+                                                                              3
+K. Mostafa and T. Hegazy                                                                                              Automation in Construction 122 (2021) 103516
+
+
+
+
+                                               Fig. 5. Mind map of existing image-based analysis techniques.
+
+
+quantification and sizing techniques were only used in 15 instances.              combining HOG with a Naïve-Bayes classifier achieving 90% accuracy
+Most of the time photogrammetry was used (13 times) as it is more                 on a 120-image dataset.
+robust, while homography/image-based measurement was used only                        Support Vector Machines (SVM): While not used exclusively for
+twice. Object tracking and edge detection algorithms were used only six           computer vision purposes, SVM is one of the most powerful classifica­
+and four times, respectively.                                                     tion techniques [26]. Despite being inherently a two-class classifier,
+                                                                                  SVM can also be effectively applied for multi-class classification prob­
+3.1. Description of image-based analysis techniques                               lems [26]. The SVM classifier can find an optimal hyperplane that sep­
+                                                                                  arates data into two classes. In essence, SVM can be thought of as a high-
+    A brief description of the image-based analysis techniques presented          dimension discriminant analysis, where the objective is finding the
+in Fig. 5 is presented below.                                                     thresholding function that achieves the best binary classification of data.
+                                                                                      Artificial Neural Networks (ANNs): ANN is a computing system
+3.1.1. Object detection and classification                                        that is primarily inspired by the human nervous system, the structure of
+    These techniques can detect objects of interest from images and               the brain, and the way humans learn from examples. What sets ANNs
+videos as well as classify them into predefined categories (e.g., hori­           apart from the other detection/classification techniques is that ANN
+zontal vs. vertical crack). Intuitively, to be able to classify objects           integrate both detection and classification steps into its design and ar­
+through images, first, there is a need to detect them. Such detection             chitecture. Since 2012, performance of ANNs has significantly improved
+typically takes place by recognizing the objects’ distinctive features.           because of the developed novel architecture that included multiple
+Therefore, object detection and classification is typically a two-step            hidden layers. As such, the “new generation” of ANNs is now more
+approach; detection then classification. Some of the commonly used                commonly referred to as Deep Neural Networks (DNNs). In the image
+techniques are:                                                                   analysis domain, one of the recently introduced and most important
+    Feature Extraction Algorithms: a feature is a distinctive charac­             types of DNNs is the convolutional neural networks (CNNs). An example
+teristic of the object. Feature extraction algorithms use such distinctive        of a CNN is shown in Fig. 7: where a handwritten text is classified into
+feature(s) (or object template) to detect objects of interest inside clut­        the correct digit. As seen in Fig. 7, CNNs consist of a combination of
+tered scenes. An example is in Fig. 6: where an object (a rectangular             convolution (examining the image using a small matrix that moves over
+card) is being detected inside a larger scene. Available feature extraction       all image pixels) and pooling operators that extract the notable features
+and template matching algorithms include: Scale Invariant Feature                 of the input image and pass them on to a group of fully connected layers
+Transform (SIFT); Speeded Up Robust Features (SURF); and others.                  that classify the image based on its features. To reduce computational
+    Histogram of Oriented Gradients (HOG): A way to describe the                  time especially when trying to detect multiple objects in the same image,
+images’ distinctive features as a distribution of local intensity gradients       [27] proposed a method where specific regions of the image are selected
+or edge directions, even without precise knowledge of the corresponding           to be analyzed instead of analyzing the entire image, naming the new
+gradient or edge positions [23]. Hence, the image is divided into cells of        technique R-CNN (CNN with region proposals). Such breakthrough has
+a predefined size, then the occurrences of gradient orientation in each           led to the development of faster R-CNN algorithms such as the YOLO
+cell are counted to build the descriptor vector. Finally, normalization is        (You-Only-Look-Once) [28] and SSD (Single Shot Detector) [29] where
+performed to regulate the variability in the image [24]. HOG pays huge            only one image is needed to detect multiple objects, making them more
+attention to the shape of the detected object. As such, [25] used HOG for         practical for real-time applications. Other ANN variations include re­
+pothole detection and accordingly developed an automated system by                sidual neural networks where some layers can be skipped for faster
+
+                                                                              4
+K. Mostafa and T. Hegazy                                                                                                 Automation in Construction 122 (2021) 103516
+
+
+processing, and Long Short-Term Memory (LSTM) networks which can                        Particle Filter: Particle filtering is a robust technique that is able to
+analyze actions from data sequences (e.g., video frames) to obtain                  overcome the problem of obstructions when it comes to object tracking.
+temporal information [30].                                                          This method includes two main phases: first, the object of interest is
+                                                                                    initiated using a rectangular window, similar to the kernel-based
+3.1.2. Object quantification                                                        tracking method, and hundreds of particles are generated inside that
+    In the literature, two main methods are used to obtain real-life                window; then the particles are propagated in the next video frame and
+measurements from images: homography, and photogrammetry. These                     resampled based on the likelihood of the particle being observed to
+are as follows:                                                                     generate a new window. This way, the object of interest can be tracked
+    Homography: The homography maps two different images of the                     across multiple frames [36].
+same object recorded from two different viewpoints as shown in Fig. 8.
+While the four points on the original object form orthogonal lines, this is         3.1.4. Edge detection
+not the case in either image due to the distortion caused by the camera                 Edge detection refers to the use of special filters to detect edges in an
+lens. Such distortion can be rectified as there exists a homography that            image, such as a crack in a deteriorated bridge deck [37]. Edges are
+relates the image to the real-world object [31]. Consequently, homog­               detected based on discontinuities in image color and/or brightness. One
+raphy can be used to directly obtain real-life measurements from                    of the most commonly used edge detectors is the Canny edge detector
+captured images.                                                                    (resulting in the binary image in Fig. 9b). Part of the process includes
+    Photogrammetry: Photogrammetry, often referred to as Structure                  setting two thresholds, a minimum and a maximum, are then set. If the
+from Motion (SfM) or Digital Image Correlation (DIC), uses feature                  pixel value is above the maximum threshold, it is considered a “strong
+detection and homography to reconstruct a 3D model of an object from                edge”. If it is below the minimum threshold, it is not an edge. If it is
+2D images. It is widely used in mapping, surveying, and historical                  between the two thresholds, it is considered an edge only if it was
+preservation applications [e.g., 32]. The technique relies on feature               connected to a strong edge. [37] compared the performance of six
+matching between images to estimate the camera positions and conse­                 different edge detectors against a Deep Convolutional Neural Network
+quently generate a 3D point cloud. Hence, it is recommended that a                  (DCNN) by applying them to a 100-image dataset of concrete panels for
+minimum overlap of 60% must be present between images to achieve                    crack detection purposes. The experiments have shown that DCNNs can
+good results [33]. With the proper scale, real measurements can be                  detect finer cracks with higher accuracy, with the LoG filter being one of
+obtained either directly from the point cloud or by using triangulation.            the most efficient filters in terms of both accuracy and computation
+                                                                                    time.
+3.1.3. Object tracking
+    In addition to object detection and classification, object tracking             4. Applications of image-based analysis in construction
+provides important information in terms of how the object changes its
+posture or location, for example, over time. This is important for prog­                A perfectly automated inspection or monitoring framework consists
+ress monitoring and productivity analysis purposes. The objective of                of two main modules; automated data acquisition using UAVs or sta­
+object tracking is to estimate the future state of an object based on all the       tionary cameras (e.g. CCTV), and automated decision making through
+measurements taken up to that point [34]. The following techniques are              data processing using image-based analysis techniques [8]. While the
+the most commonly used for object tracking.                                         rapid growth in the drone industry has made the first module a reality,
+    Kernel-based Tracking: As the name suggests, the object of interest             the analysis module and turning images into decision-support informa­
+is represented by a special window (isotropic kernel) [34]. Hence, the              tion remains a challenge. Towards this goal, the following three sub­
+tracking/localization problem becomes a search problem for a “similar               sections review the literature in the three major application areas
+kernel” in the subsequent frames. Such search problem is solved using a             featured in Fig. 2, summarizing the existing body of knowledge based on
+similarity function and a gradient optimization method [34].                        the reviewed papers and highlighting notable contributions.
+    Kalman Filter: Kalman filters offer the ability of not only tracking an
+object across multiple picture frames, but also predicting its location in          4.1. Construction safety applications
+future frames as well. Instead of the kernel representation used in the
+previous method, the state of an object is expressed as a vector including             A sizeable portion of the reviewed papers (24%) has focused on using
+its position, velocity, and acceleration among the x, y, and z axes. Hence,         image-based analysis technology to address construction safety. The
+a state transition matrix is defined which predicts the object location in          reviewed literature extensively reported the great potential benefits in
+the next frame [35]. The actual object position is then compared to the             terms of improving workers’ safety on construction sites. Table 1 sum­
+prediction to adjust the transition matrix to further improve its                   marizes the reviewed literature. In addition to the reported accuracy of
+predictions.                                                                        the developed model (column 17), the table is divided into three main
+
+
+
+
+                                       Fig. 6. Example scene with an object with distinctive features (rectangular card).
+
+                                                                                5
+K. Mostafa and T. Hegazy                                                                                              Automation in Construction 122 (2021) 103516
+
+
+
+
+                                                Fig. 7. Example of convolutional neural network architecture.
+
+
+                                                                                     accidents). Three of the most instead of grouping them under the
+                                                                                     object detection category.
+
+                                                                                     Most of the research efforts were geared towards workers detection
+                                                                                  and tracking to identify major safety concerns such as the absence of
+                                                                                  hardhats and safety harnesses (example in Fig. 10) as well as awkward
+                                                                                  postures. This was expected as most construction safety issues stem from
+                                                                                  workers’ behavior [12]. Other researchers tracked the movement of
+                                                                                  equipment to prevent worker-equipment collisions [46], while others
+                                                                                  aimed to detect a different safety hazard such as the presence, or rather
+                                                                                  absence, of guardrails [51].
+                                                                                     According to Table 1, the developed models have a satisfying per­
+                                                                                  formance level (91% on average). An interesting observation in Table 1
+
+
+
+
+  Fig. 8. Multiple images of an object can be used for direct measurements.
+
+
+sections:
+
+a) the technique used by the researcher (object detection, quantifica­
+   tion, object tracking, and edge detection), with the three most pop­
+   ular object detection techniques (ANN, feature extraction and SVM)
+   featured in columns 2–4
+b) the object being detected (workers, equipment, or others); and
+c) the safety issue being addressed by the research (e.g., posture and
+   ergonomics, hardhats and PPE negligence, worker/equipment
+                                                                                     Fig. 10. Example of detecting workers, hardhats, and safety harnesses.
+
+
+
+
+                                                                Fig. 9. Canny edge detection.
+
+                                                                              6
+K. Mostafa and T. Hegazy                                                                                               Automation in Construction 122 (2021) 103516
+
+
+
+
+                                                          Fig. 11. Equipment activity classification.
+
+
+is the sudden rise in the use of ANNs technique over the past few years.           equipment or the worker doing a certain activity (example in Fig. 11).
+ANNs have not been used to investigate construction safety issues from             An example of tracking the performance of construction equipment is
+images before 2018 and then, due to the CNN developments such as the               the work of [68] who were able to develop a model capable of detecting
+release of google Tensorflow 1.0 in 2017 [38], became the method of                different equipment activities from video sequences by integrating
+choice for almost all researchers instead of the relatively simplistic             CNNs, hidden Markov models, Gaussian mixture models, and SVM
+feature extraction algorithms. For example, the same task (detecting               classifiers. An example of tracking the workers’ performance is the work
+hardhats) was tackled by [39,40] using feature extraction algorithms               of [63] who used Long short-term memory (LSTM) neural networks to
+such as HOG and cascade classifiers, but [41,42] used ANNs and                     identify workers in a construction scene and categorize them into
+managed to achieve higher accuracy levels. The advances in image-                  working groups based on the activities being performed.
+based analysis techniques have allowed researchers to investigate                      Other researchers tracked neither workers nor equipment (column
+more complex issues such as assessing workers postures to protect them             11). [7], who used SVM and edge detection to calculate the percentage
+from developing work work-related musculoskeletal disorders (MSDs),                complete of tiling works based on the detected area of constructed tiles
+an issue that requires complex computations in order to develop and                as compared to the corresponding BIM model [78]. developed an algo­
+analyze workers’ 3D skeleton models from ordinary 2D images. As such,              rithm that would detect the state of construction of interior drywall
+five of the six papers attempted to tackle the issue of ergonomics (the            activities (e.g. studs installed, drywall plastered, etc.). [70] used worker
+five papers published after 2017) used CNN architecture.                           detection and tracking technology to detect the different onsite work­
+    Despite the seriousness of falls from heights in construction sites,           spaces (e.g., working areas, rest areas, laydown areas, etc.).
+causing a third of construction worksite fatalities [61], not a significant            The average accuracy for the reviewed models in this category is
+amount of research has attempted to address this issue compared to                 85%, the lowest of all three categories. One reason for that drop in
+other safety concerns such as the presence of hardhats, accidents, or              performance level is the problem of occlusions which makes the models
+worker postures. Column 16 highlights some interesting research that               estimate the workers and equipment pose and location incorrectly. This
+did not directly address a safety issue. For example, [55] focused on              explains why the models developed to track stationary objects such as
+detecting unauthorized work and [43] used CNNs and feature extraction              material for percentage complete [e.g., 7,78] have higher accuracies
+algorithms to identify workers on site. Some research contributions did            (88% on average) than the other models that tracks workers and other
+not directly tackle a safety issue, but rather provide the building block          moving equipment. Among the proposed solutions to resolve the issue of
+for future applications. For example, [53] developed a method to match             occlusions is the use of multiple cameras and/or place them at locations
+construction workers across multiple scenes based on appearance and                with a bigger field of view [77], or rely on techniques that track objects
+geometry.                                                                          across multiple frames of a video feed and use stochastic modeling to
+    While the image-based research related to construction safety pro­             predict the object position when occluded [35,36].
+vided many interesting potential applications, there is a need to analyze              Continued work in this research direction can enhance project
+the impact of the detected actions of workers and equipment from im­               progress and resource monitoring practices. As mentioned above, one
+ages (e.g., speed, posture, proximity, etc.) on higher-level behaviors and         major technical challenge to this research direction is the fact that
+decisions such as preventing potential collisions or improving design              image-based analysis technology can only analyze what they can “see”,
+quality [22]. Such analysis would provide more than mere measure­                  which casts a shadow of doubt on their ability to fully monitor the
+ments, but smarter decision support.                                               construction site 24/7 and under different weather conditions. Also,
+                                                                                   maintaining good quality images over the entire site would require
+4.2. Progress monitoring applications                                              installing more cameras which is costly especially in linear projects such
+                                                                                   as highways. Furthermore, installing more cameras may affect the
+     This research direction has been pursued by a sizeable portion of the         morale of the workers by making them feel “watched” which would, in
+reviewed papers (23%), extensively reporting the great potential bene­             turn, affect their productivity [82].
+fits of using image-based analysis to monitor the progress of activities on
+the construction site. Table 2 summarizes the reviewed literature, which           4.3. Damage assessment applications
+is divided into two main sections. The first section of the table focuses on
+the techniques used (similar to Table 1), while the second section                     Based on the conducted review, using image-based analysis to
+highlights the different objects recognized during progress monitoring             analyze the current condition of assets has been a major research di­
+(workers, equipment, or others).                                                   rection, addressed by most of the reviewed papers (53%). The reviewed
+     Similar to the techniques used in analyzing site safety, the most used        literature extensively reported the great potential benefits in terms of
+technique (especially in works developed in or after 2018) is ANNs. Most           assessing damages in roads, buildings, and other components of the built
+of the Research in the area of progress monitoring can be categorized              environment. Table 3 of the analysis summary is divided into three main
+based on what is the object being tracked; worker or equipment (Col­               sections:
+umns 9 ad 10, respectively), with both getting equal attention from re­
+searchers. The goal of the tracking is to determine the time spent by the
+
+                                                                               7
+                                                                                                                                                                                                                      K. Mostafa and T. Hegazy
+    Table 1
+    Summary of image-based analysis applications in construction safety.
+                 Technique                                                                             Recognized Object                    Safety Issue
+
+     (1)         (2)           (3)            (4)     (5)              (6)        (7)         (8)      (9)       (10)        (11)           (!2)           (13)        (14)    (15)         (16)           (17)
+
+     Reference   ANN (e.g.,    Feature        SVM     Quantification   Object     Edge        Others   Worker    Equipment   Other (e.g.,   Hardhats       Accidents   Falls   Ergonomics   Other (e.g.,   Accuracy
+                 CNN,          Extraction                              Tracking   Detection                                  guardrails)                                                    security)      (%)
+                 LSTM)
+
+     [43]        x                                                                                     X                                                                                    x              79
+     [44]        x                                                                                     X                                                                       x                           N/A
+     [45]        x                                                                                     X                                                                                    x              N/A
+     [46]                      x                                                                       X                                    x                                                              90
+     [47]        x                                                                                     X                                                                       x                           94
+     [48]        x                                                                                     X         x                                         x                                               96
+     [49]        x                                                                                     X                                                                       x                           84
+     [42]        x                                                                                     X                                    x                                                              91
+8
+
+
+
+
+     [50]        x                                    x                                                X         x                                         x                                               90
+     [51]        x                                                                                     X                                                               x                                   90
+     [52]                                             x                                                X                                                                                    x              95
+     [41]        x                                                                                     X                                    x                                                              95
+     [53]        x                                                                                                           x                                                              x              96
+     [30]        x                                                                                     X                                                                       x                           95
+     [54]        x                                                                                     X                                                                       x                           94
+     [55]        x                                                                                     X                                                               x                                   83
+     [56]        x                                                                                     X                                                                                    x              97
+     [57]                                     x                                                        X                                                                       x                           98
+     [40]                      x                                                                       X                                    x                                                              77
+     [58]                      x                                                                                 x                                         x                                               88
+     [59]                                                              x                               X         x                                         x                                               95
+     [35]                                                              x                               X         x                                                                          x              N/A
+     [39]                      x                                                                       x                                    x                                                              93
+
+
+
+
+                                                                                                                                                                                                                      Automation in Construction 122 (2021) 103516
+     [60]                      x                                                                       x                                                   x                                               93
+K. Mostafa and T. Hegazy                                                                                                   Automation in Construction 122 (2021) 103516
+
+
+Table 2
+Summary of image-based analysis applications in progress monitoring.
+               Technique                                                                                         Recognized Object
+
+  (1)          (2)          (3)            (4)    (5)              (6)            (7)            (8)             (9)       (10)          (11)             (12)
+
+  Reference    ANN (e.g.,   Feature        SVM    Quantification   Object         Edge           Others (e.g.,   Worker    Equipment     Other (%         Accuracy
+               CNN, LSTM)   Extraction                             Tracking       Detection      K-means)                                complete)        (%)
+
+  [7]                       x                                                                                                            x                N/A
+  [62]         X                                                                                                           x                              82
+  [63]                                            x                                                                                      x                N/A
+  [64]                                            x                                                                                      x                91
+  [65]         X                                                                                                 x                                        95
+  [66]         X                                                                                                           x                              60
+  [67]         X                                                                                                           x                              94
+  [68]         X                           x                                                     x                         x                              87
+  [69]                                            x                                                              x                                        96
+  [70]         X                                                                                 x                                       x                81
+  [71]         X                                                                                                           x                              96
+  [2]          X                                                                                                 x                                        85
+  [72]                                            x                                                                                      x                93
+  [73]         x                                                                                                 x         x                              93
+  [74]         x                                                                                                 x                                        81
+  [75]                      x                                                                                                            x                93
+  [76]         x                                                                                                 x                                        80
+  [77]                                                                            x                                        x                              70
+  [78]                                     x                                                                                             x                85
+  [79]                      x              x                                                                     x         x                              95
+  [36]                                                             x                                             x         x                              78
+  [80]                                     x                                                     x               x                                        59
+  [81]                      x                                                                                              x                              87
+
+
+
+a) the technique used by the researcher, this followed the same pro­                  computing techniques. Examples of works in other inspection “sub­
+   cedure used in Tables 1 and 2 except for adding the “object Tracking”              domains” shown in columns 10 and 11 include the ANN-based model
+   techniques to the “others” category because of the low number of                   developed by [16] for detection of moisture marks in subway networks,
+   research papers utilizing this category of techniques;                             the CNN-based schemes developed by [101,108] to automatically detect
+b) The type of the structure being inspected (e.g., vertical structures,              cracks, deposits, and root intrusions in sewers from CCTV inspection
+   roads, sewers, etc.);                                                              videos, and the use of support vector machines by [99,134] to detect
+c) The type of defect (e.g., cracks, displacements, etc.); and                        loosened bolts in steel structures.
+d) The reported accuracy of the developed models.                                         While the ongoing works provided notable efforts towards defect
+                                                                                      detection, there are still grounds to cover in terms of fully automating
+    Overall, the developed models have reported a satisfying level of                 the structural inspection process. For example, efforts towards defect
+accuracy (90%). The same observation highlighted in Tables 1 and 2                    measurements and quantification (column 5) have not been pursued
+(the popularity of ANNs) is also observed in Table 3, with early adopters             extensively the research community although they are important for
+of ANNs in 2017 [e.g., 126, 127]. Looking into sections 2 and 3 in                    decision making (e.g., [86,105]). Furthermore, most existing research
+Table 3 shows that most of the ongoing research is geared towards crack               adopts a binary classification/detection approach (defect versus no
+detection in vertical structures such as buildings and bridges. For                   defect) without investigating the level of severity of the defect detected.
+example, [111] developed a crack detection algorithm that is six times                In addition, many studies depended on lab experiments and photos of
+faster than its conventional counterparts without sacrificing accuracy.               smooth and clear surfaces, which are more ideal than outdoor
+Their interesting approach processes the image to extract vertical and                conditions.
+horizontal cracks separately then fuses them to produce a final image
+where the cracks are highlighted. [127] used CNNs to detect concrete
+cracks that achieved 98% accuracy for both training and testing sets,                 4.4. Other applications
+before expanding the detection to steel corrosion, bolt corrosion, and
+steel delamination [119]. To achieve this impressive accuracy, however,                   This section discusses other notable applications for image-based
+a 40,000 training-image-dataset was used. To utilize a small data set,                analysis that either did not fit in one of the three specific categories
+[89] reached high accuracy by first extracting the features using con­                discussed earlier.
+ventional CNN, then using feature fusion to obtain higher precision. [85]
+combined CNN with a geotagging system for instant damage identifi­                    4.4.1. Image-based model reconstruction
+cation and localization.                                                                  Using techniques such as homography and photogrammetry dis­
+    Another prominent area of research is pavement defect detection                   cussed earlier, researchers were able to rely on images to create para­
+(column 9). [118] proposed a pothole detection and localization scheme                metric models of real-life objects and scenes. One of the major
+relying on the SIFT feature extraction algorithm and support vector                   contributors to this breakthrough is the developments in multiple point
+machine. Testing the scheme has shown its capability of pothole iden­                 statistics algorithms [137] which made image-based reconstruction less
+tification with 95% accuracy. [106] proposed a novel CNN architecture,                complex and more consistent. One of the most notable image-based
+CrackNet, for automated pixel-level crack detection on asphalt surfaces.              model reconstruction applications is historical preservation, where
+An experiment using a 200-image testing dataset showed that CrackNet                  [32,138] used images from drones to build a 3D model of Singosari
+can achieve high Precision (90.13%) and Recall (87.63%) simulta­                      temple in Indonesia and Christ the Redeemer statue in Rio de Janiero,
+neously. Furthermore, CrackNet can be used in conjunction with the                    respectively. Another important application is geological modeling,
+data collection software because of its capability to utilize parallel                [139] used high resolution panoramic imaging and higher-order statis­
+                                                                                      tics methods to model the Eagle Ford outcrops in East Texas.
+
+                                                                              9
+     Table 3
+     Summary of image-based analysis applications in damage assessment.
+
+
+
+
+                                                                                                                                                                                                                K. Mostafa and T. Hegazy
+               Technique                                                                             Structure Type                               Defect Type
+
+      (1)      (2)             (3)             (4)    (5)              (6)         (7)               (8)              (9)        (10)    (11)     (12)    (13)           (14)       (15)             (16)
+
+      Author   ANN (e.g.,      Feature         SVM    Quantification   Edge        Others (e.g.,     Vertical         Pavement   Sewer   Tunnel   Crack   Displacement   Multiple   Others (e.g.,    Accuracy
+               CNN, LSTM)      Extraction                              Detection   Decision Trees)   Structures                                                                     strains, load)   (%)
+
+      [83]     x                                                                                                                 x                                       x                           65
+      [84]                     x                                                                                                         x                x                                          80
+      [85]     x                                                                                     x                                            x                                                  78
+      [86]                                            x                                              x                                                    x                                          N/A
+      [87]                                            x                                              x                                                                              x                N/A
+      [88]     x                                                                                     x                                            x                                                  92
+      [89]     x                                                                                     x                                            x                                                  90
+      [90]                     x                                                                     x                                                    x                                          N/A
+      [91]     x                                                                                                                 x                                       x                           96
+      [92]     x                                                                                     x                                            x                                                  90
+      [93]     x                                                                                     x                                            x                                                  76
+      [94]                                            X                                              x                                            x                                                  N/A
+      [95]      x                                                                                    x                                                                   x                           92
+      [96]      x                                                                                                     x                           x                                                  78
+      [97]      x                                                                                    x                                            x                                                  91
+      [98]      x                                                                                    x                                                                   x                           99
+      [99]                                     x                                   x                 x                                                                              x                91
+      [100]                    x                                                   x                 x                                                    x                                          97
+      [101]     x                                                                                                                x                                       x                           86
+      [102]     x              x               x                                   x                 x                                                                              x                85
+      [103]                                    x                                   x                                  x                           x                                                  96
+      [104]                                                                        x                 x                                                                   x                           N/A
+      [105]                                           x                                              x                                                    x                                          N/A
+      [106]     x                                                                                                     x                           x                                                  90
+10
+
+
+
+
+      [107]     x                                                                                                     x                           x                                                  90
+      [108]     x                                                                                                                x                                       x                           83
+      [109]     x                                                                                                                        x                               x                           87
+      [110]                    x                                                                                                 x                                       x                           80
+      [111]                    x                                                                     x                                                    x                                          N/A
+      [112]     x                                                                                    x                                                                   x                           98
+      [113]                                           x                                              x                                                    x                                          N/A
+      [114]     x                                                                                                                        x                                          x                95
+      [115]     x                                                                                                     x                           x                                                  92
+      [116]     x              x               x                                   x                 x                                                                              x                83
+      [117]                                                            x           x                 x                                            x                                                  94
+      [118]                    x               x                                                                      x                                                             x                95
+      [119]     x                                                                                    x                                                                   x                           88
+      [16]      x                                                                                                                        x                                          x                96
+      [120]                                                                        x                 x                                                     x                                         N/A
+      [121]                    x                                                                                      x                           x                                                  95
+
+
+
+
+                                                                                                                                                                                                                Automation in Construction 122 (2021) 103516
+      [122]                                           x                                                               x                           x                                                  N/A
+      [123]     x                                                                                                     x                           x                                                  87
+      [124]                                                                        x                                  x                                                             x                92
+      [125]                                           x                                              x                                                                              x                N/A
+      [126]     x                                                                                    x                                            x                                                  N/A
+      [127]     x                                                                                    x                                            x                                                  98
+      [128]                                           x                                                                                  x                                          x                N/A
+      [129]                                           x                                              x                                                                   x                           94
+      [130]                                                            x                             x                                                                   x                           N/A
+      [131]                                    x                                                     x                                                                              x                86
+      [25]                     x                                                                                      x                                                             x                90
+      [132]                                                                        x                 x                                            x                                                  92
+      [133]                    x                                                   x                 x                                                     x                                         N/A
+      [134]                    x               x                                                     x                                                                              x                92
+      [135]                                    x                                                                                 x                                       x                           97
+      [136]                    x                                       x                             x                                            x                                                  96
+K. Mostafa and T. Hegazy                                                                                                   Automation in Construction 122 (2021) 103516
+
+
+     In Construction, image-based model reconstruction has been used in           estimate cement compressive strength using images of the cement
+multiple domains. For example, [140] generated a virtual construction             microstructure, as opposed to doing compressive tests [153].
+scene using images from on-site cameras while avoiding repetitive
+counting of resources (e.g., the same equipment appears in images from            5. Summary and concluding remarks
+multiple cameras) by a matching method that identifies the different
+onsite resources. [141] used drone images to build a model of an                      This paper presents an overview of major image-based learning
+earthwork construction site and were successful in using the model to             techniques utilized and their applications in the construction industry.
+track earth volume change to document the progress of the different               Most applications are in the fields of site safety, progress monitoring,
+earthwork activities. [142,143] were able to correlate the captured on-           and damage assessment. The reviewed articles on image-based analysis
+site images to their respective objects in the BIM model, thus creating an        applications in construction represent groundbreaking achievements in
+up to date as-built model based on BIM’s parametric information. To               terms of using computer vision technology to enhance construction
+acquire more information from collected images, [144] proposed using              productivity and safety. To maximize the benefit from computer vision
+thermal imaging as opposed to conventional cameras as a way to resolve            technology, there is a need for investment in high-quality cameras as
+issues arising from low-quality images and to better identify the                 images of higher resolution enable the detection of finer objects (e.g.,
+different construction elements based the different material                      cracks). From the survey, Convolutional Neural Networks (CNNs) are
+temperature.                                                                      the most widely used technique by the researchers. Being a heavily
+     Researchers have used image-based model reconstruction not only to           training-based technique, CNNs have two main shortcomings: (1) they
+model construction sites, but also to model the structures themselves.            require supervised learning from input-output patterns, without un­
+This work has been done successfully and at different stages of the               derstanding the underlying causality that correlates those patterns; and
+building life cycle. During construction, [7,78] used images to recon­            (2) they require huge training datasets to reach acceptable levels of
+struct an as-built BIM model to track the progress of multiple different          accuracy. The absence of publicly available data for training and testing
+activities. Post construction, researchers have used images to recon­             means that comparing the performance of different image-analysis al­
+struct an “as-is” BIM models for existing buildings [e.g., 145]. Other            gorithms is challenging (as such, the reader is advised to take the re­
+researchers aimed to use images and BIM models to construct an “as-               ported accuracy levels in Tables 1-3 with a grain of salt). Moreover,
+damaged” model to identify the level of damage of buildings after being           these research efforts seem to cater to the academic audience rather than
+impacted by natural disasters. [146,147] developed image-based                    industry professionals. The results of many of the reviewed research
+reconstruction model for damage assessment of buildings affected by               were obtained from controlled environments, and as such, the reported
+hurricanes and earthquakes, respectively. The model in [146] was tested           accuracy may not be reached in outdoor conditions. Future efforts
+using information collected during hurricane Sandy and the results                should focus on the development of public databases and image datasets
+revealed that, compared to a LIDAR system, the proposed model pro­                for the construction industry for training and testing image-based
+vides adequate results that help determine rehabilitation needs for the           analysis algorithms. As a suggestion for future work, construction
+damaged buildings. While [147] used drone images to validate their                safety research could focus on developing applications that can “un­
+model using two different case studies; a building in Japan affected by a         derstand the scene” as well as incorporate temporal information for
+tsunami, and a Nepalese residential district affected by 7.8-degree               more meaningful hazard recognition. Also, progress monitoring could
+earthquake.                                                                       develop applications that are more suited to the modular and off-site
+     Compared to laser scanners, image-based reconstruction offers a              construction environment. Finally, damage assessment research could
+more convenient and resource efficient alternative. However, there are            develop applications that focus on detailed classification of defect
+still some gaps that need to be addressed in order for the technology to          severity level and quantification of defect size.
+become more appealing to practitioners. First of all, a process to
+streamline the model reconstruction process is yet to be developed,               Data availability statement
+which makes the technology more susceptible to user error [148]. Other
+sources of error in the model construction process include the quality of            All data generated or analyzed during the study are included in the
+the collected images, the accuracy of the object detection algorithm, and         published paper
+(in the case of BIM models) the ability to correlate the extracted objects
+to the correct Industry Foundation Classes (IFCs) to properly build and           Declaration of Competing Interest
+update the model [145]. As such, the practicality of the technology in
+terms of general applicability under various circumstances and without                The authors declare that they have no known competing financial
+the need for a specialist supervision is still a concern [145].                   interests or personal relationships that could have appeared to influence
+                                                                                  the work reported in this paper
+4.4.2. Physical properties evaluation
+    The strength and durability of a structure highly depends on the              References
+properties of the materials used. Traditionally, investigating such
+properties takes place through a variety of tests, some of which are                [1] H. Busta, KPMG Report: Construction Industry Slow to Adopt New Technology.
+destructive. However, researchers are exploring ways to study material                  Constructiondive.com, 2016.
+                                                                                    [2] H. Luo, C. Xiong, W. Fang, P.E.D. Love, B. Zhang, X. Ouyang, Convolutional
+in a non-intrusive manner through examining images of their micro­
+                                                                                        neural networks: computer vision-based workforce activity assessment in
+structure. For example, [149] used CNNs to evaluate rock permeability                   construction, Autom. Constr. 94 (2018) 282–289.
+and other physical properties. Similar work was performed on other                  [3] J. Yang, Z. Shi, Z. Wu, Vision-based action recognition of construction workers
+                                                                                        using dense trajectories, Adv. Eng. Inform. 30 (3) (2016) 327–336.
+material such as sandstone [150] and shale [151]. To address the
+                                                                                    [4] J. Woetzel, M. Sridhar, J. Mischke, The Construction Industry Has a Productivity
+problem of not being able to fully acquire all he needed images, [152]                  Problem — And here’s how to Solve it. Marketwatch.com, 2017.
+developed a stochastic process based on Markov models that would only               [5] F. Barbosa, J. Woetzel, J. Mischke, M.J. Riberinho, M. Sridhar, M. Parsons,
+acquire a single image to accurately model porous media such as                         N. Bertram, S. Brown, Reinventing Construction: A Route to Higher Productivity,
+                                                                                        McKinsey & Company, New York, 2017.
+sandstone.                                                                          [6] J. Manyika, S. Lund, J. Bughin, J. Woetzel, K. Stamenov, D. Dhingra, Digital
+    This line of research greatly benefits the construction industry as it              Globalization: The New Era of Global Flows, McKinsey & Company, New York,
+allows for a more advanced analysis of soil properties which provide the                2016.
+                                                                                    [7] H. Deng, H. Hong, D. Luo, Y. Deng, C. Su, Automatic indoor construction process
+foundation for the developed structures. Another example of using this                  monitoring for tiles based on BIM and computer vision, J. Constr. Eng. Manag.
+technique for the benefit of the construction industry is the ability to                146 (1) (2020), 04019095.
+
+
+                                                                             11
+K. Mostafa and T. Hegazy                                                                                                                 Automation in Construction 122 (2021) 103516
+
+  [8] B.F. Spencer, V. Hoskere, Y. Narazaki, “Advances in Computer Vision-Based Civil         [39] M.W. Park, N. Elsafty, Z. Zhu, Hardhat-wearing detection for enhancing on-site
+      Infrastructure Inspection and Monitoring.” Engineering, Chinese Academy of                   safety of construction workers, J. Constr. Eng. Manag. 141 (9) (2015), 04015024.
+      Engineering, 5(american socie), 2019.                                                   [40] B.E. Mneymneh, M. Abbas, H. Khoury, Automated hardhat detection for
+  [9] US Bureau of Labor Statistics, National Census of Fatal Occupational Injuries in             construction safety applications, Procedia Eng. 196 (2017) 895–902.
+      2018, Accessed February 17, 2020, https://www.bls.gov/news.release/pdf/cfoi.pdf,        [41] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-
+      2019.                                                                                        use by a deep learning method from far-field surveillance videos, Autom. Constr.
+ [10] Association of Workers’’ Compensation Boards of Canada, National Work Injury,                85 (2018) 1–9.
+      Disease and Fatality Statistics, Accessed February 17, 2020, http://awcbc.org/?         [42] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn
+      page_id=89, 2020.                                                                            by construction personnel: a deep learning approach and benchmark dataset,
+ [11] Health and Safety Executive, Construction statistics in Great Britain, Accessed              Autom. Constr. 106 (2019) 102894.
+      February 17, 2020, https://www.hse.gov.uk/statistics/industry/construction.pdf,         [43] R. Wei, P.E.D. Love, W. Fang, H. Luo, S. Xu, Recognizing people’s identity in
+      2019.                                                                                        construction sites with computer vision: a spatial and temporal attention pooling
+ [12] H. Li, M. Lu, S.-C. Hsu, M. Gray, T. Huang, Proactive behavior-based safety                  network, Adv. Eng. Inform. 42 (2019) 100981.
+      management for construction safety improvement, Saf. Sci. 75 (2015) 107–117.            [44] Y. Yu, H. Li, X. Yang, L. Kong, X. Luo, A.Y.L. Wong, An automatic and non-
+ [13] M. Bevan, J. Steve, LCI National Webinar: preliminary findings from national                 invasive physical fatigue assessment method for construction workers, Autom.
+      project performance research. http://www.leanconstruction.org/media/img/sa                   Constr. 103 (2019) 1–12.
+      fetyweek/FINAL-2016-05-26_LCI_National_Webinar-Owner_Project_Performance_               [45] X. Yan, H. Zhang, H. Li, Estimating worker-centric 3D spatial crowdedness for
+      Study_Overview_and_CallToAction.pdf, 2016.                                                   construction safety management using a single 2D camera, J. Comput. Civ. Eng.
+ [14] S. Changal, A. Mohammad, M. van Nieuwland, The Construction Productivity                     33 (5) (2019), 04019030.
+      Imperative: How to Build Megaprojects Better, McKinsey & Company, New York,             [46] B.E. Mneymneh, M. Abbas, H. Khoury, Vision-based framework for intelligent
+      2015.                                                                                        monitoring of hardhat wearing on construction sites, J. Comput. Civ. Eng. 33 (2)
+ [15] J. Yang, M.W. Park, P.A. Vela, M. Golparvar-Fard, Construction performance                   (2019), 04018066.
+      monitoring via still images, time-lapse photos, and video streams: now,                 [47] H. Son, H. Choi, H. Seong, C. Kim, Detection of construction workers under
+      tomorrow, and the future, Adv. Eng. Inform. 29 (2) (2015) 211–224.                           varying poses and changing background in image sequences via very deep
+ [16] T. Dawood, Z. Zhu, T. Zayed, Computer vision-based model for moisture Marks                  residual networks, Autom. Constr. 99 (2019) 27–38.
+      detection and recognition in Subway networks, J. Comput. Civ. Eng. 32 (2)               [48] D. Kim, M. Liu, S.H. Lee, V.R. Kamat, “Remote proximity monitoring between
+      (2018), 04017079.                                                                            mobile construction resources using camera-mounted UAVs.” Automation in
+ [17] B. Abou Shaar, Adaptable Three-Dimensional System for Building Inspection                    Construction, Elsevier B.V., 99, 168–182, 2019.
+      Management, Department of Civil and Environmental Engineering, University of            [49] Y. Yu, X. Yang, H. Li, X. Luo, H. Guo, Q. Fang, Joint-level vision-based ergonomic
+      Waterloo, Dissertation, 2012.                                                                assessment tool for construction workers, J. Constr. Eng. Manag. 145 (5) (2019),
+ [18] MERX, RFP: Condition Assessment Program for Education Facilities in Ontario,                 04019025.
+      MERX, Ministry of Government Services, Ontario Shared Services Supply Chain             [50] H. Son, H. Seong, H. Choi, C. Kim, Real-time vision-based warning system for
+      Management Procurement Advisory Branch, 2011.                                                prevention of collisions between workers and heavy equipment, J. Comput. Civ.
+ [19] C. Koch, K. Georgieva, V. Kasireddy, B. Akinci, P. Fieguth, A review on computer             Eng. 33 (5) (2019), 04019029.
+      vision based defect detection and condition assessment of concrete and asphalt          [51] W. Fang, B. Zhong, N. Zhao, P.E.D. Love, H. Luo, J. Xue, S. Xu, A deep learning-
+      civil infrastructure, Adv. Eng. Inform. 29 (2) (2015) 196–210.                               based approach for mitigating falls from height with computer vision:
+ [20] D.A. Graham, How did the Oroville dam crisis get so dire? The Atlantic (2017).               convolutional neural network, Adv. Eng. Inform. 39 (2019) 170–177.
+ [21] J.W. France, I.A. Alvi, P.A. Dickson, H.T. Falvey, S.J. Rigbey, J. Trojanowski,         [52] E. Konstantinou, I. Brilakis, Matching construction workers across views for
+      Independent forensic team report Oroville dam spillway incident, 2018. Accessed              automated 3D vision tracking on-site, J. Constr. Eng. Manag. 144 (7) (2018)
+      February 17, 2020.                                                                           14018061.
+ [22] B. Guo, Y. Zou, L. Chen, “A review of the applications of computer vision to            [53] Z. Kolar, H. Chen, X. Luo, Transfer learning and deep convolutional neural
+      construction health and safety.” 18thInternational Conference on Construction                networks for safety guardrail detection in 2D images, Autom. Constr. 89 (2018)
+      Applications of Visual Reality, 2018.                                                        58–70.
+ [23] N. Dalal, B. Triggs, “Histograms of Oriented Gradients for Human Detection.”            [54] H. Zhang, X. Yan, H. Li, Ergonomic posture recognition using 3D view-invariant
+      IEEE Computer Society Conference on Computer Vision and Pattern Recognition                  features from single ordinary camera, Autom. Constr. 94 (2018) 1–10.
+      (CVPR05), 2005.                                                                         [55] Q. Fang, H. Li, X. Luo, L. Ding, T.M. Rose, W. An, Y. Yu, A deep learning-based
+ [24] F. Suard, A. Rakotomamonjy, A. Bensrhair, A. Broggi, “Pedestrian Detection using             method for detecting non-certified work on construction sites, Adv. Eng. Inform.
+      Infrared images and Histograms of Oriented Gradients,” IEEE Symposium on                     35 (2018) 56–68.
+      Intelligent Vehicle, pp. 206–212, 2006.                                                 [56] W. Fang, L. Ding, H. Luo, P.E.D. Love, Falls from heights: a computer vision-based
+ [25] K. Azhar, F. Murtaza, M.H. Yousaf, H.A. Habib, “Computer vision based detection              approach for safety harness detection, Autom. Constr. 91 (2018) 53–61.
+      and localization of potholes in asphalt pavement images.” IEEE Canadian                 [57] J. Chen, J. Qiu, C. Ahn, Construction worker’s awkward posture recognition
+      Conference on Electrical and Computer Engineering (CCECE), 2016.                             through supervised motion tensor decomposition, Autom. Constr. 77 (2017)
+ [26] H. Seong, H. Choi, H. Cho, S. Lee, H. Son, C. Kim, “Vision-based safety vest                 67–81.
+      detection in a construction scene.” International Symposium on Automation and           [58] J. Chen, Y. Fang, Y.K. Cho, Real-time 3D crane workspace update using a hybrid
+      Robotics in Construction, (ISARC), pp. 288–293, 2017.                                        visualization approach, J. Comput. Civ. Eng. 31 (5) (2017), 04017049.
+ [27] R. Girshick, J. Donahue, T. Darrell, J. Malik, “Rich feature hierarchies for            [59] H. Kim, K. Kim, H. Kim, Vision-based object-centric safety assessment using fuzzy
+      accurate object detection and semantic segmentation.” IEEE Conference on                     inference: monitoring struck-by accidents with moving objects, J. Comput. Civ.
+      Computer Vision and Pattern Recognition (CVPR), pp. 580–587, 2014.                           Eng. 30 (4) (2016), 04015075.
+ [28] J. Redmon, S. Divvala, R. Girshick, A. Farhadi, “You Only Look Once: Unified,           [60] Z. Rong-hui, Z. Jia-Li, X. Zhou, A pedestrian detection method based on
+      Real-Time Object Detection.” IEEE Conference on Computer Vision and Pattern                  hierarchical tree Cascade classification at nighttime, J. Highway Transp. Res.
+      Recognition (CVPR), pp. 779–788, 2016.                                                       Dev. 9 (2) (2015) 77–83.
+ [29] W. Liu, D. Anguelov, D. Erhan, C. Szegedy, S. Reed, C.Y. Fu, A.C. Berg, “SSD:           [61] E.A. Nadhim, C. Hon, B. Xia, I. Stewart, D. Fang, Falls from height in the
+      single shot multibox detector.” European Conference on Computer Vision, pp.                  construction industry: a critical review of the scientific literature, Int. J. Environ.
+      21–37, 2016.                                                                                 Res. Public Health 13 (7) (2016) 638.
+ [30] L. Ding, W. Fang, H. Luo, P.E.D. Love, B. Zhong, X. Ouyang, A deep hybrid               [62] H. Luo, M. Wang, P.K.-Y. Wong, J.C.P. Cheng, Full body pose estimation of
+      learning model to detect unsafe behavior: integrating convolution neural                     construction equipment using computer vision and deep learning techniques,
+      networks and long short-term memory, Autom. Constr. 86 (2018) 118–124.                       Autom. Constr. 110 (2020) 103016.
+ [31] A.C. Bovik, Handbook of Image and Video Processing, Academic Press, Boston,             [63] A. Kazeiman, X. Yuan, O. Davtalab, B. Khoshnevis, Computer vision for real-time
+      MA, 2005.                                                                                    extrusion quality monitoring and control in robotic construction, Autom. Constr.
+ [32] H. Hidayat, A.B. Cahyono, “Combined aerial and terrestrial images for complete               101 (2019) 92–98.
+      3D documentation of Singosari Temple based on structure from motion                     [64] A. Braun, A. Borrmann, Combining inverse photogrammetry and BIM for
+      algorithm.” IOP Conference Series: Earth and Environmental Science, 47,                      automated labeling of construction site images for machine learning, Autom.
+      012004, 2016.                                                                                Constr. 106 (2019) 102879.
+ [33] E.M. Mikhail, J.S. Bethel, J.C. McGlone, Introduction to Modern                         [65] J. Cai, Y. Zhang, H. Cai, Two-step long short-term memory method for identifying
+      Photogrammetry, Wiley, New York, 2001.                                                       construction activities through positional and attentional cues, Autom. Constr.
+ [34] D. Comaniciu, V. Ramesh, P. Meer, Kernel-based object tracking, IEEE Trans.                  106 (2019) 102886.
+      Pattern Anal. Mach. Intell. 25 (5) (2003) 564–577.                                      [66] C.J. Liang, K.M. Lundeen, W. McGee, C.C. Menassa, S.H. Lee, V.R. Kamat,
+ [35] Z. Zhu, M.-W. Park, C. Koch, M. Soltani, A. Hammad, K. Davari, Predicting                    A vision-based marker-less pose estimation system for articulated construction
+      movements of onsite workers and mobile equipment for enhancing construction                  robots, Autom. Constr. 104 (2019) 80–94.
+      site safety, Autom. Constr. 68 (2016) 95–101.                                           [67] J. Kim, S. Chi, Action recognition of earthmoving excavators based on sequential
+ [36] Z. Zhu, X. Ren, Z. Chen, Visual tracking of construction jobsite workforce and               pattern analysis of visual features and operation cycles, Autom. Constr. 104
+      equipment with particle filtering, J. Comput. Civ. Eng. 30 (6) (2016), 04016023.             (2019) 255–264.
+ [37] S. Dorafshan, R.J. Thomas, M. Maguire, Comparison of deep convolutional neural          [68] D. Roberts, M. Golparvar-Fard, End-to-end vision-based detection, tracking and
+      networks and edge detectors for image-based crack detection in concrete, Constr.             activity analysis of earthmoving equipment filmed at ground level, Autom.
+      Build. Mater. 186 (2018) 1031–1045.                                                          Constr. 105 (2019) 102811.
+ [38] A.M. Sandjideh, Announcing TensorFlow 1.0, 2017 (Google AI Blog).
+
+
+                                                                                         12
+K. Mostafa and T. Hegazy                                                                                                                   Automation in Construction 122 (2021) 103516
+
+ [69] Y.J. Lee, M.W. Park, 3D tracking of multiple onsite workers based on stereo               [100] T. Khuc, F.N. Catbas, Structural identification using computer vision-based bridge
+      vision, Autom. Constr. 98 (2019) 146–159.                                                       health monitoring, J. Struct. Eng. 144 (2) (2018), 04017202.
+ [70] X. Luo, H. Li, H. Wang, Z. Wu, F. Dai, D. Cao, Vision-based detection and                 [101] S.S. Kumar, D.M. Abraham, M.R. Jahanshahi, T. Iseley, J. Starr, Automated defect
+      visualization of dynamic workspaces, Autom. Constr. 104 (2019) 1–13.                            classification in sewer closed circuit television inspections using deep
+ [71] H. Kim, H. Kim, Y.W. Hong, H. Byun, Detecting construction equipment using a                    convolutional neural networks, Autom. Constr. 91 (2018) 273–283.
+      region-based fully convolutional network and transfer learning, J. Comput. Civ.           [102] R. Davoudi, G.R. Miller, J.N. Kutz, Structural load estimation using machine
+      Eng. 32 (2) (2018), 04017082.                                                                   vision and surface crack patterns for shear-critical RC beams and slabs, J. Comput.
+ [72] C. Kropp, C. Koch, M. König, Interior construction state recognition with 4D BIM               Civ. Eng. 32 (4) (2018), 04018024.
+      registered image sequences, Autom. Constr. 86 (2018) 11–32.                               [103] N.D. Hoang, Q.L. Nguyen, D. Tien Bui, Image processing-based classification of
+ [73] W. Fang, L. Ding, B. Zhong, P.E.D. Love, H. Luo, Automated detection of workers                 asphalt pavement cracks using support vector machine optimized by artificial bee
+      and heavy equipment on construction sites: a convolutional neural network                       Colony, J. Comput. Civ. Eng. 32 (5) (2018), 04018037.
+      approach, Adv. Eng. Inform. 37 (2018) 139–149.                                            [104] H. Pragalath, S. Seshathiri, H. Rathod, B. Esakki, R. Gupta, Deterioration
+ [74] X. Luo, H. Li, D. Cao, Y. Yu, X. Yang, T. Huang, Towards efficient and objective                assessment of infrastructure using fuzzy logic and image processing algorithm,
+      work sampling: recognizing workers’ activities in site surveillance videos with                 J. Perform. Construct. 32 (2) (2018), 04018009.
+      two-stream convolutional networks, Autom. Constr. 94 (2018) 360–370.                      [105] M. Mirzazadeh, M.F. Green, Fiber optic sensors and digital image correlation for
+ [75] B. Zhang, Z. Zhu, A. Hammad, W. Aly, Automatic matching of construction onsite                  measuring deformations in reinforced concrete beams, J. Bridg. Eng. 23 (3)
+      resources under camera views, Autom. Constr. 91 (2018) 206–215.                                 (2018), 04017144.
+ [76] X. Luo, H. Li, X. Yang, D. Cao, Capturing and understanding Workers’ activities in        [106] A. Zhang, K.C.P. Wang, Y. Fei, Y. Liu, S. Tao, C. Chen, J.Q. Li, B. Li, Deep
+      far-field surveillance videos with deep action recognition and Bayesian                         learning–based fully automated pavement crack detection on 3D asphalt surfaces
+      nonparametric learning, Comput. Aided Civil Infrastruct. Eng. 34 (4) (2018)                     with an improved CrackNet, J. Comput. Civ. Eng. 32 (5) (2018), 04018041.
+      333–351.                                                                                  [107] K. Zhang, H.D. Cheng, B. Zhang, Unified approach to pavement crack and sealed
+ [77] C. Yuan, S. Li, H. Cai, Vision-based excavator detection and tracking using hybrid              crack detection using Preclassification based on transfer learning, J. Comput. Civ.
+      kinematic shapes and key nodes, J. Comput. Civ. Eng. 31 (1) (2017), 04016038.                   Eng. 32 (2) (2018), 04018001.
+ [78] H. Hamledari, B. McCabe, S. Davari, Automated computer vision-based detection             [108] J.C.P. Cheng, M. Wang, Automated detection of sewer pipe defects in closed-
+      of components of under-construction indoor partitions, Autom. Constr. 74 (2017)                 circuit television images using deep learning techniques, Autom. Constr. 95
+      78–94.                                                                                          (2018) 155–171.
+ [79] Z. Zhu, X. Ren, Z. Chen, Integrated detection and tracking of workforce and               [109] E. Menendez, J.G. Victores, R. Montero, S. Martínez, C. Balaguer, Tunnel
+      equipment from construction jobsite videos, Autom. Constr. 81 (2017) 161–171.                   structural inspection and assessment using an autonomous robotic system,
+ [80] J. Yang, Z. Shi, Z. Wu, Vision-based action recognition of construction workers                 Autom. Constr. 87 (2018) 117–126.
+      using dense trajectories, Adv. Eng. Inform. 30 (3) (2016) 327–336.                        [110] J. Myrans, R. Everson, Z. Kapelan, Automated detection of faults in sewers using
+ [81] E.R. Azar, Construction equipment identification using marker-based recognition                 CCTV image sequences, Autom. Constr. 95 (2018) 64–71.
+      and an active zoom camera, J. Comput. Civ. Eng. 30 (3) (2016), 04015033.                  [111] L. Luo, M.Q. Feng, Edge-enhanced matching for gradient-based computer vision
+ [82] E.S. Bernstein, Making transparency transparent: the evolution of observation in                displacement measurement, Computer-Aid. Civil Infrastruct. Eng. 33 (12) (2018)
+      management theory, Acad. Manag. Ann. 11 (1) (2017) 217–266.                                     1019–1040.
+ [83] M. Wang, J.C.P. Cheng, A unified convolutional neural network integrated with             [112] C. Modarres, N. Astorga, E.L. Droguett, V. Meruane, Convolutional neural
+      conditional random field for pipe defect segmentation, Computer-Aid. Civil                      networks for automated damage recognition and damage type identification,
+      Infrastruct. Eng. 35 (2) (2020) 162–177.                                                        Struct. Control. Health Monit. 25 (10) (2018), e2230.
+ [84] I.-H. Chen, S.-C. Ho, M.-B. Su, Computer vision application programming for               [113] S. Acikgoz, M.J. DeJong, K. Soga, Sensing dynamic displacements in masonry rail
+      settlement monitoring in a drainage tunnel, Autom. Constr. 110 (2020) 103011.                   bridges using 2D digital image correlation, Struct. Control. Health Monit. 25 (8)
+ [85] M.R. Saleem, J.W. Park, J.H. Lee, H.J. Jumg, Z.M. Sarwar, Instant bridge visual                 (2018) e2187. John Wiley and Sons Ltd.
+      inspection using an unmanned aerial vehicle by image capturing and geo-tagging            [114] Y. Xue, Y. Li, A fast detection method via region-based fully convolutional neural
+      system and deep convolutional neural network, Struct. Health Monit. 2020                        networks for shield tunnel lining defects, Computer-Aid. Civil Infrastruct. Eng. 33
+      (2020) 1–18.                                                                                    (8) (2018) 638–654.
+ [86] M. Alipour, S.J. Washlesky, D.K. Harris, Field deployment and laboratory                  [115] N.D. Hoang, Q.L. Nguyen, V.D. Tran, Automatic recognition of asphalt pavement
+      evaluation of 2D digital image correlation for deflection sensing in complex                    cracks using metaheuristic optimized edge detection algorithms and convolution
+      environments, J. Bridg. Eng. 24 (4) (2019), 04019010.                                           neural network, Autom. Constr. 94 (2018) 203–213.
+ [87] N. Sudarsanan, A. Arulrajah, R. Karpurapu, V. Amrithalingam, Digital Image                [116] R. Davoudi, G. Miller, J. Kutz, Data-driven vision-based inspection for reinforced
+      Correlation Technique for Measurement of Surface Strains in Reinforced Asphalt                  concrete beams and slabs: quantitative damage and load estimation, Autom.
+      Concrete Beams under Fatigue Loading, J. Mater. Civ. Eng. 31 (8) (2019).                        Constr. 96 (2018) 292–309.
+      04019135.                                                                                 [117] B. Lei, N. Wang, P. Xu, G. Song, New crack detection method for bridge inspection
+ [88] N.S. Gulgec, M. Takáč, S.N. Pakzad, Convolutional neural network approach for                 using UAV incorporating image processing, J. Aerosp. Eng. 31 (2018), 04018058.
+      robust structural damage detection and localization, J. Comput. Civ. Eng. 33 (3)          [118] M.H. Yousaf, K. Azhar, F. Murtaza, F. Hussain, Visual analysis of asphalt
+      (2019), 04019005.                                                                               pavement for detection and localization of potholes, Adv. Eng. Inform. 38 (2018)
+ [89] Z. Liu, Y. Cao, Y. Wang, W. Wang, Computer vision-based concrete crack                          527–537.
+      detection using U-net fully convolutional networks, Autom. Constr. 104 (2019)             [119] Y.J. Cha, W. Choi, G. Suh, S. Mahmoudkhani, O. Büyüköztürk, Autonomous
+      129–139.                                                                                        structural visual inspection using region-based deep learning for detecting
+ [90] C. Cabo, C. Ordóñez, M. Muñiz-Calvente, M. Lozano, G. Ismael, A hybrid SURF-                 multiple damage types, Computer-Aided Civil Infrastructure 33 (9) (2018)
+      DIC algorithm to estimate local displacements in structures using low-cost                      731–747.
+      conventional cameras, Eng. Fail. Anal. 104 (2019) 807–815.                                [120] J.G. Chen, A. Davis, N. Wadhwa, F. Durand, W.T. Freeman, O. Büyüköztürk,
+ [91] S.I. Hassan, L.M. Dang, I. Mehmood, S. Im, C. Choi, J. Kang, Y.-S. Park, H. Moon,               Video camera-based vibration measurement for civil infrastructure applications,
+      Underground sewer pipe condition assessment based on convolutional neural                       J. Infrastruct. Syst. 23 (3) (2017), B4016013.
+      networks, Autom. Constr. 106 (2019) 102849.                                               [121] S. Lu-kui, Z. Hao, L. Wen-hao, Multi-feature fusion and visualization of pavement
+ [92] C.V. Dung, L.D. Anh, Autonomous concrete crack detection using deep fully                       distress images based on manifold learning, J. Highway Transp. Res. Dev. 11 (1)
+      convolutional neural network, Autom. Constr. 99 (2019) 52–58.                                   (2017) 14–22.
+ [93] B. Kim, S. Cho, Image-based concrete crack assessment using mask and region-              [122] S.A. Safavizadeh, Y.R. Kim, DIC technique to investigate crack propagation in
+      based convolutional neural network, Struct. Control. Health Monit. 26 (8) (2019),               grid-reinforced asphalt specimens, J. Mater. Civ. Eng. 29 (6) (2017), 04017011.
+      e2381.                                                                                    [123] K. Gopalakrishnan, S.K. Khaitan, A. Choudhary, A. Agrawal, Deep convolutional
+ [94] Y. Liu, X. Nie, J. Fan, X. Liu, Image-based crack assessment of bridge piers using              neural networks with transfer learning for computer vision-based data-driven
+      unmanned aerial vehicles and three-dimensional scene reconstruction, Computer-                  pavement distress detection, Constr. Build. Mater. 157 (2017) 322–330.
+      Aid. Civil Infrastruct. Eng. 35 (5) (2019) 511–529.                                       [124] Y.O. Ouma, M. Hahn, Pothole detection on asphalt pavements from 2D-colour
+ [95] S. Li, X. Zhao, G. Zhou, Automatic pixel-level multiple damage detection of                     pothole images using fuzzy c-means clustering and morphological reconstruction,
+      concrete structure using fully convolutional network, Computer-Aid. Civil                       Autom. Constr. 83 (2017) 196–211.
+      Infrastruct. Eng. 34 (7) (2019) 616–634.                                                  [125] J. Valença, R.N.F. Carmo, Method for assessing beam column joints in RC
+ [96] S. Bang, S. Park, H. Kim, H. Kim, Encoder–decoder network for pixel-level road                  structures using photogrammetric computer vision, Struct. Control. Health Monit.
+      crack detection in black-box images, Computer-Aided Civil and Infrastructure                    24 (11) (2017), e2013.
+      Engineering, Blackwell Publishing Inc 34 (8) (2019) 713–727.                              [126] Y. Lin, Z. Nie, H. Ma, Structural Damage Detection with Automatic Feature-
+ [97] J.S. Lee, S.H. Hwang, I.Y. Choi, Y. Choi, Estimation of crack width based on                    Extraction through Deep Learning, Computer-Aid. Civil Infrastruct. Eng. 32 (12)
+      shape-sensitive kernels and semantic segmentation, Struct. Control. Health Monit.               (2017) 1025–1046. Blackwell Publishing Inc.
+      27 (4) (2019), e2504.                                                                     [127] Y.-J. Cha, W. Choi, O. Büyüköztürk, Deep learning-based crack damage detection
+ [98] X. Liang, Image-based post-disaster inspection of reinforced concrete bridge                    using convolutional neural networks, Computer-Aid. Civil Infrastruct. Eng. 32 (5)
+      systems using deep learning with Bayesian optimization, Computer-Aid. Civil                     (2017) 361–378.
+      Infrastruct. Eng. 34 (5) (2019) 415–430.                                                  [128] K. Chaiyasarn, T.K. Kim, F. Viola, R. Cipolla, K. Soga, Distortion-free image
+ [99] L. Ramana, W. Choi, Y.J. Cha, Fully automated vision-based loosened bolt                        Mosaicing for tunnel inspection based on robust cylindrical surface estimation
+      detection using the Viola–Jones algorithm, Struct. Health Monit. 18 (2) (2019)                  through structure from motion, J. Comput. Civ. Eng. 30 (3) (2016), 04015045.
+      422–434.
+
+
+
+
+                                                                                           13
+K. Mostafa and T. Hegazy                                                                                                                    Automation in Construction 122 (2021) 103516
+
+[129] Z. Zhou, J. Gong, M. Guo, Image-based 3D reconstruction for Posthurricane                    [142] Z. Pučko, N. Šuman, D. Rebolj, Automated continuous construction progress
+      residential building damage assessment, J. Comput. Civ. Eng. 30 (2) (2016),                        monitoring using multiple workplace real time 3D scans, Adv. Eng. Inform. 38
+      04015015.                                                                                          (2018) 27–40.
+[130] R.S. Adhikari, O. Moselhi, A. Bagchi, A. Rahmatian, Tracking of defects in                   [143] K.A. Boroujeni, K. Han, “Perspective-Based Image-to-BIM Alignment for
+      reinforced concrete bridges using digital images, J. Comput. Civ. Eng. 30 (5)                      Automated Visual Data Collection and Construction Performance Monitoring.”
+      (2016), 04016004.                                                                                  Computing in Civil Engineering, 2017, pp. 171–178.
+[131] K.-W. Liao, Y.-T. Lee, Detection of rust defects on steel bridge coatings via digital        [144] C. Zhang, H. Huang, “As-Built BIM Updating Based on Image Processing and
+      image recognition, Autom. Constr. 71 (2) (2016) 294–306.                                           Artificial Intelligence.” Computing in Civil Engineering, 2019, pp. 9–16.
+[132] R.G. Lins, S.N. Givigi, Automatic crack detection and measurement based on                   [145] Q. Lu, S. Lee, Image-based technologies for constructing as-is building
+      image analysis, IEEE Trans. Instrum. Meas. 65 (3) (2016) 583–590.                                  information models for existing buildings, Comput. Civil Eng. 31 (4) (2016),
+[133] D. Lattanzi, G.R. Miller, M.O. Eberhard, O.S. Haraldsson, Bridge column                            04017005.
+      maximum drift estimation via computer vision, J. Comput. Civ. Eng. 30 (4)                    [146] Z. Zhou, J. Gong, M. Guo, Image-based 3D reconstruction for Posthurricane
+      (2016), 04015051.                                                                                  residential building damage assessment, Comput. Civil Eng. 30 (2) (2016),
+[134] Y.J. Cha, K. You, W. Choi, Vision-based detection of loosened bolts using the                      04015015.
+      Hough transform and support vector machines, Autom. Constr. 71 (2) (2016)                    [147] F. Yamazaki, T. Matsuda, S. Denda, W. Liu, “Construction of 3D models of
+      181–188.                                                                                           buildings damaged by earthquakes using UAV aerial images.” Tenth Pacific
+[135] M.R. Halfawy, J. Hengmeechai, Integrated vision-based system for automated                         Conference on Earthquake Engineering, 204, 2015.
+      defect detection in sewer closed circuit television inspection videos, J. Comput.            [148] V. Pătrăucean, I. Armeni, M. Nahangi, J. Yeung, I. Brilakis, C. Haas, State of
+      Civ. Eng. 29 (1) (2015), 04014024.                                                                 research in automatic as-built modelling, Adv. Eng. Inform. 29 (2) (2015)
+[136] C.M. Yeum, S.J. Dyke, Vision-based automated crack detection for bridge                            162–171.
+      inspection, Computer-Aid. Civil Infrastruct. Eng. 30 (2015) 759–770.                         [149] S. Karimpouli, P. Tahmasebi, Image-based velocity estimation of rock using
+[137] P. Tahmasebi, Multiple point statistics: A review, in: Sagar B. Daya, Q. Cheng,                    convolutional neural networks, Neural Netw. 111 (2019) 89–97.
+      F. Agterberg (Eds.), Handbook of Mathematical Geosciences, Springer, Cham,                   [150] S. Kamrava, P. Tahmasebi, M. Sahimi, Linking morphology of porous media to
+      2018, https://doi.org/10.1007/978-3-319-78999-6_30.                                                their macroscopic permeability by deep learning, Transp. Porous Media 131
+[138] Pix4D, “Modeling Christ the Redeemer Statue in 3D” accessed on September 27,                       (2020) 427–448.
+      2019. https://www.pix4d.com/blog/mapping-christ, 2016.                                       [151] S. Kamrava, P. Tahmasebi, M. Sahimi, Enhancing images of shale formations by a
+[139] P. Tahmasebi, F. Javadpour, G. Frébourg, Ford Facies continuity based on outcrop                  hybrid stochastic and deep learning algorithm, Neural Netw. 118 (2019)
+      images and depositional processes, SPE J. 23 (4) (2018) 1359–1371.                                 310–320.
+[140] B. Zhang, Z. Zhu, A. Hammad, W. Aly, Automatic matching of construction onsite               [152] P. Tahmasebi, M. Sahimi, J.E. Andrade, Image-based modeling of granular porous
+      resources under camera views, Autom. Constr. 91 (2018) 206–215.                                    media, Geophys. Res. Lett. 44 (2017) 4738–4746.
+[141] Z. Shang, Z. Shen, “Real-time 3D reconstruction on construction site using visual            [153] L. Zhang, X. Yue, L. Wang, B. Yang, Estimating cement compressive strength from
+      SLAM and UAV.” Construction Research Congress, 2018, pp. 305–315.                                  microstructural images using GEP with probabilistic polarized similarity weight
+                                                                                                         tournament selection, Genet. Evolutionary Comput. Conf. 29 (2) (2018)
+                                                                                                         1403–1410.
+
+
+
+
+                                                                                              14
+

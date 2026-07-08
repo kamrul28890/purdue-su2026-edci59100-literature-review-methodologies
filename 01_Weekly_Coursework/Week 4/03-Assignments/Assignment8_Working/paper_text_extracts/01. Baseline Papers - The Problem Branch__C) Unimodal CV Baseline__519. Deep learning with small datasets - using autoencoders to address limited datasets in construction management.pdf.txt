@@ -1,0 +1,1013 @@
+                                                              Applied Soft Computing 112 (2021) 107836
+
+
+
+                                                            Contents lists available at ScienceDirect
+
+
+                                                            Applied Soft Computing
+                                                       journal homepage: www.elsevier.com/locate/asoc
+
+
+
+
+Deep learning with small datasets: using autoencoders to address
+limited datasets in construction management
+                                               ∗
+Juan Manuel Davila Delgado , Lukumon Oyedele
+Big Data Enterprise and Artificial Intelligence Laboratory, Faculty of Business and Law, University of West of England (UWE) Bristol, Coldharbour
+Lane, BS16, 1QY Bristol, UK
+
+
+
+article              info                             a b s t r a c t
+
+Article history:                                      Large datasets are necessary for deep learning as the performance of the algorithms used increases as
+Received 10 June 2019                                 the size of the dataset increases. Poor data management practices and the low level of digitisation of
+Received in revised form 27 July 2021                 the construction industry represent a big hurdle to compiling big datasets; which in many cases can
+Accepted 16 August 2021
+                                                      be prohibitively expensive. In other fields, such as computer vision, data augmentation techniques
+Available online 25 August 2021
+                                                      and synthetic data have been used successfully to address issues with limited datasets. In this
+Keywords:                                             study, undercomplete, sparse, deep and variational autoencoders are investigated as methods for
+Autoencoders                                          data augmentation and generation of synthetic data. Two financial datasets of underground and
+Variational autoencoders                              overhead power transmission projects are used as case studies. The datasets were augmented using
+Deep learning                                         the autoencoders, and the project cost was predicted using a deep neural network regressor. All the
+Machine learning                                      augmented datasets yielded better results than the original dataset. On average the autoencoders
+Predictive analytics                                  provide a model score improvement of 7.2% and 11.5% for the underground and overhead datasets,
+                                                      respectively. MAE and RMSE are lower for all autoencoders as well. The average error improvement
+                                                      for the underground and overhead datasets is 22.9% and 56.5%, respectively. Variational autoencoders
+                                                      provided more robust results and represented better the non-linear correlations among the attributes
+                                                      in both datasets. The novelty of this study is that presents an approach to improve existing datasets
+                                                      and thus improve the generalisation of deep learning models when other approaches are not feasible.
+                                                      Moreover, this study provides practitioners with methods to address the limited access to big datasets,
+                                                      a visualisation method to extract insights from non-linear correlations in data, and a way to improve
+                                                      data privacy and to enable sharing sensitive data using analogous synthetic data. The main contribution
+                                                      to knowledge of this study is that it presents a data augmentation technique for transformation variant
+                                                      data. Many techniques have been developed for transformation invariant data that contributed to
+                                                      improving the performance of deep learning models. This study showed that autoencoders are a good
+                                                      option for data augmentation for transformation variant data.
+                                                                                                                       © 2021 Elsevier B.V. All rights reserved.
+
+
+
+
+1. Introduction                                                                         funded [4]. In the UK, the average profit margin of the top
+                                                                                        100 construction companies was just 1.5% in 2017 [5]. Con-
+   Construction management is a very complex and challenging                            struction management is, therefore, key to the success and sur-
+task. Compared with other engineering sectors such as the au-                           vivability of construction companies. Big datasets that enable
+tomotive and aerospace, construction is labour intensive, has a                         deep learning can potentially provide many benefits to the con-
+vast and diverse supply chain, and is dominated by ‘‘one-off’’                          struction sector in general, ranging from document classification
+                                                                                        (e.g. [6]) and predicting construction costs (e.g. [7]) to identifying
+solutions, in which every project is different and delivered to
+                                                                                        and coordinating spatial conflicts (e.g. [8]) and detecting struc-
+a different client [1]. The industry is placated with cost and
+                                                                                        tural damages (e.g. [9]). The benefits of data-driven solutions for
+time overruns, which are partly caused by poor estimation, plan-
+                                                                                        construction management can potentially revolutionise current
+ning, and risk management [2,3]. Construction is a high-risk and
+                                                                                        practice. This potential is highlighted by the large technology
+low-profit sector. For example, in the US, only 36.4% of con-                           companies, e.g. IBM [10] and Oracle [11], venturing into the very
+struction companies continue in operations after 5 years of being                       large global construction market; which is expected to reach
+                                                                                        $10 trillion by 2020 [12]. However, there are many challenges
+  ∗ Corresponding author.                                                               for the implementation of big data analytics and deep learning
+     E-mail addresses: manuel.daviladelgado@uwe.ac.uk (J.M. Davila Delgado),            for construction management (e.g. [13]). The most prominent
+l.oyedele@uwe.ac.uk (L. Oyedele).                                                       challenge is the limited availability and accessibility of data in
+
+https://doi.org/10.1016/j.asoc.2021.107836
+1568-4946/© 2021 Elsevier B.V. All rights reserved.
+J.M. Davila Delgado and L. Oyedele                                                                           Applied Soft Computing 112 (2021) 107836
+
+
+the construction sector. Many of the data recording is still paper-         aspects for successful project delivery [27]. Nevertheless, con-
+based, database systems are not always used resulting in a lack of          struction is an industry with very low levels of digitisation [28],
+consolidated and structured data sources, which is a significant            in which information technologies are not fully leveraged to
+limitation for compiling sufficiently large datasets required for           facilitate the compilation of large datasets. In the construction
+deep learning. Algorithms used for deep learning require large              sector, data sources are usually decentralised, unstructured and
+datasets to produce good results, and they perform poorly with              unlabelled. For example, none of the traditional data management
+limited datasets.                                                           and exchange methods provide a way to integrate different types
+     The challenge of limited datasets affects many fields. For ex-         of data [29–31], support dynamic visualisations [32,33], or pro-
+ample, in computer vision tasks, e.g. object recognition, there is          vide real-time links with big data repositories [34]. In practice,
+evidence that the most crucial factor in ensuring good results is           compiling a sufficiently big construction management dataset
+the size of the dataset [14]. But compiling a very large dataset            would be very labour intensive and, in many cases, could become
+is an onerous task and can be prohibitively expensive. The chal-            prohibitively expensive. When compiling a big dataset is not
+lenge of small datasets has been addressed in various manners               a viable option, data analytics can be carried out with limited
+including improving the datasets used for training, i.e. data aug-          datasets. Using experience from other sectors, e.g. computer
+mentation (e.g. [15]); generating new datasets from simulations             vision [14], the best option is to seek a trade-off between using
+i.e. synthetic data (e.g. [16]); using pre-trained models from other        the minimum amount of data and obtaining acceptable results.
+datasets i.e. transfer learning [17]; and using generative models               Lack of access to big datasets is a challenge in many do-
+to generate new data based on the original dataset (e.g. [18]).             mains and research efforts have been reported in the literature
+However, most of these approaches work for transformation in-               to address them. For example, habitat suitability models were
+variant data (e.g. images) only; and they are not suitable for              developed using limited data [35]. In computer vision, the lack
+transformation variant data (e.g. financial data). This study ad-           of big labelled datasets is a common problem that has been ad-
+dresses this gap by exploring the potential use of autoencoders             dressed using different approaches (e.g. [36]). In general, there are
+(unsupervised machine learning models) and variational autoen-              three main approaches to address the limited data challenges: (1)
+coders (generative models) as tools for dealing with limited data           data augmentation, (2) synthetic data, and (3) transfer learning.
+variant datasets in construction management. In other domains,              Data augmentation and synthetic data use methods to improve
+autoencoders have significantly improved data analytics perfor-             the existing dataset or to generate new datasets based on the
+mance especially when the training data is limited (e.g. [19]).             original data; while transfer learning uses codified knowledge
+Autoencoders can be used to augment variant datasets as they can            from other domains to improve generalisation of data analytics
+preserve non-linear similarities in the input data and reproduce            models. This study focuses on data-based approaches only, but
+them in the generated data [20]. The objectives of this study
+                                                                            for completeness, a brief description of transfer learning is also
+are: (i) to define a methodology to use autoencoders to augment
+                                                                            presented in this section.
+variant datasets for construction management activities; and (ii)
+to compare the performance of different types of autoencoders
+                                                                            2.2. Data augmentation
+for data augmentation.
+     In the next section, a brief overview of the data challenges for
+                                                                                Data augmentation is an approach to augment or improve
+deep learning in construction management and the approaches
+                                                                            datasets to increase the performance of predictive models used
+used to address these challenges are presented. After that, a re-
+                                                                            in data analytics. Three main methods exist, i.e. linear transfor-
+view of the autoencoders that can be used for data augmentation
+                                                                            mations, interpolations and distortion methods, and probabilistic
+is presented. Then, the method used in this study is presented,
+                                                                            methods. The underlying principle of data augmentation is to
+which compares the performance of four types of autoencoders
+                                                                            increase the dataset used for training by creating duplicates of
+using two datasets of power transmission construction projects.
+                                                                            instances in the original dataset and transforming or distorting
+Deep Neural Network regressors, Random Forest Regressors, and
+                                                                            them to create slightly different instances. Linear transformations
+Support Vector Regressors are used to test the data augmentation
+method proposed. Lastly, discussion, implications for practice and          to generate additional data can be applied if the features of the
+conclusions are presented.                                                  dataset are not affected when alterations are introduced. Deep
+                                                                            learning algorithms can infer the transformation invariance of
+2. Background                                                               the dataset as the invariance is embedded in the parameters.
+                                                                            Linear transformations have been proved successful to improve
+2.1. Deep learning data challenges for construction management              performance if the training data is limited, and the dataset has
+                                                                            transformation invariance properties. For example, linear trans-
+    Success in the implementation of deep learning depends                  formations are commonly used for image classification tasks as
+largely on access to large amounts of data. However, little re-             images are transformation invariant. Simple transformations on
+search has been focused on addressing the existing challenges               images such as rotation, reflection, scaling, and squeezing can
+for compiling sufficiently large datasets. Research efforts on big          be generated by applying displacement fields to the images and
+data for construction have been focused mainly on identifying               changing the original location of every pixel to a new position.
+potential challenges with data management and potential archi-              For example, Krizhevsky et al. [15] used image translations and
+tectures. For example, big data challenges have been investigated           reflections to increase the original training set by a factor of 2048.
+for: (i) storing and visualising very large BIM models [21,22];             The authors note that the training examples are highly inter-
+(ii) handling geospatial data [23], (iii) handling earth observation        dependent, but that without the augmented training dataset the
+data [24], and (iv) for managing big visual data and its interaction        model suffered from substantial overfitting.
+with Building Information Modelling (BIM) [25]. This type of                    Interpolations and distortion methods have been used in com-
+research is needed, but it does not address the challenges of               puter vision applications to increase the size of the training
+compiling all the required data. In this respect, Martínez-Rojas            sample and improve the effectiveness of the models. Conversely
+et al. [26] have identified that novel information technologies             to linear transformation methods, these methods can introduce
+could facilitate data compilation of construction management                non-linear distortions and randomness to the newly generated
+related activities such as cost estimation, planning, risk identifi-        datasets For example, Simard et al. [14] presented an approach,
+cation, progress monitoring and quality control; which are critical         in which new data is generated by applying random distortion
+                                                                        2
+J.M. Davila Delgado and L. Oyedele                                                                           Applied Soft Computing 112 (2021) 107836
+
+
+fields on the initial dataset as follows: ∆x(x, y) = rand(−1, +1);           2.4. Transfer learning
+∆x(x, y) = rand(−1, +1) In which, rand (−1, +1) is a random
+number between −1 and +1 drawn from a uniform distribu-                         Transfer learning is the approach that transfers codified knowl-
+tion. Then, the fields are convolved with a Gaussian standard                edge learned by a machine learning model for one task into other
+deviation of pixels. The authors note that the introduction of               models for other tasks. In other words, what has been learned
+additional distorted data have a considerable impact for shallow             for specific tasks is exploited to improve generalisation in other
+and deep neural networks. Also, the authors indicate that the                tasks. The primary motivation for transfer learning is that compil-
+original training dataset is too small for most algorithms to infer          ing sufficiently big sets of labelled data for supervised models is a
+generalisation adequately, and that the additional distorted data            very demanding job. Therefore, compiling big datasets for every
+provides additional and relevant a-priori knowledge [14].                    specific task is, in practice, impossible. The potential benefits of
+   Probabilistic methods for data augmentation seek to generate
+                                                                             this approach have been identified many years ago [47]; and
+missing data in the training dataset. These approaches generate
+                                                                             terms such as learning to learn, knowledge consolidation, and
+a distribution of the variables in the training set instances in a
+                                                                             inductive transfer refer to similar approaches. Transfer learning
+probabilistic manner [37]. Then, the augmented dataset is usually
+                                                                             has been used for various tasks such as to improve image classifi-
+used in combination with deep learning models with probabilistic
+characteristics such as Restricted Boltzmann Machines (e.g. [38])            cation models [48], and to improve machine translations models
+and Deep Belief Networks [39]. For example, Gan et al. [40]                  for languages for which not enough data is available [17].
+present a probabilistic data augmentation method in which the
+logistic likelihood of each instance in the training dataset is refor-       2.5. Examples of data augmentation and synthetic data for construc-
+mulated. The augmented data was used to train a Sigmoid Belief               tion applications
+Network (SBN), and it was tested on common image recognition
+tasks.                                                                           Most of the augmentation and synthetic data approaches for
+                                                                             construction applications focuses on developing 3D environments
+2.3. Synthetic data                                                          from which labelled data can be produced in a quick manner.
+                                                                             For example, Neuhausen et al. [49] presented an approach for
+    The other approach is to increase the original training dataset          generating synthetic labelled images of workers in construction
+with data generated by simulations from analogous mediums.                   sites rendered in a 3D environment, which then were used to
+For example, Aubry et al. [41] presented a method that uses 3D               train computer vision models that support machine operators to
+models of chairs to generate a dataset and train machine learning            detect pedestrians walking near the machine. Hong et al. [50]
+models to recognise chairs in 2D images. The machine learning                presented an approach that generates synthetic images from a 3D
+model was able to recognise chairs in 2D images without using                environment and then uses a generative adversarial network to
+2D images for training. Aubry and Russell [42] later showed that
+                                                                             make the synthetic images look more realistic by transferring the
+the codified representations, also called embeddings, generated
+                                                                             image style from real-life images to the synthetic ones.
+while training deep neural networks using 3D models, are similar
+                                                                                 Other data augmentation approaches focus on time-series
+to the ones trained using 2D images. Dosovitskiy et al. [43] used
+random background images downloaded from the internet and                    data, for instance to detect activities on image sequences [51,52].
+overlaid images of chairs on top of them to create an entirely               Synthetic 3D representations have been generated as well. For
+new synthetic dataset for training. The results obtained using this          instance, Wu et al. [53] presented a method that generates 3D
+unrealistic dataset, known as ‘‘flying chairs’’ due to the uncon-            seismic images to train a seismic fault detector. Ma et al. [54]
+ventional position of the chairs in relation to the background               presented an approach to generate synthetic point clouds from
+images, generalises very well in comparison to other existing                3D models and then train a detection model for semantic seg-
+traditional datasets [43]. Using 3D models to generate a synthetic           mentation. Chokwitthaya et al. [55] present a similar approach
+dataset to improve the detection of objects in 2D images is a                to the presented in this paper; but it uses a Gaussian mixture
+common approach for computer vision applications [44,45]. For                model to generate independent samples of data from a small
+example, Handa et al. [16] presented a method to generate syn-               dataset to improve model performance. However, this approach
+thetic 3D-indoor-scenes (e.g. 3D models of bedrooms, kitchens,               only uses transformation invariant data, as all the approaches
+dining rooms, etc.) to improve the segmentation of the images                referred before.
+into distinct objects. Using already existing labelled 3D models                 In sum, research efforts in data augmentation and synthetic
+(e.g. beds, chairs, tables, windows, etc.), their approach creates           data in construction, and other fields, have been focused mostly
+new scenes following the underlying structure of the existing                on approaches for transformation invariant data, while this study
+ones. Their approach demonstrated that adding synthetic data                 focuses on approaches for transformation variant data. This study
+improves the performance of image segmentation algorithms.                   addresses this knowledge gap by investigating autoencoders as an
+Inverse approaches have been investigated as well, in which                  alternative approach to address transformation variant data.
+3D information is inferred from 2D images. For example, Wu
+et al. [46] presented a system to predict physical events in dy-
+                                                                             3. Autoencoders for data augmentation
+namic events and to infer the physical properties of objects based
+only on static images. For example, to determine the weight of
+                                                                                 This paper explores the potential use of autoencoders to aug-
+various objects based on how they look on 2D images. The sys-
+                                                                             ment financial datasets of construction projects. Conversely to
+tem leverages a 3D physics engine and deep learning generative
+models.                                                                      images, financial data is not transformation invariant. Therefore
+    One characteristic of the synthetic data approaches is that they         traditional linear and non-linear transformation and distortion
+add distortions and noise into the generated data to make the                methods cannot be used; thus, autoencoders can potentially be
+synthetic data similar to real-life data. For example, Krizhevsky            a good alternative. Autoencoders are unsupervised neural net-
+et al. [15] alter the intensities of RGB channels in training images         works that try to reproduce its input as its output. The typical
+to simulate the varying distribution of intensities in real-life im-         architecture of an autoencoder usually consists of two parts,
+ages. Handa et al. [16] also introduced noise to the generated 3D            i.e. the encoder and the decoder (see Fig. 1 - left). The encoder
+models to improve the performance of the image segmentation.                 compresses the original input (x) into a new representation called
+In this case, the depth maps of the generated 3D scenes were                 ‘‘latent vector’’ or ‘‘compressed representation’’. The decoder de-
+altered to simulate a noise distribution of real-world datasets.             compresses the representation into a new reconstructed input (x′ )
+                                                                         3
+J.M. Davila Delgado and L. Oyedele                                                                            Applied Soft Computing 112 (2021) 107836
+
+
+based on the correlations among input features. The network can              3.3. Sparse autoencoders
+be trained by minimising a loss function between the original
+input and the reconstructed input L(x, x′ ). Non-linear activation               Sparse autoencoders randomly limit the number of active
+functions must be used in the nodes (e.g., a11 in Fig. 1 - left) and         nodes during training to create the bottleneck in the information
+the weights must be initialised randomly so that the network                 flow, instead of reducing the number of nodes in the hidden
+does not simply reproduce the exact input.                                   layers. Fig. 2 – left shows a sample architecture of a sparse au-
+    Autoencoders are used for many machine learning applica-                 toencoder, in which only the highlighted nodes will be activated,
+tions including dimensionality reduction (e.g. [56]), semantic               and the greyed-out nodes will not be used. This forced sparsity
+hashing (e.g. [57]), data denoising (e.g. [58]), clustering and clas-        in the hidden layers prevents the autoencoder from learning the
+sification (e.g. [59,60]), change detection [61], and demand fore-           noise in the data, from reproducing the input identically, and
+casting [62]. Also, autoencoders have been used to improve model             it promotes that the autoencoder learns the intrinsic features
+performance by pretraining the models, that is by learning fea-              in the input data. A way to force this sparsity is by including
+tures in the underlying structure of the data to provide good                a penalisation term in the loss function that randomly yields
+domain generalisation (e.g. [63,64]). In this paper, autoencoders            an( activation value
+                                                                                               ⏐ h ⏐ very close to zero. The loss function is then
+are used to improve model performance by augmenting the                      L x, x′ + λ
+                                                                                    )      ∑   ⏐a ⏐, in which the activation a in the layer h
+                                                                                                 i
+original training data instead of pretraining the model. Both ap-            for observation i is scaled by a parameter λ. Then, during the
+proaches are similar because both intend to extract the essential            optimisation process, only the highest activation values are used
+structure of the training data to improve the performance of the             to prevent the autoencoder from using all the hidden nodes at
+model. The pretraining approach adds the learned structure to the            the same time. Sparse autoencoders have been used for med-
+model itself, while the data augmentation approach generates a               ical image analysis [68], hyperspectral imagery [19], and fault
+more robust dataset based on the learned structure. This latter              detection [69].
+approach has the advantage to contribute to data privacy issues
+as the generated data preserves the same structure of the original
+training data, but it is not exactly the same. For example, an               3.4. Variational autoencoders
+augmented dataset can be generated and shared with experts
+to carry out data analytics without sharing the original dataset.               Variational autoencoders [70] are generative models that es-
+This is of extreme importance, especially when dealing with                  timate the probability density function of the original training
+confidential personal or financial data, as is the case in this study.       data. They are composed of an encoder and a decoder as well.
+                                                                             The main difference with other types of autoencoders is that
+                                                                             variational autoencoders learn the parameters of a probability
+3.1. Undercomplete autoencoders
+                                                                             distribution that represents the original data. Variational autoen-
+                                                                             coders force a continuous latent space from which data samples
+    Undercomplete autoencoders constraint the number of nodes                can be generated. This latent space is defined by computing a
+in the hidden layers to limit the amount of information that flows           vector of means (µ) and a vector of standard deviations (σ ) of
+through the network. In this way, during training, the network               the corresponding variable (see Fig. 2 - right). The vector of means
+will learn to reconstruct the essential features from the original           defines where in the latent space the encoding of an input should
+input from the compressed representation. Undercomplete au-                  be centred, while the vector of standard deviations defines a
+toencoders use a ‘‘bottleneck’’ in their architecture to restrict the        limited area in which the mean encoding can vary. The Kullback–
+flow of information (Fig. 1 - left). The main drawback of under-             Leibler (KL) divergence is introduced in the loss function to limit
+complete autoencoders is that when using deep autoencoders –                 the values that (µ) and (σ ) can take and to ensure that the
+that is with many hidden layers – the model tends to overfit the             compressed representations are close to each other, but that they
+data. Overfitting occurs when random fluctuations in the training            are distinct. The loss function will minimise the KL divergence,
+data are learned as the main features. Then, the model is not                which measures how much the two probabilities    ) ∑diverge from
+                                                                             each other. Then, the loss function is L x, x′ +         KL(q (z |x) ∥
+                                                                                                                         (
+generalisable as its performance reduces significantly when new
+data, not seen during training, is used.                                     p(z)), in which the first term penalises the reconstruction error
+                                                                             and the second term, the sum of all KL divergences, induces the
+                                                                             learned distribution q (z |x) to be similar to the original distri-
+3.2. Denoising autoencoders
+                                                                             bution p(z). The main limitation of regular autoencoders is that
+                                                                             the latent space to which the input is encoded and where the
+   Denoising autoencoders are undercomplete autoencoders that                encoded vectors lie may not be continuous. If the latent space is
+intentionally add noise randomly to the original input before                discontinuous, the decoder could reconstruct an unrealistic input.
+feeding it to the autoencoder. Adding noise avoids that the au-              Variational autoencoders address this issue by defining a latent
+toencoder simply copies the input to the output without learn-               space based on the probability distribution of the original data.
+ing the structure of the training data. Adding noise is usually              In this sense, variational autoencoders have generative features
+done by randomly converting some input values to null values                 and can be regarded as a method to generate synthetic data rather
+(see Fig. 1 - right). Denoising autoencoders learn to ignore the             than a data augmentation method. Variational autoencoders have
+noise in the input data and reconstruct the input based on the               shown very effective in generating many types of complex data
+structure of the original data. The main application of denoising            including handwritten digits, faces, physical models [71]. Also,
+autoencoders is to remove noise in data; for example, denoising              variational autoencoders have been used for a wide range of gen-
+autoencoders have been used in medical image analysis [65]. But,             erative tasks including pixel anticipation in computer vision [72],
+they have been used for pretraining [66] and fault detection of              generative text modelling [73], and generation of novel molecular
+rotary machinery as well [67].                                               structures [74].
+                                                                         4
+J.M. Davila Delgado and L. Oyedele                                                                                             Applied Soft Computing 112 (2021) 107836
+
+
+
+
+                             Fig. 1. Generic architectures of an undercomplete autoencoder (left) and a denoising autoencoder (right).
+
+
+
+
+                                     Fig. 2. Generic architectures of a sparse autoencoder (left) and a variational autoencoder (right).
+
+
+4. Method and materials                                                                  variables present in both datasets were used. The underground
+                                                                                         dataset consists of 27 projects, while the overhead dataset con-
+    The objective of this paper is to show how autoencoders can                          sists of 41 projects. The datasets were split into a training set
+contribute to addressing the limited data challenge typical in                           and a test set. The training and test data split used are 21/6 and
+construction management. Accurate cost estimation is one of the                          31/10 for the underground and overhead datasets respectively.
+key activities that defines whether a project is profitable or not.                      Note that all variables were normalised into a 0–1 range.
+Estimating the cost during tendering and preconstruction activi-                             Then, both training sets were augmented using four types
+ties is a critical aspect for the successful delivery of construction                    of autoencoders, i.e.: (1) an undercomplete autoencoder, (2) a
+projects. Poor estimations often lead to profit erosion and even                         sparse autoencoder, (3) a deep autoencoder, and (4) a varia-
+economic losses. Estimating the cost of a construction project                           tional autoencoder (Fig. 3). Table 2 presents the architectures and
+accurately is a difficult task that still has not been addressed                         hyper-parameters of the four autoencoders used in this study. The
+satisfactorily [3,75]. This paper presents an investigation on how                       architecture of the autoencoders defines the number and type of
+autoencoders can augment relatively small datasets and improve                           hidden layers and the activation function used in the nodes. The
+the performance of deep learning models to predict the cost of                           rectifier linear unit (reLU) function g (x) = max(0,x) was used as
+construction projects.                                                                   an activation function in all the nodes.
+    The method employed for this investigation is depicted in
+Fig. 3. Two sets of financial data from power transmission con-                          4.1. Regression methods
+struction projects delivered in the last 12 years in the United
+Kingdom were used as input. One dataset relates to overhead                                 For each dataset, underground and overhead, five deep neu-
+transmission lines (overhead in Fig. 3) and the other one to under-                      ral network regression models (DNN regressors in Fig. 3) were
+ground cabling lines (underground in Fig. 3). Table 1 presents the                       trained with the four augmented training sets and with a train-
+data available in both datasets. These datasets represent the data                       ing set without augmentation. Traditional non-deep learning
+that is traditionally used to come up with cost estimation during                        methods were implemented as well. A Random Forest Regressor
+preconstruction. Note that for this study, only the continuous                           (RFR) [76] and Support Vector Regression (SVR) [77,78] were
+                                                                                     5
+J.M. Davila Delgado and L. Oyedele                                                                                    Applied Soft Computing 112 (2021) 107836
+
+
+implemented to provide additional baselines and compare the                         measures the average magnitude       of the errors in absolute terms.
+                                                                                    It is calculated using: 1n
+                                                                                                                ∑
+presented approach with other types of regression methods.                                                         |yi − ŷi |, where n is the number of
+These regression methods were selected because they are com-                        errors and |yi − ŷi | are the absolute errors. (3) The root-mean-
+monly used for these types of estimation tasks [79,80]. The                         square-error (RMSE), which is the square root     √    of the averaged
+                                                                                                                                       2
+implementation details of the three regression methods are as                       squared error. It is computed as follows:            1 − r 2 SDy , where
+follows:                                                                            SDy is the standard deviation of Y. Both MAE and RMSE range
+                                                                                    from 0 to ∞ in the same units as the predicted variable. They
+  ( (1)) DNN Regressor.   )2 The regression loss function used was
+L ŷ, y = 12 ŷ − y , in which y and ŷ are the target and es-
+                 (
+                                                                                    are negatively-oriented metrics for which lower values indicate
+timated values, respectively (The                                                   better performance. In this study, the reported MAE and RMSE
+                                        ) vectorised forward propagation
+is: Z l = W l X + bl , Al = g Z l , where X is the vector of input                  are normalised into a 0–1 range, instead of their actual units,
+parameters, W is the vector of weights, A is the vector of acti-                    i.e., British pounds (£). This normalisation has been carried out
+vation functions, and l is the number of layers of the( model.            The       due to the sensitive commercial nature of the data; however, the
+vectorised backward propagation is: {δ Z l = δ Al−1 ∗g l Z l ; δ W l =
+                                                                      )
+                                                                                    metrics still provide a clear indication of the performance of the
+(1/2)δ Z l · A(l−1)T ; δ bl = (1/2)      δ Z ; δ Al−1 = W (l)T · δ Z l }.           models.
+                                      ∑ l
+    (2) RFR. The basic idea behind RFR is combining multiple
+decision trees. In a decision tree, given the training set X and                    5. Results
+the test set Y, the dataset is partitioned so that the instances
+with the same corresponding y values are grouped together. The                          Fig. 4 shows the different model scores of the underground
+function used to measure the                                                        (left) and overhead (right) datasets for predicting the total cost
+                                ∑ ( quality)2 of the partitions is the mean         of the construction project and increments factors ranging from
+square error MSE = 1/n               y − ŷ , in which n is the number of
+                                                                                    1 to 20 using the DNN model. The increment factor defines the
+training samples. In this implementation, each tree is built from a
+                                                                                    amount of additional data included in the training dataset. For
+bootstrap sample drawn with replacement from the training set.
+                                                                                    both datasets, the autoencoders yield better results than the
+    (3) SVR. The SVR function used is: ŷ = (W , (Φ X )) + b.
+                                                                                    initial model. An increasing trend in performance can be observed
+Variables ζi and ξi∗ are introduced to measure the deviation
+                                                                                    as the increment factor increases. However, this increase in per-
+of samples; thus∑        ( SVR ∗optimisation
+                       the                            ( ) is expressed as
+                                                   problem
+                                                                                    formance can potentially be attributed to the model overfitting
+min 12 ∥W ∥2 + C           ζi + ξi subject to: {f xi − yi ≤ ε + ζi ; yi −
+                                   )
+                                                                                    the data, because the MAE and RMSE increase with higher in-
+f (xi ) ≤ ε + ξi∗ ; ζi , ξi∗ ≥ 0}. In which, C is the parameter that
+                                                                                    crement factors, as shown in Fig. 5 and Fig. 6, respectively. For
+regulates the trade-off between the margin and the prediction
+                                                                                    both underground and overhead datasets, the MAE and RMSE
+                                       ) ζi and ξi . The final regression
+                                                     ∗
+error denoted by the      ∑ (variables                                              decrease initially as the increment factor increases and start to
+function is f (x) =            ai − a∗i K (x, y) + b, where ai , a∗i are the
+                                                                                    increase afterwards until they reach similar values as obtained in
+Lagrange multipliers and K (x, y) is the kernel function. In this
+                                                                                    the initial model without augmentation. This is an indication that,
+case, a linear kernel function was used (K (x, y) = xT y + b), C =
+                                                                                    in this case, data augmentation provides benefits up to a point
+1.0, and ε = 0.1.
+                                                                                    and after that, the additional data can cause overfitting.
+    Table 2 presents the architecture and hyperparameters of the
+                                                                                        Regarding differences between datasets, the overhead datasets
+three regression methods used to calculate all the cost esti-
+                                                                                    reach better results overall than the underground. This can be
+mations. Also, the adadelta optimiser [81] and the adam opti-
+                                                                                    attributed to a stronger correlation between the variables in the
+miser [82] were used for training the autoencoders and the DNN                      overhead dataset. In other words, it is easier to estimate the cost
+regressors, respectively.                                                           of overhead transmission projects because the distance of the
+                                                                                    project correlates more closely to the cost; which is not the case
+4.2. Increasing the size of the augmented dataset                                   with underground projects, in which the underground conditions
+                                                                                    are unknown. The variational autoencoder is the best performing
+    The process above was repeated 20 times for each type of au-                    for the underground dataset; while the deep architecture is the
+toencoder. Each time, the training set was expanded by a higher                     best performing for the overhead. This could be explained be-
+data increment factor. That is, in the first augmentation iteration,                cause the correlations between variables in the overhead dataset
+the training set was doubled in size; in the second iteration, it was               are more explicit than in the underground dataset. More substan-
+tripled, and so on until 20 iterations. The results of the increasing               tial variations can be observed for the variational autoencoder
+training sets using the four types of autoencoders were compared.                   that can be attributed to its generative nature.
+The results of the training set without augmentation were used                          Table 3 compares the performance metrics (model score, MAE
+as a baseline using the DNN regressor, DTR, and RFR.                                and RMSE) for the DNN regressors trained with the original
+                                                                                    data and trained with data augmented with four types of au-
+4.3. Performance metrics                                                            toencoders. Note that the performance metrics that correspond
+                                                                                    to increment factor equal to 5 have been used; because there
+     Three metrics were used for comparing performances: (1) the                    are indications, in the graphs above, that for higher increment
+coefficient of determination (r 2 ), which provides an indication                   factors overfitting can be occurring. All autoencoders provide
+of the goodness of fit by providing a measure of the variance                       better model scores and lower MAE and RMSE. On average the
+between predicted and actual values. In this study, it is called                    autoencoders provide a model score improvement of 7.2% and
+the model score because is computed using the augmented data                        11.5% for the underground and overhead datasets, respectively.
+generated by the autoencoders and provides an indication of how                     No autoencoder provides the best results for all metrics, but the
+closely the model represents the training data. It is a positively                  deep and the variational autoencoder architectures provide the
+oriented metric and ranges from                     ∑ score is com-
+                                    ∑ 0–1. The2 model                               best results on average. Summarising, using any of the autoen-
+puted    as follows r 2 = 1 −          (yi − ŷi ) / (yi − y)2 . Where              coders presented here will improve all the performance metrics,
+     (yi − ŷi )2 is the sum of squares of the difference between
+∑
+                                                                    the             which is an indication that data augmentation using autoencoders
+                                                              (yi − y)2
+                                                           ∑
+actual values (yi ) and the predicted values (ŷi ); and                            is beneficial for regression problems when using DNN models.
+is the sum of squares between the difference of the actual values                       Non-traditional deep learning regression methods were in-
+(yi ) and their mean (y). (2) The mean absolute error (MAE), which                  vestigated as well. Figs. 7 and 8 present the results using the
+                                                                                6
+J.M. Davila Delgado and L. Oyedele                                                                                        Applied Soft Computing 112 (2021) 107836
+
+
+
+
+                                                               Fig. 3. Diagram of the method used.
+
+
+
+
+Fig. 4. Graphs showing the varying model scores of the underground dataset (left) and the overhead dataset (right) for predicting cost at various increment factors.
+
+
+
+
+   Fig. 5. Graphs showing the varying MAEs of the underground dataset (left) and the overhead dataset (right) for predicting cost at various increment factors.
+
+                                                                                 7
+J.M. Davila Delgado and L. Oyedele                                                                                          Applied Soft Computing 112 (2021) 107836
+
+                          Table 1
+                          Variables from the overhead and underground datasets.
+                           Variable            Description                                                         Underground   Overhead
+                           Distance            Distance in kilometres of the project.                              ✓             ✓
+                           Duration            Duration in weeks of the project.                                   ✓             ✓
+                           Tender Value        Value in British pounds (£) for the tender proposal.                ✓
+                           Sales Value         Final agreed value with the client in British pounds (£).           ✓
+                           Cost                Total cost of the project in British pounds (£).                    ✓             ✓
+                           Profit              The difference between the Sales Value and the Cost in British      ✓             ✓
+                                               pounds (£).
+                           Region              Geographical region in which the project is located.                ✓             ✓
+                           Client              The client that is requesting the project.                                        ✓
+                           Contract type       The type of contract of the project (e.g. lump sum, schedule of     ✓
+                                               rates, framework agreement, quantity-based contract, etc.).
+                           Voltage             Voltage in kV of the transmission line (33 kV, 66 kV, 133 kV,                     ✓
+                                               275 kV, 400 kV).
+
+
+          Table 2
+          Autoencoders used in this study.
+            Type                      ID                          Architecture                                               Hyper-parameters
+            Undercomplete             under                       – Input data                                               Latent vector = 2
+                                                                     – Dense layer (initial vector size, reLU)               Optimiser = adadelta
+                                                                  – Encoded representation (latent vector size)              Loss = mse
+                                                                     – Dense layer (initial vector size)
+                                                                  – Decoded representation (initial vector size)
+                                                                  – Reconstructed data
+            Sparse                    sparse                      – Input data                                               Latent vector = 2
+                                                                     – Regularised layer (initial vector size, reLU)         Optimiser = adadelta
+                                                                     – Regularised layer (latent vector size*2, reLU)        Loss = mse
+                                                                  – Encoded representation (latent vector size)
+                                                                     – Regularised layer (latent vector size*2, r
+                                                                  reLU)
+                                                                     – Regularised layer (initial vector size, reLU)
+                                                                  – Decoded representation (initial vector size)
+                                                                  – Reconstructed data
+            Sparse/Deep               deep                        – Input data                                               Latent vector = 2
+                                                                     – Regularised layer (initial vector size, reLU)         Optimiser = adadelta
+                                                                     – Regularised layer (latent vector size*6, reLU)        Loss = mse
+                                                                     – Regularised layer (latent vector size*4, reLU)
+                                                                     – Regularised layer (latent vector size*2, reLU)
+                                                                  – Encoded representation (latent vector size)
+                                                                     – Regularised layer (latent vector size*2, reLU)
+                                                                     – Regularised layer (latent vector size*4, reLU)
+                                                                     – Regularised layer (latent vector size*6, reLU)
+                                                                     – Regularised layer (initial vector size, reLU)
+                                                                  – Decoded representation (initial vector size)
+                                                                  – Reconstructed data
+            Variational               var                         – Input data                                               Latent vector = 2
+                                                                     – Dense layer (initial vector size, reLU)               Optimiser = adam
+                                                                     – Dense layer (initial vector size, mean)               Loss = mean (xent, kl)
+                                                                     – Dense layer (initial vector size, variance)
+                                                                  – Encoded representation (latent vector size)
+                                                                     – Dense layer (latent vector size, reLU)
+                                                                     – Dense layer (initial vector size, reLU)
+                                                                     – Dense layer (initial vector size)
+                                                                  – Decoded representation (initial vector size)
+                                                                  – Reconstructed data
+
+            DNN regressor                                         Optimiser = adam
+                                                                  Activation function = reLU
+                                                                  Hidden layers = 10
+            Random Forest Regressor (RFR)                         Quality of partition function = mse
+                                                                  Number of trees = 10
+                                                                  Max depth = 3
+            Singular Vector Regressor (SVR)                       C = 1.0
+                                                                  ε = 0.1.
+          See Section 3 for details regarding the autoencoders loss functions.
+
+
+RFR and SVR models, respectively. Regarding RFR and the un-                             throughout all the increment factors. Table 4 presents a com-
+derground data set, only the deep autoencoder provided a better                         parison of the performance metrics using the RFR model for the
+model score, while the MAE and RMSE yielded lower errors and                            underground and overhead datasets. For both datasets, the deep
+remained somewhat constant through all increment factors. Re-                           sparse autoencoder yielded the best results; while the undercom-
+garding RFR and the overhead data set, all autoencoders yielded                         plete autoencoder yielded the worst results. Regarding MAE and
+better results except for the undercomplete autoencoder. The                            RMSE no single autoencoder yielded the lowest errors, and no
+MAE and RMSE remained at similar levels as the initial value                            augmentation provided the largest errors.
+                                                                                    8
+J.M. Davila Delgado and L. Oyedele                                                                                        Applied Soft Computing 112 (2021) 107836
+
+
+
+
+  Fig. 6. Graphs showing the varying RMSEs of the underground dataset (left) and the overhead dataset (right) for predicting cost at various increment factors.
+
+
+Table 3                                                                             Table 4
+Comparison of the performance metrics for the original data and autoencoders        Comparison of the performance metrics for the original data and autoencoders
+using the DNN model. Bold indicates the best results. Bold indicates the best       using the RFR model. Bold indicates the best results. Bold indicates the best
+result and underlined the worst.                                                    result and underlined the worst.
+ DNN                                          Model score     MAE     RMSE           RFR                                      Model score       MAE        RMSE
+ Underground                                                                         Underground
+   Original data                                                                       Original data
+     Deep Neural Network Regressor (DNN)      0.747           0.279   0.179              Random Forest Regressor (RFR)        0.891             0.746      0.647
+   Augmented data                                                                      Augmented data
+     Undercomplete autoencoder                0.881           0.267   0.162              Undercomplete autoencoder            0.772             0.256      0.129
+     Sparse autoencoder                       0.788           0.230   0.128              Sparse autoencoder                   0.839             0.257      0.173
+     Deep sparse autoencoder                  0.813           0.241   0.138              Deep sparse autoencoder              0.921             0.254      0.160
+     Variational autoencoder                  0.797           0.236   0.143              Variational autoencoder              0.889             0.253      0.167
+
+ Overhead                                                                            Overhead
+   Original data                                                                       Original data
+     Deep Neural Network Regressor (DNN)      0.813           0.168   0.037              Random Forest Regressor (RFR)        0.843             0.102      0.025
+   Augmented data                                                                      Augmented data
+     Undercomplete autoencoder                0.896           0.098   0.011              Undercomplete autoencoder            0.831             0.063      0.009
+     Sparse autoencoder                       0.950           0.104   0.012              Sparse autoencoder                   0.930             0.102      0.023
+     Deep sparse autoencoder                  0.933           0.096   0.011              Deep sparse autoencoder              0.945             0.090      0.020
+     Variational autoencoder                  0.936           0.128   0.018              Variational autoencoder              0.932             0.080      0.017
+
+Results for augmented data correspond to an increment factor equal to 5.            Results for augmented data correspond to an increment factor equal to 5.
+
+
+
+
+   Regarding the SVR model, results are presented in Fig. 8 and                     Table 5
+                                                                                    Comparison of the performance metrics for the original data and autoencoders
+Table 5. For the underground dataset, the model score improved                      using the SVR model. Bold indicates the best results. Bold indicates the best
+using all autoencoders, while for the overhead dataset the model                    result and underlined the worst.
+score remained somewhat constant at a slightly lower level than                      SVR                                       Model score      MAE        RMSE
+without augmentation, except for the undercomplete autoen-                           Underground
+coder which yielded larger errors on larger increment factors.                         Original data
+                                                                                         Support Vector Regressor (SVR)        0.788            0.358      0.213
+For MAE and RMSE in the underground dataset, only the sparse                           Augmented data
+autoencoder yielded better results without data augmentation.                            Undercomplete autoencoder             0.730            0.537      0.424
+                                                                                         Sparse autoencoder                    0.811            0.250      0.183
+For the overhead dataset, none of the autoencoders provided
+                                                                                         Deep sparse autoencoder               0.885            0.388      0.341
+lower MAE and RMSE. The sparse autoencoder yielded signifi-                              Variational autoencoder               0.858            0.294      0.212
+cantly higher errors for larger increment factors. Table 5 presents                  Overhead
+the results using the SVR model. For the underground dataset,                          Original data
+                                                                                         Support Vector Regressor (SVR)        0.928            0.072      0.007
+the sparse and deep sparse yielded the best metrics, while the
+                                                                                       Augmented data
+undercomplete yielded the worst. For the overhead dataset, no                            Undercomplete autoencoder             0.885            0.513      0.368
+augmentation yielded the best model score, MAE and RMSE.                                 Sparse autoencoder                    0.918            0.247      0.081
+                                                                                         Deep sparse autoencoder               0.893            0.172      0.035
+   In summary, autoencoder-based data augmentation using RFR                             Variational autoencoder               0.882            0.201      0.048
+did not provide significant improvements, while using SVR de-
+                                                                                    Results for augmented data correspond to an increment factor equal to 5.
+creased performance. The performances between the
+underground and overhead datasets were more dissimilar using
+the RFR and SVR than using DNN.
+                                                                                9
+J.M. Davila Delgado and L. Oyedele                                                                                     Applied Soft Computing 112 (2021) 107836
+
+
+
+
+Fig. 7. Graphs showing the results (model score, MAE and RMSE) of the underground dataset (left) and the overhead dataset (right) for predicting cost at various
+increment factors using the RFR model.
+
+
+5.1. Analysing the compressed representations                                      case, the compressed representations are two-dimensional repre-
+                                                                                   sentations compressed from a multi-dimensional dataset. Fig. 9
+                                                                                   presents four graphs that plot the compressed representations
+   Another manner to analyse the behaviour and to study the                        generated by the unsupervised autoencoders (undercomplete,
+underlying structure of the datasets is to plot the compressed                     sparse, and deep) and the generative autoencoder (variational)
+representation generated by the autoencoders. Note that, in this                   for the underground dataset. The total cost of each project is
+                                                                              10
+J.M. Davila Delgado and L. Oyedele                                                                                     Applied Soft Computing 112 (2021) 107836
+
+
+
+
+Fig. 8. Graphs showing the results (model score, MAE and RMSE) of the underground dataset (left) and the overhead dataset (right) for predicting cost at various
+increment factors using the SVR model.
+
+
+indicated by different shades of colour. Different diameters of the                dataset was generated by each autoencoder. The different na-
+circular markers indicate varying costs. Small diameters indicate                  ture of the unsupervised and the generative autoencoders can
+small costs and larger diameters larger costs. For example, small                  be seen in the different configurations of the compressed rep-
+dark blue circles represent projects with low costs, while large                   resentations. All the unsupervised autoencoders present linear
+bright circles represent projects with large costs. The colour                     configurations along the main axis of the plots; while in the
+scale is different in each graph because a completely different                    variational autoencoder well-defined clusters can be observed. In
+                                                                              11
+J.M. Davila Delgado and L. Oyedele                                                                         Applied Soft Computing 112 (2021) 107836
+
+
+general, for all cases, a positive relationship between the values         scores and lower MAE and RMSE errors. (2) However, using
+of the compressed representation and cost is present.                      autoencoders for data augmentation when using other non-deep
+    Fig. 10 presents similar graphs for the overhead dataset, in           learning methods does not provide clear improvements. For ex-
+which similar configurations can be observed. That is, the unsu-           ample, in the presented experiments for RFR data, augmentation
+pervised autoencoders present strong linear configurations along           did not provide significant improvements, while for SVR decrease
+the main axis of the plot, and the variational autoencoder presents        in performance was observed. This indicates that data augmen-
+well-defined clusters. Note that for the overhead dataset the              tation using autoencoders is only beneficial for neural network
+linear nature of the configurations is more defined, which can be          regressors. Note that the objective of this study is not to compare
+attributed to stronger linear correlations between variables in the        the performance of different regression methods, but to inves-
+overhead dataset. This strong linear configuration is present even         tigate if autoencoders can be used for data augmentation. (3)
+for the variational autoencoder, in which the observable clusters          The compressed representations created by the autoencoders can
+are arranged in a linear manner across the graph. The undercom-
+                                                                           provide useful insights regarding the underlying non-linear rela-
+plete and sparse autoencoders present very similar configurations
+                                                                           tions among variables in the datasets. In particular, the variational
+in which the instances are arranged in an increasing order based
+                                                                           autoencoder was able to highlight the relations among variables
+on cost; while in the deep autoencoder this arrangement is not as
+                                                                           by generating distinguishable clusters (Figs. 9 and 10). (4) Fur-
+clear. The other characteristic of the configuration present in all
+                                                                           thermore, the compressed representation can potentially be used
+cases is that the instances with lower costs are grouped together
+very closely; while the instances with higher costs are distributed        as well to investigate whether variables are correlated or not. In
+sparsely across the latent space.                                          this case, it was shown that the total cost is highly correlated to
+    In all graphs, defined differences between instances based on          the other variables in the compressed representation, while the
+cost can be observed. These differences can be leveraged to define         profit margin was not (Figs. 9, 10, and 11). (5) Lastly, this study
+a categorisation of projects in relation to cost and complexity.           presents evidence that using autoencoders for data augmentation
+For example, in the variational graph in Fig. 7, three groups              can improve the generalisation of deep neural network regression
+could be defined as follows: (1) low-cost/low-complexity, (2)              models. This point is addressed in more detail in the following
+mid-cost/mid-complexity and (3) high-cost/high-complexity. For             subsection.
+the variational graph in Fig. 8, a similar categorisation could be
+made as well but defining four groups instead of three. These              6.1. Improving generalisation
+types of groupings based on the configurations of compressed
+representations can be very useful, as they can be used by other
+machine learning algorithms to automatically classify projects.                The main issue with models trained using small datasets is
+For example, during the planning stages of a new project, an               that the models do not generalise well. That is when the model
+autoencoder can use the existing information of the project to             is confronted with data slightly different than the one used dur-
+classify it based on the previously generated latent categories.           ing training it performs poorly. Models trained with very big
+Then adequate resources can be allocated that correspond to the            datasets do not suffer from this issue as increasing the size
+identified category to ensure successful project delivery. Note            of datasets increases model generalisation. There are three ap-
+that there are no implications of having high or low-cost projects         proaches to improve generalisation (i) collect more data, (ii)
+as long as the cost estimations are accurate. The compressed rep-          improve your dataset, and (iii) transfer learning. Collect more data
+resentations generated by the variational autoencoder indicate             can be in many cases, impractical or impossible, and to use trans-
+that the underlying relations among variables are very similar             fer learning existing trained models are required. For construction
+for low-cost projects, mid-cost projects and high-cost projects.           management, improving datasets is the alternative with the best
+That is why clusters can be identified in Figs. 9 and 10. Note as          trade-offs. This paper proposes autoencoders as good tools for
+well that the relation among variables seems stronger for low-             data augmentation for transformation variant datasets. The idea
+cost projects as the clusters are denser than for mid-cost or high         is to generate larger datasets based on the original dataset to
+cost, as the clusters are more spread out.                                 improve generalisation. Existing methods for data augmentation
+    Fig. 11 presents the compressed representations using the              only work with data invariant datasets such as images. Financial
+variational autoencoder for the underground and overhead                   data is a transformation variant so different approaches are re-
+datasets, in which the colour scale represents the profit margin           quired. This paper provides empirical evidence that autoencoders
+instead of the total cost, as in Figs. 9 and 10. It can be seen            are a good alternative for data augmentation to improve general-
+that there is no clear relation between profit margin and the              isation in models that use construction financial data. Note that
+clustering of the compressed representations; as was the case
+                                                                           improving current datasets should be considered as an interim
+with Figs. 9 and 10, in which the clusters correspond to different
+                                                                           approach and that efforts to collect larger datasets must continue.
+levels of costs. This is an indication that the profit margin is
+                                                                           Note as well, that data augmentation approaches have a limit
+not strongly related to the variables included in the compressed
+                                                                           on the increase in performance. As can be seen in Figs. 5 and
+representation. This is the opposite case as the total cost, in
+                                                                           6, the MAE and RMSE start decreasing as more augmented data
+which a clear relation between the compressed representations
+and the total cost can be observed particularly in the compressed          is used but increase again with more data. This is an indication
+representations generated by the variational autoencoders. In              that overfitting is occurring. Overfitting ensues when a machine
+other words, low-cost and high-cost projects are not directly              learning model learns features that occur a lot in the training
+related to a specific level of profit margins.                             dataset and discards small variations. Overfitting reduces gener-
+                                                                           alisation. Therefore, a balance should be found so that the amount
+6. Discussion                                                              of augmented data improves generalisation, but it does not cause
+                                                                           overfitting. In Table 3, the results of the metrics for an increment
+   The main findings of this study can be summarised as follows:           in the dataset with a factor of 5 is presented, because, for this
+(1) using autoencoders for data augmentation is a potentially              case, it seems that overfitting may start occurring with larger
+good approach when using neural network regressors. All the                increment factors. The potential overfitting behaviour observed
+autoencoders investigated provided significantly better model              in this study should be further investigated in other datasets.
+                                                                      12
+J.M. Davila Delgado and L. Oyedele                                                                                              Applied Soft Computing 112 (2021) 107836
+
+
+
+
+Fig. 9. Scatter graphs of the underground dataset project data encoded in two dimensions using the four autoencoders studied. The vertical and horizontal axes are
+unitless. The total cost of each project is indicated by different shades of colour. The colour scale is also unitless. Different diameters of the circular markers indicate
+varying costs. Small diameters indicate small costs and larger diameters larger costs.
+
+
+6.2. Data privacy                                                                        generalisation assessment of the approach. This is a complex
+                                                                                         limitation to address because the lack of existing datasets is the
+    Data privacy is a major challenge for implementing deep                              main motivation of this study, but it is also the main limitation for
+learning. Lack of data privacy is a significant limitation for com-                      its validation. Nevertheless, the approach has been presented in
+panies to adopt deep learning. Financial data is particularly sen-                       a detailed manner so that it can be easily implemented by other
+sitive, and construction companies are usually reluctant to share                        researchers. Consequently, further research efforts should focus
+this information with experts for data analytics. Data used in con-                      on testing the approaches presented in this paper with other
+struction management activities are very sensitive as well and in                        types of datasets and deep learning models. This will confirm that
+it resides the competitive advantage of construction companies.                          autoencoders are suitable models for data augmentations and
+The approach presented in this paper contributes to protecting                           provide more information related to the overfitting behaviours
+                                                                                         observed in the study. Also, a comparison of latent representa-
+sensitive data as the augmented datasets preserve the same cor-
+                                                                                         tions of different types of datasets could provide valuable insights
+relations of the original dataset but with different values. Using
+                                                                                         regarding the underlying correlation among data attributes. Fur-
+the approach presented in this paper, a construction company
+                                                                                         ther research should also focus on how to handle and interpret
+could generate an augmented dataset based on its original data,
+                                                                                         categorical variables. A large part of the construction manage-
+and then share the augmented dataset with data analysts without                          ment data consists of categorical variables; which is not the case
+the need to share the real dataset.                                                      with other datasets on which data augmentation has been used,
+                                                                                         e.g. images. Generative adversarial neural networks [83], another
+6.3. Limitations and further research                                                    prominent generative model, should be investigated as an alter-
+                                                                                         native to variational autoencoders. Further studies should also be
+   The main limitation of this study is that it uses only two                            focused on identifying the specific characteristics of datasets used
+similar types of datasets to evaluate the proposed approach, i.e.:                       in construction management and fine-tune data augmentation
+overhead and underground transmission lines, which limits the                            techniques to fit those characteristics.
+                                                                                    13
+J.M. Davila Delgado and L. Oyedele                                                                                              Applied Soft Computing 112 (2021) 107836
+
+
+
+
+Fig. 10. Scatter graphs of the overhead dataset project data encoded in two dimensions using the four autoencoders studied. The vertical and horizontal axes are
+unitless. The total cost of each project is indicated by different shades of colour. The colour scale is also unitless. Different diameters of the circular markers indicate
+varying costs. Small diameters indicate small costs and larger diameters larger costs.
+
+
+
+
+Fig. 11. Scatter graphs of the compressed representations. The vertical and horizontal axes are unitless. The profit margin of each project is indicated by different
+shades of colour. The colour scale is also unitless.
+
+                                                                                    14
+J.M. Davila Delgado and L. Oyedele                                                                                 Applied Soft Computing 112 (2021) 107836
+
+
+6.4. Contribution to knowledge                                              power transmission projects. Better results were obtained when
+                                                                            using the augmented datasets generated by all autoencoders. On
+    The contribution to knowledge of this study are (1) it pre-             average the autoencoders provide a model score improvement of
+sented a data augmentation technique for transformation variant             7.2% and 11.5% for the underground and overhead datasets, re-
+data. Many techniques have been developed for transformation                spectively. MAE and RMSE are lower for all autoencoders as well.
+invariant data that have contributed to improving the perfor-               The average error improvement for the underground and over-
+mance of deep learning models (e.g. [15]). This study showed                head datasets is 22.9% and 56.5%, respectively. Overall, the deep
+that autoencoders could be a good option for data augmenta-                 and variational autoencoders were the best performing models.
+tion for transformation variant data. (2) It presented empirical            The generative nature of the variational autoencoder can provide
+evidence showing that autoencoders can help with generalisa-                added benefits as the latent representations generated can be
+tion problems when large datasets are not available. (3) It pro-            used for project classification, as discussed in Section 5.1. The
+vided evidence that data augmentation using autoencoders is                 augmentation method proposed here was tested using other non-
+useful for deep learning regression models such as DNN, but                 deep-learning regression methods, i.e. RFR and SVR. Contrary
+not for other regression models such as RFR and SVR. Lastly, (4)            to the DNN, significant improvements were not achieved when
+it showed that compressed representations generated by vari-                using RFR and SVR. This can be explained due to the completely
+ational autoencoders could provide valuable insights that can               different nature among the regression models.
+unearth underlying relations among variables in the datasets.                   The novelty of this study is that presents an approach to
+                                                                            improve existing datasets and thus improve the generalisation of
+7. Implications for practice                                                deep learning models when other approaches are not feasible.
+                                                                            For instance, even though the size of construction datasets is
+    The main implication for practice of this study is that it pro-         increasing by the hour, compiling big enough datasets is onerous,
+vides stakeholders with an effective interim solution to the lack           and in many cases, is an impossible task; presenting an unavoid-
+of accessibility to big datasets. In many cases, compiling a suffi-         able hurdle that limits the adoption of deep learning models for
+ciently large dataset is not possible. This study provides a practi-        construction management tasks. This paper provides empirical
+cal approach to stakeholders to improve existing datasets so that           evidence that autoencoders are a good alternative to facilitate the
+advanced deep learning techniques can be used. These types of               implementation of deep learning models, while larger datasets
+solutions have been applied in other sectors successfully. This             are available.
+study shows that data augmentation and synthetic data are valid
+approaches to address the challenge of limited data and can be              CRediT authorship contribution statement
+used by practitioners in construction management as well.
+    This study also presents practitioners with a method to extract            Juan Manuel Davila Delgado: Conceptualization, Method-
+insights from data by plotting the data compressed represen-                ology, Software, Validation, Formal analysis, Investigation, Re-
+tations. These graphical visualisations represent the underlying            sources, Data curation, Writing – original draft, Writing – re-
+non-linear correlations of the data. These visualisations can be            view & editing, Visualization, Project administration. Lukumon
+used by practitioners to extract hidden insights from project data.         Oyedele: Funding acquisition, Supervision.
+For example, as the study showed, stakeholders can use latent
+visual representations to group projects in different categories.           Declaration of competing interest
+Projects in different categories can then be treated differently ac-
+cording to their similarities to ensure successful project delivery.            The authors declare that they have no known competing finan-
+For example, additional resources or additional oversight can be            cial interests or personal relationships that could have appeared
+allocated to more complex projects.                                         to influence the work reported in this paper.
+    Lastly, this study also provides practitioners with a method
+to improve data privacy. Financial data on construction projects            Acknowledgements
+contain sensitive information that must not be publicly avail-
+able. The approach presented in this paper enables practitioners               The authors would like to gratefully acknowledge the EPSRC
+to generate an analogous dataset based on the original. The                 and Innovate UK for funding this research under grant 102061,
+analogous dataset preserves the underlying correlations among               application number: 44746-322224.
+attributes in the dataset, but the individual instances are not the
+same. Using the analogous dataset for data analytics provides an            Research data
+extra layer of security. For example, construction companies have
+relatively limited access to in-house data specialists. For many              The data used in this study is confidential due to its sensitive
+construction companies is impossible to hire experts dedicated to           commercial nature.
+deep learning. The approach presented here enables construction
+companies to generate analogous datasets that can be shared                 References
+with external data analysts without sharing the real data.
+                                                                             [1] R. Vrijhoef, L. Koskela, A critical review of construction as a project-based
+8. Conclusions                                                                   industry: identifying paths towards a project-independent approach to
+                                                                                 construction, Proc. CIB Comb. Forces (2005) 1–10.
+                                                                             [2] O.J. Olaniran, P. Love, D. Edwards, A. Olatunji, J. Matthews, Cost overruns in
+   This paper investigated autoencoders as potential tools to
+                                                                                 hydrocarbon megaprojects: A critical review and implications for research,
+address the challenges with limited data availability in construc-               Proj. Manag. J. 46 (6) (2015) 126–138.
+tion management. Autoencoders can be an effective alternative                [3] J.S. Shane, K.R. Molenaar, S. Anderson, C. Schexnayder, Construction project
+when compiling sufficiently big datasets becomes a prohibitively                 cost escalation factors, J. Manage. Eng. 25 (4) (2009) 221–229.
+expensive task. Three types of unsupervised autoencoders (un-                [4] US Census Bureu, Business Dynamic Statistics, 2014.
+                                                                             [5] TCI, Top 100 Construction Companies 2017, 2018.
+dercomplete, sparse, and deep) and one generative autoencoder                [6] C.H. Caldas, L. Soibelman, Automating hierarchical document classification
+(variational) were compared. The autoencoders were used to                       for construction management information systems, Autom. Constr. 12 (4)
+augment two financial datasets of underground and overhead                       (2003) 395–406.
+
+                                                                       15
+J.M. Davila Delgado and L. Oyedele                                                                                                  Applied Soft Computing 112 (2021) 107836
+
+
+ [7] J.M. Davila Delgado, L. Oyedele, M. Bilal, A. Ajayi, L. Akanbi, O. Akinade,             [33] M. Mousa, X. Luo, B. McCabe, Utilizing BIM and carbon estimating methods
+     Big data analytics system for costing power transmission projects, J. Constr.                for meaningful data representation, Procedia Eng. 145 (2016) 1242–1249.
+     Eng. Manag. 146 (1) (2020) 05019017.                                                    [34] M. Bilal, L.O. Oyedele, J. Qadir, K. Munir, S.O. Ajayi, O.O. Akinade, H.A.
+ [8] L. Wang, F. Leite, Knowledge discovery of spatial conflict resolution                        Owolabi, et al., Big data in the construction industry: A review of present
+     philosophies in BIM-enabled MEP design coordination using data mining                        status, opportunities, and future trends, Adv. Eng. Inf. 30 (3) (2016)
+     techniques: A proof-of-concept, Computing in Civil Engineering - Proceed-                    500–521.
+     ings of the 2013 ASCE International Workshop on Computing in Civil                      [35] S.H. Hamilton, C.A. Pollino, A.J. Jakeman, Habitat suitability modelling of
+     Engineering, 2013.                                                                           rare species using Bayesian networks: Model evaluation under limited
+ [9] H.-B. Liu, Y.-B. Jiao, Application of genetic algorithm-support vector ma-                   data, Ecol. Model. 299 (2015) 64–78.
+     chine (GA-SVM) for damage identification of bridge, Int. J. Comput. Intell.             [36] A.G. Roy, S. Conjeti, D. Sheet, A. Katouzian, N. Navab, C. Wachinger,
+     Appl. 10 (04) (2011) 383–397.                                                                Error corrective boosting for learning fully convolutional networks with
+[10] E. Murchu, D. Platt, G. Webb, The Performance Advantages of Digitizing                       limited data, in: International Conference on Medical Image Computing
+     the Built Environment, 2016.                                                                 and Computer-Assisted Intervention, Springer, Cham, 2017, pp. 231–239.
+[11] B. Ali, The Silicon Valley giant that wants to reinvent construction, 2018,             [37] N.G. Polson, J.G. Scott, J. Windle, BayesIan inference for logistic models
+     Construction News, available at: https://www.constructionnews.co.uk/                         using polya-gamma latent variables, 2012.
+     best-practice/technology/the-silicon-valley-giant-that-wants-to-reinvent-
+                                                                                             [38] N. Hazrati, B. Shams, S. Haratizadeh, Entity representation for pairwise
+     construction/10034264.article (accessed 8 2019).
+                                                                                                  collaborative ranking using restricted Boltzmann machine, Expert Systems
+[12] D. Farnham, Global construction industry expected to reach $10 trillion by
+                                                                                                  with Applications, Pergamon 116 (2019) 161–171.
+     2020, in: Case Study Research: Design & Methods: Applied Social Research
+                                                                                             [39] L. Zhao, Y. Zhou, H. Lu, H. Fujita, Parallel computing method of deep belief
+     Methods Series, 2018.
+                                                                                                  networks and its application to traffic flow prediction, Knowl.-Based Syst.
+[13] J. Whyte, A. Stasis, C. Lindkvist, Managing change in the delivery of
+                                                                                                  163 (2019) 972–987.
+     complex projects: Configuration management, asset information and ‘big
+                                                                                             [40] Z. Gan, R. Henao, D. Carlson, L. Carin, Learning deep sigmoid belief
+     data’, Int. J. Proj. Manage. 34 (2) (2016) 339–351.
+                                                                                                  networks with data augmentation, Artif. Intell. Stat. (February) (2015)
+[14] P.Y. Simard, D. Steinkraus, J.C. Platt, Best practices for convolutional neural
+                                                                                                  268–276.
+     networks applied to visual document analysis, in: Seventh International
+     Conference on Document Analysis and Recognition, 2003, Proceedings                      [41] M. Aubry, D. Maturana, A. Efros, B. Russell, J. Sivic, Seeing 3d chairs:
+     (2003) 958–962.                                                                              exemplar part-based 2d-3d alignment using a large dataset of cad models,
+[15] A. Krizhevsky, I. Sutskever, G.E. Hinton, ImageNet Classification with Deep                  Proceedings of the IEEE Conference on Computer Vision and Pattern
+     Convolutional Neural Networks, 2012.                                                         Recognition, 2014.
+[16] A. Handa, V. Patraucean, V. Badrinarayanan, S. Stent, R. Cipolla, Un-                   [42] M. Aubry, B. Russell, Understanding deep features with computer-
+     derstanding Real World Indoor Scenes With Synthetic Data, The IEEE                           generated imagery, Proceedings of the IEEE International Conference on
+     Conference on Computer Vision and Pattern Recognition (CVPR), 2016, pp.                      Computer Vision, 2015.
+     4077–4085.                                                                              [43] A. Dosovitskiy, P. Fischer, E. Ilg, P. Hausser, C. Hazirbas, Flownet: Learning
+[17] B. Zoph, D. Yuret, J. May, K. Knight, Transfer Learning for Low-Resource                     optical flow with convolutional networks, in: Proceedings of the IEEE
+     Neural Machine Translation, 2016.                                                            International Conference on Computer Vision, 2015.
+[18] S. Gurumurthy, R. Kiran Sarvadevabhatla, R. Venkatesh Babu, DeLiGAN :                   [44] S. Gupta, R. Girshick, P. Arbeláez, J. Malik, Learning rich features from
+     Generative adversarial networks for diverse and limited data, in: CVPR                       RGB-d images for object detection and segmentation, in: Computer Vision
+     2017, 2017, pp. 166–174.                                                                     ECCV 2012, Springer, Cham, 2014, pp. 345–360.
+[19] Chao Tao, Hongbo Pan, Yansheng Li, Zhengrou Zou, Unsupervised spectral–                 [45] S. Gupta, P. Arbeláez, R. Girshick, J. Malik, Aligning 3D models to RGB-
+     spatial feature learning with stacked sparse autoencoder for hyperspectral                   D images of cluttered scenes, in: Proceedings of the IEEE Conference on
+     imagery classification, IEEE Geosci. Remote Sens. Lett. 12 (12) (2015)                       Computer Vision and Pattern Recognition, 2015.
+     2438–2442.                                                                              [46] J. Wu, I. Yildirim, J.J. Lim, B. Freeman, J. Tenenbaum, Galileo: Perceiving
+[20] M. Kampffmeyer, S. Lø kse, F.M. Bianchi, R. Jenssen, L. Livi, The deep                       physical object properties by integrating a physics engine with deep
+     kernelized autoencoder, Appl. Soft Comput. 71 (2018) 816–825.                                learning, in: (NIPS 2015), Adv. Neural Inf. Process. Syst. 28 (2015) 127–135.
+[21] H.-M. Chen, K.-C. Chang, T.-H. Lin, A cloud-based system framework for                  [47] S. Thrun, L. Pratt, Learning to learn: Introduction and overview, in:
+     performing online viewing, storage, and analysis on big data of massive                      Learning To Learn, Springer US, Boston, MA, 1998, pp. 3–17.
+     BIMs, Autom. Constr. 71 (2016) 34–48.                                                   [48] J. Yosinski, J. Clune, Y. Bengio, H. Lipson, How transferable are features in
+[22] S. Gao, L. Li, W. Li, K. Janowicz, Y. Zhang, Constructing gazetteers from                    deep neural networks?, 2014.
+     volunteered big geo-data based on Hadoop, Comput. Environ. Urban Syst.                  [49] M. Neuhausen, P. Herbers, M. König, Synthetic data for evaluating the
+     61 (2017) 172–186.                                                                           visual tracking of construction workers, in: Construction Research Congress
+[23] C. Yang, M. Yu, F. Hu, Y. Jiang, Y. Li, Utilizing cloud computing to address                 2020: Computer Applications - Selected Papers from the Construction
+     big geospatial data challenges, Comput. Environ. Urban Syst. 61 (2017)                       Research Congress 2020, American Society of Civil Engineers (ASCE), 2020,
+     120–128.                                                                                     pp. 354–361.
+[24] J. Xia, C. Yang, Q. Li, Using spatiotemporal patterns to optimize earth
+                                                                                             [50] Y. Hong, S. Park, H. Kim, Synthetic data generation for indoor scene
+     observation big data access: Novel approaches of indexing, service mod-
+                                                                                                  understanding using BIM, in: Proceedings of the 37th International Sym-
+     eling and cloud computing, Comput. Environ. Urban Syst. (2018) available
+                                                                                                  posium on Automation and Robotics in Construction (ISARC), International
+     at:https://doi.org/10.1016/J.COMPENVURBSYS.2018.06.010.
+                                                                                                  Association for Automation and Robotics in Construction (IAARC), 2020,
+[25] K.K. Han, M. Golparvar-Fard, Potential of big visual data and building infor-
+                                                                                                  available at:https://doi.org/10.22260/isarc2020/0048.
+     mation modeling for construction performance analytics: An exploratory
+                                                                                             [51] K.M. Rashid, J. Louis, Times-series data augmentation and deep learning for
+     study, Autom. Constr. 73 (2017) 184–198.
+                                                                                                  construction equipment activity recognition, Adv. Eng. Inform. 42 (2019a)
+[26] M. Martínez-Rojas, N. Marín, M.A. Vila, The role of information tech-
+                                                                                                  100944.
+     nologies to address data handling in construction project management,
+                                                                                             [52] K.M. Rashid, J. Louis, Window-warping: A time series data augmentation
+     J. Comput. Civ. Eng. 30 (4) (2016) 04015064.
+                                                                                                  of IMU data for construction equipment activity identification, in: Inter-
+[27] D.W. Halpin, G. Lucko, B.A. Senior, Construction Management, Wiley, 2011.
+                                                                                                  national Symposium on Automation and Robotics in Construction (ISARC
+[28] J. Manyika, S. Ramaswamy, K. Somesh, H. Sarrazin, G. Pinkus, G. Sethu-
+                                                                                                  2019), IAARC Publication, 2019b, pp. 651–657.
+     pathy, A. Yaffe, Digital America: A Tale of Haves and Have-Mores,
+     2015.                                                                                   [53] X. Wu, L. Liang, Y. Shi, S. Fomel, FaultSeg3D: Using synthetic data sets
+[29] J.M. Davila Delgado, I. Brilakis, C.R. Middleton, Open data model stan-                      to train an end-to-end convolutional neural network for 3D seismic fault
+     dards for structural performance monitoring of infrastructure assets, in:                    segmentation, Geophysics 84 (3) (2019) IM35–IM45.
+     J. Beetz (Ed.), CIB W78 Conference 2015, TU Eindhoven, Eindhoven, The                   [54] J.W. Ma, T. Czerniawski, F. Leite, Semantic segmentation of point clouds of
+     Netherlands, 2015, pp. 1–10.                                                                 building interiors with deep learning: Augmenting training datasets with
+[30] J.M. Davila Delgado, L.J. Butler, N. Gibbons, I. Brilakis, M.Z.E.B Elshafie, C.              synthetic BIM-based point clouds, Autom. Constr. 113 (2020) 103144.
+     Middleton, Management of structural monitoring data of bridges using                    [55] C. Chokwitthaya, Y. Zhu, S. Mukhopadhyay, A. Jafari, Applying the Gaussian
+     BIM, Proc. Inst. Civ. Eng. 170 (3) (2017) 204–218.                                           mixture model to generate large synthetic data from a small data set, in:
+[31] T. Gerrish, K. Ruikar, M.J. Cook, M. Johnson, M. Phillip, Attributing in-use                 Construction Research Congress 2020: Computer Applications - Selected
+     building performance data to an as-built building information model for                      Papers from the Construction Research Congress 2020, American Society
+     lifecycle building performance management, in: J. Beetz (Ed.), Proceedings                   of Civil Engineers (ASCE), 2020, pp. 1251–1260.
+     of the 32nd CIB W78 Conference, CIB, 2015, pp. 1–11.                                    [56] G.E. Hinton, R.R. Salakhutdinov, Reducing the dimensionality of data with
+[32] J.M. Davila Delgado, L.J. Butler, I. Brilakis, M.Z.E.B Elshafie, C.R. Middleton,             neural networks, Science 313 (5786) (2006) 504–507.
+     Structural performance monitoring using a dynamic data-driven BIM                       [57] M.A. Carreira-Perpinan, R. Raziperchikolaei, Hashing with binary autoen-
+     environment, J. Comput. Civ. Eng. 32 (3) (2018) 04018009.                                    coders, in: CVPR 2015, 2015, pp. 557–566.
+
+                                                                                        16
+J.M. Davila Delgado and L. Oyedele                                                                                           Applied Soft Computing 112 (2021) 107836
+
+
+[58] B. Xia, C. Bao, Wiener filtering based speech enhancement with weighted           [69] Z. Chen, W. Li, Multisensor feature fusion for bearing fault diagnosis using
+     denoising auto-encoder and noise classification, Speech Commun. 60                     sparse autoencoder and deep belief network, IEEE Trans. Instrum. Meas.
+     (2014) 13–29.                                                                          66 (7) (2017) 1693–1702.
+[59] R. Lan, Z. Li, Z. Liu, T. Gu, X. Luo, Hyperspectral image classifica-             [70] D.P. Kingma, M. Welling, Auto-Encoding Variational Bayes, 2013.
+     tion using k-sparse denoising autoencoder and spectral–restricted spatial         [71] C. Doersch, Tutorial on Variational Autoencoders, 2016.
+     characteristics, Appl. Soft Comput. 74 (2019) 693–708.                            [72] J. Walker, C. Doersch, A. Gupta, M. Hebert, An uncertain future: Forecasting
+[60] A. Majumdar, Graph structured autoencoder, Neural Netw. 106 (2018)                     from static images using variational autoencoders, in: European Conference
+     271–280.                                                                               on Computer Vision, Springer, Cham, 2016, pp. 835–851.
+[61] H. Li, M. Gong, C. Wang, Q. Miao, Self-paced stacked denoising autoen-            [73] Z. Yang, Z. Hu, R. Salakhutdinov, T. Berg-Kirkpatrick, Improved variational
+     coders based on differential evolution for change detection, Appl. Soft                autoencoders for text modeling using dilated convolutions, in: Proceedings
+     Comput. 71 (2018) 698–714.                                                             of the 34th International Conference on Machine Learning - Vol. 70,
+[62] S.-X. Lv, L. Peng, L. Wang, Stacked autoencoder with echo-state regres-                JMLR.org, 2017, pp. 3881–3890.
+     sion for tourism demand forecasting using search query data, Appl. Soft           [74] T. Blaschke, M. Olivecrona, O. Engkvist, J. Bajorath, H. Chen, Application
+     Comput. 73 (2018) 119–133.                                                             of generative autoencoder in De Novo molecular design, Mol. Inform. 37
+[63] M. Ghifary, W.Bastiaan. Kleijn, M. Zhang, D. Balduzzi, Domain generaliza-              (1–2) (2018) 1700123.
+     tion for object recognition with multi-task autoencoders, in: ICCV 2015,          [75] S.M. Trost, G.D. Oberlender, Predicting accuracy of early cost estimates
+     2015, pp. 2551–2559.                                                                   using factor analysis and multivariate regression, J. Constr. Eng. Manag.
+[64] C. Zhou, J.G. Chase, G.W. Rodgers, Degradation evaluation of lateral story             129 (2) (2003) 198–204.
+     stiffness using HLA-based deep learning networks, Advanced Engineering            [76] L. Breiman, Random forests, Mach. Learn. 45 (1) (2001) 5–32.
+     Informatics 39 (2019) 259–268.                                                    [77] H. Drucker, C. Burges, L. Kaufman, A. Smola, V. Vapnik, Support vector
+[65] L. Gondara, Medical image denoising using convolutional denoising au-                  regression machines, Adv. Neural Inf. Process. Syst. (1997) 155–161.
+     toencoders, in: 2016 IEEE 16th International Conference on Data Mining            [78] A.J. Smola, B. Schölkopf, A tutorial on support vector regression, Stat.
+     Workshops (ICDMW), IEEE, 2016, pp. 241–246.                                            Comput. 14 (3) (2004) 199–222.
+[66] P. Vincent, H. Larochelle, Y. Bengio, P.-A. Manzagol, Extracting and com-         [79] S. Deng, T.-H. Yeh, Using least squares support vector machines for the
+     posing robust features with denoising autoencoders, in: Proceedings of the             airframe structures manufacturing cost estimation, Int. J. Prod. Econ. 131
+     25th International Conference on Machine Learning - ICML ’08, ACM Press,               (2) (2011) 701–708.
+     New York, New York, USA, 2008, pp. 1096–1103.                                     [80] G.K.F. Tso, K.K.W. Yau, Predicting electricity energy consumption: A com-
+[67] C. Lu, Z.-Y. Wang, W.-L. Qin, J. Ma, Fault diagnosis of rotary machinery               parison of regression analysis, decision tree and neural networks, Energy
+     components using a stacked denoising autoencoder-based health state                    32 (9) (2007) 1761–1768.
+     identification, Signal Process. 130 (2017) 377–388.                               [81] M.D. Zeiler, ADADELTA: An Adaptive Learning Rate Method, 2012.
+[68] J. Xu, L. Xiang, Q. Liu, H. Gilmore, J. Wu, J. Tang, A. Madabhushi,               [82] D.P. Kingma, J.L. Ba, Adam: A method for stochastic optimization, in: ICLR
+     Stacked sparse autoencoder (SSAE) for nuclei detection on breast cancer                2015, 2015, pp. 1–15.
+     histopathology images, IEEE Trans. Med. Imaging 35 (1) (2016) 119–130.            [83] I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair,
+                                                                                            A. Courville, et al., Generative Adversarial Nets, 2014.
+
+
+
+
+                                                                                  17
+

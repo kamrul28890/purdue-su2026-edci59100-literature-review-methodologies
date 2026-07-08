@@ -1,0 +1,921 @@
+DOI: 10.1111/mice.12695
+
+
+I N D U S T R I A L A P P L I C AT I O N
+
+
+
+
+3D convolutional neural network-based one-stage
+model for real-time action detection in video of
+construction equipment
+
+Seunghoon Jung                        Jaewon Jeoung                 Hyuna Kang              Taehoon Hong
+
+Department of Architecture &
+Architectural Engineering, Yonsei                    Abstract
+University, Seoul, Korea                             This study aims to propose a three-dimensional convolutional neural network
+Correspondence
+                                                     (3D CNN)-based one-stage model for real-time action detection in video of
+Taehoon Hong, Department of Architec-                construction equipment (ADVICE). The 3D CNN-based single-stream feature
+ture & Architectural Engineering, Yonsei             extraction network and detection network are designed with the implementa-
+University, Seoul, Republic of Korea.
+Email: hong7@yonsei.ac.kr                            tion of the 3D attention module and feature pyramid network developed in this
+                                                     study to improve performance. For model evaluation, 130 videos were collected
+Funding Information
+                                                     from YouTube including videos of four types of construction equipment at var-
+National Research Foundation of
+Korea, Grant/Award Number: NRF-                      ious construction sites. Trained on 520 clips and tested on 260 clips, ADVICE
+2018R1A5A1025137                                     achieved precision and recall of 82.1% and 83.1%, respectively, with an inference
+                                                     speed of 36.6 frames per second. The evaluation results indicate that the proposed
+                                                     method can implement the 3D CNN-based one-stage model for real-time action
+                                                     detection of construction equipment in videos of diverse, variable, and complex
+                                                     construction sites. The proposed method paved the way to improving safety, pro-
+                                                     ductivity, and environmental management of construction projects.
+
+
+1         INTRODUCTION                                                      in construction projects has become more obvious than
+                                                                            ever (Biörck et al., 2020). In the future, smart construc-
+Recently, as the “global lockdown” is demanding min-                        tion that uses emerging technologies (e.g., artificial intel-
+imal human contact and digital communications amid                          ligence, big data, etc.) will become essential in construc-
+the coronavirus disease 2019 (COVID-19) pandemic (Lew-                      tion sites to strengthen remote monitoring and manage-
+nard & Lo, 2020; Spinelli & Pellino, 2020), the fourth                      ment and to promote off-site construction in the future
+industrial revolution that had started in all sectors is                    (Maskuriy et al., 2019). These include (i) work safety—
+further accelerating (AlMaadeed, 2020; Costabile et al.,                    by preventing safety accidents through the recognition of
+2020). Despite the need for reduced human contact, the                      the movement of construction equipment in real-time (W.
+labor-intensive construction industry shows a relatively                    Fang et al., 2020); (ii) construction productivity—by mon-
+lower teleworking rate (22%) than other industries (Din-                    itoring equipment in real-time so as to increase marginal
+gel & Neiman, 2020) and still regards face-to-face contact                  product labor (Goodrum et al., 2011; Zhai et al., 2009); and
+as an essential requirement. Therefore, limitations man-                    (iii) environmental management—environmental man-
+ifest in remote monitoring and control of worksites (Y.                     agement of pollutants (noise, vibration dust, and green-
+Fang et al., 2016; Golparvar-Fard et al., 2013). Accordingly,               house gases) produced by construction equipment opera-
+the importance of automated and unmanned operation                          tion (Jung et al., 2019, 2020; Kang et al., 2020).
+
+
+© 2021 Computer-Aided Civil and Infrastructure Engineering
+
+
+126      wileyonlinelibrary.com/journal/mice                                                                Comput Aided Civ Inf. 2022;37:126–142.
+                                                                                                                                    14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                   127
+
+
+   Construction equipment monitoring is traditionally per-           This study aims to propose ADVICE (action detection in
+formed directly by a construction manager and takes much          video of construction equipment) for monitoring actions
+time and effort to simultaneously cover all sites in a large      of construction equipment at various construction sites.
+construction project (J. Kim & Chi, 2019). Accordingly,           ADVICE is a 3D CNN-based one-stage model for real-time
+previous studies have developed methods to monitor the            action detection of construction equipment. Toward this
+movement and location of construction equipment using             end, the 3D CNN-based single-stream feature extraction
+sensors. In some studies, sensor-based monitoring meth-           network that extracts the spatio-temporal features and the
+ods for construction equipment using various sensors such         detection network that generates the detection results were
+as radio frequency identification systems (RFID; Y. Fang          designed. Also, the 3D attention module, feature pyramid
+et al., 2016), global positioning systems (GPS; Alshibani &       network, and multiclass output algorithms were developed
+Moselhi, 2016), light detection and ranging (Wang et al.,         to improve the model performance while maintaining the
+2015), mobile phone (Akhavian & Behzadan, 2015), and              inference speed for real-time detection. For model applica-
+inertial measurement units (H. Kim, Ahn, et al., 2018)            tion at complex and various construction sites, the perfor-
+have been developed. However, such methods require sen-           mance of the ADVICE was analyzed, and its reliability was
+sors for individual construction equipment. Furthermore,          evaluated using the video dataset of the multiple construc-
+location-based construction equipment monitoring meth-            tion sites collected from YouTube.
+ods based on GPS or RFID are limited in that they do
+not recognize the type of construction equipment and
+action.                                                           2      RELATED WORKS
+   On the other hand, other studies monitored construc-
+tion equipment in real-time by using computer vision-             In this section, various related works on the monitoring of
+based technology that collected and analyzed construction         construction sites using a computer vision-based method
+site information automatically (Golparvar-Fard et al., 2013;      were reviewed. Focusing on the object and action detec-
+Heydarian et al., 2012). Since the computer vision-based          tion, this study reviewed previous studies on the 2D CNN
+method does not require additional sensors, except for the        that is used based on the emerging big data and computing-
+device for image capture, it is both time- and cost-efficient     related technologies and the 3D CNN, which is being used
+(Roberts & Golparvar-Fard, 2019). Recently, several studies       effectively in video processing recently.
+that used the convolutional neural network (CNN) based
+on big data have been conducted in two categories (W. Fang
+et al., 2018; Roberts & Golparvar-Fard, 2019; Yan et al.,         2.1       2D CNN
+2020): (i) Object detection, which combined object local-
+ization and classification; and (ii) action detection, which      With the recent advancements in computer calculation
+can recognize and classify the motion of equipment or             performance, the 2D CNN has shown much improved per-
+workers. The object detection model predicts the type of          formance in processing big data compared to the tradi-
+construction equipment and its location using the image-          tional hand-crafted feature method. As a result, the 2D
+based two-dimensional (2D) CNN (e.g., Faster region-              CNN is now widely used in studies related to image and
+based CNN (R-CNN) and Single shot multibox detector               video processing tasks. Also in the construction industry,
+(SSD); W. Fang et al., 2018; Thakar et al., 2018). However,       several studies have developed a model that uses the 2D
+2D CNN only extracts spatial features and is inappropri-          CNN to detect objects in a construction site for structural
+ate for classification or detection of the actions that require   health monitoring (Cha et al., 2018; R. Li, Yuan, et al., 2018;
+temporal features from a sequence of images. Other studies        Liang, 2019; Narazaki et al., 2018) or workers’ safety (W.
+proposed multistage action detection methods where the            Fang et al., 2018; Yan et al., 2020).
+action classification stage was performed using the long             Several studies have been conducted not only on
+short-term memory (LSTM) or three-dimensional (3D)                structural health monitoring and workers’ safety but
+CNN to extract the spatio-temporal features, which repre-         also on construction equipment monitoring. Roberts and
+sent the time-series change of the spatial features extracted     Golparvar-Fard (2019) proposed an action labeling method
+from the object detection stage (Chen et al., 2020; Luo           using the hidden Markov model and proposed end-to-end
+et al., 2020). However, each stage of the multistage action       detection and tracking method based on the 2D CNN.
+detection method produces errors and requires consider-           Object detection was performed in real-time by calculating
+able processing time. Thus, such errors at the object detec-      the frame within 1 s with the Faster R-CNN (W. Fang et al.,
+tion stage may cause a huge impact on accuracy in the             2018). H. Kim, Kim, et al. (2018) conducted object detec-
+action classification stage, consequently making real-time        tion of construction equipment using the region-based
+detection difficult.                                              fully convolutional network (R-FCN). Yan et al. (2020)
+                                                                                                                                     14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+128                                                                                                                    JUNG et al.
+
+
+proposed the method to detect the 3D information of an            bining deep activity features and contextual information
+object (top, front, and elevation) by inputting 2D images         after having detected objects with the YOLOv3 and clas-
+from the camera to the R-FCN. Arabi et al. (2020) con-            sified their action with the 3D CNN. These two studies
+ducted the research on the development of solutions for           proposed a multistage framework consisting of the object
+construction vehicles by proposing an object detection            detection, tracking, and action detection stages. First, the
+model that used an improved version of SSD MobileNet.             object detection was performed with extracted spatial fea-
+   In several studies focusing on action detection, which         tures from the 2D CNN. Through a tracking algorithm,
+requires additional temporal features, 2D CNN is also used        the sequential spatio-temporal features were extracted as
+to recognize and classify actions. Luo et al. (2018) classi-      to be input to the 3D CNN. Finally, the action classifica-
+fied the action of workers by tracking their work using           tion result from the 3D CNN was combined with the object
+the multi-domain CNN and by extracting the spatial and            detection result.
+temporal features based on the optical flow estimation               The proposed multistage framework could not perform
+technology. Slaton et al. (2020) proposed a classification        the whole process from the spatio-temporal feature extrac-
+framework for the action of construction equipment by             tion to the action detection at once. Even though the stud-
+introducing a hybrid network between the LSTM and the             ies processed the action classification individually at a
+2D CNN. Kim and Chi (2020) conducted an interaction               speed of 15 frames per second (fps) or higher, the whole
+analysis between actions after classifying their visual fea-      process of the object detection and the action classification
+tures and operation cycles with the 2D CNN and the                could not be performed in real time. Furthermore, since
+double-layer LSTM.                                                the errors generated in the previous stage would affect
+   At the construction site, 2D CNN, such as Faster R-CNN,        the following stage in a multistage framework, the perfor-
+conducted fast object detection of construction equipment,        mance of action classification will be degraded due to the
+which is spatial information, and maintained high accu-           errors in object detection and tracking.
+racy in action recognition. However, 2D CNN can only deal
+with 2D information, which is related to the spatial fea-
+tures. Therefore, for action detection using the 2D CNN,          3  RESEARCH SCOPE AND
+other algorithms for encoding spatio-temporal informa-            CHALLENGES
+tion, such as LSTM, are required. This entails additional
+computation so action detection cannot be performed in            In the field of computer science, there has been active
+real time.                                                        research on the 3D CNN-based one-stage model, which
+                                                                  can extract spatial and temporal features at the same time
+                                                                  and achieved high performance in human action detec-
+2.2       3D CNN                                                  tion (Carrara et al., 2019; Hou et al., 2017; Kalogeiton et al.,
+                                                                  2017; Z. Li, Gavrilyuk, et al., 2018; J. Zhao & Snoek, 2019).
+For action detection, spatio-temporal features, which are         Compared to the multistage model, the one-stage model
+the combination of the spatial features required for object       offers fast computation and requires smaller datasets as
+detection and the temporal features required for action           its object detection and action classification is performed
+classification, should be extracted. The 3D CNN uses the          end-to-end. In particular, the single-stream model, where
+3D convolutional layer and the 3D pooling layer that adds         input data for action classification and object detection are
+the depth axis to the 2D CNN. As sequential video frames          entered together, has a simple architecture and requires
+are staked along with the depth axis, the spatio-temporal         less computation.
+features can be extracted. The 3D CNN showed consid-                 Despite such advantages of the 3D CNN-based one-stage
+erably higher performance than the 2D CNN in terms of             action detection model, no studies used it for construc-
+action classification and detection tasks (Ji et al., 2013). In   tion equipment action detection in real time. Therefore, it
+particular, the 3D CNN is widely used in the classification       is necessary to apply the 3D CNN-based one-stage action
+or detection of human actions (R. Zhao et al., 2017) and          detection model to the real-time monitoring of construc-
+hand gestures on videos (Ge et al., 2017).                        tion equipment actions. Before it can be applied, however,
+   In keeping with such a trend, the construction industry        the following challenges must be resolved.
+also used the 3D CNN to develop an action classification             First, there are diverse types of construction equip-
+or action detection method in order to monitor construc-          ment and corresponding equipment actions. The existing
+tion workers and equipment action. Chen et al. (2020) ana-        3D CNN-based one-stage model targets human actions
+lyzed the productivity of construction equipment by using         and predicts only the action class. However, this study
+the 3D CNN after implementing the Fast R-CNN. Luo et al.          needs to predict the object class, that is, the type of
+(2020) improved the action classification accuracy by com-        construction equipment and the action class of the
+                                                                                                                                   14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                  129
+
+
+
+
+FIGURE 1       Overview of the developed model, action detection in video of construction equipment (ADVICE)
+
+
+corresponding construction equipment. Second, at a con-             4       METHODOLOGY
+struction site, besides construction equipment, there are
+various other objects, such as materials and structures in          As shown in Figure 1, ADVICE consists of two parts: (i) The
+the background, and each construction site has different            single-stream feature extraction network is for extracting
+backgrounds. Furthermore, construction equipment and                spatio-temporal features at each of the three submodules
+their actions in the same class have differences such as            (submodules 3, 4, and 5) from a sequence of video frames
+colors, sizes, and moving speed, whereas among classes,             after they go through a network in which 3D attention
+differences are insignificant such as idling and traveling,         modules are applied to the existing 3D CNN architecture.
+which can be performed by all the construction equip-               (ii) The detection network extracts three detection results
+ment. Therefore, there is a high similarity among classes.          from the spatio-temporal features, which are taken from
+Thus, it is important to segment the construction equip-            the single-stream feature extraction network, after the fea-
+ment from its background and extract significant spatio-            ture pyramid network and output layers.
+temporal features from similar appearances (e.g., having
+wheels and a bucket) and actions (e.g., digging and unload-
+ing soil). Finally, multiple number of equipment perform            4.1   Single-stream feature extraction
+various activities in construction sites at the same time,          network
+and their scales in video frames are diverse. Since construc-
+tion equipment are used in diverse locations at a construc-         This study designed a 3D CNN-based single-stream fea-
+tion site, their size in video frames may differ according          ture extraction network that extracts spatio-temporal fea-
+to their distance from the camera and the optical zoom of           tures from the input video frames, which is necessary
+the camera, even if they have the same size. Therefore, the         for the detection of construction equipment actions. In
+model should be able to detect at once multiple numbers             extracting spatio-temporal features, the 3D convolutional
+of construction equipment that have different scales.               layer needs input as a four-dimensional (4D) feature map,
+   To address the above challenges, ADVICE was devel-               that is, 𝐹input ∈ ℝ𝑊×𝐻×𝐷×𝐶 (W, H, D, and C are number of
+oped for real-time action detection of construction equip-          width, height, depth, and channels, respectively), which
+ment (i.e., localization and classification of various types of     generates an output feature map (𝐹output ) after 3D convo-
+equipment actions) on diverse videos recorded at different          lution computation (Diba et al., 2018). Particularly, the 3D
+construction sites from various perspectives and distances          attention module was developed to improve action detec-
+with varying camera motions. For this whole process to be           tion performance with slightly increasing computation by
+performed in real time, the inference speed of the model            focusing on the significant features along both the spatial
+should comply with the recording speed of the video (25             and temporal dimensions.
+fps or above).
+                                                                                                                                                14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+130                                                                                                                               JUNG et al.
+
+
+TA B L E 1     Architecture of the 3D ResNeXt-101 (input: 224 × 224 × 16 × 3)
+ Submodule                         3D ResNeXt-101 layers                                                     Output feature maps
+ Submodule 1                       7 × 7 × 7, 64, 2 × 2 spatial stride, 1 temporal stride                    56 × 56 × 8 × 64
+                                   3 × 3 × 3 max pooling, stride 2
+                                   ⎛ 1 × 1 × 1 64 ⎞
+ Submodule 2                       ⎜ 3 × 3 × 3 64 ⎟ × 3                                                      56 × 56 × 8 × 256
+                                   ⎜              ⎟
+                                   ⎝1 × 1 × 1 256⎠
+                                   ⎛1 × 1 × 1 128 ⎞
+ Submodule 3                       ⎜ 3 × 3 × 3 128 ⎟ × 4                                                     28 × 28 × 4 × 512
+                                   ⎜               ⎟
+                                   ⎝ 1 × 1 × 1512 ⎠
+                                   ⎛ 1 × 1 × 1 256 ⎞
+ Submodule 4                       ⎜ 3 × 3 × 3 256 ⎟ × 23                                                    14 × 14 × 2 × 1024
+                                   ⎜                 ⎟
+                                   ⎝1 × 1 × 1 1, 024⎠
+                                   ⎛ 1 × 1 × 1 512 ⎞
+ Submodule 5                       ⎜ 3 × 3 × 3 512 ⎟ × 3                                                     7 × 7 × 1 × 2048
+                                   ⎜                 ⎟
+                                   ⎝1 × 1 × 1 2, 048⎠
+
+
+
+
+4.1.1        3D CNN architecture                                           for spatial feature attention with a negligible overhead of
+                                                                           computation (Woo et al., 2018), this study developed the 3D
+The performance of the feature extraction network affects                  attention module to help refine spatio-temporal features
+the accuracy of the overall model (Kornblith et al., 2019).                for detection of construction equipment actions by utiliz-
+Therefore, 3D ResNeXt-101, one of the single-stream 3D                     ing minimal computational load.
+CNN architectures that showed excellent performance in                        The developed 3D attention module can refine spatio-
+the existing action classification and detection, was used                 temporal features by expanding the dimension of the pro-
+as the basic architecture of the feature extraction network                cessed 4D features (i.e., the width, height, depth, and chan-
+(Hara et al., 2018).                                                       nels). Particularly, the module is modularized into simple
+   The 3D ResNeXt-101 in this study consists of five sub-                  pooling and convolution so that it could be applied with-
+modules (see Table 1). The input size was defined by mul-                  out transforming the existing 3D CNN architecture, such
+tiplying 224 × 224 by the depth (i.e., the number of input                 as the 3D ResNeXt-101. The attention module consists of
+frames), following previous studies that used the same size                two types of the attention submodule (see Figure 2): (i) The
+(Köpüklü et al., 2019; Luo et al., 2018).                                  one-dimensional (1D) channel attention module that can
+                                                                           emphasize object features; and (ii) the 3D spatio-temporal
+                                                                           attention module that can emphasize spatio-temporal fea-
+4.1.2        3D attention module                                           tures.
+                                                                              As for the 1D channel attention module, it
+To more accurately detect the construction equipment                       performs the average pooling and max pooling
+actions with high-class similarity at a construction site                  (𝐴𝑣𝑔𝑃𝑜𝑜𝑙channel , 𝑀𝑎𝑥𝑃𝑜𝑜𝑙channel ,) on the feature map
+with complex backgrounds, it is necessary to focus on the                  (𝐹 ∈ ℝ𝑊×𝐻×𝐷×𝐶 )along the channel direction (i.e.,
+significant features, which are related to each object and                 depth-axis) and passes the result to the multilayer per-
+action. The attention mechanism, which has been proven                     ceptron and the sigmoid function (𝜎; see Equation 1).
+to effectively improve accuracy in various computer vision                 Through the element-wise multiplication of the extracted
+tasks, can refine input feature maps and emphasize the                     𝑀channel (𝐹) ∈ ℝ𝑊×𝐻×D×1 and F, the channel refined fea-
+significant features. Particularly, in the case of an action               ture map (𝐹 ′ ∈ ℝ𝑊×𝐻×𝐷×𝐶 ) is generated (see Equation 2).
+associated with surrounding objects, such as digging and                   As a result, the channel attention module can emphasize
+unloading soil, the attention mechanism can help distin-                   the meaningful information as each channel acts as a
+guish its class considering the entire context of the video                feature extractor of the given input video frames. As for
+frames. Several 3D attention modules that refine spatio-                   the 3D spatio-temporal attention module, it performs the
+temporal features were developed in previous studies;                      average pooling (𝐴𝑣𝑔𝑃𝑜𝑜𝑙spatio−temporal ) and max pooling
+however, those modules considerably increased computa-                     (𝑀𝑎𝑥𝑃𝑜𝑜𝑙spatio−temporal ) on 𝐹 ′ along the spatio-temporal
+tional load and time (J. Li et al., 2020; Zhou et al., 2019).              direction (width, height, and depth) and passes the result
+Therefore, inspired by the convolutional block attention                   to the convolution (𝐶𝑜𝑛𝑣) with filter size 7 × 7 × depth and
+module (CBAM), which consisted of 2D attention blocks                      𝜎 (see Equation 3). Through the element-wise multiplica-
+                                                                                                                                            14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                           131
+
+                                                                                                                    ( )
+                                                                                       𝐹 ′′ = 𝐹 ′ ⊗ 𝑀spatio−temporal 𝐹 ′             (4)
+
+                                                                         where 𝜎 is the sigmoid function. 𝑀channel and
+                                                                         𝑀spatio-temporal correspond to the 1D channel atten-
+                                                                         tion and the 3D spatio-temporal attention, respectively.
+                                                                         𝐴𝑣𝑔𝑃𝑜𝑜𝑙channel , 𝑀𝑎𝑥𝑃𝑜𝑜𝑙channel , 𝐴𝑣𝑔𝑃𝑜𝑜𝑙spatio-temporal
+                                                                         and 𝑀𝑎𝑥𝑃𝑜𝑜𝑙spatio-temporal , correspond to the average pool-
+                                                                         ing and the max pooling in the 𝑀channel and 𝑀spatio-temporal ,
+                                                                         respectively. 𝐹, 𝐹 ′ , and 𝐹 ′′ refer to the first input feature
+                                                                         maps, the channel refined feature maps, and the spatio-
+                                                                         temporal-refined feature maps, respectively.
+                                                                            The developed 3D attention module was added at each
+                                                                         ResNeXt block in the 3D ResNeXt-101. Similar to the
+                                                                         CBAM, it was applied in the order of channel attention
+                                                                         module followed by spatio-temporal module.
+
+
+                                                                         4.2       Detection network
+
+                                                                         A detection network was designed to generate the detec-
+                                                                         tion results from the spatio-temporal features. The 2D
+                                                                         CNN-based detection network consists of the feature pyra-
+                                                                         mid network and the output layer. The feature pyramid
+                                                                         network, which is effective for the detection of multiple
+                                                                         construction equipment with different scales, was trans-
+                                                                         formed so that it could be linked to the third, fourth,
+FIGURE 2         3D attention module developed in this study             and last submodules of the feature extraction network to
+                                                                         extract spatio-temporal features. In addition, the output
+                                                                         layer, which was designed to solve multiclass problems at
+tion of the extracted 𝑀spatio−temporal (𝐹 ′ ) ∈ ℝ1×1×1×𝐶
+                                                                         the end of ADVICE, was designed to generate the results
+and 𝐹 ′ , the spatio-temporal refined feature map
+                                                                         from the features of the three different scales extracted
+(𝐹 ′′ ∈ ℝ𝑊×𝐻×𝐷×𝐶 ) is finally generated (see Equation 4).
+                                                                         from the feature pyramid network.
+Through this process, 3D spatio-temporal attention can
+emphasize the context of construction equipment and
+their surroundings in a construction site since the features
+                                                                         4.2.1       Feature pyramid network
+were extracted from the width, height, and depth of the
+given input video frames:
+                                                                         In the existing 2D CNNs, to improve the accuracy of small
+                                                                         object detection, the feature pyramid network is used to
+       𝑀channel (𝐹) = 𝜎 (MLP (AvgPoo𝑙channel (𝐹)))
+                                                                         expand the low-resolution feature map with high-level
+                          (+ MLP (MaxPoo𝑙channel (𝐹)))            (1)    semantic information (i.e., upsampling) and incorporating
+                                                                         low-level semantic information by stage so as to generate
+                                                                         a high-resolution feature map with rich semantic informa-
+                     𝐹 ′ = 𝐹 ⊗ 𝑀channel (𝐹)                       (2)    tion (Lin et al., 2017). Therefore, this study proposes a new
+                                                                         feature pyramid network, in which 4D feature maps can
+                                                                         be input by adding connection 3D CNN blocks. The new
+                                ⎛                                        feature pyramid network was applied to the detection net-
+     𝑀spatio−temporal (𝐹 ′ ) = 𝜎⎜𝐶𝑜𝑛𝑣7×7×𝑑𝑒𝑝𝑡ℎ                           work to detect several construction equipment at different
+                                ⎜
+                                ⎝                                        scales at the same time (see Figure 3).
+                            ([                                ])            In general, feature extraction in the feature pyramid net-
+                                                                 ⎞
+                                𝐴𝑣𝑔𝑃𝑜𝑜𝑙spatio−temporal (𝐹 ′ )    ⎟ (3)   work is performed in the process of bottom-up and top-
+                                𝑀𝑎𝑥𝑃𝑜𝑜𝑙spatio−temporal (𝐹 ) ⎟
+                                                           ′
+                                                                         down pathways. First, the bottom-up pathway computes
+                                                                 ⎠
+                                                                         the high-level semantic feature map as input feature maps
+                                                                                                                                        14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+132                                                                                                                       JUNG et al.
+
+
+
+
+                                                                FIGURE 4         Final output of the detection network
+
+
+                                                                4.2.2        Output layer
+
+                                                                The output layers of three different sizes, located at the
+                                                                end of the detection network, consist of 1×1 convolutional
+                                                                layers and output the results based on the bounding box
+                                                                regression guideline of YOLOv3. The output layer predicts
+                                                                the two bounding boxes and the probability of classes of
+                                                                the corresponding grid cell from the video frame divided
+                                                                by 𝑊 ′ × 𝐻 ′ . In particular, output layers were designed to
+F I G U R E 3 Architecture of feature pyramid network; (a)
+                                                                solve the newly defined multiclass problem (i.e., the object
+bottom-up pathway (b) top-down pathway
+                                                                class and the action class) in this study (see Figure 4).
+                                                                   First, the information of each bounding box has five val-
+                                                                ues and consists of four location elements and one confi-
+are passed through several submodules. In this study, the       dence score. The location elements are center x-coordinate
+bottom-up pathway is designed to generate three different       (x), center y-coordinate (y), width (w), and height (h) of the
+4D feature maps. Here, the convolutional layer with the fil-    bounding box, and the confidence score (c) is between 0
+ter size of 1 × 1 × 𝐷 × 1 was added to compress the depth       and 1, showing the possibility of the object inside the cor-
+axis of the 4D feature map. Second, the top-down pathway        responding bounding box.
+creates a high-resolution feature map by concatenating the         Second, the probability of classes means the probabil-
+upsampled high-level semantic feature map and the low-          ity that the object in the grid belongs to each class and is
+level semantic feature map. Toward this end, the feature        between 0 and 1 per class. The existing 3D CNN-based one-
+maps extracted from the third and the fourth submodules         stage model was developed for the general human action
+of the feature extraction network (28 × 28 × 4 × 512 and        detection problem, which is a binary-class problem on the
+14 × 14 × 2 × 1024) are passed through the convolutional        action class without distinction of the object class. How-
+layer with the filter size of 1 × 1 × 𝐷 × 1 so as to com-       ever, the possible types of action are limited depending
+press the depth-axis and concatenate it with the upsam-         on the type of construction equipment. Meanwhile, some
+pled feature map. Finally, the concatenated feature maps        actions such as “idling” and “traveling” can be performed
+are passed through the convolutional layers consisting of       by different types of construction equipment. Therefore,
+three sequences of 1 × 1 layers to reduce the aliasing effect   instead of treating each object and action class combina-
+due to upsampling.                                              tion as a new binary class, in this study, the problem was
+   As a result, the feature maps extracted from the three       defined as a multiclass problem to predict the type of con-
+submodules can generate feature maps with three differ-         struction equipment (i.e., the object class, 𝑃object ) and the
+ent scales via the feature pyramid network: (i) Feature         class of its action (i.e., its action class, 𝑃action ), respectively,
+maps with size 28 × 28 × 512 for small object detection;        and one class in each object class and action class with
+(ii) 14 × 14 × 1024 for medium object detection; and (iii)      the highest score could be determined as a final output.
+7 × 7 × 2048 for big object detection.                          Here, the probability of the action classes that could not be
+                                                                                                                                              14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                             133
+
+
+performed by the predicted type of construction equip-
+ment with the highest probability among the object classes
+was set at 0 by post-processing.
+   Finally, the output resulting from one output layer is
+in a 3D cube of 𝑊 ′ × 𝐻 ′ × (2 × (4 + 1) + 𝑃object + 𝑃action ).
+The outputs from the three output layers are combined to
+indicate all bounding boxes and classes in the single video
+frame.
+                                                                   F I G U R E 5 Examples of data collected from “Youtube” and
+                                                                   challenges related to object recognition: (a) occlusion, (b) lighting,
+5       EXPERIMENTS                                                (c) scale of object, and (d) motion of camera including various
+                                                                   construction equipment
+5.1           Dataset
+
+Since a set of sequential frames was given to the devel-           TA B L E 2       Statistics of the annotated construction equipment
+oped ADVICE as an input to predict the bounding box                actions
+and types of construction equipment and actions, video
+                                                                    Equipment                  Actions                No. of bounding
+datasets were collected and annotated for training and test-        (object #)                 (action #)             boxes
+ing ADVICE. As shown in the UCF 101 (Soomro et al., 2012)
+                                                                    Excavator (1)              Idle (1)               11,720
+or THUMOS (Idrees et al., 2017) where the video dataset
+                                                                                               Travel (2)             3843
+on various human action classes is established, this study
+                                                                                               Rotate (3)             7835
+used the video dataset that included various construction
+                                                                                               Dig (4)                8815
+equipment action classes so as to train and test ADVICE.
+   First, the types (i.e., excavator, truck, loader, and roller)                               Unload (5)             6437
+of construction equipment and their actions (i.e., idle,            Truck (2)                  Idle (1)               32,141
+travel, rotate, dig, and unload) to be detected were deter-                                    Travel (2)             18,254
+mined. Several previous studies on the action of the con-           Loader (3)                 Idle (1)               3021
+struction equipment only targeted excavators and trucks                                        Travel (2)             13,512
+(H. Kim, Bang, et al., 2018; Roberts & Golparvar-Fard,                                         Dig (6)                1657
+2019), but this study deals with the four types of object                                      Unload (7)             5676
+classes by additionally including loaders and rollers. In           Roller (4)                 Idle (1)               3620
+addition, action classes were determined by focusing on                                        Travel (2)             12,811
+the main works of each type of construction equipment
+                                                                    Total                                             129,342
+and similar actions were considered as the same action
+in order to establish the standard action of construction
+equipment (Roberts & Golparvar-Fard, 2019). For instance,
+moving materials or flattening the land, which are sec-            to the action of construction equipment (e.g., video logo)
+ondary works of excavators, were excluded, and simi-               or sudden cuts in the video were excluded (Caba Heilbron
+lar swinging buckets and rotating of excavators were all           et al., 2015). A total of 130 videos with 640 × 480 resolution
+considered as “rotating.” Meanwhile, since digging and             and 25 sampling rates (a total of 62,854 frames) that contain
+unloading of the excavator and the loader have differ-             the movement of the four types of equipment at construc-
+ent characteristics in their bucket movements, “dig” and           tion sites were collected.
+“unload” of excavator and loader were separately classi-              Third, all 130 videos were annotated. The annotation
+fied. Therefore, a total of seven action classes were deter-       included bounding box drawing, object class labeling,
+mined.                                                             and action class labeling as the results from the out-
+   Second, the videos of construction equipment actions in         put layer. The annotation process used the open-source
+various construction sites were collected from YouTube.            program that helps draw bounding boxes using object
+To verify the robustness of the developed ADVICE, the              detection and tracking algorithms (https://github.com/
+videos that include various challenging factors of com-            alexandre01/UltimateLabeling). The bounding boxes were
+puter vision-based data such as occlusion, lighting, the var-      then adjusted manually in more detail so that the appear-
+ious scale of objects, and motions of the camera were col-         ance of the whole object can be contained in the bounding
+lected (see Figure 5). From the collected video frames with        box. Table 2 shows the defined numbers according to the
+different durations, unnecessary parts that had no relation        object and action class and their statistics.
+                                                                                                                                   14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+134                                                                                                                  JUNG et al.
+
+
+   Finally, the collected datasets were divided into             same class among the duplicated bounding boxes with the
+the training and the test sets. Similar to the dataset           intersection over union (IoU) at a certain level or higher.
+composition of the human action detection field (Soomro          In this study, the possible actions differ by the type of
+et al., 2012), the collected YouTube video dataset was           construction equipment so the action class is subordinated
+grouped into subsets based on the object and action              to the object class. Subsequently, the nonmaximum sup-
+class. Since a single video contains different types of          pression was performed on bounding boxes having the
+construction equipment action, the videos were divided           same object class. This way, accuracy can be improved by
+into clips and assigned to different subsets according to the    limiting the duplicated indication of the bounding boxes
+object and action class. Particularly, clips that contained      with the same construction equipment. The setting for
+the duplicate actions from the same video were excluded          the model testing is obtained as follows: (i) The bound-
+to ensure the independence of training and test sets. To         ing boxes whose object confidence score is below 0.75 were
+conduct threefold cross-validation while maintaining the         removed; (ii) the threshold of the IoU that performs the
+distribution in the training and test sets, six clips were       nonmaximum suppression was set to 0.5 or higher; and (iii)
+assigned to each subset and randomly divided into three          if the predicted class of the bounding box with the IoU of
+groups of two clips each. Two of them were used for              0.5 or above is true, it is assumed to be true-positive.
+training and the rest one was used for testing of the model         As for the evaluation metric of the test, precision, recall,
+so that they would not duplicate in the training and test        and F1 score were used. In particular, F1 score, considering
+sets. Then, the fixed number of sequential frames (e.g.,         precision and recall at the same time, is highly sensitive to
+eight or 16 frames that had the same size of depth) in the       imbalanced data, and it was used as an indicator for action
+same clip were combined to be the input for the training         detection evaluation in the field of computer science (Lea
+and testing models.                                              et al., 2017; Onal Ertugrul et al., 2019).
+
+
+5.2       Training and testing                                   5.3       Results and discussions
+
+Based on the collected dataset, training and testing were        5.3.1      Performance evaluation of ADVICE
+performed on ADVICE. A personal computer with two
+Intel Core i7-9700 @ 3.00 GHz, 32 GB DDR4, and one               ADVICE was developed for real-time action detection of
+Nvidia RTX 2080Ti GPU was used for the training and              various types of construction equipment on diverse videos
+testing. ADVICE is a one-stage and single-stream model,          recorded at different construction sites. Therefore, the
+so the training and testing process were carried out on          detection scores and inference speed were analyzed as
+an end-to-end basis. Training and testing were conducted         the main performance metrics. Particularly, the perfor-
+with four and two clips in each subset, and three-fold cross-    mance of the action detection model depends on the num-
+validation was conducted to evaluate the proposed model.         ber of input frames, therefore the spatio-temporal features
+   First, ADVICE was trained on the 520 clips. The study         extracted from the single-stream feature extraction net-
+applied transfer learning based on the weight parameters         work are changed. The more the input frames , the more
+of the pre-trained 3D ResNeXt-101 model on the Kinet-            the start of the inference process is delayed, and the more
+ics dataset. The overfitting is prevented during training by     the calculation and parameters increase, which make the
+using data augmentations. The setting for the model train-       inference speed slower. Therefore, this study compared the
+ing is obtained as follows: (i) As the loss function, the mean   detection performance and inference speed of ADVICE by
+squared error was used for the location elements of bound-       changing the number of input frames. Among the power
+ing boxes, and the binary cross-entropy was used for the         of 2 that can be the input frames of the 3D ResNeXt-101,
+confidence score and the probability of class; (ii) adaptive     the two cases where the number of input frames is 25, cor-
+moment estimation was used as the loss optimization algo-        responding to 1 s or below, are compared: 8 input frames
+rithm; (iii) the training rate started from 0.001 and gradu-     with 1 interval (case 1) and 16 input frames with 1 interval
+ally decreased; (iv) the batch size was set to 4; and (v) a      (case 2; see Table 3 and Figure 6). Furthermore, it was not
+total of 30 epochs of training were carried out.                 available to run the model in which the input was over 32
+   Second, testing on the 260 clips was conducted. With          frames due to the memory limits of GPU.
+ADVICE, the final output shows the bounding box regres-             First, the F1 scores of cases 1 and 2 in the object and
+sion results on all grid cells so that several bounding          action detection were compared while the IoU threshold
+boxes on the same construction equipment can be pre-             was changing (see Figure 6). Regardless of the action class,
+dicted. Therefore, the study conducted the nonmaximum            when the predicted object class was correct, it is consid-
+suppression combining the bounding boxes having the              ered as a true-positive in the object detection task. On the
+                                                                                                                                              14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                             135
+
+
+
+
+FIGURE 6        The performance of object detection (left) and action detection (right) according to the intersection over union
+
+
+T A B L E 3 Object and action detection performance according            TA B L E 4     Inference time according to the input frame numbers
+to the input frame numbers                                                Case           Inference time (ms)           Frames per second
+ Task                  Case     Precision    Recall     F1 score          1              23.4                          42.7
+ Object detection      1        91.1%        92.7%      91.9%             2              27.3                          36.6
+                       2        94.5%        95.7%      95.1%
+ Action detection      1        80.0%        81.4%      80.7%
+                       2        82.1%        83.1%      82.6%            mance trade-off with the shorter input frames. In this
+                                                                         study, ADVICE with 16 input frames was selected as the
+                                                                         optimal model to compare with other models.
+other hand, when both the object class and the action class
+were correct, it is considered as a true-positive in the action
+detection task. In both object and action detection tasks,               5.3.2        Ablation study
+the detection performance of case 2 was better than that of
+case 1 in all the IoU thresholds. Particularly, the F1 score             The study applied the 3D attention module and the fea-
+of case 2 in the object and action detection was 2.7% higher             ture pyramid network to the developed ADVICE. Further-
+and 1.5% higher on average in all the IoUs. Furthermore,                 more, the multiclass output layers were proposed to sepa-
+when the IoU was at the common threshold, which is typ-                  rately predict the probability of object type and its action.
+ically 0.5, the F1 scores of case 2 in object and action detec-          To determine their effectiveness for real-time action detec-
+tion were 95.1% and 82.6%, which are both higher than                    tion of the construction equipment, the ablation study was
+91.9% and 80.7% of case 1.                                               conducted. Therefore, ADVICE was compared with two
+   Second, performance scores in the object and action                   different models: (i) 3D ResNeXt-101 without the two algo-
+detection were compared (see Table 3). In the object detec-              rithms using the multiclass output layer (i.e., the basic
+tion, case 2 showed higher precision and recall, as well as a            model); and (ii) 3D ResNeXt-101 with the two algorithms
+higher F1 score of 95.1% than case 1. In the action detection,           using the binary-class output layer (i.e., the binary-class
+case 2 had a higher precision, recall, and F1 score than case            model) in which the total of 13 actions of four construc-
+1 by 2.1%, 1.7%, and 1.9%, respectively, in which the perfor-            tion equipment were considered as a binary class in order.
+mance differences are greater than in the object detection               For instance, the construction equipment labeled “2” (i.e.,
+task.                                                                    truck) for object class and “2” (i.e., travel) for action class
+   Overall, the case with 16 input frames showed improved                in the multiclass output is transformed into “7” (i.e., truck-
+performance in both object and action detection than the                 travel) in the binary-class output.
+case with eight input frames. However, the inference time                   First, the object and action detection performance
+of case 2 at 23.5 ms was longer than that of case 1 (see                 of ADVICE and the basic model were compared (see
+Table 4). Thus, if the action detection model is performed               Figure 7). Overall, ADVICE showed better performance
+on a lower-end PC or with videos at 30 fps or more, case                 than the basic model on both object and action detec-
+1 can be used for real-time inference, despite the perfor-               tion. The precision, recall, and F1 score in all the test
+                                                                                                                                            14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+136                                                                                                                           JUNG et al.
+
+
+
+
+FIGURE 7        The performance of the basic model and ADVICE on object detection (left) and action detection (right)
+
+
+T A B L E 5 F1 scores according to the object size of the basic        TA B L E 6     F1 scores of the binary-class model and ADVICE
+model and action detection in video of construction equipment           Object detection                   Action detection
+(ADVICE)                                                                Binary-class                       Binary-class
+ Object size                  Medium                                    model                Advice        model              Advice
+ (bounding       Small (under (12,000 to         Large (39,420          85.7%                95.1%         72.9%              82.6%
+ box area)       12,000)      39,420)            or above)
+ Basic model     64.5%           80.5%           75.6%
+ ADVICE          82.1%           84.5%           81.1%                 ter performance than the binary-class model in both object
+                                                                       and action detection. As shown in Table 6, the F1 score in
+                                                                       all the test datasets was 9.4% higher in object detection.
+datasets were 0.8%, 13.6%, and 7.6% higher on object detec-            Meanwhile, the F1 score of ADVICE in action detection for
+tion, respectively. Furthermore, the precision, recall, and            all the datasets 9.7% higher. Furthermore, as shown in Fig-
+F1 score on all the test datasets were higher by 3.2%,                 ure 8 which represents the confusion matrix of the number
+14%, and 9% on action detection, respectively. Particu-                of targets and predicted labels with F1 scores, the object
+larly, object detection performance improved considerably              and action detection performance of ADVICE improved,
+because of the improvement in small object detection with              compared to the binary-class model in all object and action
+the implementation of the feature pyramid network. As                  classes. As a result, it is validated that the multiclass out-
+shown in Table 5, the comparison of the action detec-                  put layer could improve the detection performance by sep-
+tion performance on three different dataset clusters, which            arately estimating probabilities of object and action class,
+divided the total test dataset into an equal number accord-            which could affect each other when they were considered
+ing to the size of the bounding box, showed that the F1                as a binary class. Thus, ADVICE showed better perfor-
+score on small objects improved by 17.6%, which showed                 mance not only in the classification of the object in the
+a remarkable performance improvement over the medium                   same action but also in the classification of the action in
+and big object detection. Meanwhile, the difference in per-            the same object, which is one of the challenging factors of
+formance increased more in the action detection task than              action detection in construction sites. it is possible when
+in the object detection task. This shows that the 3D atten-            the number of clips of a specific action and object label
+tion modules applied to the 3D-CNN architecture were                   may belong to a specific size group, compared to other size
+also effective in extracting the spatio-temporal features for          groups.
+action detection. The performance reduced as the object                   Overall, the 3D attention module and the feature pyra-
+size increases are possible since the number of clips of a             mid network were validated to improve the object detec-
+specific action label may belong to a specific group.                  tion performance of the developed model, ADVICE. In
+   Second, the object and action detection performance of              addition, the application of the multiclass output layers
+the ADVICE and the binary-class model were compared                    to the 3D CNN-based one-stage model could enhance
+(see Table 6 and Figure 8). Overall, ADVICE showed bet-                the detection of the object and action of construction
+                                                                                                                                          14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                         137
+
+
+
+
+F I G U R E 8 Action detection performance of the (a) binary-class model and (b) ADVICE. The numbers and the percentage scores in
+each grid represent the number of the corresponding target and predicted labels and F1 scores on each class
+
+
+
+equipment. Although the application of the attention mod-            T A B L E 7 Performance of the algorithms in the multistage
+ules and the feature pyramid network reduced the infer-              model trained with the same datasets
+ence speed of ADVICE, which increased the inference
+time, 25 or more frames could still be processed within 1             Task          Model               Precision Recall F1 score
+s (see Figure 7).                                                     Object        Yolov3 + DeepSort 94.8%        91.1%   92.9%
+                                                                        detection
+                                                                      Action classi- 3D ResNext-101     90.8%      90.7%   90.7%
+5.3.3    Comparative analysis of ADVICE with                            fication
+the multistage model
+
+Unlike the multistage models proposed in several previ-              in sequential frames. Particularly, the 3D CNN algorithm
+ous studies (Chen et al., 2020; J. Kim & Chi, 2019; Luo              was adopted to the multistage model since it outperformed
+et al., 2020; Roberts & Golparvar-Fard, 2019), ADVICE is             the other methods such as 2D CNN only or 2D CNN with
+a one-stage model in which the object and action detec-              LSTM in the action classification task (Hara et al., 2018; Ji
+tion tasks are performed at once. Therefore, to evaluate the         et al., 2013; Liu et al., 2018; Lu et al., 2018). All the algo-
+effectiveness of ADVICE, it was compared with the exist-             rithms are trained on the same datasets used for training
+ing multistage model. As in the previous studies, the mul-           ADVICE, and their performance is shown in Table 7.
+tistage model consists of three stages: (i) Object detection            First, the object detection and action detection per-
+using YOLOv3, (ii) tracking using DeepSort based on the              formance were analyzed (see Table 8). In the object
+bounding box of the object detection, and (iii) action clas-         detection, the recall and F1 score of ADVICE were 4.6%
+sification using 3D ResNext-101 by entering the sequential           and 2.2% higher than those of the multistage model,
+images cropped by the minimum bounding box that can                  respectively, despite the precision that was 0.3% lower.
+encompass all tracked bounding boxes of the same object              Moreover, in the action detection, the precision, recall,
+                                                                                                                                               14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+138                                                                                                                              JUNG et al.
+
+
+T A B L E 8 Detection performance of multistage model and               model in terms of the occlusion and the camera motion,
+ADVICE for all dataset                                                  respectively. However, in the F1 score that reflected the
+ Task               Model       Precision Recall       F1 score         recall performance, the performance of ADVICE was as
+ Object detection   Multistage 94.8%        91.1%      92.9%            high as 4.0%, 2.7%, and 0.4% in occlusion, lighting, and
+                    ADVICE      94.5%       95.7%      95.1%            camera motion, respectively. As for the results of the action
+ Action detection   Multistage 56.5%        54.3%      55.4%            detection, ADVICE showed better performance in occlu-
+                    ADVICE      82.1%       83.1%      82.6%
+                                                                        sion, lighting, and camera motion. The performance differ-
+                                                                        ences in the occlusion and lighting conditions were larger
+                                                                        than the average performance difference that was 27.2%. In
+and F1 scores were 25.6%, 28.8%, and 27.2% higher than                  contrast, the performance difference in the camera motion
+those in the multistage model, respectively. In particular,             (i.e., 23.3%) was smaller than the average performance dif-
+although each algorithm used in the multistage model had                ference. This is because the sequential frames are cropped
+over 90% of performance scores, respectively, the precision,            focusing on the object by the bounding box from the object
+recall, and F1 scores declined to 56.5%, 54.3%, and 55.4%,              detection and tracking process, so moving of surrounding
+when the sequential images predicted in the object detec-               materials and the background by camera motions are not
+tion and tracking process were given to the action classifi-            included as spatio-temporal information.
+cation model. This performance decline was due to the sep-                 Overall, ADVICE showed better performance than the
+arate process of the multistage model in which input of the             multistage model. Although the precision, recall, and F1
+action classification model was generated from the result               score were more than 90% in each stage of the multi-
+of the object detection and tracking. The action classifica-            stage model, it showed lower performance than ADVICE
+tion accuracy of the multistage model highly depended on                when both the action and the object classes were consid-
+the accuracy of the bounding boxes generated in the track-              ered. Since each step proceeded separately in the multi-
+ing process. Particularly, there were input images contain-             stage model, the errors in each step could be accumu-
+ing only partial scenes of the action even if the object detec-         lated, and the final performance was shown to be poor.
+tion result was true-positive by exceeding the IoU of 0.5               Besides, ADVICE, as a single-stage model, predicts the
+after the tracking. As a result, the poor action classification         entire context in the entire frame, whereas in the multi-
+performance for those inputs degraded the overall action                stage model, the action classification model could not con-
+detection performance.                                                  sider the context because it considers only the information
+   Second, to evaluate the performance of the challenging               in the bounding box. Moreover, in terms of the inference
+factors (i.e., the occlusion, lighting, and camera motion), a           time, the multistage model showed a slower speed (i.e.,
+comparative analysis was also conducted (see Figure 9). To              53.8 ms and 18.5 fps) than the one-stage model because the
+this end, clips with occlusion, clips with weak saturation              multistage model proceeds through each step in order and
+by lighting, and clips shot by a camera with motion were                extracts the results. As a result, the ADVICE model per-
+analyzed separately. In the results of the object detection,            formed with higher accuracy in real time than the multi-
+the precision was 1.4% and 3.4% higher in the multistage                stage model.
+
+
+
+
+FIGURE 9        Object and action detection performance of challenging factors (i.e., occlusion, lighting condition, and camera motion)
+                                                                                                                                     14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                    139
+
+
+
+5.3.4         Discussions                                           In terms of the detection result on a class “loader, dig,”
+                                                                 compared to other classes, the precision, recall, and F1
+The diversity, variability, and complexity of the construc-      score showed low scores at 35.9%, 42.1%, and 38.8%, respec-
+tion site are important and challenging factors that need to     tively, which indicates the limitation of this study (see
+be resolved when implementing a computer vision-based            Figure 8). The number of bounding boxes on the four types
+method in the construction industry. When compared to            of construction equipment was around 130,000, but the
+previous studies that proposed a computer-vision based           digging loader is about 1675, which was about 1% of the
+method for action detection of construction equipment            total bounding boxes. Thus, compared to the other action
+(Chen et al., 2020; J. Kim & Chi, 2019; Roberts & Golparvar-     classes, the training on the diverse video frames recorded
+Fard, 2019), the results obtained from the experiment vali-      in different conditions and construction sites was lacking,
+dated the real-time applicability of ADVICE to a construc-       which may be the reason for the lower accuracy. Similar to
+tion site with diversity, variability and complexity.            the other classes, the evaluation performance of the model
+   First, in contrast to the methods proposed by the pre-        may be further improved with sufficient datasets. Another
+vious studies, ADVICE can perform the detection process          limitation is that there are construction equipment actions
+from the data input via feature extraction through a single-     that cannot be distinguished by visual information. For
+stage structure. To this end, the 3D attention module, fea-      instance, in the case of working actions underneath the
+ture pyramid network, and multiclass output layers are           surface, such as an auger or breaker, accurate classification
+developed to improve the detection performance with neg-         of the action class of those types of construction equipment
+ligible overhead computation. This computational novelty         via video frames is limited. In such cases, action detection
+allows the developed model to detect the action detection        can be performed by fusing visual information with other
+in real time. Furthermore, end-to-end training and testing       types of data, such as audio information.
+are possible as well.
+   Second, in contrast to the previous studies that per-
+formed action detection only on a maximum of two types of        6       CONCLUSION
+construction equipment (excavator and truck), this study
+performed action detection by targeting the seven types          A 3D CNN-based one-stage model for real-time action
+of actions from the four types of construction equipment.        detection in videos of construction equipment is developed
+This allows for the action detection of the diverse types of     focusing on real-time monitoring of various types of con-
+construction equipment.                                          struction equipment: excavator, truck, loader, and roller. To
+   Third, in contrast to the previous studies that used less     overcome the limitations of previous studies that monitor
+diverse types of videos of construction sites, this study col-   construction equipment using multistage model, ADVICE
+lected a total of 130 videos recorded in different conditions,   is designed with the implementation of the 3D attention
+which were then used for model training and testing. Thus,       module and the feature pyramid network developed in this
+it allows for robust action detection under variable site con-   study to refine the spatio-temporal features. Moreover, the
+ditions. In addition, the proposed model showed higher           output layer was designed for multiclass detection prob-
+action detection performance even in challenging situa-          lems (i.e., object class and action class). A total of 130 videos
+tions such as occlusions, different lighting conditions, and     were collected to validate various actions of construction
+recording with camera motions, which were included in            equipment concerning occlusion, lighting, scale of objects,
+the datasets.                                                    and motions of the camera.
+   Last, the action classification performance of the               Based on the training in the experimental study,
+computer-vision-based construction equipment action              ADVICE achieved 82.1% precision and 83.1% recall with an
+detection model proposed in the previous studies was             inference speed of 36.6 fps on all test sets. The compara-
+between 80% and 90% of recall rates. Such performance            tive analysis showed that the average F1 scores in ADVICE
+results may decrease further if the accuracy of the object       were 9% and 9.7% higher than in the basic model with-
+detection and tracking, the stage previous to the action         out the 3D attention module and the feature pyramid net-
+classification stage, is included such as the multistage         work. In the binary-class model, particularly, compared
+model that showed recall rates between 50% and 60% in            to the existing multistage model, ADVICE showed 27.2%
+this study. On the other hand, the precision and recall          higher F1 score maintaining decent performance even in
+on all test sets of ADVICE were 82.1% and 83.1%, respec-         challenging situations such as occlusion, different lighting
+tively. Considering the higher number of classes and the         conditions, and camera motions included.
+possibility of real-time action detection, the error rates          This study is the first study dealing with the action
+can be acceptable, which shows the computational                 detection of construction equipment using the 3D CNN-
+novelty.                                                         based one-stage model. Particularly, by implementing the
+                                                                                                                                                     14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+140                                                                                                                                   JUNG et al.
+
+
+3D attention module and the feature pyramid network,                      Carrara, F., Elias, P., Sedmidubsky, J., & Zezula, P. (2019). LSTM-
+ADVICE can detect the complex actions of multiple con-                      based real-time action detection and prediction in human motion
+struction equipment with different scales in real time.                     streams. Multimedia Tools and Applications, 78(19), 27309–27331.
+                                                                          Cha, Y. J., Choi, W., Suh, G., Mahmoudkhani, S., & Büyüköztürk,
+   A distinct advantage of ADVICE is that it can detect
+                                                                            O. (2018). Autonomous structural visual inspection using region-
+construction equipment action based on the surveillance
+                                                                            based deep learning for detecting multiple damage types.
+video, instead of utilizing human resources or expen-                       Computer-Aided Civil and Infrastructure Engineering, 33(9), 731–
+sive monitoring sensors. Furthermore, ADVICE can be                         747.
+applied to videos with various camera motions from a                      Chen, C., Zhu, Z., & Hammad, A. (2020). Automated excavators activ-
+hand-held camera or an unmanned aerial vehicle, which                       ity recognition and productivity analysis from construction site
+is being increasingly utilized for construction manage-                     surveillance videos. Automation in Construction, 110, 103045.
+ment recently. It is anticipated to increase accuracy and                 Costabile, I., Kallegias, A., & Robins, J. C. (2020). The corona decade:
+                                                                            The transition to the age of hyper-connectivity and the fourth indus-
+speed with the application of the advanced neural net-
+                                                                            trial revolution. https://transformationnorthwest.org/wp-content/
+work algorithm that is effective for the classification and                 uploads/2020/05/TNW-The-Corona-Decade-April-2020.pdf
+recognition process (Ahmadlou & Adeli, 2010; Alam et al.,                 Diba, A., Fayyaz, M., Sharma, V., Arzani, M. M., Yousefzadeh, R.,
+2020; Pereira et al., 2020; Rafiei & Adeli, 2017). Ultimately,              Gall, J., & Van Gool, L. (2018). Spatio-temporal channel correla-
+ADVICE can be further generalized at construction sites                     tion networks for action classification. In V. Ferrari, M. Hebert, C.
+by training with various types of equipment that were not                   Sminchisescu & Y. Weiss (Eds.), Proceedings of the European Con-
+considered in this study.                                                   ference on Computer Vision (ECCV) (pp. 284–299). Springer
+                                                                          Dingel, J. I., & Neiman, B. (2020). How many jobs can be done at
+                                                                            home? Journal of Public Economics, 189, 104235.
+AC K N OW L E D G M E N T
+                                                                          Fang, W., Ding, L., Zhong, B., Love, P. E. D., & Luo, H. (2018). Auto-
+This work was supported by the National Research Foun-                      mated detection of workers and heavy equipment on construction
+dation of Korea (NRF) grant funded by the Korea govern-                     sites: A convolutional neural network approach. Advanced Engi-
+ment (MSIT; No. NRF-2018R1A5A1025137).                                      neering Informatics, 37, 139–149.
+                                                                          Fang, W., Love, P. E. D., Luo, H., & Ding, L. (2020). Computer vision
+REFERENCES                                                                  for behaviour-based safety in construction: A review and future
+                                                                            directions. Advanced Engineering Informatics, 43, 100980.
+Ahmadlou, M., & Adeli, H. (2010). Enhanced probabilistic neural
+                                                                          Fang, Y., Cho, Y. K., Zhang, S., & Perez, E. (2016). Case study of BIM
+   network with local decision circles: A robust classifier. Integrated
+                                                                            and cloud-enabled real-time RFID indoor localization for con-
+   Computer-Aided Engineering, 17(3), 197–210.
+                                                                            struction management applications. Journal of Construction Engi-
+Akhavian, R., & Behzadan, A. H. (2015). Construction equipment
+                                                                            neering and Management, 142(7), 05016003.
+   activity recognition for simulation input modeling using mobile
+                                                                          Ge, L., Liang, H., Yuan, J., & Thalmann, D. (2017). 3D convolutional
+   sensors and machine learning classifiers. Advanced Engineering
+                                                                            neural networks for efficient and robust hand pose estimation
+   Informatics, 29(4), 867–877.
+                                                                            from single depth images. Proceedings of the IEEE Conference on
+Alam, K. M. R., Siddique, N., & Adeli, H. (2020). A dynamic ensem-
+                                                                            Computer Vision and Pattern Recognition, Honolulu, HI, USA (pp.
+   ble learning algorithm for neural networks. Neural Computing and
+                                                                            1991–2000).
+   Applications, 32(12), 8675–8690.
+                                                                          Golparvar-Fard, M., Heydarian, A., & Niebles, J. C. (2013). Vision-
+AlMaadeed, M. A. (2020). Emergent materials and industry 4.0 con-
+                                                                            based action recognition of earthmoving equipment using
+   tribution toward pandemic diseases such as COVID-19. Emergent
+                                                                            spatio-temporal features and support vector machine classifiers.
+   Materials, 3, 107–108.
+                                                                            Advanced Engineering Informatics, 27(4), 652–663.
+Alshibani, A., & Moselhi, O. (2016). Productivity based method for
+                                                                          Goodrum, P. M., Haas, C. T., Caldas, C., Zhai, D., Yeiser, J., & Homm,
+   forecasting cost and time of earthmoving operations using sam-
+                                                                            D. (2011). Model to predict the impact of a technology on construc-
+   pling GPS data. Journal of Information Technology in Construction,
+                                                                            tion productivity. Journal of Construction Engineering and Man-
+   21, 39–56.
+                                                                            agement, 137(9), 678–688.
+Arabi, S., Haghighat, A., & Sharma, A. (2020). A deep learning-
+                                                                          Hara, K., Kataoka, H., & Satoh, Y. (2018). Can spatiotemporal 3D
+   based computer vision solution for construction vehicle detection.
+                                                                            CNNS retrace the history of 2D CNNS and ImageNet? Proceedings
+   Computer-Aided Civil and Infrastructure Engineering, 35(7), 753–
+                                                                            of the IEEE Conference on Computer Vision and Pattern Recogni-
+   767.
+                                                                            tion, Salt Lake City, UT (pp. 6546–6555).
+Biörck, J., Blanco, J. L., Mischke, J., Ribeirinho, M. J., Rockhill,
+                                                                          Heydarian, A., Golparvar-Fard, M., & Niebles, J. C. (2012). Automated
+   D., Sjödin, E., & Strube, G. (2020). How construction can emerge
+                                                                            visual recognition of construction equipment actions using spatio-
+   stronger after coronavirus. Mckinsey & Company. https://www.
+                                                                            temporal features and multiple binary support vector machines. In
+   mckinsey.com/business-functions/operations/our-insights/how-
+                                                                            H. Cai, A. Kandil, M. Hastak & P. S. Dunston (Eds.), Construction
+   construction-can-emerge-stronger-after-coronavirus
+                                                                            Research Congress 2012: Construction Challenges in a Flat World
+Caba Heilbron, F., Escorcia, V., Ghanem, B., & Carlos Niebles, J.
+                                                                            (pp. 889–898). American Society of Civil Engineers.
+   (2015). Activitynet: A large-scale video benchmark for human
+                                                                          Hou, R., Chen, C., & Shah, M. (2017). An end-to-end 3D convolutional
+   activity understanding. Proceedings of the IEEE Conference on
+                                                                            neural network for action detection and segmentation in videos.
+   Computer Vision and Pattern Recognition, Boston, MA (pp. 961–
+                                                                            arXiv:1712.01111.
+   970).
+                                                                                                                                                            14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+JUNG et al.                                                                                                                                          141
+
+
+Idrees, H., Zamir, A. R., Jiang, Y. G., Gorban, A., Laptev, I., Suk-        Li, J., Liu, X., Zhang, W., Zhang, M., Song, J., & Sebe, N. (2020). Spatio-
+    thankar, R., & Shah, M. (2017). The THUMOS challenge on action             temporal attention networks for action recognition and detection.
+    recognition for videos “in the wild. Computer Vision and Image             IEEE Transactions on Multimedia, 22(11), 2990–3001.
+    Understanding, 155, 1–23.                                               Li, R., Yuan, Y., Zhang, W., & Yuan, Y. (2018). Unified vision-based
+Ji, S., Xu, W., Yang, M., & Yu, K. (2013). 3D Convolutional neural net-        methodology for simultaneous concrete defect detection and
+    works for human action recognition. IEEE Transactions on Pattern           geolocalization. Computer-Aided Civil and Infrastructure Engi-
+    Analysis and Machine Intelligence, 35(1), 221–231.                         neering, 33(7), 527–544.
+Jung, S., Kang, H., Choi, J., Hong, T., Park, H. S., & Lee, D.-E. (2020).   Li, Z., Gavrilyuk, K., Gavves, E., Jain, M., & Snoek, C. G. (2018). Vide-
+    Quantitative health impact assessment of construction noise expo-          oLSTM convolves, attends and flows for action recognition. Com-
+    sure on the nearby region for noise barrier optimization. Building         puter Vision and Image Understanding, 166, 41–50.
+    and Environment, 176, 106869.                                           Lin, T. Y., Dollár, P., Girshick, R., He, K., Hariharan, B., & Belongie,
+Jung, S., Kang, H., Sung, S., & Hong, T. (2019). Health risk assess-           S. (2017). Feature pyramid networks for object detection. Proceed-
+    ment for occupants as a decision-making tool to quantify the envi-         ings of the IEEE Conference on Computer Vision and Pattern Recog-
+    ronmental effects of particulate matter in construction projects.          nition, Honolulu, HI (pp. 2117–2125).
+    Building and Environment, 161, 106267.                                  Liu, K., Liu, W., Gan, C., Tan, M., & Ma, H. (2018, April). T-C3D: Tem-
+Kalogeiton, V., Weinzaepfel, P., Ferrari, V., & Schmid, C. (2017).             poral convolutional 3D network for real-time action recognition.
+    Action tubelet detector for spatio-temporal action localization.           Proceedings of the AAAI Conference on Artificial Intelligence, 32(1),
+    Proceedings of the IEEE International Conference on Computer               7138–7145.
+    Vision, Venice, Italy (pp. 4405–4413).                                  Lu, N., Wu, Y., Feng, L., & Song, J. (2018). Deep learning for fall detec-
+Kang, H., Sung, S., Hong, J., Jung, S., Hong, T., Park, H. S., & Lee,          tion: Three-dimensional CNN combined with LSTM on video
+    D. (2020). Development of a real-time automated monitoring sys-            kinematic data. IEEE Journal of Biomedical and Health Informat-
+    tem for managing the hazardous environmental pollutants at the             ics, 23(1), 314–323.
+    construction site. Journal of Hazardous Materials, 402, 123483.         Luo, X., Li, H., Cao, D., Yu, Y., Yang, X., & Huang, T. (2018). Towards
+Kim, H., Ahn, C. R., Engelhaupt, D., & Lee, S. H. (2018). Application          efficient and objective work sampling: Recognizing workers’ activ-
+    of dynamic time warping to the recognition of mixed equipment              ities in site surveillance videos with two-stream convolutional net-
+    activities in cycle time measurement. Automation in Construction,          works. Automation in Construction, 94, 360–370.
+    87, 225–234.                                                            Luo, X., Li, H., Yu, Y., Zhou, C., & Cao, D. (2020). Combining deep
+Kim, H., Bang, S., Jeong, H., Ham, Y., & Kim, H. (2018). Analyzing             features and activity context to improve recognition of activities of
+    context and productivity of tunnel earthmoving processes using             workers in groups. Computer-Aided Civil and Infrastructure Engi-
+    imaging and simulation. Automation in Construction, 92, 188–198.           neering, 35(9), 965–978.
+Kim, H., Kim, H., Hong, Y. W., & Byun, H. (2018). Detecting construc-       Maskuriy, R., Selamat, A., Maresova, P., Krejcar, O., & David, O. O.
+    tion equipment using a region-based fully convolutional network            (2019). Industry 4.0 for the construction industry: Review of man-
+    and transfer learning. Journal of Computing in Civil Engineering,          agement perspective. Economies, 7(3), 68.
+    32(2), 04017082.                                                        Narazaki, Y., Hoskere, V., Hoang, T. A., & Spencer Jr, B. F. (2018).
+Kim, J., & Chi, S. (2019). Action recognition of earthmoving exca-             Automated vision-based bridge component extraction using mul-
+    vators based on sequential pattern analysis of visual features and         tiscale convolutional neural networks. arXiv:1805.06042.
+    operation cycles. Automation in Construction, 104, 255–264.             Onal Ertugrul, I., Yang, L., Jeni, L. A., & Cohn, J. F. (2019). D-PAttNet:
+Kim, J., & Chi, S.(2020). Multi-camera vision-based productivity               Dynamic patch-attentive deep network for action unit detection.
+    monitoring of earthmoving operations. Automation in Construc-              Frontiers in Computer Science, 1, 11.
+    tion, 112, 103121.                                                      Pereira, D. R., Piteri, M. A., Souza, A. N., Papa, J. P., & Adeli, H. (2020).
+Köpüklü, O., Wei, X., & Rigoll, G. (2019). You only watch once: A uni-         FEMa: A finite element machine for fast learning. Neural Comput-
+    fied CNN architecture for real-time spatiotemporal action localiza-        ing and Applications, 32(10), 6393–6404.
+    tion. arXiv:1911.06644.                                                 Rafiei, M. H., & Adeli, H. (2017). A new neural dynamic classifica-
+Kornblith, S., Shlens, J., & Le, Q. V. (2019). Do better imagenet models       tion algorithm. IEEE Transactions on Neural Networks and Learn-
+    transfer better? Proceedings of the IEEE/CVF Conference on Com-            ing Systems, 28(12), 3074–3083.
+    puter Vision and Pattern Recognition, Long Beach, CA (pp. 2661–         Roberts, D., & Golparvar-Fard, M. (2019). End-to-end vision-based
+    2671).                                                                     detection, tracking and activity analysis of earthmoving equip-
+Lea, C., Flynn, M. D., Vidal, R., Reiter, A., & Hager, G. D. (2017). Tem-      ment filmed at ground level. Automation in Construction, 105,
+    poral convolutional networks for action segmentation and detec-            102811.
+    tion. Proceedings of the IEEE Conference on Computer Vision and         Slaton, T., Hernandez, C., & Akhavian, R. (2020). Construction activ-
+    Pattern Recognition, Honolulu, HI (pp. 156–165).                           ity recognition with convolutional recurrent networks. Automa-
+Lewnard, J. A., & Lo, N. C. (2020). Scientific and ethical basis               tion in Construction, 113, 103138.
+    for social-distancing interventions against COVID-19. The Lancet        Soomro, K., Zamir, A. R., & Shah, M. (2012). UCF101: A dataset of 101
+    Infectious diseases, 20(6), 631–633.                                       human actions classes from videos in the wild. arXiv:1212.0402.
+Liang, X. (2019). Image-based post-disaster inspection of reinforced        Spinelli, A., & Pellino, G. (2020). COVID-19 pandemic: Perspectives
+    concrete bridge systems using deep learning with bayesian opti-            on an unfolding crisis. Journal of British Surgery, 107(7), 785–787.
+    mization. Computer-Aided Civil and Infrastructure Engineering,          Thakar, V., Saini, H., Ahmed, W., Soltani, M. M., Aly, A., & Yu, J.
+    34(5), 415–430.                                                            Y. (2018, September). Efficient single-shot multibox detector for
+                                                                                                                                                  14678667, 2022, 1, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.12695 by <Shibboleth>-member@purdue.edu, Wiley Online Library on [04/03/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+142                                                                                                                                 JUNG et al.
+
+
+  construction site monitoring. 2018 IEEE International Smart Cities         puter Vision and Pattern Recognition, Long Beach, CA (pp. 9935–
+  Conference (ISC2), Kansas City, MO (pp. 1–6).                              9944).
+Wang, J., Sun, W., Shou, W., Wang, X., Wu, C., Chong, H. Y., Liu, Y., &    Zhao, R., Ali, H., & Van der Smagt, P. (2017, September). Two-stream
+  Sun, C. (2015). Integrating BIM and LiDAR for real-time construc-          RNN/CNN for action recognition in 3D videos. 2017 IEEE/RSJ
+  tion quality control. Journal of Intelligent & Robotic Systems, 79(3),     International Conference on Intelligent Robots and Systems (IROS),
+  417–432.                                                                   Vancouver, Canada (pp. 4260–4267).
+Woo, S., Park, J., Lee, J. Y., & Kweon, I. S. (2018). CBAM: Convolu-       Zhou, S., Bai, L., Wang, H., Deng, Z., Zhu, X., & Gong, C. (2019).
+  tional block attention module. In V. Ferrari, M. Hebert, C. Smin-          A spatial-temporal attention module for 3D convolution network
+  chisescu & Y. Weiss (Eds.), Proceedings of the European Conference         in action recognition. 2019 International Conference on Computer
+  on Computer Vision (ECCV) (pp. 3–19). Springer.                            Intelligent Systems and Network Remote Control (CISNRC 2019),
+Yan, X., Zhang, H., & Li, H. (2020). Computer vision-based recogni-          Shanghai, China (pp. 35–42).
+  tion of 3D relationship between construction entities for monitor-
+  ing struck-by accidents. Computer-Aided Civil and Infrastructure
+  Engineering, 35(9), 1023–1038.                                              How to cite this article: Jung, S., Jeoung, J.,
+Zhai, D., Goodrum, P. M., Haas, C. T., & Caldas, C. H. (2009).                Kang, H., & Hong, T. 3D convolutional neural
+  Relationship between automation and integration of construction             network-based one-stage model for real-time action
+  information systems and labor productivity. Journal of Construc-
+                                                                              detection in video of construction equipment.
+  tion Engineering and Management, 135(8), 746–753.
+                                                                              Comput Aided Civ Inf. 2022; 37:126–142.
+Zhao, J., & Snoek, C. G. (2019). Dance with flow: Two-in-one stream
+  action detection. Proceedings of the IEEE/CVF Conference on Com-            https://doi.org/10.1111/mice.12695
+

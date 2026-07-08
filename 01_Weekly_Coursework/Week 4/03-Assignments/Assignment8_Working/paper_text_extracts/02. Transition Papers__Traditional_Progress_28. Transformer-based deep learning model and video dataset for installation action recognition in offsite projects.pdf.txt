@@ -1,0 +1,907 @@
+                                                                   Automation in Construction 172 (2025) 106042
+
+
+                                                                      Contents lists available at ScienceDirect
+
+
+                                                                Automation in Construction
+                                                            journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Transformer-based deep learning model and video dataset for installation
+action recognition in offsite projects
+Junyoung Jang a , Eunbeen Jeong a, Tae Wan Kim a,b,*
+a
+    Division of Architecture & Urban Design, Incheon National University, 119 Academy-ro, Yeonsu-gu, Incheon 22012, Republic of Korea
+b
+    Urban Science Institute, Incheon National University, Incheon 22012, Republic of Korea
+
+
+
+
+A R T I C L E I N F O                                       A B S T R A C T
+
+Keywords:                                                   This paper developed and evaluated the Precast Concrete Installation Dataset (PCI-Dataset), a large-scale video
+Precast concrete installation                               dataset for automatically recognizing precast concrete (PC) installation activities. The dataset comprises 12,791
+Off-site construction                                       video clips (5 s each, 1080 × 1080 resolution, 30fps) from actual PC construction sites, including 12 balanced
+Computer vision
+                                                            activity classes combining three component types and four work stages. Evaluation of six Transformer-based
+Transformer models
+Video recognition
+                                                            video classification models showed VideoMAE V2 achieved the highest overall accuracy of 98.10 %, followed
+                                                            by UniFormer V2, Video Swin, MVIT, ViViT, and TimeSformer. VideoMAE V2 achieved F1 scores above 80 % for
+                                                            most activities, with a peak of 92.20 % for slab assembly. In a case study on a real PC construction site, the model
+                                                            demonstrated high recognition accuracies: 100 % for lifting, 85.83–100 % for rigging, and 93.75–100 % for
+                                                            assembly operations. The paper contributes to PC construction management theory by applying computer vision
+                                                            for real-time and automated work recognition and analysis.
+
+
+
+
+1. Introduction                                                                                  accurate monitoring data hinders effective decision-making and timely
+                                                                                                 interventions in the construction process.
+    Precast concrete (PC) construction is a building method in which                                 To address these challenges, there is a growing need for automated
+concrete components prefabricated in a factory are assembled on-site                             monitoring systems that can provide real-time, accurate data on PC
+[1–3]. Off-Site Construction (OSC) includes not only PC construction,                            component installation actions. Such systems could significantly
+but also modular construction, panelized systems, and prefabricated                              enhance construction management practices by improving progress
+MEP (Mechanical, Electrical, and Plumbing) systems [4,5]. It gained                              tracking, workflow optimization, safety monitoring, quality control, and
+popularity in the construction industry due to its advantages, such as                           stakeholder communication.
+shortened construction time, improved quality, and cost reduction                                    Recent attempts to introduce various technologies for installation
+[6–9]. The installation of PC components is a crucial process in PC                              action monitoring in construction sites showed limitations in accurately
+construction, consisting of rigging, lifting, assembly, and unrigging                            identifying detailed actions in complex processes such as PC component
+installation actions [10,11]. The efficiency and accuracy of these                               installation. These limitations primarily stem from two factors:
+installation actions are vital factors determining project success, making
+effective monitoring and management of the PC component installation                                 (1) Limited application of computer vision technology in PC con­
+process essential.                                                                                       struction: Current technologies mainly focus on simple object
+    However, current monitoring practices for PC component installa­                                     detection or basic motion recognition, failing to effectively
+tion face several challenges. According to studies by Mäki and Kerosuo                                  analyze complex installation actions. Studies by Liu et al. [14]
+[12] and Styhre [13], construction site managers spend 80 to 90 % of                                     and Lee et al. [15] demonstrate that current models are limited to
+their working hours on office tasks, leaving limited time for on-site                                    simple object recognition tasks such as detecting worker helmet
+monitoring. This makes it difficult to allocate sufficient time for on-                                  use or PC column installation. While Wang et al. [16] and Zhang
+site monitoring and raises concerns about the accuracy and consis­                                       et al. [17] attempted to monitor precast wall installation pro­
+tency of the collected information. Moreover, the lack of real-time,                                     cesses and predict alignment trajectories for PC column
+
+
+
+    * Corresponding author at: Division of Architecture & Urban Design, Incheon National University, 119 Academy-ro, Yeonsu-gu, Incheon 22012, Republic of Korea.
+      E-mail addresses: injjy@inu.ac.kr (J. Jang), eb09080@inu.ac.kr (E. Jeong), taewkim@inu.ac.kr (T.W. Kim).
+
+https://doi.org/10.1016/j.autcon.2025.106042
+Received 15 July 2024; Received in revised form 31 January 2025; Accepted 1 February 2025
+Available online 6 February 2025
+0926-5805/© 2025 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+J. Jang et al.                                                                                                          Automation in Construction 172 (2025) 106042
+
+
+       installation, respectively, they still fall short in understanding the       extended YOLOv3 algorithm to detect workers’ PPE usage for safety
+       overall flow and context of the installation actions, focusing only          management in prefabrication construction sites. For installation prog­
+       on individual component positioning or utilizing information                 ress monitoring. For installation progress monitoring, Wang et al. [27]
+       from a single perspective.                                                   proposed a framework using Faster R-CNN to monitor the installation
+   (2) Lack of specialized data for PC component installation actions:              process of precast walls. In the area of interruption management, Yan
+       Existing datasets primarily focus on elements of general con­                and Zhang [28] developed a system using Faster R-CNN to detect and
+       struction sites, failing to reflect the specificity of PC component          manage various types of interruptions in prefabricated building projects.
+       installation actions. Datasets constructed by Duan et al. [9] and            For process guidance, Zhang et al. [17] proposed a deep learning-based
+       Xiao et al. [18] focus on workers, equipment, materials, and                 system to predict alignment trajectories during PC column installation.
+       heavy machinery in general construction sites. However, these                    Existing OSC installation action recognition research primarily uses
+       datasets do not include elements specific to PC construction                 CNN, LSTM, or combinations of these models, focusing on object
+       methods, presenting a fundamental limitation in reflecting the               detection or recognition of specific tasks, limiting the recognition of
+       uniqueness of PC component installation actions. Meanwhile, PC               installation processes considering the continuity of the entire operation.
+       construction site datasets built by Jang et al. [4] and Yan et al.           In particular, there is a lack of research on datasets and model evalua­
+       [19] include PC components and installation tools but fail to                tions that can distinguish and recognize continuous installation action
+       sufficiently reflect the continuity of the PC component installa­            stages such as rigging, lifting, assembly, and unrigging in the precast
+       tion process or the interdependence between installation actions.            component installation process.
+
+    These technological limitations and data deficiencies present sig­              2.2. Datasets for construction site work recognition
+nificant challenges to comprehensively understanding and modeling the
+complex characteristics of PC component installation actions.                           Datasets for construction site installation action recognition can be
+    To address these issues, this study aims to construct a comprehensive           broadly categorized into worker behavior recognition and safety
+dataset called PCI (Precast Concrete Installation)-Dataset for automatic            monitoring, construction equipment operation recognition and pose
+recognition of PC component installation actions and to evaluate the                estimation, construction site object detection, and PC and modular
+performance of Transformer-based video recognition models using this                construction fields.
+dataset. Specifically, the authors constructed a PCI-Dataset based on                   As for worker behavior recognition and safety monitoring datasets,
+actual video data from PC component installation sites and evaluated its            Yang et al. [29] developed a dataset including 1595 video clips and
+performance using VideoMAE V2, TimeSformer, ViViT, MVIT V2, Uni­                    seven action classes for identifying unsafe behaviors in construction
+former V2, and Video SWIN models. Additionally, the authors tested the              projects. Luo et al. [30] used about 1000 video clips to build a computer
+practicality of the developed model through application in an actual                vision-based worker activity assessment model. Bonyani et al. [31]
+field setting. This study contributes to the enhanced installation action           conducted a study to detect unsafe behaviors of construction workers
+monitoring and management in construction sites and improved pro­                   using 2806 images from the SODA dataset and 1595 video clips from the
+ductivity by accelerating the digitalization and automation of the con­             CMA dataset. Wu et al. [32] presented a benchmark dataset for safety
+struction industry. By providing a foundation for more accurate and                 helmet wear detection, including 3174 images.
+detailed monitoring of PC installation actions, this research aims to                   As for construction equipment operation recognition and pose esti­
+bridge the gap between academic advancements in computer vision and                 mation datasets, Ghelmani and Hammad. [33] developed a self-
+the practical needs of construction management professionals.                       supervised learning model for construction equipment operation
+                                                                                    recognition using 1036 video clips. Roberts and Golparvar-Fard. [34]
+2. Related works                                                                    built an end-to-end vision-based system for the detection, tracking, and
+                                                                                    activity analysis of earthmoving equipment using ten videos. Assadza­
+2.1. Deep learning models for OSC installation action recognition                   deh et al. [35] developed an excavator pose estimation model using up
+                                                                                    to 15,000 synthetic and 824 real images. Luo et al. [36] conducted a
+    Research on deep learning models for offsite construction (OSC)                 study on full-body pose estimation of construction equipment using
+installation action recognition is divided into factory and on-site envi­           1281 images (augmented to 6405). Soltani et al. [37] researched to
+ronments. Studies in factory environments focus on quality control,                 estimate excavators’ skeletons using 30,600 synthetic images. Xiao et al.
+productivity improvement, and ergonomic analysis. In contrast,                      [18] presented a methodology for automatically detecting construction
+research in on-site environments typically concentrates on safety man­              video highlights by integrating machine tracking and CNN feature
+agement, installation progress monitoring, interruption management,                 extraction.
+and process guidance.                                                                   As for construction site object detection datasets, Duan et al. [9]
+    In factory environments, Lee et al. [15] (2020) developed an auto­              developed the SODA dataset, including 19,846 images, for object
+matic quality inspection system for detecting cracks and damages in PC              detection in construction sites. Yan et al. [19] presented the Construc­
+components, while Martinez et al. [20] proposed a vision-based system               tion Instance Segmentation (CIS) dataset of 50,000 images. Tajeen and
+for automatically inspecting screw fastening in lightweight steel frame             Zhu. [38] developed a dataset using 2000 images to measure construc­
+manufacturing. For productivity improvement and progress monitoring,                tion equipment recognition performance. Fang et al. [39] built an
+Zheng et al. [21] developed a Mask R-CNN model to count installed                   automatic detection model for workers and heavy equipment using over
+modules in modular integrated structures automatically. Fini et al. [22]            10,000 image frames. Luo et al. [40] conducted a study to recognize
+presented a model for real-time module tracking. Panahi et al. [23]                 various construction activities through relevance networks of
+developed a computer vision-based model for tracking volumetric                     construction-related objects detected by CNN using 7790 images. Zhu
+modules through various stations along the production line. Park et al.             et al. [41] developed an integrated detection and tracking system for
+[24] proposed a model for recognizing stages of the module assembly                 workers and equipment in construction site videos using 44,597 image
+process in a virtual factory environment. Martinez et al. [25] developed            frames.
+a model for tracking the progress of floor panel production. In the field               As for PC and modular construction datasets, Jang et al. [6] devel­
+of ergonomic analysis, Chu et al. [26] developed a monocular vision-                oped a PC project image dataset including 12,000 high-resolution im­
+based framework for evaluating worker postures in modular construc­                 ages. Baek et al. [42] researched module installation productivity
+tion factories.                                                                     monitoring in OSC using about 28 h of video. Lee et al. [43] developed a
+    In on-site environments, Liu et al. [25] developed a system using an            PC component crack detection dataset of 4000 images. Panahi et al. [23]
+
+                                                                                2
+J. Jang et al.                                                                                                              Automation in Construction 172 (2025) 106042
+
+
+researched to identify modular construction worker tasks using com­                     dataset. Finally, the authors tested the effectiveness of the selected best-
+puter vision. Park and Ergan [44] presented an approach to generate                     performing model by applying it to an actual PC component installation
+training data for scene understanding in modular construction using                     site.
+84,000 synthetic images. Panahi et al. [45] conducted a study to detect
+bottlenecks in modular construction factories through computer vision
+                                                                                        3.1. PCI-dataset construction
+using 420 h of surveillance video. Chen et al. [46] built a real-time
+process monitoring and problem feedback system in OSC using 3200
+                                                                                            This study constructed the PCI-Dataset, a dataset for automatically
+images.
+                                                                                        recognizing PC component installation actions. The dataset construction
+    Despite the progress, there remains a significant gap in the field of
+                                                                                        process proceeded in the following steps. Through a literature review
+OSC construction datasets. Specifically, there is a lack of comprehensive
+                                                                                        [10,11,47,48] and interviews with field experts, the authors defined the
+datasets that cover the entire process of precast component installation
+                                                                                        main installation actions of PC component installation and established a
+actions in OSC sites. The dataset by Baek et al. [42] is a step forward as it
+                                                                                        classification system. The installation process was divided into four ac­
+focuses on module installation, but it has limitations in not addressing
+                                                                                        tion stages (ring clutch rigging, lifting, assembly, unrigging) and com­
+the entire installation process in detail, such as rigging, lifting, assembly,
+                                                                                        bined with three types of components (column, beam, slab) to define a
+and unrigging, which are specific to PC.
+                                                                                        total of 12 installation actions. Clear definitions and descriptions for
+    An ideal OSC dataset should have the following characteristics: long-
+                                                                                        each installation action are presented in Table 2.
+term continuous recording, inclusion of various installation action
+stages (rigging, lifting, assembly, unrigging), multi-angle recording,
+                                                                                        3.1.1. Collection of PC component installation videos
+reflection of various environmental conditions, capture of interactions
+                                                                                            To construct the image dataset, a systematic data collection process
+between workers and equipment, and high-resolution video. Table 1
+                                                                                        from various sources was necessary [49]. Following this process, the
+summarizes existing datasets for behavior or object recognition for use
+                                                                                        authors conducted filming for two months at one domestic construction
+in OSC projects.
+                                                                                        site applying the PC method. One thousand-seven videos (about 700 h)
+                                                                                        were collected using four action cameras and one smartphone. The
+2.3. Summary                                                                            collected videos were classified by PC component type, consisting of 362
+                                                                                        beams, 207 slabs, and 438 columns of videos.
+   Based on our review of existing literature, several key gaps have been
+identified in the research on Off-Site Construction (OSC) installation                  3.1.2. Preprocessing of PC component installation actions
+task recognition: (1) the scope of continuous installation processes, (2)                   A systematic preprocessing was performed to transform the collected
+lack of datasets encompassing the entire process, (3) limited model                     raw video data into a form suitable for deep learning model training.
+evaluation for recognizing continuous installation task stages, and (4)                 This process was based on the methodologies of Jang et al. [6], Xiao
+insufficient consideration of environmental and contextual factors. To                  et al. [18], and Duan et al. [9], with modifications and applications. The
+address these gaps, our study aims to: (a) develop an OSC installation                  preprocessing consisted of two stages: manual annotation work and data
+process dataset that includes task stages such as rigging, lifting, assem­              structuring and video clip segmentation.
+bly, and unrigging, (b) propose and evaluate deep learning models for
+recognizing continuous installation task stages, (c) capture OSC envi­                   • Manual annotation work and data structuring: The research team
+ronments and worker-equipment interactions using various high-                             analyzed all videos over four weeks to identify each installation ac­
+resolution videos, and (d) provide a dataset and model evaluation                          tion’s start and end points and assign labels. Clear start and end
+framework for future research and applications. Through these efforts,                     criteria, as presented in Table 3, were applied to ensure consistency
+our study seeks to contribute to the understanding and improvement of                      of annotations. The annotation data was organized into an Excel file,
+OSC processes.                                                                             including information such as folder name, file name, component
+                                                                                           type, installation action type, and start and end times (Table 4).
+3. Methods
+                                                                                         • Video clip segmentation: Using a Python script developed based on
+    This study was conducted in three main stages, as shown in Fig. 1.                     the Excel data, the original videos were automatically segmented
+First, the authors constructed the PCI-Dataset, a video dataset for                        into individual clips of 5 s in length. This duration was chosen based
+recognizing PC component installation actions. Second, the authors                         on our field data analysis of PC installation actions (ranging from ~2
+evaluated the performance of deep learning models for automatic                            to 5 s) and consideration of clip lengths in widely used datasets (e.g.,
+recognition of PC component installation actions using the constructed                     UCF101, Kinetics, HMDB51: 3–10 s). This approach aimed to
+
+Table 1
+Existing datasets for behavior or object recognition in OSC construction.
+  Ref.            Recognition Type          Object                  Number of Clips      Algorithms                      Metrics
+
+  Jang et al.     Object Detection          PC Component            12,000 images        YOLOv5, YOLOX, Faster R-CNN,    mAP(97 %), Robustness(96 %), fps(23)
+    [6]                                                                                  Double Head R-CNN
+  Baek et al.     Object Detection,         Module, Worker          28 h 29 min 27       YOLO v4                         Precision(91 %), Recall(91 %), F1-score(91 %),
+    [42]          Behavior Recognition                              s video                                              mAP(93 %)
+  Lee et al.      Object Detection          PC components           4000 images          SSD                             Recall(78 %), Precision(75 %)
+    [44]
+  Panahi et al.   Behavior Recognition      Modular construction    –                    CNN, SSD                        Accuracy(90 %)
+    [23]                                    workers
+  Park &          Object Detection          Modular construction    84,000 images        CNN-based 3D reconstruction     Accuracy(97 %)
+    Ergan.                                  components                                   network
+    [44]
+  Panahi et al.   Object Detection          Modular construction    420 h video          SIFT, Mask R-CNN                Workplace occupancy/state(88 %)
+    [45]                                    workplace                                                                    identification accuracy(91 %), F1-score(89 %)
+  Chen et al.     Object Detection,         Workers, equipment,     3200 images          YOLO V8, ByteTrack              Precision(97 %), Recall(98 %), IDSW(2.5),
+    [46]          Behavior Recognition      etc.                                                                         MOTA(97 %), MOTP(86 %)
+
+
+                                                                                    3
+J. Jang et al.                                                                                                                    Automation in Construction 172 (2025) 106042
+
+
+
+
+                                                         Fig. 1. Development and application process of PCI-Dataset.
+
+
+                                                                                               3.1.3. Final dataset composition
+Table 2
+                                                                                                   Clips were selected to include 12 detailed installation actions (three
+Definition of installation actions.
+                                                                                               component types by four action stages) in a balanced manner. Consid­
+  Activity                    Description                                                      ering the limitations of computer performance and computational re­
+  Column -Rigging (C-R)       Connecting rigging equipment to a column for lifting             sources, the final dataset size was set to 12,791. This dataset clearly
+  Column-Lifting (C-L)        Lifting a column using a crane with rigging equipment            defines each installation action’s start and end points, providing a reli­
+  Column-Assembly (C-A)       Installing and adjusting a column at the designated
+                                                                                               able standard for deep learning model training and evaluation.
+                              location
+  Column-Unrigging (C-        Removing rigging equipment from a column after
+    UR)                       installation                                                     3.2. Algorithm selection and evaluation for PCI-dataset assessment
+  Beam-Rigging (B-R)          Connecting rigging equipment to a beam for lifting
+  Beam-Lifting (B-L)          Lifting a beam using a crane with rigging equipment
+  Beam-Assembly (B-A)         Installing and adjusting a beam at the designated location
+                                                                                                   This study used video analysis models including VideoMAE, ViViT,
+  Beam-Unrigging (B-UR)       Removing rigging equipment from a beam after                     TimeSformer, MVIT V2, UniFormer V2, and Video Swin V2 to evaluate
+                              installation                                                     the effectiveness of PCI-Dataset and analyze the performance of PC
+  Slab-Rigging (S-R)          Connecting rigging equipment to a slab for lifting               component installation action recognition. While traditional approaches
+  Slab-Lifting (S-L)          Lifting a slab using a crane with rigging equipment
+                                                                                               such as 3D-CNN and LSTM have been widely used in construction ac­
+  Slab-Assembly (S-A)         Installing and adjusting a slab at the designated location
+  Slab-Unrigging (S-UR)       Removing rigging equipment from a slab after                     tivity recognition, they have limitations in modeling long-range de­
+                              installation                                                     pendencies and handling long sequences efficiently [27]. These
+                                                                                               Transformer-based models were chosen based on their established per­
+                                                                                               formance in video understanding tasks and their ability to address these
+Table 3
+                                                                                               limitations. However, our primary focus is on assessing the quality and
+PC component installation work definition.                                                     usefulness of PCI-Dataset, rather than comparing algorithm perfor­
+                                                                                               mances. Through these models, we evaluated the characteristics and
+  Activity       Start Time                             End Time
+                                                                                               potential applications of PCI-Dataset from various angles. Additionally,
+  Rigging        The moment the ring clutch appears     The moment the ring clutch is          we included performance results of CNN-based models (I3D, C3D, R(2 +
+                 on the screen                          completely fastened to the
+                                                                                               1)D), hybrid models (CNN + LSTM, TSM), as well as traditional 3D-CNN
+                                                        component
+  Lifting        The moment the component starts to     Just before the worker grabs           and LSTM models in our evaluation for a comprehensive comparison
+                 lift                                   the installation control rope          and to provide a broader perspective on how different architectural
+  Assembly       The moment the worker grabs the        The moment the component is            approaches interact with our dataset (see Section 4.2).
+                 component with their hand or grabs     fixed in place
+                 the hoisting rope
+  Unrigging      Immediately after the component is     The moment the hoisting rope
+                                                                                               3.2.1. Algorithm selection
+                 fixed                                  is completely removed from                 VideoMAE V2 is a pre-training model that utilizes self-supervised
+                                                        the component                          learning. It randomly masks some patches along the time and spatial
+                                                                                               axes in the input video and learns general features of the video through
+                                                                                               the process of reconstructing the masked patches through an encoder-
+    effectively capture varying action durations while maintaining
+                                                                                               decoder structure. High performance can be expected by fine-tuning
+    dataset compatibility. This approach ensured optimal capture of
+                                                                                               the pre-trained encoder for the task of installation action recognition
+    actions with varying durations. Irrelevant sections were removed,
+                                                                                               [50]. This model was chosen because it can effectively learn from a large
+    and all clips were standardized to 1080 × 1080 resolution, 30fps
+                                                                                               amount of unlabeled video data, which is expected to understand
+    [29]. Through this process, a total dataset consisting of 56,901 clips
+                                                                                               various situations at PC component installation sites well.
+    was generated.
+                                                                                                   TimeSformer is a Transformer-based video recognition model that
+                                                                                               explicitly models long-term temporal dependencies through temporal
+
+                                                                                           4
+J. Jang et al.                                                                                                               Automation in Construction 172 (2025) 106042
+
+
+Table 4
+PC component installation video labeling summary.
+  Date                    Title                 File name                    Component Type                      Activity                  Start                 End
+
+  20,220,606              Project1              2.3GH030221                  Column                              Assembly                  0:00                  10:24
+  20,220,606              Project1              2.4GH040221                  Beam                                Lifting                   0:00                  10:35
+  20,220,606              Project1              2.5GH010222                  Slab                                Assembly                  0:00                  7:03
+  20,220,606              Project1              2.6GH010222                  Slab                                Lifting                   0:00                  7:03
+  20,220,606              Project2              2.7GH010222                  Slab                                Assembly                  0:00                  6:00
+  20,220,606              Project2              2.8GH040222                  Slab                                Rigging                   0:00                  6:00
+  20,220,606              Project2              2.9GH040222                  Slab                                Unrigging                 0:00                  9:10
+
+
+
+attention. It divides the input video into spatiotemporal patches and             model learns stably, prevents overfitting, and performs optimally.
+then sequentially applies spatial and temporal attention to each patch
+for encoding. This enhances the model’s expressiveness by separating              3.2.4. PCI-dataset evaluation method
+spatial axis modeling, which extracts scene features, and temporal axis               This study evaluated the prediction performance of the three models
+modeling, which captures changes over time [51]. This model was                   implemented using PCI-Dataset. Standard performance indicators such
+selected because it is expected to capture the sequential characteristics         as accuracy, precision, recall, and F1 score were used for evaluation.
+and long-term dependencies of PC component installation actions well.             Eqs. (1), (2), (3), and (4) were used to calculate each indicator. The
+    ViViT is a video recognition model based on the Transformer struc­            confusion matrix was used to analyze the prediction performance and
+ture. It divides each frame into patch units and encodes them through a           error patterns for each class in detail. In addition, to evaluate the pos­
+Transformer encoder to extract features of the entire video. It learns the        sibility of actual field application, the authors collected separate test
+relationships between patches through a multi-head attention mecha­               data from a PC construction project site and analyzed the performance of
+nism and outputs the final recognition result through MLP layers [52].            each model comprehensively.
+This model was selected because it is expected to effectively learn the
+                                                                                                       TP + TN
+complex spatiotemporal relationships of PC component installation                 Accuracy =                                                                           (1)
+                                                                                                  TP + TN + FP + FN
+actions.
+    MViT v2 is a video recognition model that extracts features from                                TP
+various spatiotemporal scales through a hierarchical structure. It uses a         Precision =                                                                          (2)
+                                                                                                  TP + FP
+pooling attention mechanism to increase computational efficiency while
+capturing extensive spatiotemporal relationships. Additionally, it im­                         TP
+                                                                                  Recall =                                                                             (3)
+proves efficiency by independently processing spatial and temporal di­                       TP + FN
+mensions through separated spatiotemporal attention [53]. This model
+was chosen because it can simultaneously capture various detailed ac­                        Prcision × Recall
+                                                                                  F1 = 2 ×                                                                             (4)
+tions and the overall flow of the PC component installation process.                         Prcision + Recall
+    Uniformer v2 is a unified architecture for image and video process­
+ing. It employs a mixed attention mechanism that combines local and               4. Results
+global attention, and effectively encodes temporal position information
+through dynamic position encoding. It also possesses multimodal                   4.1. PCI-dataset profile
+learning capabilities that can simultaneously process image and video
+data [54]. This model was selected because it can simultaneously un­                  As explained in the previous section, the PCI-Dataset comprises
+derstand the detailed actions and overall process of PC component                 12,791 video clips. Each installation action class accounts for 8.1 % to
+installation, and accurately capture the installation sequence and                8.5 % of the entire dataset, showing a well-balanced distribution. By PC
+changes over time.                                                                component, it shows an even distribution of about 33 %, and by the
+    Video Swin is a video transformer model with a hierarchical struc­            installation action stage, about 25 %. This composition comprehensively
+ture. It uses a shifted window technique to maintain connectivity be­             reflects various PC component installation action situations (Table 5).
+tween windows while using local windows for efficient computation. It             The total duration of all videos in the dataset is 1065.55 min, with each
+processes spatial and temporal information simultaneously through 3D              activity category having approximately equal representation in terms of
+spatiotemporal attention and effectively encodes position information             video count and duration (Table 6).
+using relative position bias [55]. This model was chosen because it can               This dataset was designed to reflect the variability and diversity of
+capture both the local characteristics and overall context of PC                  actual installation environments, including various weather conditions,
+component installation, and can simultaneously learn the temporal and             time zones, workers, and equipment. It was also designed to contribute
+spatial relationships of the installation process.                                to improving the generalization ability and robustness of the six models,
+
+3.2.2. Dataset split                                                              Table 5
+   PCI-Dataset was split into training (70 %), validation (10 %), and             Profile of the PCI-Dataset.
+evaluation (20 %) sets [56,57]. Stratified sampling was applied to                 Installation     Beam              Slab             Column            Total
+ensure that each subset evenly includes 12 installation action classes.            activities
+This ensures balanced learning and evaluation of the model.                        Rigging          1071(8.37 %)      1049(8.20 %)     1068(8.35 %)      3188(24.92
+                                                                                                                                                         %)
+3.2.3. Training and evaluation settings                                            Lifting          1070(8.36 %)      1057(8.26 %)     1076(8.41 %)      3203(25.04
+    Model implementation and training were conducted using the                                                                                           %)
+                                                                                   Assembly         1081(8.45 %)      1072(8.38 %)     1081(8.45 %)      3234(25.28
+PyTorch framework. The main training parameters are as follows.
+                                                                                                                                                         %)
+AdamW was used as the optimizer, and Cosine Annealing was applied as               Unrigging        1065(8.33 %)      1038(8.12 %)     1063(8.31 %)      3166(24.75
+the learning rate scheduler. The batch size was set to 16, the initial                                                                                   %)
+learning rate to 0.0001, the maximum number of epochs to 30, and the               Total            4287(33.52        4216(32.96       4288(33.52        12,791(100
+                                                                                                    %)                %)               %)                %)
+weight decay to 0.05 [58]. These parameter settings ensure that the
+
+                                                                              5
+J. Jang et al.                                                                                                              Automation in Construction 172 (2025) 106042
+
+
+Table 6                                                                                   These performance differences may be attributed to the structural
+Analysis of work activities and video duration by categories.                          characteristics and learning methods of each model. The performance of
+  Categories                     Activity                       Total time(min)        Transformer-based models in this task indicates the potential of these
+                                                                                       architectures in recognizing complex actions in construction scenarios.
+  Beam                           Rigging                        89.15
+                                 Lifting                        85.10                  The performance of some traditional models in certain actions suggests
+                                 Assembly                       90.05                  that combining different approaches might be beneficial for compre­
+                                 Unrigging                      88.45                  hensive action recognition in PC installation.
+  Slab                           Rigging                        87.25
+                                 Lifting                        88.05
+                                 Assembly                       89.20
+                                                                                       4.2.3. Confusion matrix analysis
+                                 Unrigging                      86.30                      Figs. 3, 4, and 5 represent the confusion matrices of three models.
+  Column                         Rigging                        89.00                  These confusion matrices imply that most errors stemmed from confu­
+                                 Lifting                        89.40                  sion between similar installation actions. Confusion between rigging and
+                                 Assembly                       90.05
+                                                                                       unrigging actions and between lifting and assembly actions was notably
+                                 Unrigging                      88.35
+  Total                                                         1065.55                observed because these pairs share visually similar characteristics.
+                                                                                       These results suggest the need to define the boundaries between
+Note: All videos were shot at a resolution of 1080 × 1080 and a frame rate of 30
+                                                                                       installation actions more clearly and reflect this in annotation and
+fps.
+                                                                                       learning strategies.
+
+i.e., VideoMAE V2, TimeSformer, ViViT, MVIT V2, Uniformer V2, Video                    4.2.4. Demonstration of PC installation action recognition using PCI-
+Swin V2. Fig. 2 shows representative frames of 12 installation actions.                dataset
+                                                                                           Fig. 6 shows the recognition results of the VideoMAE V2 model for
+4.2. Performance of PC component installation action recognition based                 representative installation actions among the 12 main actions of PCI-
+on PCI-dataset                                                                         Dataset. Each row represents the same installation action at different
+                                                                                       times, and the “Prob” indicated on the right represents the model’s
+4.2.1. Overall performance comparison                                                  prediction confidence. The VideoMAE V2 model trained using PCI-
+   As shown in Table 7, VideoMAE V2 showed the best performance                        Dataset performed accurate recognition with a high probability of
+with an accuracy of 98.10 %. Other Transformer-based models also                       over 90 % for all installation actions. Particularly noteworthy points are
+performed well, with UniformerV2, Video SWIN, and MVIT V2                              as follows:
+achieving accuracies of 94.20 %, 93.25 %, and 92.81 %, respectively.
+The excellent performance of VideoMAE V2 is analyzed due to effective                   • It recognized all installation actions related to various PC compo­
+pre-training through masked autoencoding and the ability to model                         nents included in the dataset, such as columns, beams, and slabs,
+long-term dependencies through the Transformer structure. The pro­                        with high accuracy. This suggests that the PCI dataset reflects the
+posed Transformer-based methods all achieved high recognition accu­                       diversity of PC components well.
+racy of over 87 %, outperforming traditional approaches such as I3D                     • It accurately distinguished various installation action stages occur­
+(79.75 %), R(2 + 1)D (80.76 %), and CNN + LSTM (87.34 %). This result                     ring during the installation process of each component, such as ring
+demonstrates that the proposed PCI-Dataset and Transformer-based                          clutch rigging, lifting, assembly, and unrigging. This shows that the
+video recognition models can be very effectively applied to PC compo­                     PCI-Dataset comprehensively covers the entire process of PC instal­
+nent installation action recognition, showing significant improvements                    lation actions.
+over conventional methods.                                                              • It effectively captured and utilized for recognition of the character­
+                                                                                          istic visual elements of each installation action included in the PCI-
+4.2.2. Performance in detail by installation actions and models                           Dataset, such as crane use, worker movements, and changes in
+    Tables 8, 9, 10 shows the recognition performance of each model for                   component position. This means that the dataset captures various
+12 detailed installation actions. The models demonstrated varying per­                    visual elements of the site well.
+formance across different actions.                                                      • It accurately identified subtle differences between similar installa­
+    VideoMAE V2 (1) showed high performance across most actions,                          tion actions, clearly distinguishing, for example, column lifting from
+with accuracies often above 95 %. TimeSformer (2) and ViViT (3) per­                      beam lifting or slab assembly from beam assembly. This indicates
+formed well in specific actions. TimeSformer achieved 92.3 % accuracy                     that PCI-Dataset provides detailed information that can capture
+in Column Assembly and 92.9 % in Beam Rigging, while ViViT reached                        subtle differences between similar installation actions.
+95.8 % in both Beam Rigging and Slab Assembly.
+    UniformerV2 (4), Video SWIN (5), and MVIT V2 (6) also showed                          These results suggest that the PCI-Dataset effectively represents
+competitive performance. UniformerV2 achieved 98.75 % accuracy in                      various installation actions in the PC component installation process.
+Column Assembly, Video SWIN 98.80 % in Beam Unrigging, and MVIT                        Based on this, the VideoMAE V2 model can very accurately identify and
+V2 99.39 % in Slab Unrigging.                                                          recognize installation actions occurring in various construction envi­
+    These six Transformer-based models generally outperformed tradi­                   ronments and action stages.
+tional approaches like CNN + LSTM (7), I3D (8), C3D (9), R(2 + 1)D
+(10), and TSM (11). However, some traditional models performed well                    4.3. Field applicability of the PCI-dataset
+in certain actions, such as I3D achieving 98.47 % accuracy in Column
+Rigging.                                                                                   To evaluate the actual field applicability of PCI-Dataset developed in
+    The models showed lower performance for Column Lifting and Slab                    this study and verify the versatility of the dataset, the authors conducted
+Rigging actions. ViViT achieved 79.0 % accuracy in Column Lifting and                  a case study on a domestic PC construction project site.
+70.1 % in Slab Rigging. This might be due to these actions having less
+distinct visual cues or higher similarity to other actions.                            4.3.1. Experimental design
+    In contrast, actions like Beam Assembly, Beam Unrigging, and Slab                      This experiment was conducted on a new construction site of a PC
+Unrigging saw higher performance across most models. VideoMAE V2                       structure logistics center with a total floor area of 264,000 m2 and five
+achieved 98.1 %, 98.2 %, and 98.7 % accuracy in these actions                          stories above ground. The actual field applicability of PCI-Dataset with
+respectively.                                                                          the VideoMAE V2 model was evaluated in this experiment. To do so, the
+
+                                                                                   6
+J. Jang et al.                                                                                            Automation in Construction 172 (2025) 106042
+
+
+
+
+                 Fig. 2. Representative frame sequences of PC component installation activities in the PCI-Dataset.
+
+
+
+
+                                                                 7
+J. Jang et al.                                                                                                             Automation in Construction 172 (2025) 106042
+
+
+Table 7                                                                                   Also, the authors developed an installation action recognition pro­
+Performance comparison on the PC component installation dataset.                      totype system (Fig. 7) based on the VideoMAE V2 model trained with
+  No         Model            Accuracy   Precision    Recall       F1 Score           PCI-Dataset. This prototype was used to evaluate the dataset’s general­
+                                                                                      ization ability and field applicability, with the model’s recognition ac­
+  1          Videomae V2      98.10 %    88.23 %      88.92 %      88.96 %
+  2          Uniformer V2     94.20 %    94.31 %      94.20 %      94.19 %            curacy and consistency as the main evaluation criteria.
+  3          Video SWIN       93.25 %    93.43 %      93.25 %      93.19 %
+  4          MVIT V2          92.10 %    92.36 %      92.10 %      91.98 %            4.3.2. Experiment results
+  5          TimeSformer      87.76 %    88.20 %      87.72 %      87.96 %                The VideoMAE V2 model trained with PCI-Dataset showed high
+  6          ViViT            88.45 %    88.97 %      88.45 %      88.71 %
+  7          C3D              90.50 %    90.70 %      90.50 %      90.41 %
+                                                                                      recognition accuracy at the actual PC component installation site. As
+  8          CNN + LSTM       87.34 %    87.58 %      87.34 %      87.15 %            shown in Fig. 8, which analyzes a continuous sequence of four instal­
+  9          I3D              79.75 %    80.23 %      79.77 %      79.61 %            lation action processes over 8 min, the lifting action showed 100 %
+  10         TSM              81.07 %    82.28 %      81.07 %      80.86 %            accuracy, rigging action 85.83 %–100 %, assembly action 93.75 %–100
+  11         R(2 + 1)         80.76 %    81.15 %      80.76 %      80.35 %
+                                                                                      %, and unrigging action 91.67 % accuracy. This suggests that the PCI-
+                                                                                      Dataset effectively captures the characteristics of each installation ac­
+authors first recorded PC component installation actions through a 7-                 tion stage and appropriately reflects the diversity and complexity of the
+day on-site observation. During this period, beam (n = 48), slab (n =                 actual site. As a result, it was proven that the trained model can perform
+52), and column (n = 42) installations were observed. The collected                   stably in actual sites, even with continuous and sequential activities.
+videos were classified by component type and installation action stage                Notably, a video similarity analysis between the case study videos and
+reflecting the structure of PCI-Dataset and then reconstructed into four              the PCI-Dataset revealed a low average similarity score of 0.43, further
+consecutive installation action sequences in the order of rigging-lifting-            emphasizing the model’s ability to generalize to significantly different
+assembly-unrigging. Additionally, a video similarity analysis was per­                real-world scenarios. To provide a more comprehensive evaluation, we
+formed to quantitatively compare the case study videos with the PCI-                  extended our analysis to the complete dataset collected over a 7-day
+Dataset. To facilitate comprehensive process analysis, A Value Stream                 period. The results of this extended analysis are presented in Table 11.
+Map (VSM) was developed for each component type, incorporating                            This extended analysis confirms the model’s high performance over a
+detailed time statistics including quartiles and 95 % confidence                      longer period, maintaining an average of 98.1 % recognition accuracy
+intervals.                                                                            across all activities. The data also provides valuable insights for con­
+                                                                                      struction practitioners, supporting data-driven decision-making in
+
+Table 8
+Performance comparison of various models for column-related installation actions.*
+  Activity           Metric      1         2           3            4             5            6           7           8             9             10           11
+
+  C-R                Acc         97.7      88.8        96.4         95.5          96.4         94.0        89.2        98.4          79.0          68.4         88.5
+                     Pre         83.7      84.9        80.1         89.8          87.9         88.2        74.1        77.7          70.9          76.6         55.6
+                     Rec         89.7      88.7        96.4         92.5          96.4         94.0        89.2        86.8          79.0          72.3         68.3
+                     F1          86.6      86.8        87.5         89.8          92.0         91.0        80.9        77.7          74.7          76.6         55.6
+  C-L                Acc         97.0      83.8        79.0         88.3          78.4         79.0        60.8        96.9          59.8          66.9         62.1
+                     Pre         82.9      80.0        84.0         91.0          91.6         92.9        77.6        96.9          68.9          50.9         81.4
+                     Rec         81.1      83.7        79.0         89.6          78.4         79.0        80.8        96.9          59.8          57.8         70.4
+                     F1          82.2      81.8        81.4         91.0          84.5         85.4        68.2        96.9          64.1          50.9         81.4
+  C-I                Acc         98.4      92.3        89.8         98.7          95.1         95.7        97.5        82.4          91.5          92.9         92.4
+                     Pre         91.2      94.7        93.7         95.1          98.1         95.7        93.6        73.0          92.6          94.5         96.3
+                     Rec         90.3      92.3        89.7         96.9          95.1         95.7        97.5        77.4          91.5          93.7         94.4
+                     F1          90.7      93.5        91.6         95.1          96.6         95.7        95.5        73.0          92.1          94.5         96.3
+  C-UR               Acc         97.6      83.7        80.2         88.2          94.6         94.6        82.0        88.4          76.0          80.2         83.0
+                     Pre         87.3      89.4        89.3         94.0          87.2         86.8        83.5        86.8          73.4          85.0         85.0
+                     Rec         82.9      83.7        80.2         91.0          94.6         94.6        82.0        87.6          76.0          82.5         84.0
+                     F1          85.0      86.4        84.5         94.0          90.8         90.5        82.7        86.8          74.7          85.0         85.0
+  *
+   C-R: Column Rigging C-L: Column Lifting C-I: Column Assembly C-UR: Column Unrigging B-R: Beam Rigging B-L: Beam Lifting B-I: Beam Assembly B-UR: Beam
+Unrigging S-R: Slab Rigging S-L: Slab Lifting S-I: Slab Assembly S-UR: Slab Unrigging.
+
+
+Table 9
+Performance comparison of various models for beam-related installation actions.
+  Activity           Metric      1         2           3            4             5            6           7           8             9             10           11
+
+  B-R                Acc         98.4      92.9        95.8         93.7          98.2         99.4        96.4        83.2          59.2          78.2         81.8
+                     Pre         87.7      91.5        89.8         99.4          93.1         87.8        88.9        92.2          81.1          92.8         64.6
+                     Rec         93.9      92.9        95.8         96.5          98.2         99.4        96.4        87.5          59.2          84.9         72.2
+                     F1          90.7      92.2        92.7         99.4          95.6         93.2        92.5        92.2          68.5          92.8         64.6
+  B-L                Acc         97.1      85.4        86.7         97.9          85.5         76.5        79.5        91.7          80.7          92.1         68.0
+                     Pre         89.4      88.4        91.7         87.9          98.6         96.2        92.9        93.4          63.8          63.2         78.3
+                     Rec         81.9      85.4        86.7         92.7          85.5         76.5        79.5        92.5          80.7          75.0         72.8
+                     F1          85.5      86.9        89.1         87.9          91.6         85.2        85.7        93.4          71.2          63.2         78.3
+  B-I                Acc         98.1      93.8        92.8         94.6          94.6         91.6        88.0        93.4          91.0          86.2         78.3
+                     Pre         88.4      89.0        91.1         94.6          94.6         91.0        88.0        93.4          84.4          82.6         93.4
+                     Rec         89.4      93.7        92.8         94.6          94.6         91.6        88.0        93.4          91.0          84.4         85.2
+                     F1          88.9      91.3        91.9         94.6          94.6         91.3        88.0        93.4          87.6          82.6         93.4
+  B-UR               Acc         98.2      91.1        94.0         94.8          98.8         97.6        92.2        86.1          77.2          75.1         93.3
+                     Pre         90.6      93.7        94.0         98.8          92.1         90.6        88.5        89.2          92.8          92.2         75.4
+                     Rec         87.2      91.0        94.0         96.7          98.8         97.6        92.2        87.6          77.2          82.8         83.4
+                     F1          88.9      92.3        94.0         98.8          95.3         93.6        90.3        89.2          84.3          92.2         75.4
+
+
+                                                                                  8
+J. Jang et al.                                                                                                            Automation in Construction 172 (2025) 106042
+
+
+Table 10
+Performance comparison of various models for slab-related installation actions.
+  Activity       Metric        1            2           3            4            5           6           7           8             9             10           11
+
+  S-R            Acc           98.7         71.2        70.1         96.9         97.6        98.8        94.0        90.9          89.2          86.7         87.5
+                 Pre           87.8         91.3        92.8         95.8         93.1        95.9        94.5        96.4          85.1          94.0         92.2
+                 Rec           97.1         71.2        70.0         96.3         97.6        98.8        94.0        93.6          89.2          90.2         89.8
+                 F1            92.2         80.4        79.8         95.8         95.3        97.3        94.2        96.4          87.1          94.0         92.2
+  S-L            Acc           98.1         85.8        88.6         94.4         89.2        85.6        87.9        96.9          71.2          88.5         83.6
+                 Pre           89.8         71.2        74.0         91.6         96.7        97.9        88.4        94.5          79.           74.2         76.6
+                 Rec           86.2         85.8        88.6         93.0         89.2        85.6        87.9        95.7          71.2          80.7         80.0
+                 F1            88.0         77.8        80.6         91.6         92.8        91.3        88.2        94.5          75.3          74.2         76.6
+  S-I            Acc           98.1         90.9        95.8         94.5         92.2        92.8        81.4        92.2          92.2          80.2         89.4
+                 Pre           89.6         89.9        89.3         92.8         95.0        93.9        96.4        92.2          81.9          70.6         76.0
+                 Rec           87.4         90.9        95.8         93.6         92.2        92.8        81.4        92.2          92.2          75.1         82.2
+                 F1            88.5         90.4        92.4         92.8         93.6        93.3        88.3        92.2          86.7          70.6         76.0
+  S-UR           Acc           98.7         93.0        92.1         93.7         98.1        99.3        98.7        87.4          89.7          77.9         78.9
+                 Pre           91.6         93.9        97.4         99.3         92.5        91.6        84.0        100           87.5          92.1         97.5
+                 Rec           92.5         93.0        92.1         96.4         98.1        99.3        98.7        93.3          89.7          84.4         87.2
+                 F1            92.0         93.4        94.7         99.3         95.2        95.3        90.8        100           88.6          92.1         97.5
+
+
+
+
+                                                               Fig. 3. Timesformer confusion matrix.
+
+
+several key areas:                                                                       show the highest productivity, particularly for slabs (43.6 units/h)
+                                                                                         and beams (8.2 units/h), while assembly operations consistently
+ • Productivity improvement: The analysis reveals significant varia­                     show lower productivity (1.1 to 4.5 units/h). This suggests potential
+   tions in productivity across different activities. Unrigging operations               for targeted improvements in the assembly process.
+
+
+                                                                                  9
+J. Jang et al.                                                                                                       Automation in Construction 172 (2025) 106042
+
+
+
+
+                                                             Fig. 4. ViViT confusion matrix.
+
+
+ • Progress monitoring: The distribution of work time varies signifi­             (36.0–44.0 min) with a median of 40.0 min, while the total installation
+   cantly across installation phases. Column assembly takes the longest           time averaged 86.6 min (95 % CI [82.3, 90.9]). Slab installations
+   time (51.3 h), followed by column lifting (39.1 h) and beam as­                demonstrated higher efficiency, averaging 36.1 min (95 % CI [34.2,
+   sembly (33h). This information enables more accurate real-time                 38.0]), whereas column installations required the longest time, aver­
+   progress tracking and scheduling.                                              aging 125.5 min (95 % CI [120.8, 130.2]). These temporal insights,
+ • Workflow optimization: Assembly operations have the longest                    derived from our computer vision-based monitoring system, can support
+   average waiting times, with column assembly (442.2 s) and beam                 the integration of digital technologies for process improvement,
+   assembly (415.8 s) showing the highest values. This indicates po­              particularly in predicting and preventing excessive waiting periods
+   tential bottlenecks in the installation process that could be addressed        through real-time monitoring and automated scheduling.
+   to improve overall efficiency.                                                     However, notable errors were observed in some installation action
+ • Component-specific insights: Slab installation appears to be the               processes (Fig. 10). There were cases where the rigging stage was mis­
+   most efficient process overall, with high productivity rates and lower         recognized between assembly and unrigging actions, and unrigging ac­
+   waiting times compared to beam and column installation. This in­               tion was misrecognized in the rigging stage. The main reason would be
+   formation can guide resource allocation and process refinement                 that the rigging and unrigging actions share visually similar character­
+   efforts.                                                                       istics. These results suggest the need to distinguish between such similar
+                                                                                  installation actions in PCI-Dataset more clearly.
+    To visualize these patterns in detail, Fig. 9 presents VSM for the                Overall, these experimental results show that the PCI-Dataset effec­
+beam, slab, and column installation processes, respectively, showing the          tively represents the key stages of PC component installation, and
+complete workflow sequence (Loading Bay & Rigging → Waiting →                     models trained on it can perform excellently in real-world settings. The
+Lifting → Waiting → Assembly → Waiting → Unrigging → Back to                      high recognition accuracy (98.1 % overall) combined with detailed
+Loading Bay) along with corresponding time distributions (min, 25th               temporal insights proves its potential to enhance construction manage­
+percentile, median, 75th percentile, max) and waiting periods. For beam           ment practices through data-driven decision-making and digital tech­
+installations, assembly operations showed the highest variability                 nology integration.
+
+
+                                                                             10
+J. Jang et al.                                                                                                        Automation in Construction 172 (2025) 106042
+
+
+
+
+                                                          Fig. 5. VideoMAE V2 confusion matrix.
+
+
+5. Limitations and future research directions                                      comprehensive understanding of the PC installation process. Addition­
+                                                                                   ally, integration with existing datasets such as SODA could enhance the
+    This study has several limitations in automatically recognizing PC             model’s ability to understand the broader context of construction sites.
+component installation actions using the PCI-Dataset. First, the model’s           The introduction of multimodal learning methods that integrate voice
+generalization ability may be limited due to the need for scale and di­            and sensor data in tandem with video data should be considered. Real-
+versity of the dataset. Also, the limited scope of installation action an­         time processing and feedback systems should be developed to increase
+notations may limit the ability to recognize some critical installation            practical usability in the field. Methods to achieve high performance
+action stages or particular situations. The fact that video data’s temporal        with limited data by applying transfer learning and meta-learning
+continuity and context were not sufficiently considered may also affect            techniques should be researched. Integration plans with existing con­
+the accurate recognition of continuous installation action processes.              struction management systems should be studied to explore ways to
+Fourth, this study’s focus on video data alone may not capture all aspects         effectively utilize automatic recognition results in actual process man­
+of the complex PC installation process, potentially limiting the model’s           agement and decision-making.
+comprehensiveness. Lastly, the possibility of errors in the manual                     Through these future studies, it is expected that the automatic
+annotation process may act as noise during model training, potentially             recognition technology for PC component installation actions will be
+degrading overall recognition performance.                                         further advanced, and its applicability and effectiveness on actual con­
+    To overcome these limitations, the following future research di­               struction sites will be significantly improved. By addressing the current
+rections are proposed: The scale of PCI-Dataset should be expanded, and            limitations and expanding the scope of data and methodologies, we aim
+its diversity should be increased to improve the model’s generalization            to develop a more comprehensive and practical tool for PC installation
+ability. Developing new model structures that can better reflect the               management, contributing to the broader goal of digitizing and opti­
+sequential characteristics of PC component installation actions is                 mizing construction processes.
+required. The introduction of multimodal learning methods integrating
+voice, sensor, and video data should be considered to provide a more
+
+
+                                                                              11
+J. Jang et al.                                                                                                           Automation in Construction 172 (2025) 106042
+
+
+
+
+        Fig. 6. Per-installation action performance comparison of VideoMAE V2, TimeSformer, and ViViT models for PC component installation recognition.
+
+
+
+
+                                            Fig. 7. Installation action recognition prototype system for a case study.
+
+
+6. Conclusions                                                                      balanced proportion between 8.1 % and 8.5 % of the entire dataset,
+                                                                                    designed to prevent the model from being biased towards specific
+    This paper constructed a PCI-Dataset for automatic recognition of PC            components or installation action stages. Also, reflecting the variability
+component installation actions, evaluate the performance of                         of actual installation environments, including weather conditions, time
+Transformer-based video recognition models using this dataset, and                  zones, worker experience, and equipment types, is expected to improve
+verify the effectiveness of the developed model by applying it to an                the model’s generalization ability.
+actual PC component installation site. The main results and significance                Second, this study compared and evaluated the performance of
+of the research can be summarized in detail as follows:                             Transformer-based video recognition models such as VideoMAE V2,
+    First, this study successfully constructed a PCI-Dataset consisting of          TimeSformer, and ViViT by applying them to PCI-Dataset. As a result,
+12,791 video clips collected from actual PC construction sites. This                the VideoMAE V2 model showed the best performance with 98.10 %
+dataset includes 12 installation action classes combining three PC                  accuracy, while ViViT and TimeSformer recorded 88.45 % and 87.76 %
+components (column, beam, slab) and four installation action stages                 accuracy, respectively. The excellent performance of the VideoMAE V2
+(rigging, lifting, assembly, and unrigging). Each class is composed of a            model is interpreted to be due to the contribution of Masked
+
+
+                                                                               12
+J. Jang et al.                                                                                                             Automation in Construction 172 (2025) 106042
+
+
+
+
+                                         Fig. 8. PC component installation work recognition results of VideoMAE V2 model.
+
+
+Table 11
+Recognition analysis results of PC component installation work over seven days.
+  Categories     Activity    Recognition Accuracy    Total Time      Average Time Ratio        Average Time per Unit    Average Wait Time        Productivity (units/
+                             (%)                     (hour)          (%)                       (min)                    (sec)                    h)
+
+                 Rigging     98.4                    10.7            4.71                      10.7                     100.8                    5.6
+                 Lifting     97.1                    22.9            10.0                      28.6                     286.8                    2.1
+  Beam
+                 Assembly    98.1                    33              14.5                      40                       415.8                    1.5
+                 Unrigging   98.2                    3.7             1.6                       7.3                      43.8                     8.2
+                 Rigging     98.7                    2.6             1.1                       2.6                      25.2                     23.1
+                 Lifting     98.1                    18.7            8.2                       18.8                     175.8                    3.2
+  Slab
+                 Assembly    98.1                    13.3            5.8                       13.3                     124.8                    4.5
+                 Unrigging   98.7                    1.4             0.6                       1.4                      13.2                     43.6
+                 Rigging     97.7                    16.6            7.3                       16.7                     142.8                    3.6
+                 Lifting     97                      39.1            17.2                      40                       337.2                    1.5
+  Column
+                 Assembly    98.4                    51.3            22.5                      54.5                     442.2                    1.1
+                 Unrigging   97.6                    13.9            6.1                       14.3                     120                      4.2
+  Total                      98.1                    227.2           100                       20.6                     185.7                    8.5
+
+
+
+Autoencoder-based pre-training to effective feature representation                     equipment monitoring) with these temporal insights enables enhanced
+learning. In particular, the VideoMAE V2 model showed high recogni­                    decision-making and situational awareness, particularly in predicting
+tion accuracy of over 80 % for most installation actions and achieved                  and preventing excessive waiting periods through real-time monitoring
+accuracy exceeding 90 % for actions such as beam-assembly, beam-                       and automated equipment tracking.
+unrigging, and slab-assembly.                                                              This study contributes to expanding construction management the­
+    Third, this study verified the effectiveness of the developed model by             ory by applying computer vision technology to OSC project manage­
+applying it to an actual PC construction site over a 7-day period. The                 ment. It would enable real-time and automated installation action
+Value Stream Map analysis of installation processes revealed distinct                  recognition and analysis on fields, which is totally different from the
+temporal patterns across components (n = 48 beams, n = 52 slabs, n =                   existing passive and retrospective project monitoring methods. By
+42 columns). For beam installations, assembly operations showed the                    introducing deep learning-based video recognition models to OSC
+highest variability (36.0–44.0 min), while slab installations demon­                   project management theory, it has laid the foundation for promoting the
+strated higher efficiency, averaging about 36.1 min. Column in­                        digitalization and automation of OSC sites and contributing to
+stallations required the longest time, averaging about 125.5 min.                      improving project efficiency and safety. This technology presents po­
+Further analysis of the entire week’s data confirmed the model’s                       tential for construction automation: real-time quality control, predictive
+consistent performance, showing recognition accuracies ranging from                    maintenance, and safety monitoring through action analysis. The inte­
+90.4 % to 98.7 % across all installation stages. This extended analysis                gration of these capabilities with existing digital technologies (e.g., BIM,
+also provided valuable insights into task distribution, productivity, and              IoT sensors) could enable data-driven decision making and problem
+potential bottlenecks in the installation process. These results demon­                resolution. This suggests a transition from traditional human-centered
+strate that the developed model can maintain high performance despite                  supervision to AI-assisted construction management, where the roles
+the complexity and diversity of real construction sites, and can provide               of construction professionals and requirements for new technical capa­
+actionable insights for construction management over extended periods.                 bilities are likely to evolve. As construction sites become more digita­
+Integration of digital technologies (e.g., sensors, BIM, automated                     lized, the industry may need to balance automation benefits with human
+
+
+                                                                                  13
+J. Jang et al.                                                                                                  Automation in Construction 172 (2025) 106042
+
+
+
+
+                 Fig. 9. Value stream mapping of beam, slab, and column installation processes with time distribution analysis.
+
+
+
+
+                                                                       14
+J. Jang et al.                                                                                                                            Automation in Construction 172 (2025) 106042
+
+
+
+
+                                                            Fig. 10. Misrecognition cases in actual site application.
+
+
+judgment in critical decision-making processes.                                                  [8] J. Hong, G.Q. Shen, Z. Li, B. Zhang, W. Zhang, Barriers to promoting prefabricated
+                                                                                                     construction in China: a cost–benefit analysis, J. Clean. Prod. 172 (2018) 649–660,
+                                                                                                     https://doi.org/10.1016/j.jclepro.2017.10.171.
+CRediT authorship contribution statement                                                         [9] R. Duan, H. Deng, M. Tian, Y. Deng, J. Lin, SODA: a large-scale open site object
+                                                                                                     detection dataset for deep learning in construction, Autom. Constr. 142 (2022)
+                                                                                                     104499, https://doi.org/10.1016/j.autcon.2022.104499.
+   Junyoung Jang: Writing – review & editing, Writing – original draft,                         [10] E. Jeong, J. Jang, S. Lee, S. Ahn, T.W. Kim, Quantitative analysis of the factors
+Visualization, Software, Investigation, Formal analysis, Data curation.                              influencing field installation time for precast concrete building components: an
+Eunbeen Jeong: Visualization, Validation, Formal analysis, Data                                      empirical study, J. Manag. Eng. 40 (2024) 04024010, https://doi.org/10.1061/
+                                                                                                     JMENEA.MEENG-5816.
+curation. Tae Wan Kim: Writing – review & editing, Writing – original
+                                                                                                [11] A. Najafi, R.T.L. Kong, Productivity analysis of precast concrete operations by
+draft, Supervision, Resources, Project administration, Methodology,                                  artificial neural networks, ARPN J. Eng. Appl. Sci. 11 (2016) 10512–10521. https
+Funding acquisition, Conceptualization.                                                              ://www.arpnjournals.org/jeas/research_papers/rp_2016/jeas_0916_4946.pdf.
+                                                                                                [12] T. Mäki, H. Kerosuo, Site managers’ daily work and the uses of building
+                                                                                                     information modelling in construction site management, Constr. Manag. Econ. 33
+                                                                                                     (2015) 163–175, https://doi.org/10.1080/01446193.2015.1028953.
+Declaration of competing interest
+                                                                                                [13] A. Styhre, The overworked site manager: gendered ideologies in the construction
+                                                                                                     industry, Constr. Manag. Econ. 29 (2011) 943–955, https://doi.org/10.1080/
+    The authors declare that they have no known competing financial                                  01446193.2011.588955.
+                                                                                                [14] S. Liu, Y. Xu, L. Guo, M. Shao, G. Yue, D. An, Multi-scale personnel deep feature
+interests or personal relationships that could have appeared to influence
+                                                                                                     detection algorithm based on extended-YOLOv3, J. Intell. Fuzzy Syst. 40 (2021)
+the work reported in this paper.                                                                     773–786, https://doi.org/10.3233/JIFS-200778.
+                                                                                                [15] S.J. Lee, S.W. Kwon, M.K. Jeong, S.M. Hasan, A. Kim, Automated on-site quality
+                                                                                                     inspection and reporting technology for off-site construction (OSC)-based precast
+Acknowledgment                                                                                       concrete members, in: ISARC. Proceedings of the International Symposium on
+                                                                                                     Automation and Robotics in Construction 37, 2020, pp. 1152–1159, https://doi.
+   This research was supported by Basic Science Research Program                                     org/10.22260/ISARC2020/0158.
+                                                                                                [16] Z. Wang, Q. Zhang, B. Yang, T. Wu, K. Lei, B. Zhang, T. Fang, Vision-based
+through the National Research Foundation of Korea(NRF) funded by the
+                                                                                                     framework for automatic progress monitoring of precast walls by using
+Ministry of Education(2022R1A6A3A01087611).                                                          surveillance videos during the construction phase, J. Comput. Civ. Eng. 35 (2021)
+                                                                                                     04020056, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000933.
+Data availability                                                                               [17] K. Zhang, S. Tong, H. Shi, Trajectory prediction of assembly alignment of columnar
+                                                                                                     precast concrete members with deep learning, Symmetry 11 (2019) 629, https://
+                                                                                                     doi.org/10.3390/sym11050629.
+    Some or all of the data or code that support the findings of this study                     [18] B. Xiao, S.C. Kang, Development of an image data set of construction machines for
+are available from the following links on Laboratory of Construction                                 deep learning object detection, J. Comput. Civ. Eng. 35 (2021) 05020005, https://
+                                                                                                     doi.org/10.1061/(ASCE)CP.1943-5487.0000945.
+Engineering and Management, Incheon National University                                         [19] X. Yan, H. Zhang, Y. Wu, C. Lin, S. Liu, Construction instance segmentation (CIS)
+(http://inucem.inu.ac.kr) and GitHub(URL to be added).                                               dataset for deep learning-based computer vision, Autom. Constr. 156 (2023)
+                                                                                                     105083, https://doi.org/10.1016/j.autcon.2023.105083.
+                                                                                                [20] P. Martinez, R. Ahmad, M. Al-Hussein, A vision-based system for pre-inspection of
+References                                                                                           steel frame manufacturing, Autom. Constr. 97 (2019) 151–163, https://doi.org/
+                                                                                                     10.1016/j.autcon.2018.10.021.
+ [1] J. Jang, K.W. Cho, C. Koo, C. Lee, T. Kim, Importance and performance analysis on          [21] Z. Zheng, Z. Zhang, W. Pan, Virtual prototyping-and transfer learning-enabled
+     factors of PC component allocation and loading planning, Korean J. Construct. Eng.              module detection for modular integrated construction, Autom. Constr. 120 (2020)
+     Manag. 22 (2021) 53–62, https://doi.org/10.6106/KJCEM.2021.22.2.053.                            103387, https://doi.org/10.1016/j.autcon.2020.103387.
+ [2] G. Lee, M. Kim, C. Lee, C. Koo, T. Kim, Towards a transportation support system for        [22] A. Ahmadian Fard Fini, M. Maghrebi, P.J. Forsythe, T.S. Waller, Using existing site
+     off-site construction: identifying key functions and diagramming functional blocks,             surveillance cameras to automatically measure the installation speed in
+     Korean J. Construct. Eng. Manag. 22 (2021) 21–30, https://doi.org/10.6106/                      prefabricated timber construction, Eng. Constr. Archit. Manag. 29 (2022) 573–600,
+     KJCEM.2021.22.2.021.                                                                            https://doi.org/10.1108/ECAM-04-2020-0281.
+ [3] S. Lee, H. Cha, A study on plans for diffusion & revitalization, and developing key        [23] R. Panahi, J. Louis, N. Aziere, A. Podder, C. Swanson, Identifying modular
+     performance indicator for OSC based PC structure apartment housing, Korean J.                   construction worker tasks using computer vision, in: Computing in Civil
+     Construct. Eng. Manag. 22 (2021) 98–105, https://doi.org/10.6106/                               Engineering, 2021, pp. 959–966, 9780784483893, https://doi.org/10.106
+     KJCEM.2021.22.1.098.                                                                            1/9780784483893.118.
+ [4] H. Hyun, H.G. Kim, J.S. Kim, Integrated off-site construction design process               [24] K. Park, S. Ergan, C. Feng, Towards intelligent agents to assist in modular
+     including DfMA considerations, Sustainability 14 (7) (2022) 4084, https://doi.org/              construction: Evaluation of datasets generated in virtual environments for AI
+     10.3390/su14074084.                                                                             training, in: Proceedings of the 38th International Symposium on Automation and
+ [5] K.O. Kazeem, T.O. Olawumi, J.J. Adam, E.W.M. Lam, Integration of building                       Robotics in Construction, 2021, pp. 327–333, https://doi.org/10.22260/
+     services in modular construction: a PRISMA approach, Appl. Sci. 14 (10) (2024)                  ISARC2021/0046.
+     4151, https://doi.org/10.3390/app14104151.                                                 [25] P. Martinez, B. Barkokebas, F. Hamzeh, M. Al-Hussein, R. Ahmad, A vision-based
+ [6] J.Y. Jang, E. Jeong, S.H. Park, C. Koo, T.W. Kim, Precast concrete project image                approach for automatic progress tracking of floor paneling in offsite construction
+     dataset for deep learning object detection, Dev. Built Environ. 17 (2024) 100383,               facilities, Autom. Constr. 125 (2021) 103620, https://doi.org/10.1016/j.
+     https://doi.org/10.1016/j.dibe.2024.100383.                                                     autcon.2021.103620.
+ [7] K. Cho, S. Ahn, K. Park, T.W. Kim, Schedule delay leading indicators in precast            [26] W. Chu, S. Han, X. Luo, Z. Zhu, Monocular vision–based framework for
+     concrete construction projects: qualitative comparative analysis of Korean cases,               biomechanical analysis or ergonomic posture assessment in modular construction,
+     J. Manag. Eng. 37 (2021) 04021024, https://doi.org/10.1061/(ASCE)ME.1943-                       J. Comput. Civ. Eng. 34 (2020) 04020018, https://doi.org/10.1061/(ASCE)
+     5479.0000915.                                                                                   CP.1943-5487.0000897.
+
+
+                                                                                           15
+J. Jang et al.                                                                                                                            Automation in Construction 172 (2025) 106042
+
+[27] Z. Wang, Q. Zhang, B. Yang, T. Wu, K. Lei, B. Zhang, T. Fang, Vision-based                [42] J. Baek, D. Kim, B. Choi, Deep learning-based automated productivity monitoring
+     framework for automatic progress monitoring of precast walls by using                          for on-site module installation in off-site construction, Dev. Built Environ. 18
+     surveillance videos during the construction phase, J. Comput. Civ. Eng. 35 (2021)              (2024) 100382, https://doi.org/10.1016/j.dibe.2024.100382.
+     04020056, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000933.                             [43] S. Lee, M. Jeong, C.S. Cho, J. Park, S. Kwon, Deep learning-based pc member crack
+[28] X. Yan, H. Zhang, Computer vision–based disruption management for                              detection and quality inspection support technology for the precise construction of
+     prefabricated building construction schedule, J. Comput. Civ. Eng. 35 (2021)                   osc projects, Appl. Sci. 12 (2022) 9810, https://doi.org/10.3390/app12199810.
+     04021027, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000990.                             [44] K. Park, S. Ergan, Toward intelligent agents to detect work pieces and processes in
+[29] M. Yang, C. Wu, Y. Guo, R. Jiang, F. Zhou, J. Zhang, Z. Yang, Transformer-based                modular construction: An approach to generate synthetic training data, in:
+     deep learning model and video dataset for unsafe action identification in                      Construction Research Congress, 2022, pp. 802–811, 9780784483961, https://doi.
+     construction projects, Autom. Constr. 146 (2023) 104703, https://doi.org/                      org/10.1061/9780784483961.084.
+     10.1016/j.autcon.2022.104703.                                                             [45] R. Panahi, J. Louis, A. Podder, C. Swanson, S. Pless, Bottleneck detection in
+[30] H. Luo, C. Xiong, W. Fang, P.E. Love, B. Zhang, X. Ouyang, Convolutional neural                modular construction factories using computer vision, Sensors 23 (2023) 3982,
+     networks: computer vision-based workforce activity assessment in construction,                 https://doi.org/10.3390/s23083982.
+     Autom. Constr. 94 (2018) 282–289, https://doi.org/10.1016/j.                              [46] X. Chen, Y. Wang, J. Wang, A. Bouferguene, M. Al-Hussein, Vision-based real-time
+     autcon.2018.06.007.                                                                            process monitoring and problem feedback for productivity-oriented analysis in off-
+[31] M. Bonyani, M. Soleymani, C. Wang, Construction workers’ unsafe behavior                       site construction, Autom. Constr. 162 (2024) 105389, https://doi.org/10.1016/j.
+     detection through adaptive spatiotemporal sampling and optimized attention                     autcon.2024.105389.
+     based video monitoring, Autom. Constr. 165 (2024) 105508, https://doi.org/                [47] S.M.A. Ali, A.A.A. Hammad, G.J. Sweis, M.S. Samhouri, Productivity improvement
+     10.1016/j.autcon.2024.105508.                                                                  of pre-cast concrete installation, Jordan J. Civ. Eng. 3 (2009) 50–60.
+[32] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn            [48] C.Z. Li, F. Xue, X. Li, J. Hong, G.Q. Shen, An internet of things-enabled BIM
+     by construction personnel: a deep learning approach and benchmark dataset,                     platform for on-site assembly services in prefabricated construction, Autom.
+     Autom. Constr. 106 (2019) 102894, https://doi.org/10.1016/j.                                   Constr. 89 (2018) 146–161, https://doi.org/10.1016/j.autcon.2018.01.001.
+     autcon.2019.102894.                                                                       [49] A. Munappy, J. Bosch, H.H. Olsson, A. Arpteg, B. Brinne, Data management
+[33] A. Ghelmani, A. Hammad, Self-supervised contrastive video representation                       challenges for deep learning, in: 2019 45th Euromicro Conference on Software
+     learning for construction equipment activity recognition on limited dataset,                   Engineering and Advanced Applications (SEAA), 2019, pp. 140–147, https://doi.
+     Autom. Constr. 154 (2023) 105001, https://doi.org/10.1016/j.                                   org/10.1109/SEAA.2019.00030.
+     autcon.2023.105001.                                                                       [50] Z. Tong, Y. Song, J. Wang, L. Wang, Videomae: masked autoencoders are data-
+[34] D. Roberts, M. Golparvar-Fard, End-to-end vision-based detection, tracking and                 efficient learners for self-supervised video pre-training, Adv. Neural Inf. Proces.
+     activity analysis of earthmoving equipment filmed at ground level, Autom. Constr.              Syst. 35 (2022) 10078–10093, https://doi.org/10.48550/arXiv.2203.12602.
+     105 (2019) 102811, https://doi.org/10.1016/j.autcon.2019.04.006.                          [51] G. Bertasius, H. Wang, L. Torresani, Is space-time attention all you need for video
+[35] A. Assadzadeh, M. Arashpour, I. Brilakis, T. Ngo, E. Konstantinou, Vision-based                understanding?, in: International Conference on Machine Learning, 2021, p. 2,
+     excavator pose estimation using synthetically generated datasets with domain                   https://doi.org/10.48550/arXiv.2102.05095.
+     randomization, Autom. Constr. 134 (2022) 104089, https://doi.org/10.1016/j.               [52] A. Arnab, M. Dehghani, G. Heigold, C. Sun, M. Lučić, C. Schmid, Vivit: A video
+     autcon.2021.104089.                                                                            vision transformer, in: Proceedings of the IEEE/CVF International Conference on
+[36] H. Luo, M. Wang, P.K.Y. Wong, J.C. Cheng, Full body pose estimation of                         Computer Vision, 2021, pp. 6836–6846, https://doi.org/10.48550/
+     construction equipment using computer vision and deep learning techniques,                     arXiv.2103.1569.
+     Autom. Constr. 110 (2020) 103016, https://doi.org/10.1016/j.                              [53] Y. Li, C.Y. Wu, H. Fan, K. Mangalam, B. Xiong, J. Malik, C. Feichtenhofer, Mvitv2:
+     autcon.2019.103016.                                                                            Improved multiscale vision transformers for classification and detection, in:
+[37] M.M. Soltani, Z. Zhu, A. Hammad, Skeleton estimation of excavator by detecting its             Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+     parts, Autom. Constr. 82 (2017) 1–15, https://doi.org/10.1016/j.                               Recognition, 2022, pp. 4804–4814, https://doi.org/10.48550/arXiv.2112.01526.
+     autcon.2017.06.023.                                                                       [54] K. Li, Y. Wang, Y. He, Y. Li, Y. Wang, L. Wang, Y. Qiao, Uniformerv2:
+[38] H. Tajeen, Z. Zhu, Image dataset development for measuring construction                        Spatiotemporal learning by arming image vits with video uniformer, arXiv preprint
+     equipment recognition performance, Autom. Constr. 48 (2014) 1–10, https://doi.                 arXiv:2211.09552, 2022, https://doi.org/10.48550/arXiv.2211.09552.
+     org/10.1016/j.autcon.2014.07.006.                                                         [55] Z. Liu, J. Ning, Y. Cao, Y. Wei, Z. Zhang, S. Lin, H. Hu, Video swin transformer, in:
+[39] W. Fang, L. Ding, B. Zhong, P.E. Love, H. Luo, Automated detection of workers and              Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern
+     heavy equipment on construction sites: a convolutional neural network approach,                Recognition, 2022, pp. 3202–3211, https://doi.org/10.48550/arXiv.2106.13230.
+     Adv. Eng. Inform. 37 (2018) 139–149, https://doi.org/10.1016/j.aei.2018.05.003.           [56] M. Brezovský, D. Sopiak, M. Oravec, Action recognition by 3d convolutional
+[40] X. Luo, H. Li, D. Cao, F. Dai, J. Seo, S. Lee, Recognizing diverse construction                network, in: 2018 International Symposium ELMAR, 2018, pp. 71–74, https://doi.
+     activities in site images via relevance networks of construction-related objects               org/10.23919/ELMAR.2018.8534657.
+     detected by convolutional neural networks, J. Comput. Civ. Eng. 32 (2018)                 [57] S. Deep, X. Zheng, Leveraging CNN and transfer learning for vision-based human
+     04018012, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000756.                                  activity recognition, in: 2019 29th International Telecommunication Networks and
+[41] Z. Zhu, X. Ren, Z. Chen, Integrated detection and tracking of workforce and                    Applications Conference (ITNAC), 2019, pp. 1–4, https://doi.org/10.1109/
+     equipment from construction jobsite videos, Autom. Constr. 81 (2017) 161–171,                  ITNAC46935.2019.9078016.
+     https://doi.org/10.1016/j.autcon.2017.05.005.                                             [58] Heo B, Chun S, Oh S, Han D, Yun S, Kim G, Uh Y, Ha J. Adamp: Slowing down the
+                                                                                                    slowdown for momentum optimizers on scale-invariant weights. arXiv preprint
+                                                                                                    arXiv:2006.08217. doi: 10.48550/arXiv.2006.08217.
+
+
+
+
+                                                                                          16
+

@@ -1,0 +1,834 @@
+                                                                 Automation in Construction 168 (2024) 105874
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                          journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Automated daily report generation from construction videos using ChatGPT
+and computer vision
+Bo Xiao a , Yifan Wang a , Yongpan Zhang b , Chen Chen c,* , Amos Darko d
+a
+  Department of Civil, Environmental, and Geospatial Engineering, Michigan Technological University, Houghton, 49931, MI, USA
+b
+  Department of Building and Real Estate, The Hong Kong Polytechnic University, Hung Hom, Kowloon, Hong Kong, China
+c
+  School of Civil Engineering and Architecture, Zhejiang University of Science and Technology, Hangzhou 310023, China
+d
+  Department of Construction Management, University of Washington, Seattle, 98195, WA, USA
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Daily reports are important in construction management, informing project teams about status, enabling timely
+Construction daily report generation                      resolutions of delays and budget issues, and serving as official records for disputes and litigation. However,
+Computer vision                                           current practices are manual and time-consuming, requiring engineers to physically visit sites for observations.
+ChatGPT
+                                                          To fill this gap, this paper proposes an automated framework to generate daily construction reports from on-site
+Construction management
+Project documentation
+                                                          videos by integrating ChatGPT and computer vision (CV)-based methods. The framework utilizes CV methods to
+                                                          analyze video footage and extract relevant productivity and activity information, which is then fed into ChatGPT
+                                                          using proper prompts to generate daily reports. A web application is developed to implement and validate the
+                                                          framework on a real construction site in Hong Kong, generating daily reports over a month. This research en­
+                                                          hances construction management by significantly reducing documentation efforts through generative artificial
+                                                          intelligence, with potential applications in jobsite safety management, quality reporting, and stakeholder
+                                                          communication.
+
+
+
+
+1. Introduction                                                                                    Construction video captured using on-site cameras contain visual
+                                                                                               information on project activities, progress, and status, which can help
+    In construction management, daily reports are one of the most crit­                        engineers to remotely monitor their sites and then write reports [6].
+ical documents for recording construction progress, schedules, quality of                      However, Xiao et al. [1] has indicated that construction engineers are
+works, and daily affairs [1,2]. Daily reports are important in construc­                       quickly fatigued by watching construction videos. Recently, computer
+tion projects for 1) keeping the project management team updated with                          vision (CV) methods have been introduced in construction management
+the project status to solve any delays/over-budgeting issues on-time [3],                      to analyze on-site videos automatically, with reliable performance being
+2) allowing general contractors to examine project performance across                          achieved in many tasks, including productivity analysis, safety control,
+all areas of the projects [4], and 3) serving as official documents for post-                  and progress monitoring [7]. For example, Chen et al. [8] proposed a
+project disputes or even evidence in lawsuits. In all types of construction                    framework for recognizing construction machine activities and calcu­
+projects, engineers need to write daily reports by physically visiting                         lating the earthmoving productivity of this equipment. To facilitate
+their sites and conducting manual observations several times per day                           construction safety, Kim et al. [9] proposed a vision-based safety
+[1,5]. Considering modern construction projects are huge and complex,                          assessment method for monitoring struck-by accidents in construction
+engineers need to expend significant efforts to collect and summarize                          sites.
+such comprehensive project-related information. Automating the gen­                                However, an integrated framework for applying CV techniques to
+eration of daily reports via high-tech solutions is especially meaningful                      automatically generate daily reports is lacking in construction man­
+for construction management because it saves construction engineers                            agement. Currently, vision-based methods can extract specific project-
+substantial manual efforts, allowing them to focus on engineering works                        related information (e.g., productivity, progress, and safety) from con­
+instead of documentation.                                                                      struction videos. However, how to present this fragmented information
+
+
+ * Corresponding author.
+   E-mail addresses: boxiao@mtu.edu (B. Xiao), wyifan@mtu.edu (Y. Wang), yongpan.zhang@polyu.edu.hk (Y. Zhang), chen.c@zust.edu.cn (C. Chen), adarko@uw.
+edu (A. Darko).
+
+https://doi.org/10.1016/j.autcon.2024.105874
+Received 24 February 2024; Received in revised form 6 November 2024; Accepted 11 November 2024
+Available online 21 November 2024
+0926-5805/© 2024 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+B. Xiao et al.                                                                                                      Automation in Construction 168 (2024) 105874
+
+
+in the format of natural sentence descriptions, like reports written by          construction machines in the video.
+humans, to help construction managers and stakeholders understand the                Activity recognition is another vision-based monitoring technique in
+project information has not been elucidated. Additionally, construction          construction. Researchers applied spatial-temporal-based CNNs to
+reports must include insights from construction engineers to analyze             recognize activities (e.g., working, idling, and digging) of construction
+daily activities and provide recommendations based on their profes­              machines (e.g., excavator and truck) and calculate productivity based on
+sional knowledge of construction management. Currently, vision-based             the activity information [17,18]. Some research work focused on
+methods have limited reasoning ability to analyze project delays/over­           recognizing the activity of workers to monitor their work efficiency. For
+budgeting, which makes it difficult to provide engineering insights for          example, Luo et al. [19] used two-stream CNN to recognize 16 categories
+daily report generation using this technology.                                   of workers’ activities (e.g., fixing rebar, placing framework, and mov­
+    The recent development of large language models (LLMs) in artificial         ing). Then, by combining the activity context with deep features, Luo
+intelligence (AI) has created new opportunities for the generation of            et al. [20] discovered relations among people and recognized the work
+construction reports. LLMs are natural language processing techniques            groups of construction workers.
+for training deep learning models (i.e. transformer architecture) on vast            Scene analysis applies a variety of vision-based methods to identify
+amounts of textual data from the Internet, enabling them to generate             additional information from construction images and videos, which
+human-like language. The Chat Generative Pre-training Transformer                helps to understand complex construction scenes. Kim et al. [21] used a
+(ChatGPT) [10] is a representative LLM launched by OpenAI in                     semantic graph neural network and deep visual features to structuralize
+November 2022, which has attracted widespread interest from society.             construction resources and analyze the relationships between con­
+As a generative AI, ChatGPT’s ability to understand and respond to               struction resources (e.g., worker, machine, and material). Wang et al.
+human language, as well as its vast knowledge and expertise, accuracy            [2] integrated semantic information extraction, object detection, and
+and reliability, and speed and efficiency have made deep impressions on          image caption methods to describe a construction scene using a sen­
+the public [10,11]. ChatGPT [10] also has immense application poten­             tence. Xiao et al. [12] combined a YOLOv3 detector, Kalman filter-based
+tial in construction management in terms of automating construction              tracker, and data augmentation algorithm to identify construction ma­
+project data analysis, facilitating communication between stakeholders,          chines during nighttime to avoid accidents caused by poor light condi­
+and generating daily reports.                                                    tions. In addition, Chen et al. [22] combined machine detection,
+    The objective of this research is to propose a novel framework for           tracking, and activity recognition results with a visual distance calcu­
+generating daily reports from construction videos by integrating                 lation algorithm to identify the work group of excavators and trucks and
+ChatGPT and CV. The proposed framework adopts vision-based object                analyze the reasons for trucks idling.
+detection, tracking, and activity recognition methods to extract pro­                The above reviews indicated that current research mainly focused on
+ductivity information from construction sites. Then, the productivity            extracting individual project-related information from construction
+information is formalized by prompt engineering and inputted to                  videos, such as object detection (e.g., worker, machinery) [12–16] and
+ChatGPT to generate reports. In addition, a web application is developed         activity recognition [17–20]. Moreover, existing scene analysis methods
+to implement the proposed framework, which allows construction en­               [2,12,21,22] simply summarize construction scenes with words or sen­
+gineers to stream onsite videos using Internet Protocol (IP) cameras,            tences. Such information provides only basic details, such as the number
+visualize project productivity information, and browse daily reports.            and type of workers or machinery present, which must then be manually
+The ability of the proposed framework to generate daily reports is tested        integrated and analyzed to generate useful productivity insights for
+over one month in a real construction site in Hong Kong. This research           construction managers requiring additional human efforts. Therefore,
+contributes to construction management by saving construction pro­               an integrated framework is needed to systematically organize useful
+fessionals the effort of daily project documentation by leveraging con­          visual information and deliver productivity reports in natural language,
+struction videos and AI. By fine-tuning the vision modules, the proposed         offering construction managers more direct and easily interpretable
+framework can be applied to all types of construction projects (e.g.,            insights.
+residential, industrial, and infrastructure projects).
+                                                                                 2.2. Natural language processing in construction
+2. Literature review
+                                                                                     Construction documents are strongly associated with human lan­
+   In this section, existing research on CV and language processing              guage and contain important project-related information, which cove a
+(NLP) in construction management is reviewed. The development of                 full range of construction phases. Recent NLP methods have the poten­
+GPT methods is then comprehensively introduced. Finally, the research            tial to greatly improve the efficiency and quality of reviewing, com­
+gaps and objectives in this section are recognized.                              prehending, classifying, and retrieving knowledge from documents
+                                                                                 [23]. In recent years, NLP has achieved promising results in different
+2.1. Vision-based monitoring in construction                                     construction management tasks, such as safety control, contract anal­
+                                                                                 ysis, staff arrangement, and infrastructure management.
+    Vision-based monitoring has been widely used for automatic con­                  Safety control by knowledge retrieval and classification is one of the
+struction management in recent years for various tasks, such as safety           main NLP application tasks. Tixier et al. [24] designed a rule-based NLP
+control, operation process monitoring, and scene analysis [12–14].               system to extract and organize construction injuries from unstructured
+Some researchers utilized object detection to identify construction ob­          reports. Chokor et al. [25] applied K-means clustering to classify safety
+jects in real time for safety control. For example, Ferdous and Ahsan            reports and analyze the distribution of construction accidents in the
+[15] created an anchor-free you only look once (YOLO) network to                 State of Arizona. Zhang et al. [26] developed an NLP model with support
+detect hardhats, vests, and safety glasses for worker safety management.         vector machine (SVM), linear regression (LR), K-nearest neighbor
+Li [14] proposed a deep convolutional neural network (CNN) to detect             (KNN), decision tree (DT), Naive Bayes (NB), and sequential quadratic
+falling objects on construction sites to protect construction workers from       programming (SQP) algorithms to analyze the accident report. They
+injuries. Some researchers combined object detection with a tracking             classified accidents into 11 types and analyzed the reasons for the dis­
+method to monitor the operation of construction machines. Xiao and               tribution of accidents. However, Luo et al. [27] indicated that these ML-
+Kang [16] developed a construction machine tracker system, which                 based methods are not efficient to use, which need to manually select
+combined a YOLOv3 detector and an association-based tracking algo­               effective text features. More efficient deep learning-based methods
+rithm to monitor the trajectories of construction machines. The pro­             should be created to automatically learn text features.
+posed method achieved an accuracy of 96.9 % in tracking multiple                     NLP is also widely used to address legal and contractual problems by
+
+                                                                             2
+B. Xiao et al.                                                                                                       Automation in Construction 168 (2024) 105874
+
+
+compliance checking. For example, Salama and EI-Gohary [28] first               2019 and trained on a larger corpus of data (40 GB). Specifically, four
+proposed an ML-based NLP model to classify the regulatory provisions            versions of GPT-2 were released by OpenAI, with model sizes ranging
+into 14 categories (e.g. environmental, safety, quality, etc.) for              from small (124 million parameters) to large (1.5 billion parameters).
+compliance checking. Zhang and EI-Gohary [29] proposed a rule-based             The number of layers in the decoder-only transformer model was
+semantic NLP approach to extract regulatory requirements from con­              increased to 48. GPT-2 was trained on several datasets with multiple
+struction documents and transformed them into a formalized format that          tasks, and it did not need fine-tuning with supervised learning for a
+enables automated reasoning. Song et al. [30] developed a DL-based              specific task. According to the researchers, if a language model is trained
+method to analyze the building regulations. The proposed method                 on sufficiently large and diverse datasets, it can perform well across
+used word2vec model for the semantic analysis of words. Zhong et al.            various tasks without further supervised fine-tuning. Furthermore,
+[31] indicated that aforementioned DL-based methods can only learn              human correction was used for data filtering (i.e., manually filtering
+shallow semantics information, which is limited for text analysis. A            some of the documents), which enables GPT-2 to generate outputs
+method should be created to analyze the logistic relationships between          credible to humans [37]. The performance of GPT-2 was superior to
+construction regulations. Therefore, they [31] proposed a hybrid deep           seven out of eight tested state-of-the-art methods. However, the per­
+neural network, which combined the bidirectional long short-term                formance of GPT-2 in summarization and translation tasks was worse
+memory (Bi-LSTM) and the conditional random field (CRF) models.                 than those of the best methods [38].
+The proposed Bi-LSTM-CRF can automatically extract construction                      GPT-3 was improved based on the GPT-2 model, which used a
+procedural constraints from construction regulations for both entities          transformer model with 96 layers and 175 billion parameters. GPT-3
+and interlinks or relationships between them. Typically, Bi-LSTM is used        performs well in tasks such as translation, question answering, cloze
+for pattern recognition, which can learn the relationships between              filling, new word usage, and algebraic operations, but its performance
+different entities in regulations.                                              on reading comprehension and reasoning task datasets, as well as long
+    To address disputes, Moon et al. [32] developed a bidirectional             test generation, still needs to be improved. ChatGPT is a chatbot model
+encoder representation from transformer (BERT)-based model [33] for             developed from GPT-3, which can quickly generate detailed responses
+contractual risk classification. The contractual risk categories were           and articulate answers conversationally. ChatGPT applies reinforcement
+classified based on the construction specification clauses to provide re­       learning from human feedback to fine-tune GPT-3; thus, it can follow a
+viewers with the crucial clauses that commonly cause disputes. BERT             broad class of written instructions (uses human preferences as a reward
+[33] is a state-of-the-art pretrained NLP model composed of bidirec­            signal to fine-tune models) [37]. In the training stage, hired labelers first
+tional transformer encoder blocks. The model was pretrained from the            provided demonstrations of the desired output of the question in the
+massive amounts of language data and achieved stratifying performance           dataset. These data were used to fine-tune GPT-3 with supervised
+within minor fine-tuning. Moreover, the bidirectional structure enables         learning to train a supervised policy. A comparison dataset was then
+easy and deep understanding of the text, as well as the relationship            created, in which labelers indicated model outputs that they preferred
+between sentences and words. Kim et al. [34] also applied BERT to               for a given input. Accordingly, a reward model (RM) was trained based
+retrieve infrastructure damage information in terms of question                 on the comparison dataset to predict the human-preferred output. Next,
+answering. They first used a sentence-BERT model to retrieve question           the RM was used as a reward function to fine-tune the supervised policy
+and answer (QA) sentences about infrastructure damage from published            and maximize this reward. The test results revealed that including
+reports and created several QA datasets. Then, a BERT model was                 human feedback is a promising strategy for aligning language models
+trained with the question-answer pairs in the QA datasets. Finally,             with human intents. Although ChatGPT has attracted immense attention
+additional 142 question-answer pairs created from the same reports              from the public, few research efforts have been made to leverage the
+were used for testing, with an accuracy of 90.5 % being achieved.               ability of ChatGPT in construction. Moreover, how to integrate ChatGPT
+    Currently, the NLP techniques have been applied in construction             and CV for generating daily construction reports is not clear.
+documents and contract analysis, but still require significant human
+efforts [24–33]. For example, ML-based require manual selection of
+effective text features [24–27], and DL-based methods need major or             2.4. Research gaps, objectives, and scope
+minor training on large dataset [28–33]. Moreover, current NLP
+methods only provide language information as simple words or sen­                   As reviewed in the above subsections, limited efforts have been put
+tences. Therefore, there is a clear need for a more efficient approach to       into construction management for automatically generating daily re­
+construction report generation that can deliver comprehensive and in­           ports from videos. The research gaps, objectives, and scope are pre­
+tegrated construction text information.                                         sented as follows.
+
+2.3. Development of GPT-based LLMs                                              2.4.1. Research gaps
+                                                                                   Two significant research gaps have been identified in this research:
+    GPT series LLMs were developed by OpenAI and can generate natural
+language text based on the given input. GPT-1 [35] was first proposed in         • An integral framework is needed for automatically generating daily
+2018, which aimed to learn a universal representation that transfers to a          construction reports from on-site videos. Existing research can
+wide range of tasks with minor adaption. The training processes of GPT-            extract project-related information (e.g., productivity and progress)
+1 have two stages, first, large unlabeled data were used to train a high-          from videos in an automated manner, whereas state-of-the-art
+capacity language model with unsupervised learning. Subsequently, the              research is still in the process of converting video footage to infor­
+model was fine-tuned and transferred with labeled data to a target task            mation. However, how to organize this fragmented project infor­
+with supervised learning. In the first stage, a 12-layer decoder-only              mation with proper text descriptions, such as reports written by
+transformer with a masked self-attention model was used for handling               engineers, remains to be clarified. To the authors’ best knowledge,
+long-term dependencies in text. The model was then fine-tuned for a                no such framework has been proposed in the field of automation in
+variety of supervised tasks for natural language inference, question               construction.
+answering, semantic similarity, and text classification. GPT-1 was a             • Generating engineering insights from construction videos remains
+significant breakthrough in the field of natural language processing, and          challenging. In daily construction reports, engineers need to analyze
+it paved the way for the development of more advanced language                     daily activities/progress/safety issues and provide recommenda­
+models, such as GPT-2 and GPT-3.                                                   tions. This type of engineering insight requires a body of knowledge
+    GPT-2 [36], which is an improved version of GPT-1, was released in             and years of professional experience in construction management.
+
+                                                                            3
+B. Xiao et al.                                                                                                         Automation in Construction 168 (2024) 105874
+
+
+    Existing vision-based methods have insufficient reasoning ability to           3. Proposed framework
+    provide reliable insights on daily construction reports.
+                                                                                       The proposed framework for automatically generating daily reports
+2.4.2. Research objectives                                                         from construction videos is presented in this section. First, an overview
+   To fill the above research gaps, three research objectives are                  of this framework is introduced. Three main modules are then detailed,
+proposed:                                                                          namely vision-based project information extraction, ChatGPT for daily
+                                                                                   report generation, and web application development.
+ • Proposing an automated framework for generating daily reports
+   from construction videos by integrating ChatGPT and CV. The pro­                3.1. Overview
+   posed framework aims to present a novel method of summarizing
+   engineering knowledge (in the daily report format) from construc­                   Fig. 1 shows an overview of the proposed framework. It connects on-
+   tion videos, which consists of two main processes: 1) converting                site IP cameras and streams construction site videos to the server. A web
+   video footage to project information via vision methods and 2)                  application is developed to store the streamed videos, which allows
+   transferring information to construction engineering knowledge                  engineers to manage and browse these videos. First, the construction
+   using ChatGPT. Because ChatGPT has been trained with extremely                  videos are fed into the vision-based project information extraction
+   large amounts of text data from the Internet, it possesses both general         module. In this module, all workers are detected and tracked by indi­
+   knowledge from human beings and domain knowledge in construc­                   cating the workers’ pixel location and identification (ID) number. The
+   tion management and can generate daily reports that resemble those              tracking results have been inputted into the activity recognition algo­
+   written by professional engineers.                                              rithm to clarify worker activities into 10 categories, and the productivity
+ • Evaluating the feasibility of ChatGPT in construction management.               information can be analyzed based on the activity information. Mean­
+   As one of the most representative LLMs, ChatGPT has attracted keen              while, the extracted productivity information can be visualized using the
+   interest from the public due to its vast domain knowledge, highly               web application. The activity, productivity, and other project-related
+   accurate responses, and high processing speed. However, the feasi­              information (e.g., project name, date, and weather) are then combined
+   bility of ChatGPT in construction management remains unclear. In                to form a prompt, which refers to a discussion topic the user provides for
+   this research, ChatGPT is adopted for two purposes: 1) organizing               the ChatGPT model to respond to. The designed prompt is used to trigger
+   project information extracted by CV into the daily report format with           ChatGPT to generate daily reports from construction videos. The
+   proper text descriptions to explain the information and 2) analyzing            generated reports are stored in the server and construction engineers can
+   project information to provide professional insights and recom­                 manage, view, and download them for further use from the web
+   mendations in daily reports. The authors analyzed the experimental              application.
+   results to explore the feasibility of using ChatGPT in construction,                The technical innovations of the proposed framework are two-fold.
+   which can potentially benefit other areas of research adopting                  First, this framework integrated CV and LLMs for construction report
+   generative language machine intelligence for construction manage­               generation, which has not been performed in the field before. The CV
+   ment applications.                                                              can extract project-related information from videos, and LLMs under­
+ • Developing a web application to implement the proposed framework                stand this fragment information and transform it into a daily report,
+   and conduct field tests in a real construction project. To evaluate the         which a human can understand. As such, the generated daily reports
+   proposed framework, a web application is developed with the                     contain both subjective project information and engineering insights.
+   following functions: video management (i.e., uploading, browsing,               Second, a prompt is designed for instructing ChatGPT to generate con­
+   and downloading), project information visualization (i.e., activity,            struction reports. Considering that ChatGPT is a novel technology, how
+   productivity, and progress), and daily report management (genera­               it can be adopted for construction documentation purposes has not been
+   tion, browsing, and downloading). The developed application is                  clarified. The proposed framework indicates how to instruct ChatGPT to
+   adapted to a real construction site located in Hong Kong for a month            generate construction reports, which can help other researchers in this
+   to perform field tests. Accordingly, the contributions and limitations          field to efficiently incorporate LLMs in construction management
+   of this research are further clarified with the support of practical            applications.
+   evidence.
+                                                                                   3.2. Vision-based project information extraction
+2.4.3. Research scope
+    This research focuses on analyzing construction videos of workers’                 The main purpose of this module is to extract project productivity
+activities in high-rise buildings, and the generated daily reports mainly          information from video streams. The accuracy of the vision-based
+contain the project productivity information. Notably, this research               monitoring directly affects the report quality because all productivity
+proposes a general framework that can generate daily reports for mul­              data will appear in the report. To achieve this goal, four well-adopted
+tiple purposes, such as productivity analysis and safety control. Previous         techniques in vision-based construction site monitoring are intro­
+research has already proved that the vision-based method can be used to            duced, namely work detection, worker tracking, activity recognition,
+conduct productivity analysis and safety monitoring from videos of                 and productivity analysis.
+workers, machines, and materials. Therefore, the construction produc­
+tivity case was selected in this research to validate the feasibility of the       3.2.1. Worker detection
+proposed framework for automated daily documentation in construction                   Worker detection involves producing precise bounding boxes of
+management. By customizing the vision algorithms from this research,               construction worker objects from individual video sequences using ob­
+the proposed framework can easily be adapted to generate daily reports             ject detection techniques. In this research, the deep learning object de­
+from construction machine and material videos for other project man­               tector YOLO-v5 [39] was adopted due to its high processing speed and
+agement purposes (e.g., safety control and progress monitoring). In real           reliable performance in the field [17,40,41]. The architecture of YOLO-
+construction projects, the daily report contents may change according to           v5 is shown in Fig. 2, which consists of a cross-stage partial network
+the different construction stages. Therefore, proposing a general                  (CSPNet), path aggregation network (PANet), and YOLO layer. CSPNet
+framework for daily report generation is necessary, and the specific al­           serves as the backbone of YOLO-v5, extracting features from images,
+gorithms can be adjusted to meet the needs of real projects.                       whereas PANet is a feature pyramid network that helps enhance the
+                                                                                   detection performance, especially for small objects. Moreover, the YOLO
+                                                                                   layers produce three types of feature maps (18 × 18, 36 × 36, and 72 ×
+
+                                                                               4
+B. Xiao et al.                                                                                    Automation in Construction 168 (2024) 105874
+
+
+
+
+                 Fig. 1. Overview of the proposed framework for constructing daily report generation.
+
+
+
+
+                                   Fig. 2. Neural network architecture of YOLO-v5.
+
+
+
+
+                                                          5
+B. Xiao et al.                                                                                                           Automation in Construction 168 (2024) 105874
+
+
+72) for multiple-scale detection to improve the detection performance of
+                                                                                                            accumunalted working time × productivity rate
+small objects. In this study, videos were captured from a camera                    worker productivity =
+                                                                                                                               hour
+mounted on the tower crane, and workers appeared small from a bird’s
+                                                                                                                                                                 (2)
+eye view. The special design of YOLO-v5 helps to precisely detect small
+worker objects from images.                                                             The start and end timestamps can be retrieved from the timestamps
+    To train YOLO-v5, the authors developed an image dataset of con­                of the first worker clocking in and the last worker clocking out,
+struction workers. The developed dataset contains 1340 images, and all              respectively, in the daily video footage of a project. All detection,
+worker objects in each image are annotated in terms of the object                   tracking, and activity analysis results are stored in a database, which
+category and pixel location. These images were collected from both                  means all productivity information can be automatically analyzed and
+online (e.g., YouTube and Google Image) and on-site (e.g., site visit and           flexibly visualized (e.g., hourly, daily, weekly, or even monthly). In this
+previous project recordings) resources. The detection results in each               research, the relational database was adopted, and the database struc­
+frame were inputted into the worker tracking algorithm.                             ture of the proposed framework is shown in Fig. 3.
+
+3.2.2. Worker tracking                                                              3.3. ChatGPT for daily report generation
+    Worker tracking aims to retrieve the worker trajectories by associ­
+ating the detection results across frames. Once all detection results are               The main purpose of this module is to bridge the vision-based pro­
+inputted into the worker tracking, the same worker object in continuous             ductivity analysis and construction report generation by leveraging the
+frames is assigned to the same ID number as the tracking results. The               feasibility of ChatGPT. First, a prompt template was designed to incor­
+tracking results are used to identify worker activities along timelines by          porate the daily activity and productivity information in the construc­
+analyzing the worker object areas using deep neural networks. In this               tion project. By inserting the daily information into the template, a
+study, the simple online and real-time (SORT) method [42] was used for              prompt can be used as the query question, which is inputted to ChatGPT
+tracking multiple workers from construction videos. The performance of              using the OpenAI application programming interface (API). The
+SORT has been validated on the multiple objects tracking benchmark                  querying results are then exported to the web application as construc­
+(MOT16) [43] and in previous studies in the construction field                      tion daily reports for users to browse. Details on prompt design and
+[12,16,44]. In addition, SORT can achieve a tracking speed of over 200              ChatGPT are presented in this subsection.
+frames per second (fps), which is important for multiple construction
+worker tracking.                                                                    3.3.1. Prompt design
+                                                                                         A prompt refers to the information, sentences, or questions that users
+3.2.3. Activity recognition                                                         enter into the generative AI, and it has a large effect on the quality of the
+    The activity recognition classifies the activities of each individual           feedback received by users. In brief, prompting refers to how humans
+worker at every frame into one of the following activities: rebar, form­            interact with and provide initial instruction to the LLM. Notably, a slight
+work, scaffold, concrete, prepare, transport, rest/talk, walk, and clean.           difference in prompting may cause a large difference in the quality of the
+In this study, the 3D Resent [45] method was adopted for worker activity            LLM results, and designing a proper prompt to allow LLMs to understand
+recognition, which is a standard CV method. 3D Resent is a type of 3D               engineering problems is crucial.
+deep neural network with a similar architecture as Resnet; where 2D                      To meet the daily report expectations in construction management,
+neural networks are changed into 3D neural networks. Specifically, the              the prompt design in this research considers three types of information.
+3D Resnet adopted the mixed convolution technique to stack the 2D and               1) Basic project information (e.g., date, site name, site address, and
+3D convolutions in the early stage of activity recognition to improve the           weather), which is an essential component of a daily construction
+model performance and processing speed. For a specific frame in a                   report. 2) Daily productivity information (e.g., total productivity, top
+construction video, all worker objects in the current frame and the same            three activities, first worker start time, and last worker leave time). (In
+object in the previous 10 frames were stacked and inputted in the 3D                this research, the authors focused on productivity analysis; more safety
+Resent model. The activity category, one of the nine activity types, was            information can be reported by customizing the vision-based analysis
+output from 3D Resent for the worker object.                                        module for other studies in the field.) 3) Comparison of the analysis and
+    This research adopted the 3D Resnet-18 model pretrained on the                  summaries of the productivity compared to the historical project data.
+Kinetics-400 dataset [46] due to its high processing speed. To fine-tune            Importantly, the daily report should provide engineering insights by
+this model, 1143 video clips (3 s for each) of construction workers                 summarizing and identifying the reasons for any delay or under­
+engaging in different activities were developed. The activity information           productivity. LLMs have shown breakthrough potential to generate this
+is used for 1) further productivity analysis and 2) activity information            kind of engineering summary, which traditional methods cannot do.
+visualization in the developed web application.                                          The design prompt used in this study is.
+                                                                                         “Please write a markdown format daily report in a construction site with
+3.2.4. Productivity analysis                                                        the following information: date is {%date%}; site name is {%site name%};
+    The productivity analysis calculates workers’ productivity from the             site address is {%site address%}; weather is {%weather%}; total productivity
+activity analysis results. Notably, this research focuses on nine activities,       is {%total productivity%}; the first worker starts working at {%first worker
+and they are further divided into productive activities (rebar, formwork,           start time%} and the last worker leaves the site at {%last worker leave time
+and concrete), semi-productive activities (scaffold, prepare, and trans­            %}; the top three activities of workers today are {%top3 activity%} and their
+port), and nonproductive activities (rest/talk, walk, and clean). This              times are {%top3 activity time%}, respectively; today is a {%productivity
+study focuses on productive activities. The productivity information of             level%} productive working day. Please refer to the project historical data
+interest is the accumulated working time for each activity, worker                  and write a {%number of words%} word summary section to analyze the
+productivity, and the start and end time stamp for a project. The accu­             daily activity and productivity performance.”
+mulated working time can be calculated from Eq. (1).                                     Notably, {%variable%} refers to the variable directly extracted from
+                                                                                    the productivity analysis results. Specifically, the site name and site
+                              total number of activity frames
+accumulated working time =                                               (1)        address are predefined in the construction project. Date and weather in­
+                                     frames per second
+                                                                                    formation can be extracted from the Internet. The total productivity, first
+   Worker productivity can be calculated as the accumulated working                 worker start time, last worker leave time, top three activities, and top three
+time for a specific activity multiplied by the production rate per hour (as         activity times can be extracted from the database because all productivity
+shown in Eq. (2)).                                                                  information has been stored in a database, and this information changes
+
+                                                                                6
+B. Xiao et al.                                                                                                           Automation in Construction 168 (2024) 105874
+
+
+
+
+                                       Fig. 3. Database structure of the proposed framework for productivity analysis.
+
+
+every day. In this study, the daily productivity level was categorized as          historical productivity information, and generate summaries based on it,
+high, normal, and low. In the database, all working days were ranked in            making it suitable for long-term project reporting spanning several
+a list according to their daily productivity. If new daily data outranks the       months or years. Notably, ChatGPT can also customize the output
+first 1/3 days in the list, the day is considered to be high-productive.           format, which is beneficial for practical applications in the construction
+Moreover, the normal and low productive levels refer to the middle 1/              field. For example, this study queries ChatGPT as “please write a mark­
+3 and last 1/3 sections in the list. The number of words is a hyper­               down format …,” and ChatGPT can provide a markdown format output
+parameter that can be determined by the users. Because LLMs can                    for easy integration with the web application.
+remember historical queries, they naturally know the historical pro­
+ductivity information of this project and can analyze the productivity
+performance and generate summaries without requiring additional in­                3.4. Web application development
+formation. In this study, the prompt will be automatically integrated to
+ChatGPT by: 1) extracting variable information from the database and                   A web application to apply the proposed framework to real con­
+Internet; 2) filling the variables into the aforementioned prompting               struction scenarios for efficient project management was developed in
+template; 3) query ChatGPT with the prompt; and 4) parse the ChatGPT               this study. The web application has three functions, and details are given
+outputs and generate the report.                                                   as follows.
+
+3.3.2. ChatGPT                                                                     3.4.1. Video management
+    The proposed design was directly inputted into ChatGPT through the                The video management function offers basic platforms for managing
+API provided by OpenAI. The ChatGPT API provides a way to interact                 videos over the entire project lifespan. This function includes connecting
+programmatically with the ChatGPT model hosted on OpenAI’s servers.                IP cameras, streaming videos from IP cameras, uploading video clips
+Developers can send text prompts to the API and receive responses                  from computers, organizing videos by projects/timelines, video
+generated by ChatGPT in real-time. This enables integration of natural             searching by dates, video previewing, video downloading, and video
+language understanding and generation capabilities into applications,              deletion.
+websites, chatbots, and other software solutions. In this study, the GPT-
+3.5 model was adopted by querying the API, which was trained on an                 3.4.2. Project information visualization
+immense dataset of internet-source data (570 GB of text and 176 billion                The project information visualization function allows project man­
+parameters) to grant its great generalizability and human-like responses.          agers/engineers to interact with productivity information. This function
+    ChatGPT was adopted for generating construction reports for the                includes worker monitoring visualization, worker location visualization,
+following reasons: 1) It can take fragmented project information and               activity information visualization, top three activities visualization,
+present it in a more human-understandable way for reporting. 2)                    daily productivity visualization, and project-wise productivity visuali­
+ChatGPT has been trained on an extensive amount of data, enabling it to            zation. All the categories of project information mentioned above can be
+summarize information and provide insights similar to those of con­                customized for different periods to meet the demands of project
+struction engineers. 3) ChatGPT can retain historical input data, such as          managers.
+
+                                                                               7
+B. Xiao et al.                                                                                                       Automation in Construction 168 (2024) 105874
+
+
+3.4.3. Daily reports management                                                 proposed system and the report, respectively.
+   The daily reports management function allows for the management
+of daily reports generated by ChatGPT. This function includes daily             4.1. Implementation
+report generation, report previewing, report storage, report download,
+and report deletion. By default, the web application automatically                  The implementation in this study includes both server- and client-
+generates a report daily.                                                       sides. Server-side means that the action takes place on a web server,
+   Additional information regarding the implementation of the pro­              which was implemented on Python 3.6. and the Flask 2.2.2. Other major
+posed framework and web application can be found in Section 4.1.                libraries were also adopted for data processing, database querying, and
+                                                                                file management, including ffmpeg-pyton 0.2.0, httpx 0.23.3, numpy
+4. Implementation, experiment, and results                                      1.23.5, opencv-python 4.6.0.66, pdfkit 1.0.0, Pillow 9.3.0, PyJWT 2.6.0,
+                                                                                PyMySQL 1.0.2, PyYAML 6.0, torch 1.12.1, and torchvision 0.13.1. The
+   In this section, the implementation of the proposed system is intro­         client-side refers to the action from the user’s (the client’s) computer. In
+duced. Moreover, two experiments are designed to evaluate the CV-               this study, Javascript was used for the client-side with using following
+based productivity analysis module and the functionalities of the               main libraries, @ant-design/icons 5.0.1, @emotion/reac 11.10.6,
+
+
+
+
+                                       Fig. 4. UI of the main page and project information visualization function.
+
+                                                                            8
+B. Xiao et al.                                                                                                       Automation in Construction 168 (2024) 105874
+
+
+@emotion/styled 11.10.6, @mui/material 5.11.13, @mui/x-date-                      May 29, 2019 for a total of 488.5 h. To be noted, these two cameras were
+pickers 6.0.2, ahooks 3.7.5, antd 5.3.1, axios 1.3.4, dayjs 1.11.7,               installed on two separated working zones and did not have overlapping
+downloadjs 1.4.7, echarts 5.4.1, and react 18.2.0.                                views. The project mainly involved construction workers renovating a
+    The user interface (UI) of the main page of the developed web                 high-rise building, including rebar, formwork, and concrete. Fig. 6
+application is shown in Fig. 4, which is also the project information             shows a screenshot of daily report on 10 May 2019, which is automat­
+visualization function. In the left, the project name, main dashboard,            ically generated by the proposed framework. Specifically, the report is
+video functions, report functions are illustrated. In the Manpower sec­           generated as a pdf file, which can be download from the web
+tion, the productivity information is visualized and can be customized            application.
+by selecting a specific camera or period within the project. In our sys­
+tem, the statistics analysis results are presented in three types of views,
+namely Trades, Modes, and Actions. The Trades mode classifies worker              4.3. Productivity analysis experiment and results
+activities based on the type of trade. In Modes, worker activities are
+classified as productive activities, semi-productive activities, and non-             A quantitative evaluation was conducted to assess the performance
+productive activities, as previously introduced. The Actions mode                 of the productivity analysis. The productivity of a certain job is calcu­
+shows human work hours based on worker’s activities. In each mode,                lated with the duration of each activity multiplied by the production
+the number of workers for each type of activity at any time point can be          rate. The ground truth is calculated manually by observing the videos.
+viewed. In addition, Fig. 5 shows the UI for the video management and             The accuracy metric was employed to evaluate the productivity analysis
+daily reports management functions, which can be used to add, search,             performance, which is calculated from Eq. (3). Specifically, the authors
+download, and delete videos/reports in a project.                                 selected five working days from the project videos and manually an­
+                                                                                  notated the duration of three productive activities, namely rebar,
+4.2. Experimental design                                                          formwork, and concrete. The duration of these activities in the five
+                                                                                  working days was automatically calculated using the developed vision
+   Two experiments were conducted to evaluate the 1) vision-based                 module. Particularly, the activity duration and productivity were
+productivity analysis module and 2) user experience of daily reports              calculated from Eqs. (1) and (2), respectively. According to the data
+and web applications. The productivity analysis experiment aims to                from Methvin, the production rates for rebar, formwork, and concrete
+evaluate the performance of the proposed vision-based productivity                were determined as 18.9 kg/man-hour, 1.8 m2 , and 1.5 m3 , respectively,
+analysis, whereas the user experience experiment aims to evaluate the             in this study. Notably, the production rate can by adjusted or calculated
+quality of generated reports and functionalities of the developed web             for different projects according to historical recordings, observation, or
+application. The experiments and results are presented in the following           prediction.
+subsections.
+                                                                                               Min{Groundtruth Productivity, Detected Prodcutivity}
+   A real construction job site was employed as the test bed, namely the          Accuracy =                                                                 (3)
+                                                                                               Max{Groundtruth Productivity, Detected Prodcutivity}
+Ming Wah Dai redevelopment project located in Hong Kong. Two
+cameras were installed at this site (on the crane to capture a bird’s-eye            Table 1 summarizes the experimental results for the vision-based
+view of the whole site) and the videos were captured from April 23 to             productivity analysis module, which reveals that the accuracies for
+
+
+
+
+                                                 Fig. 5. UI of the video and reports management functions.
+
+                                                                              9
+B. Xiao et al.                                                                                                           Automation in Construction 168 (2024) 105874
+
+
+
+
+                                                            Fig. 6. Example of generated daily report.
+
+
+
+Table 1
+Experimental results of productivity analysis.
+  Activity                    Rebar                                        Formwork                                     Concrete
+
+                              Duration (Man-hour)   Productivity (kg)      Duration (Man-hour)     Productivity (m2 )   Duration (Man-hour)       Productivity (m3 )
+
+  Day1      Detected          116.85                2208.5                 11.2                    20.16                1.24                      1.86
+            Ground Truth      102.0                 1927.8                 10.2                    18.36                1.18                      1.77
+            Accuracy          87.6 %                                       90.1 %                                       95 %
+  Day2      Detected          120.49                2277.3                 7.01                    12.62                1.31                      1.97
+            Ground Truth      115.0                 2173.5                 6.0                     10.8                 1.41                      2.12
+            Accuracy          95.1 %                                       84.5 %                                       93.1 %
+  Day3      Detected          52.95                 1000.8                 3.12                    5.62                 1.3                       1.95
+            Ground Truth      47.7                  901.5                  3.03                    5.45                 1.2                       1.8
+            Accuracy          90.1 %                                       97.1 %                                       92.6 %
+  Day4      Detected          94.88                 1793.2                 10.63                   19.13                12.68                     19.02
+            Ground Truth      90.0                  1701.0                 9.1                     16.38                10.27                     15.41
+            Accuracy          95 %                                         85.6 %                                       81 %
+  Day5      Detected          25.98                 491.0                  2.93                    5.27                 0.90                      1.35
+            Ground Truth      23.6                  446.0                  2.7                     4.86                 0.87                      1.31
+            Accuracy          91 %                                         92.1 %                                       97 %
+  Average Accuracy            91.76 %                                      89.88 %                                      91.74 %
+
+
+
+rebar, formwork, and concrete were 91.76 %, 89.88 %, and 91.74 %,                    ChatGPT.
+respectively. The average productivity accuracy in the experiment was
+91.13 %, which is comparable to the current practice of construction
+                                                                                     4.4. User experience experiment and results
+productivity management. Notably, this study adopted the standard
+algorithms and pipeline used in the vision-based monitoring of con­
+                                                                                        To evaluate the quality of the report and web application, 10 grad­
+struction sites and achieved similar results as previous studies, con­
+                                                                                     uate students from the Hong Kong Polytechnic University with a back­
+firming that state-of-the-art vision methods can extract reliable
+                                                                                     ground in construction management were selected to participate in the
+information from videos to report generation. The experimental results
+                                                                                     experiment. Fig. 7 shows the experiment design procedure. First, the
+also reveal the feasibility of the proposed framework by bridging CV and
+                                                                                     participants were briefly trained by (1) explaining the purpose of the
+
+                                                                                10
+B. Xiao et al.                                                                                                                           Automation in Construction 168 (2024) 105874
+
+
+                                                                                                   explain the items they disagreed and strongly disagreed with and pro­
+                                                                                                   vide feedback and suggestions on the method. A total of 10 question­
+                                                                                                   naires were released and 10 were returned and judged valid for this
+                                                                                                   study. The questionnaire contents and results are listed in Table 2.
+                                                                                                       The experimental results demonstrate that the overall feedback from
+                                                                                                   the participants regarding the proposed system and generated report is
+                                                                                                   positive, as the total score of each performance index is higher than
+                                                                                                   3.18. Among the five indexes, satisfaction with the system and the
+                                                                                                   clarity of the report achieved the highest agreement among participants.
+                                                                                                   Three factors achieved a high score, which indicates that participants
+                                                                                                   think that the proposed system can efficiently lower manual efforts in
+                                                                                                   daily documentation work, the report content is easy to understand, and
+                                                                                                   the report is organized with natural language. The participants were also
+                                                                                                   satisfied with the functionality of the system. The functions of the system
+                                                                                                   for site visualization, report management, and video management ach­
+                                                                                                   ieved scores of 4.24, 4.28, and 4.18, respectively.
+
+                                                                                                   5. Discussion
+
+                                                                                                   5.1. Report quality analysis
+
+                                                                                                       After the experiment, the participants were followed up and asked to
+                                Fig. 7. Experimental procedure.                                    express their evaluations and provide suggestions about the report. The
+                                                                                                   participants deemed the report performance satisfactory in the
+experiment, (2) indicating how to use the proposed system to generate                              following aspects. The report was clearly organized in natural language,
+the daily report, (3) explaining the questions on the questionnaire form,                          summarizing the daily work conditions of construction workers, and it
+and (4) introducing the test procedure.                                                            can be easily understood by the construction manager. It saves human
+    Moreover, based on the procedure from the training stage, each                                 efforts associated with daily reporting. In addition, the report contains
+participant was asked to view the construction site surveillance videos                            project-related construction productivity information, which is neces­
+collected from the construction site. Each participant viewed preselected                          sary and useful for daily reporting and productivity monitoring. More­
+videos for five random workdays and focused on the production infor­                               over, the information provided by the report is based on construction
+mation of the project. The videos were watched without time re­                                    domain knowledge and contains engineer insight.
+quirements to grant the participants the opportunity to fully observe the                              The scores of reliability and profession were 3.90 and 3.88, respec­
+content. After watching each video, the participants were required to                              tively. Although the scores for reliability and professionalism are both
+operate the developed web application and generate a report for that                               above 3, indicating that participants agree that the report can provide
+video. Specifically, first, they should open the web application and select                        project-related information that is reliable and sourced from real con­
+the video they watched from the calendar, as shown in Fig. 4. Then, they                           struction sites, the scores for these two factors are relatively low
+click the button “Generate Report” (as shown in Fig. 5), and the report                            compared to the other three factors. Regarding the professionalism of
+will be generated automatically accordingly.                                                       the report, some participants felt that the correct construction termi­
+    Operate the developed web application and generate a report for that                           nology was not used, and it cannot provide suggestions to improve the
+video. Finally, the participants were required to read generated reports                           management of the construction. For example, one of the participants
+and fill the questionnaire form to the best of their knowledge.                                    indicated that the suggestion was not detailed enough for the con­
+    Each participant was required to express their opinion by ranking                              struction manager to perform specific productivity optimization tasks.
+their level of agreement in the questionnaire. The questionnaire utilizes                              The quality of the proposed report can be improved in the following
+a five-level Likert scale [47]: strongly agree = 5, agree = 4, neutral =3,                         aspects based on users’ experiences. First, the productivity information
+disagree = 2, and strongly disagree = 1. Participants were asked to                                proposed by the report was too general. For example, the report only
+
+
+Table 2
+Experimental results of the questionnaire.
+  Object         Performance           Factors                                                           Option (number)                                                 Total
+                 index                                                                                                                                                   score
+                                                                                                           Totally     Agree    Normal    Disagree       Strongly
+                                                                                                            agree                                        disagree
+
+  System         Satisfactory          This system can reduce manual efforts in daily documentation          30            20     0          0               0             4.60
+                                       This system can improve productivity, progress, and safety            10            34     6          0               0             4.08
+                                       management
+                 Functionality         The system provides efficient visualization information               18            26     6          0               0             4.24
+                                       The system provides report management functions                       20            25     4          1               0             4.28
+                                       The system provides video management functions                        19            21     10         0               0             4.18
+                 Clarity               The report content is easy for humans to understand                   33            16     1          0               0             4.64
+                                       The report is organized using natural sentence descriptions           31            18     1          0               0             4.60
+                 Reliability           The report contains project-related information required in           13            25     6          6               0             3.90
+                                       daily reporting
+                                       The report contains real information recorded from surveillance       13            20     15         2               0             3.88
+                                       videos
+                 Profession            The report uses correct construction terminology                      15            14     19         2               0             3.84
+                                       The report provides suggestions that are useful to project             5            21     8          10              6             3.18
+                                       managers
+
+
+                                                                                              11
+B. Xiao et al.                                                                                                        Automation in Construction 168 (2024) 105874
+
+
+indicates that the concrete work in a specific report is 6 h, making it           framework for generating daily reports from construction videos has
+difficult for the construction manager to understand the progress of the          been proposed. To the best of the authors’ knowledge, efforts in this
+project. More detailed information, such as 6 h of concrete pouring work          direction in the construction management field have been limited. The
+for the top floor slab was completed, would be more valuable for pro­             developed framework integrated vision-based site monitoring for
+ductivity and progress monitoring. Second, some suggestions from the              extracting project information from videos and ChatGPT for generating
+report are sensible but are not applicable for improving the construction         reports (engineering knowledge) based on project information. Second,
+productivity. For example, the report summarizes the influence of                 the feasibility of LLMs was validated in this study. In this research, a
+weather conditions on the workers’ productivity. However, weather                 representative LLM, ChatGPT, was adopted for generating construction
+condition cannot be optimized to improve the construction productivity.           reports, and it exhibited excellent performance in organizing frag­
+To better support construction management work, useful applicable                 mented project information to produce documentation and provide
+information should be provided to construction managers to help them              professional insights on construction activities. Third, a web application
+improve the productivity. For this purpose, text information related to           for implementing the proposed framework was introduced and tested in
+productivity improvement strategies (i.e. a productivity improvement              a real construction site for one month. The web application successfully
+strategy knowledge graph) should be added into the prompt to help the             achieved various functions including video management, report man­
+ChatGPT provide suitable suggestions based on different conditions.               agement, and productivity analysis.
+                                                                                      The authors believe, based on this study, that ChatGPT has great
+5.2. Prompt engineering for LLMs in construction applications                     potential in construction management for documentation and commu­
+                                                                                  nication, safety management, and the training of construction engineers.
+    LLMs, especially ChatGPT, have exhibited immense potential to                 First, this study illustrates how ChatGPT can be used to facilitate
+represent fragmented information as human-understandable sentences,               documentation in a project. By leveraging the feasibility of CV and
+making them suitable for various construction applications, including             LLMs, engineers’ manual documentation efforts can be lowered signif­
+accidental report analysis, daily report generation, and structure in­            icantly. Moreover, ChatGPT can facilitate communication between team
+spection reporting. However, LLMs are very sensitive to prompts and               members and stakeholders. It can answer questions regarding project
+some changes to the prompts may affect the querying result quality. This          status, provide updates, and project compliance. This can help keep
+study draws some conclusions regarding prompt engineering. 1) Asking              everyone informed and on the same page. For safety management,
+LLMs clear questions. A clear question helps LLMs understand the                  ChatGPT can provide immediate safety instructions to workers during
+intention and give proper feedback based on their cross-disciplinary              their work. By integrating ChatGPT with CV, workers can understand
+knowledge bases. For example, this study focused on generating con­               construction hazards and know how to react. Regarding training,
+struction daily reports and the query was “please write a markdown                ChatGPT can help train new team members or provide refresher training
+format daily report in a construction site with the following information:        to existing team members. It can guide best practices, safety protocols,
+….” 2) Providing as much project-related details as possible and                  and other important aspects of construction management.
+combining these details using semicolons. The authors found that more
+project information improves the quality of generated reports. Such               5.5. Limitations
+details should be connected using semicolons that LLMs can easily break
+up to understand related project information 3) LLMs can provide                      The proposed framework still has some limitations that should be
+various output formats to accommodate project needs. For instance, the            improved in future work. First, some information provided by the report
+proposed framework directly asked ChatGPT to give a markdown format               is not reliable. Initially, during the project, the historical information
+report because this format can be easily integrated into our web appli­           that can be used by ChatGPT for data analysis is relatively limited. In this
+cation. The authors also tried to ask ChatGPT to generate other formats           condition, it may provide fake information. For example, if the daily
+of reports, which was successful without affecting the quality of the             productivity is below average or the progress is behind schedule at the
+generated reports.                                                                beginning of the project, the report still indicates that the overall pro­
+                                                                                  ductivity aligns with expectations. Our experiments revealed that daily
+5.3. Reliability of ChatGPT for report generation                                 reporting becomes increasingly more precise as the project progresses
+                                                                                  because more historical data are available to ChatGPT. In addition, some
+    This research relies on ChatGPT for report generation, and the reli­          prompting techniques can be used to mitigate the fake information from
+ability of ChatGPT is critical for the overall performance. To assess the         ChatGPT such as Chain of thought (CoT) prompting.
+quality of the reports generated by ChatGPT, the authors have analyzed                Second, the report generated by the proposed method may exist
+input prompts and output reports by using three metrics, which are                inconsistent formatting issues, while means the section titles have a
+response relevance, factual accuracy, and response completeness. The              certain level of randomness. This is an internal limitation of ChatGPT
+response relevance refers to grades how relevant the response context             and maybe addressed by using a stronger or more restricted prompt for
+was to the question specified. The factual accuracy refers to grades              querying ChatGPT. In addition, the ChatGPT does not sensitive to the
+whether the response generated is factually correct and grounded by the           expression of word counts in some cases, which may result to mis-
+provided context, and the response completeness refers to how complete            functionality of the “{%number of words%}” requirement in the
+the response is as a statement. The evaluation was implemented by the             prompt. In the future, the authors will investigate other new LLM
+UpTrain software [48], an unified platform to evaluate generative AI              models. To be noticed, due to the token limitation of ChatGPT, the
+applications. The authors input the prompts and generated reports of              proposed platform can only analyze historical data of 10 days. This
+five working days to the evaluation software and the results are 1.0 for          limitation can be solved by using newer version of ChatGPT (i.e.
+response relevance, 0.8 for factual accuracy, and 1.0 response                    ChatGPT 4).
+completeness on average. The factual accuracy has not achieved 1.0                    Thirdly, the proposed system should also be improved to lower the
+because the construction site, weather, and location cannot be verified           learning cost. Specifically, in the experiment, all the participants were
+by the evaluation software. The results show the ChatGPT can generate             trained to use the system, which requires extra man-hours and costs.
+high-quality reports to response the prompts.                                     Generally, it took about half an hour to train 10 participants to use the
+                                                                                  proposed system, corresponding to 3 min per person. To help users
+5.4. Contributions and outlooks of ChatGPT in construction                        better understand how to use the proposed system while increasing its
+                                                                                  efficiency, the system should be improved based on the users’ prefer­
+    The contributions of this study are three-fold. First, an automated           ences and habits. Third, the proposed system only focused on generating
+
+                                                                             12
+B. Xiao et al.                                                                                                                Automation in Construction 168 (2024) 105874
+
+
+a daily report of construction productivity. However, daily construction          Data availability
+reports cover more than productivity information. In future work, daily
+reports on construction safety and quality control should also incorpo­               Data will be made available on request.
+rated into the proposed system.
+                                                                                  References
+6. Conclusions
+                                                                                   [1] B. Xiao, X. Yin, S.C. Kang, Vision-based method of automatically detecting
+                                                                                       construction video highlights by integrating machine tracking and CNN feature
+    This paper presented a system that combined vision and ChatGPT to                  extraction, Autom. Constr. 129 (2021) 103817, https://doi.org/10.1016/j.
+automatically generate daily construction reports. The proposed system                 autcon.2021.103817.
+contained three major components: vision-based construction activity               [2] Y. Wang, B. Xiao, A. Bouferguene, M. Al-Hussein, H. Li, Vision-based method for
+                                                                                       semantic information extraction in construction by integrating deep learning object
+recognition and productivity analysis, report generation with ChatGPT,                 detection and image captioning, Adv. Eng. Inform. 53 (2022) 101699, https://doi.
+and a web application. First, Yolo-V5 worker detector, SORT tracker,                   org/10.1016/j.aei.2022.101699.
+and 3D Resnet activity recognition modes were used to recognize nine               [3] W. Lamptey, A.R. Fayek, Developing a project status dashboard for construction
+                                                                                       project progress reporting, Int. J. Architect. Eng. Constr. 1 (2) (2012) 112–120,
+types of worker activities. Accordingly, the worker productivity was                   https://doi.org/10.7492/IJAEC.2012.013.
+analyzed based on the activity information. Prompts were then designed             [4] H. Xie, S. Fernando, S. AbouRizk, Integrating realtime project progress input into a
+based on productivity information and project-related information and                  construction simulation model, in: Proceedings of the 2011 Winter Simulation
+                                                                                       Conference (WSC 2011), 2011, pp. 3443–3454, https://doi.org/10.1109/
+fed into ChatGPT to generate daily reports. Moreover, a web application
+                                                                                       WSC.2011.6148040.
+was developed to store the streamed site surveillance videos by inte­              [5] B. Xiao, Y. Wang, S.C. Kang, Deep learning image captioning in construction
+grating CV-based methods, report generation, and UI for automatic                      management: a feasibility study, J. Constr. Eng. Manag. 148 (7) (2022) 04022049,
+productivity report generation. Finally, a questionnaire-based experi­                 https://doi.org/10.1061/(ASCE)CO.1943-7862.000229.
+                                                                                   [6] J.S. Bohn, J. Teizer, Benefits and barriers of construction project monitoring using
+ment was conducted to validate the feasibility of the proposed system.                 high-resolution automated cameras, J. Constr. Eng. Manag. 136 (2010) 632–640,
+The experimental results revealed that the functions of the proposed                   https://doi.org/10.1061/(ASCE)CO.1943-7862.0000164.
+system scored 4.24 out of 5.                                                       [7] J. Yang, M.-W. Park, P.A. Vela, M. Golparvar-Fard, Construction performance
+                                                                                       monitoring via still images, time-lapse photos, and video streams: now, tomorrow,
+    The contributions of this study are three-fold: First, a novel method              and the future, Adv. Eng. Inform. 29 (2015) 211–224, https://doi.org/10.1016/j.
+that integrated vision and language methods was developed to extract                   aei.2015.01.011.
+engineering knowledge and automatically generate daily construction                [8] C. Chen, B. Xiao, Y. Zhang, Z. Zhu, Automatic vision-based calculation of excavator
+                                                                                       earthmoving productivity using zero-shot learning activity recognition, Autom.
+reports. The proposed method decreases construction managers’ efforts                  Constr. 146 (2023) 104702, https://doi.org/10.1016/j.autcon.2022.104702.
+of project documentation by utilizing generative AI. Second, the feasi­            [9] H. Kim, K. Kim, H. Kim, Vision-based object-centric safety assessment using fuzzy
+bility of utilizing LLMs, such as ChatGPT, for construction knowledge                  inference: monitoring struck-by accidents with moving objects, J. Comput. Civ.
+                                                                                       Eng. 30 (2016) 1–13, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000562.
+management was evaluated, which can be beneficial for adopting                    [10] Open AI ChatGPT. https://openai.com/chatgpt/, 2024 (accessed September 26,
+generative language machine intelligence for construction management                   2024).
+applications. Third, a web application is developed to implement the              [11] T. Wu, S. He, J. Liu, S. Sun, K. Liu, Q.-L. Han, Y. Tang, A brief overview of ChatGPT:
+                                                                                       the history, status quo and potential future development, IEEE/CAA J. Autom.
+proposed framework and conduct field tests in a real construction
+                                                                                       Sinica 10 (2023) 1122–1136, https://doi.org/10.1109/JAS.2023.123618.
+project.                                                                          [12] B. Xiao, Q. Lin, Y. Chen, A vision-based method for automatic tracking of
+    Future work will focus on addressing the following issues. First, the              construction machines at nighttime based on deep learning illumination
+proposed system can be improved to generate daily reports for not only                 enhancement, Autom. Constr. 127 (2021) 103721, https://doi.org/10.1016/j.
+                                                                                       autcon.2021.103721.
+productivity monitoring but also safety and quality control. For                  [13] J. Kim, S. Chi, Multi-camera vision-based productivity monitoring of earthmoving
+example, more visual and textual information should be added to the                    operations, Autom. Constr. 112 (2020) 103121, https://doi.org/10.1016/j.
+prompts to provide a more comprehensive and in-depth analysis of the                   autcon.2020.103121.
+                                                                                  [14] C. Li, L. Ding, Falling objects detection for near miss incidents identification on
+construction process. Second, the proposed web application and UI can                  construction site, in: ASCE International Conference on Computing in Civil
+be optimized and developed based on users’ preference and habits to                    Engineering 2019, 2019, pp. 138–145, https://doi.org/10.1061/
+improve their usability. Third, considering each construction site is                  9780784482438.018.
+                                                                                  [15] M. Ferdous, S.M.M. Ahsan, PPE detector: a YOLO-based architecture to detect
+unique, more real construction surveillance videos collected from                      personal protective equipment (PPE) for construction sites, PeerJ. Comp. Sci. 8
+different construction sites should be used for testing, thus, to evaluate             (2022) e999, https://doi.org/10.7717/peerj-cs.999.
+the performance of the proposed method. Currently, the developed                  [16] B. Xiao, S.C. Kang, Vision-based method integrating deep learning detection for
+                                                                                       tracking multiple construction machines, J. Comput. Civ. Eng. 35 (2021)
+platform mainly focuses on generating report, while future works will                  04020071, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000957.
+investigate more functions, such as conversation between users/project            [17] C. Chen, Z. Zhu, A. Hammad, Automated excavators activity recognition and
+managers with the platform once any issue is identified.                               productivity analysis from construction site surveillance videos, Autom. Constr.
+                                                                                       110 (2020) 103045, https://doi.org/10.1016/j.autcon.2019.103045.
+                                                                                  [18] J. Kim, S. Chi, Action recognition of earthmoving excavators based on sequential
+CRediT authorship contribution statement                                               pattern analysis of visual features and operation cycles, Autom. Constr. 104 (2019)
+                                                                                       255–264, https://doi.org/10.1016/j.autcon.2019.03.025.
+    Bo Xiao: Writing – original draft, Resources, Project administration,         [19] X. Luo, H. Li, D. Cao, Y. Yu, X. Yang, T. Huang, Towards efficient and objective
+                                                                                       work sampling: recognizing workers’ activities in site surveillance videos with two-
+Methodology, Investigation, Conceptualization. Yifan Wang: Valida­                     stream convolutional networks, Autom. Constr. 94 (2018) 360–370, https://doi.
+tion, Formal analysis. Yongpan Zhang: Software, Methodology. Chen                      org/10.1016/j.autcon.2018.07.011.
+Chen: Writing – original draft, Validation, Software, Investigation,              [20] X. Luo, H. Li, Y. Yu, C. Zhou, D. Cao, Combining deep features and activity context
+                                                                                       to improve recognition of activities of workers in groups, Comput. Aided Civ. Inf.
+Conceptualization. Amos Darko: Writing – review & editing,                             Eng. 35 (2020) 965–978, https://doi.org/10.1111/mice.12538.
+Conceptualization.                                                                [21] J. Kim, S. Chi, Graph neural network-based propagation effects modeling for
+                                                                                       detecting visual relationships among construction resources, Autom. Constr. 141
+                                                                                       (2022) 104443, https://doi.org/10.1016/j.autcon.2022.104443.
+Declaration of competing interest                                                 [22] C. Chen, Z. Zhu, A. Hammad, M. Akbarzadeh, Automatic identification of idling
+                                                                                       reasons in excavation operations based on excavator–truck relationships,
+    The authors declare that they have no known competing financial                    J. Comput. Civ. Eng. 35 (2021) 04021015, https://doi.org/10.1061/(ASCE)
+                                                                                       CP.1943-5487.0000981.
+interests or personal relationships that could have appeared to influence         [23] F. Ul Hassan, T. Le, X. Lv, Addressing legal and contractual matters in construction
+the work reported in this paper.                                                       using natural language processing: a critical review, J. Constr. Eng. Manag. 147
+                                                                                       (2021) 03121004, https://doi.org/10.1061/(ASCE)CO.1943-7862.0002122.
+                                                                                  [24] A.J.-P. Tixier, M.R. Hallowell, B. Rajagopalan, D. Bowman, Automated content
+                                                                                       analysis for construction safety: a natural language processing system to extract
+
+
+
+                                                                             13
+B. Xiao et al.                                                                                                                             Automation in Construction 168 (2024) 105874
+
+     precursors and outcomes from unstructured injury reports, Autom. Constr. 62                [36] I. Solaiman, M. Brundage, J. Clark, A. Askell, A. Herbert-Voss, J. Wu, Release
+     (2016) 45–56, https://doi.org/10.1016/j.autcon.2015.11.001.                                     strategies and the social impacts of language models, arXiv (2019), doi:10.48550/
+[25] A. Chokor, H. Naganathan, W.K. Chong, M.E. Asmar, Analyzing Arizona OSHA                        arXiv.1908.09203.
+     injury reports using unsupervised machine learning, Procedia Eng. 145 (2016)               [37] L. Ouyang, J. Wu, X. Jiang, D. Almeida, C.L. Wainwright, P. Mishkin, Training
+     1588–1593, https://doi.org/10.1016/j.proeng.2016.04.200.                                        language models to follow instructions with human feedback, arXiv (2022),
+[26] F. Zhang, H. Fleyeh, X. Wang, M. Lu, Construction site accident analysis using text             https://doi.org/10.48550/arXiv.2203.02155.
+     mining and natural language processing techniques, Autom. Constr. 99 (2019)                [38] A. Radford, J. Wu, R. Child, D. Luan, D. Amodei, I. Sutskever, Language models are
+     238–248, https://doi.org/10.1016/j.autcon.2018.12.016.                                          unsupervised multitask learners, OpenAI blog. 1 (8) (2018). https://ailab-ua.gith
+[27] X. Luo, X. Li, X. Song, Q. Liu, Convolutional neural network algorithm–based novel              ub.io/courses/resources/GPT-2_Radford_2018.pdf (accessed September 26, 2024).
+     automatic text classification framework for construction accident reports,                 [39] Y. Zhang, Z. Guo, J. Wu, Y. Tian, H. Tang, X. Guo, Real-time vehicle detection
+     J. Constr. Eng. Manag. 149 (2023) 04023128, https://doi.org/10.1061/JCEMD4.                     based on improved yolo v5, Sustainability 14 (19) (2022) 12274, https://doi.org/
+     COENG-13523.                                                                                    10.3390/su141912274.
+[28] D.A. Salama, N.M. El-Gohary, Automated compliance checking of construction                 [40] C. Chen, H. Gu, S. Lian, Y. Zhao, B. Xiao, Investigation of edge computing in
+     operation plans using a deontology for the construction domain, J. Comput. Civ.                 computer vision-based construction resource detection, Buildings 12 (2022) 2167,
+     Eng. 27 (2013) 681–698, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000298.                     https://doi.org/10.3390/buildings12122167.
+[29] J. Zhang, N.M. El-Gohary, Automated information transformation for automated               [41] H. Song, X. Zhang, J. Song, J. Zhao, Detection and tracking of safety helmet based
+     regulatory compliance checking in construction, J. Comput. Civ. Eng. 29 (2015)                  on DeepSort and YOLOv5, Multimed. Tools Appl. 82 (7) (2023) 10781–10794,
+     B4015001, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000427.                                   https://doi.org/10.1007/s11042-022-13305-0.
+[30] J. Song, J. Kim, J.-K. Lee, NLP and deep learning-based analysis of building               [42] A. Bewley, Z. Ge, L. Ott, F. Ramos, B. Upcroft, Simple online and realtime tracking,
+     regulations to support automated rule checking system, in: ISARC. Proceedings of                in: 2016 IEEE International Conference on Image Processing (ICIP), 2016,
+     the International Symposium on Automation and Robotics in Construction 35,                      pp. 3464–3468, https://doi.org/10.1109/ICIP.2016.7533003.
+     2018, pp. 1–7, in: https://www.proquest.com/conference-papers-proceedings/n                [43] A. Milan, L. Leal-Taixe, I. Reid, S. Roth, K. Schindler, MOT16: a benchmark for
+     lp-deep-learning-based-analysis-building/docview/2123611147/se-2.                               multi-object tracking, arXiv (2016), https://doi.org/10.48550/arXiv.1603.00831.
+[31] B. Zhong, X. Xing, H. Luo, Q. Zhou, H. Li, T. Rose, Deep learning-based extraction         [44] B. Xiao, Y. Zhang, Y. Chen, X. Yin, A semi-supervised learning detection method for
+     of construction procedural constraints from construction regulations, Adv. Eng.                 vision-based monitoring of construction sites by integrating teacher-student
+     Inform. 43 (2020) 101003, https://doi.org/10.1016/j.aei.2019.101003.                            networks and data augmentation, Adv. Eng. Inform. 50 (2021) 101372, https://
+[32] S. Moon, S. Chi, S.-B. Im, Automated detection of contractual risk clauses from                 doi.org/10.1016/j.aei.2021.101372.
+     construction specifications using bidirectional encoder representations from               [45] K. Hara, H. Kataoka, Y. Satoh, Can spatiotemporal 3D CNNs retrace the history of
+     transformers (BERT), Autom. Constr. 142 (2022) 104465, https://doi.org/                         2D CNNs and ImageNet?, in: Proceedings of the IEEE Conference on Computer
+     10.1016/j.autcon.2022.104465.                                                                   Vision and Pattern Recognition, 2018, pp. 6546–6555, https://doi.org/10.48550/
+[33] J. Devlin, M.-W. Chang, K. Lee, K. Toutanova, BERT: pre-training of deep                        arXiv.1711.09577.
+     bidirectional transformers for language understanding, arXiv (2019), doi:                  [46] W. Kay, J. Carreira, K. Simonyan, B. Zhang, C. Hillier, S. Vijayanarasimhan, The
+     10.48550/arXiv.1810.04805.                                                                      kinetics human action video dataset, arXiv (2017), https://doi.org/10.48550/
+[34] Y. Kim, S. Bang, J. Sohn, H. Kim, Question answering method for infrastructure                  arXiv.1705.06950.
+     damage information retrieval from textual data using bidirectional encoder                 [47] A.T. Jebb, V. Ng, L. Tay, A review of key Likert scale development advances:
+     representations from transformers, Autom. Constr. 134 (2022) 104061, https://                   1995–2019, Front. Psychol. 12 (2021) 637547, https://doi.org/10.3389/
+     doi.org/10.1016/j.autcon.2021.104061.                                                           fpsyg.2021.637547.
+[35] A. Radford, K. Narasimhan, T. Salimans, I. Sutskever, Improving language                   [48] Uptrain-ai/Uptrain. https://github.com/uptrain-ai/uptrain, 2024 (accessed
+     understanding by generative pre-training, 2024. https://cdn.openai.com/research                 September 26, 2024).
+     -covers/language-unsupervised/language_understanding_paper.pdf (accessed
+     September 26 2024).
+
+
+
+
+                                                                                           14
+

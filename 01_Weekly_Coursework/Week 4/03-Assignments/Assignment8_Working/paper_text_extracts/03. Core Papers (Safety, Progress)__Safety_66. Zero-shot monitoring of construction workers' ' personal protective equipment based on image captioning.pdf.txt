@@ -1,0 +1,846 @@
+                                                                  Automation in Construction 164 (2024) 105470
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                               Automation in Construction
+                                                           journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Zero-shot monitoring of construction workers’ personal protective
+equipment based on image captioning
+Daeyoung Gil, Ghang Lee *
+Department of Architecture and Architectural Engineering, Yonsei University, Seoul, South Korea
+
+
+
+
+A R T I C L E I N F O                                       A B S T R A C T
+
+Keywords:                                                   Previous studies have deployed object-detection-based approaches to automate personal protective equipment
+Zero-shot detection                                         (PPE) safety monitoring. However, previously proposed methods require large amounts of labeled data for
+Computer vision                                             different PPE items. This study proposes a zero-shot PPE monitoring method that does not require a training
+Site monitoring
+                                                            process to overcome this problem. The proposed method comprises three steps. First, it detects workers onsite
+Image captioning
+Human-pose estimation
+                                                            from images and crops body parts using human-body key points. Next, the cropped body images are described in
+                                                            text using image captioning. Finally, the extracted text is compared with prompts describing body parts wearing
+                                                            PPE, and safety is determined based on cosine similarity. Compared to the F1-score of 73.5% achieved by
+                                                            traditional object detection approaches trained on 50 images for hardhat monitoring, the proposed zero-shot
+                                                            approach demonstrates significant improvement with an F1-score of 82.6%. It also surpasses the previous
+                                                            zero-shot monitoring performance (an accuracy of 53%).
+
+
+
+
+1. Introduction                                                                                   adopted for site monitoring, enabling neural networks to be trained with
+                                                                                                  only a few or no images [14]. Because the few-shot learning approach
+    Personal protective equipment (PPE) is fundamental to the safety of                           trains models with fewer than five to ten cases per class, the performance
+construction workers. Naturally, several studies have been conducted to                           of few-shot object detection is lower than those of large-data-based su­
+monitor the PPE compliance of onsite workers via PPE detection based                              pervised learning approaches. By comparison, zero-shot learning (ZSL),
+on convolutional neural networks (CNN) to reduce accidents [1–4].                                 which performs a new task without training data, naturally performs less
+However, to utilize a CNN model, a large volume of data must be pre­                              than other methods. Thus, to improve the performance of ZSL, ZSL is
+pared using a time-consuming and laborious process [5–8]. Transfer                                often combined with other methods, such as knowledge graphs (KG)
+learning [5,9,10] and data augmentation [11–13] have been proposed                                [15] and prompt engineering [16]. Those approaches are studies that
+to overcome this limitation. Transfer learning significantly reduces the                          have well-adopted ZSL in construction, but some research applying ZSL
+amount of data required to train a model for a specific task by reusing                           to construction beyond these is still limited. Considering that ZSL re­
+the weights of a large pre-trained model [5]. And, data augmentation                              duces the model’s data dependency and enables learning from various
+alleviates the burden of constructing an image dataset by supplying                               domains, there is a need to develop models that can easily be trained for
+additional data. Data augmentation can be achieved in two ways: by                                construction sites.
+transforming existing images to increase the number of samples or by                                  In this regard, this study proposes a three-step–ZSL-based PPE
+using other tools to generate entirely new data. The former involves                              monitoring (hereafter referred to as zero-shot monitoring) method,
+simple geometric transformations of image data [13], whereas the latter                           which combines pose estimation, image captioning, and semantic text
+involves generating new images from building information modeling                                 similarity analysis. The proposed method receives three inputs as
+(BIM) models [12] or generative adversarial networks (GANs) [11].                                 prompts: a construction site photo, a pair of PPE conformance state­
+However, transfer learning and data augmentation are limited because                              ments, and a violation statement. First, the workers are extracted from
+they require significant amounts of training data for different types of                          the input image. From the extracted workers, body parts, such as the
+PPE items, such as hardhats, vests, and gloves, to be effective.                                  head, face, torso, and hands, wearing safety equipment are extracted
+    Recently, few-shot and zero-shot learning approaches have been                                using the pose-estimation model. Second, descriptions of each body part
+
+
+
+ * Corresponding author.
+   E-mail address: glee@yonsei.ac.kr (G. Lee).
+
+https://doi.org/10.1016/j.autcon.2024.105470
+Received 2 June 2023; Received in revised form 4 October 2023; Accepted 10 May 2024
+Available online 17 May 2024
+0926-5805/© 2024 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+D. Gil and G. Lee                                                                                                         Automation in Construction 164 (2024) 105470
+
+
+are generated using an image captioning model. Finally, the similarity             Table 1
+between the generated descriptions of the body parts and the PPE                   Data sizes of CNN-based field monitoring research in the construction field.
+requirement text for each body part is assessed to determine whether the            #    Author       Target object      Number       Number of      Image source
+PPE requirements are fulfilled.                                                                                          of classes   images per
+    Regarding the scope of study, whereas previous studies focused                                                                    class
+mostly on hardhats [2–4,8], this research expands the scope of auto­                     Kim          Construction
+                                                                                    1                                             5    353–787       ImageNet
+mated PPE compliance checking from hardhats to safety goggles, vests,                    et al. [5]   equipment
+and gloves to demonstrate the generalizability of the proposed method                                 Workers,                    3    517–715       Web mining
+                                                                                         Nath
+                                                                                    2                 buildings, and
+without additional training.                                                             et al. [9]
+                                                                                                      equipment
+                                                                                                                                  7     21–633       Web mining
+    This paper comprises five sections. Following the introduction,                      Kolar
+                                                                                                                                                     Synthetic
+related studies are reviewed to provide the research background, and the            3    et al.       Safety guardrail            2      2000
+                                                                                                                                                     images
+limitations of previous studies and the differentiation of this study are                [26]
+                                                                                         Shen                                                        Construction
+explained. The proposed zero-shot monitoring method is then intro­                  4                 Safety helmet               2     18,800
+                                                                                         et al. [4]                                                  videos
+duced in the third section, and the verification experiments performed                   Zheng        Modules of
+on various PPE items to evaluate the performance of the proposed                                                                                     Synthetic
+                                                                                    5    et al.       modular                     2    100–1000
+                                                                                                                                                     images
+method are recounted in the fourth section. Finally, the fifth section                   [27]         construction
+discusses the results, their implications, and the conclusion of this study,             Bunrit
+                                                                                                      Construction
+                                                                                    6    et al.                                   3       400        (Unspecified)
+including its contributions, limitations, and future research directions.                [28]
+                                                                                                      materials
+
+                                                                                         Zhu
+                                                                                                      Construction                                   Construction
+2. Research background                                                              7    et al.
+                                                                                                      defects
+                                                                                                                                  5     48–510
+                                                                                                                                                     site photos
+                                                                                         [29]
+                                                                                         Hayat
+2.1. Onsite PPE detection using computer vision                                     8                 Safety helmet               2      5000        (Unspecified)
+                                                                                         et al. [3]
+
+    Many safety accidents at construction sites can be prevented by
+workers wearing proper PPE [1,17]. Consequently, several studies have
+                                                                                   [5,9,41] can reduce the burden of constructing a large dataset but still
+been conducted to devise methods for monitoring proper PPE use by
+                                                                                   requires hundreds of images and additional training to adapt the model
+workers, based on the application of computer vision techniques to
+                                                                                   to new domains or tasks.
+CCTV images [18,19]. Hardhat detection, an example of PPE detection,
+                                                                                       As standard datasets for general objects, such as ImageNet [30] and
+has been particularly researched, and rule-based computer vision ap­
+                                                                                   MS COCO [31], available datasets for specific objects, such as hardhats
+proaches using color channels and edge features were initially utilized
+                                                                                   and construction equipment, have also been constructed in previous
+[20]. However, the rule-based approach has limitations in flexibly
+                                                                                   studies [5–8,32]. However, such datasets are thus far limited to hardhats
+handling external factors, such as shadows or shooting angles of images.
+                                                                                   only; to the best of the authors’ knowledge, similar data for similar
+On the other hand, several studies have focused on directly visible fea­
+                                                                                   purposes are yet to be made available for other PPE, implying that a
+tures for the robust performance of target detection, and many have
+                                                                                   customized dataset is essential for effectively applying PPE safety
+been conducted with feature-based approaches, such as scale-invariant
+                                                                                   monitoring. However, given the challenge of gathering and labeling
+feature transform (SIFT) and histogram of gradient (HoG). For
+                                                                                   images for such a dataset, it is necessary to reduce their dependence on
+example, Rubaiyat et al. [21] proposed an advanced method that
+                                                                                   the dataset [33]. Furthermore, various pre-trained models have recently
+matches the color channel to the image features from the HoG
+                                                                                   emerged, and techniques for applying those weights to new domains
+descriptor. HoG has the strength of feature matching for moving objects
+                                                                                   have already been proposed. Adapting these pre-trained models to the
+and has also been applied to other research studies on safety monitoring
+                                                                                   construction field could reduce dependence on specific datasets and
+by tracking hardhats and human bodies [18,19]. However, it has been
+                                                                                   ensure flexibility in the model configuration.
+difficult to obtain robust performance because it is challenging to
+recognize objects using these methods semantically [22]. Thus, since the
+introduction of CNN, many studies have adopted these networks for                  2.2. Few-shot and zero-shot learning
+monitoring solutions.
+    Recent studies that have utilized CNN for object detection have                    As mentioned earlier, attempts have been made to eliminate the need
+largely been based on Faster Region-based CNNs (R-CNNs) [23], and                  for training data and enhance the domain adaptability of artificial in­
+You Only Look Once (YOLO) [24]. They enable the recognition of target              telligence models. In few-shot learning, the model learns the meta-
+objects, usually hardhats or workers, on construction sites and exhibit            features of novel class images from a few sample images. Few-shot
+robust and improved performance when trained with sufficiently large               learning methods include distance-based learning, such as Siamese
+datasets. For example, Fang et al. [2] suggested a hardhat detection               networks [34], proto-typical networks [35], and optimization-based
+module based on Faster R-CNN that demonstrated robust performance                  learning methods, such as model-agnostic meta-learning [36]. In the
+regardless of photo range, time, and weather changes. Alternatively,               construction field, Kim and Chi [14] suggested a few-shot detection
+Shen et al. [4] recently proposed an advanced hardhat detection                    module for construction equipment using metadata of features extracted
+network based on the DenseNet architecture [25] and demonstrated                   from the AIM dataset [5]. Cui et al. [37] also proposed a few-shot
+high-end performance.                                                              detection method. They demonstrated a way of optimizing the similar­
+    To train a CNN, a large labeled dataset and, correspondingly, massive          ity between defect images by applying cross and contrastive loss to the
+calculation effort and time are required. As outlined in Table 1, the              objective function.
+previous CNN methods developed for the construction field required at                  Unlike few-shot learning, which requires a small number of samples
+least 400 images per class. Quite notably, Shen et al. [4] utilized 9800           (shots), ZSL makes assumptions regarding unseen classes without any
+images to create their dataset, whereas Fang et al. prepared over                  given data [38]. In ZSL, information about the unseen class is provided
+100,000 images to train their model [2]. Methods for generating pho­               in ways other than images, such as through the relationship between
+torealistic images from BIM models [26] or extracting frames from                  pre-trained seen classes [39], among other various ways. For example,
+videos [4] have been deployed to supplement these image datasets. Both             Kampffmeyer et al. [15] utilized a knowledge graph. By updating the
+methods enhance performance; however, supervised learning requires                 relationships between classes during training, the model can infer the
+large and diverse datasets to improve performance. Transfer learning               label of an input image using the meta-information of the seen classes.
+
+                                                                               2
+D. Gil and G. Lee                                                                                                     Automation in Construction 164 (2024) 105470
+
+
+Although it requires graph updates, this approach enables the model to             compliance and violation cases from the Occupational Safety and Health
+learn by providing only the relationships necessary for inferring new              Administration (OSHA) PPE regulations [44]. Fig. 1 illustrates these
+labels without requiring training images. This strategy has also been              three steps. The entire process utilized pre-trained weights for general
+utilized in the construction domain, where Pan et al. [40] adopted a               objects, and direct training of the model was not conducted except for
+knowledge graph to extract unseen entities. Another ZSL approach uses              the prompt engineering process in the green-colored area. The following
+a large multimodal pre-trained model [41].                                         subsections describe these three steps in detail.
+    Contrastive language–image pre-training (CLIP) [16] is a represen­
+tative model of vision language pre-training (VLP), which enables the              3.1. Body-part extraction
+model to train an unseen class using only its description in the text. CLIP,
+introduced by Radford et al. [16], can learn the information of an unseen              Checking PPE use on workers begins with identifying workers in a
+class using textual inputs. This model consists of two encoders for text           site image and extracting each worker’s skeletal posture key points.
+and image inputs, which transfer the relationship between the text and             Fig. 2 illustrates the body-part extraction process. Construction workers
+image features and can infer unseen image classes based on the observed            in an input photo were detected using YOLO v5 for object detection in
+image features. However, VLP models pre-trained with general objects               the human category [24], and human skeletal key points were extracted
+perform poorly on domain-specific photos, such as hardhats; therefore,             using a pose-estimation model, mm-Pose [45], based on HRNet [46].
+an additional process is necessary for site applications. It is necessary to       The pose estimation was pre-trained using the 2017 COCO dataset,
+optimize for more appropriate text through prompt engineering to uti­              which consists of 17 body key points. Using the body key points, the
+lize VLP models such as CLIP in the construction domain [42]. In con­              body parts are divided into four parts—namely, the head, face, torso,
+struction, Yong et al. [43] employed prompt engineering of CLIP for                and hand—to detect hardhats, goggles, safety vests, and gloves to ach­
+building defect detection and provided general guidelines for making               ieve the aim of this study. Nine body key points for the nose, shoulders,
+prompts. However, our preliminary study indicates that prompt-                     hips, wrists, and elbows are used to define the bounding box for each
+engineering-based ZSL yielded poor results for PPE monitoring, sug­                body part. For example, the bounding box of a head is defined as a
+gesting the need for a new approach.                                               square with a nose at the center and a width equal to the distance be­
+                                                                                   tween the two shoulders. An additional buffer space of 30% of the dis­
+2.3. Research gaps                                                                 tance was added to the head image to ensure that the entire hardhat was
+                                                                                   included, thereby decreasing the ratio for the face image. Other body
+    Recent studies on construction safety monitoring have been based on            parts were extracted using the same process. The reference key points
+traditional CNN-based–object-detection methods [3,4]. They showed                  and the added buffer spaces for each body part are listed in Table 2.
+improved performance compared to the rule-based approach, but they
+required the preparation of large datasets, which would demand                     3.2. Image captioning
+considerable human labor [5–8,32]. Although few-shot and ZSL have
+been proposed to reduce the dependence on large datasets, only a few                   A description of the cropped body-part image was obtained using
+studies [14,37] have been conducted on these approaches, and their                 ClipCap [47]. An image captioning model based on CLIP image
+application in the building construction domain is in its nascent stage. In        captioning is applied to a construction photo on three levels to
+particular, applying these techniques for onsite safety monitoring has             demonstrate this: the entire construction photo, a full-body shot, and a
+not yet been attempted.                                                            body-part shot (Fig. 3). Our intention with image captioning was to
+    Although several studies in the construction domain have attempted             extract words related to PPE and increase their relevance to prompts. As
+to reduce the burden of creating datasets by utilizing metadata for few-           illustrated in Fig. 3, the automatically generated caption at the body-
+shot or ZSL, further processing is still required. For example, the ZSL            part level was closest to the intended caption. Therefore, body-part
+approach based on a predefined knowledge graph [40] or ontology will               extraction was performed as the first step.
+require relation updates when new classes are added, which can lead to                 The pose-estimation model [45] uses pre-trained weights from the
+an additional workload. The KG-based ZSL relies on the relationships of            MS COCO dataset [31], and ClipCap [47] uses the Conceptual Captions
+the base classes used in pre-training, which can burden model updates as           dataset [48].
+new labels are added when the model becomes larger. On the other
+hand, text-based ZSL approaches [16] have the advantage of obtaining
+information on unseen classes and can provide semantic information
+about words through prompts alone. However, they cannot deal with
+domain-specific knowledge directly because they are pre-trained on
+general objects and unfamiliar with technical terms. For specific items
+such as construction PPE, additional tasks are required to induce the
+intended information to be learned by the model.
+
+3. Proposed method
+
+    In the initial attempt to detect PPE use by workers, CLIP was fully
+applied to the entire process with only text prompts because this method
+was designed for text-based ZSL. However, the proposed approach did
+not successfully produce acceptable performance in detecting detailed
+objects, such as hardhats, via simple label transfer. Therefore, a target-
+specific approach was attempted while maintaining a large framework
+in a similar manner. After the caption text was extracted from the target-
+specific–body-part images, text embedding via a language model was
+applied to determine whether the PPE was worn. Therefore, the pro­
+posed zero-shot PPE monitoring system primarily comprises three steps:
+1) body-part extraction using pose estimation, 2) image captioning, and
+3) text similarity comparison, including a step to generate text for                   Fig. 1. Overall flow of proposed zero-shot PPE monitoring method.
+
+                                                                               3
+D. Gil and G. Lee                                                                                                            Automation in Construction 164 (2024) 105470
+
+
+
+
+                                                     Fig. 2. Illustrated example of the body-part extraction process.
+
+
+                                                                                           or from electrical shock and burns, shall be protected by protective
+Table 2
+                                                                                           helmets.
+Reference key points for defining the bounding box of a body part.
+                                                                                         • 1926.100(b)(2): The employer must ensure that the head protection
+  Body        Center point              Length of target boundary   Added buffer           provided for each employee exposed to high-voltage electric shock
+  part                                  box                         space
+                                                                                           and burns also meets the specifications contained in Section 9.7
+  Head        Nose point                Distance between                    30%            (“Electrical Insulation”) of any of the consensus standards identified
+  Face        Nose point                shoulders                           10%
+                                                                                           in paragraph (b)(1) of this section.
+              Center point of both      Farthest distance between
+  Torso                                                                     10%
+              shoulders and hips        shoulders and hips
+              Center points of elbows   Distance between elbows                             The results of zero-shot detection vary significantly depending on the
+  Hands                                                                     15%
+              and wrists                and wrists                                      composition of prompts [49–52]. The process of optimizing prompts is
+                                                                                        referred to as prompt engineering. Radford et al. [16] proposed a stan­
+                                                                                        dard form for constructing prompts: “a <category> photo of <label>.”
+3.3. Detection of PPE compliance among workers                                          Building on this, Yong et al. [43] discovered that prompts composed of a
+                                                                                        complete sentence rather than keywords and domain-specific definitions
+    In this study, to determine whether a worker complies with OSHA                     rather than general ones perform better in domain-specific zero- and
+PPE regulations [44], the similarity between the automatically gener­                   few-shot classifications. Building upon the prompt engineering methods
+ated image caption and prompts prepared based on OSHA PPE regula­                       for text-based ZSL demonstrated in previous studies. This study aims to
+tions was measured using cosine similarity. The OSHA defines PPE                        tailor domain-specific information to the output structure.
+regulations as follows:                                                                     For the similarity comparison, we initially considered detecting a
+                                                                                        worker’s PPE compliance using a single prompt, either a compliance or
+ • 1910.135(a)(1): The employer shall ensure that each affected                         violation prompt. However, if only one prompt is compared with an
+   employee wears a protective helmet when working in areas where                       automatically generated image caption, a threshold value must be set to
+   there is a potential for injury to the head from falling objects.                    determine the worker’s PPE compliance. Therefore, the proposed
+ • 1910.135(a)(2): The employer shall ensure that a protective helmet                   method compares automatically generated image captions against a
+   designed to reduce electrical shock hazard is worn by each such                      compliance prompt and a violation prompt as a pair. Suppose an auto­
+   affected employee when near exposed electrical conductors which                      matically generated image caption is more similar to a compliance
+   could contact the head.                                                              prompt than a violation prompt; the worker is deemed to be wearing a
+ • 1926.100(a): Employees working in areas where there is a possible                    hardhat, and vice versa. This approach prevented us from determining a
+   danger of head injury from impact, or from falling or flying objects,                threshold value randomly or based on many experiments.
+                                                                                            To fulfill the purpose of this study and to improve the accuracy of our
+
+
+
+
+                                              Fig. 3. Examples of varied captioning outputs for different levels of focus.
+
+                                                                                    4
+D. Gil and G. Lee                                                                                                         Automation in Construction 164 (2024) 105470
+
+
+PPE compliance checking method, the PPE regulation was first simpli­                  Table 4
+fied to “A person shall be protected by protective helmets.” This                     Prompts to determine PPE compliance among workers.
+simplification was performed by removing the reasons for wearing                                      Code      Compliance prompt     Code       Violation prompt
+protective helmets and generalizing the subject from “employee” to
+                                                                                                                                                 a person is not
+“person” because an image captioning model would not recognize a                                                                      SPO1v      protected by a
+contractual relationship [44].                                                         OSHA vs.                 a person shall be                protective helmet.
+    ClipCap, the image captioning model used in this study, outputs the                 violation     SPO1c     protected by a        SPO2v      a person with hair
+sentences in the form “a <Subject > <Predicate> <Object>.” We                           statements              protective helmet.               a person with hair
+                                                                                                                                      SPO3v      and no head
+attempted to compose prompts that properly reflected the OSHA PPE                                                                                protection
+regulations. First, we used “a person” as the subject to apply gender                                           a person with a                  a person without a
+                                                                                                      SP1O1c                          SP1O1v
+neutrality. For the predicate [44], “with” and “wearing” were used to                                           protective helmet                protective helmet
+indicate whether a PPE item was worn. For the <Object> part, target                                   SP1O2c
+                                                                                                                a person with a
+                                                                                                                                      SP1O2v
+                                                                                                                                                 a person without a
+                                                                                                                hardhat                          hardhat
+PPE items and their synonyms from the Collins dictionary [53] were
+                                                                                                                                                 a person without
+used. For example, OSHA also refers to the “head protection” equipment                 With vs.       SP1O3c
+                                                                                                                a person with
+                                                                                                                                      SP1O3v     protective
+as a “protective helmet.” Their synonyms from Collins are “hardhat” and                                         protective headgear
+                                                                                        without                                                  headgear
+“protective headgear.” In addition, to compare the results with cases                                           a person with a
+                                                                                                                                                 a person without a
+wherein entire sentences were included without changes in the sentence                                                                           hardhat,
+                                                                                                                hardhat, protective
+                                                                                                      SP1O4c                          SP1O4v     protective
+structure, one OSHA sentence was extracted and used as in the experi­                                           headgear, or a
+                                                                                                                                                 headgear, or a
+ment. Table 3 summarizes the terms used in this study, including the                                            helmet
+                                                                                                                                                 helmet
+code numbers and sources. These terms generated prompts aligned with                                                                             a person not
+                                                                                                                a person wearing a
+OSHA PPE regulations, as described earlier.                                                           SP2O1c
+                                                                                                                protective helmet
+                                                                                                                                      SP2O1v     wearing a
+                                                                                                                                                 protective helmet
+    As previously mentioned, we set prompts specifically for detecting
+                                                                                                                a person wearing a               a person not
+hardhat wearers. However, since the actual goal of our study is to                                    SP2O2c
+                                                                                                                hardhat
+                                                                                                                                      SP2O2v
+                                                                                                                                                 wearing a hardhat
+identify individuals not wearing PPE rather than those wearing them, a                 Wearing vs.                                               a person not
+                                                                                                                a person wearing
+violation prompt for this purpose has been created. Two approaches                      not           SP2O3c
+                                                                                                                protective headgear
+                                                                                                                                      SP2O3v     wearing protective
+were used in this study. The first was to change the aforementioned                     wearing                                                  headgear
+                                                                                                                                                 a person not
+compliance prompts into their corresponding negative forms (SPO1,                                               a person wearing a
+                                                                                                                                                 wearing a hardhat,
+SP1O1-SP2O4). In this approach, violation prompts are constructed by                                            hardhat, protective
+                                                                                                      SP2O4c                          SP2O4v     protective
+                                                                                                                headgear, or a
+replacing the <Predicate> parts with “without” and “not wearing,”                                                                                headgear, or a
+                                                                                                                helmet
+respectively. In the second approach, compliance prompts describe                                                                                helmet
+people not wearing hardhats (SPO1, SP1O1-SP2O4), in contrast to
+compliance prompts that refer to people wearing hardhats (SPO2v,
+                                                                                      encoder representations from transformers (SBERT) [54]. SBERT,
+SPO3v). With these approaches, the aim is to test whether the negative
+                                                                                      backboned on MPNet [55], embeds the descriptive texts of cropped
+sentence prompts work appropriately and, if not, to use the affirmative
+                                                                                      images and prepares prompts as vectors of size (1768).
+sentences instead. A pair of compliance-violation prompts are required
+to conduct the test, but there are no corresponding compliance prompts
+                                                                                      4. Experiments and analysis
+for SPOv2 and SPOv3, representing not wearing safety helmets in
+affirmative sentences. Thus, we conducted experiments using SPO1c as a
+                                                                                      4.1. Datasets for validation
+substitute pair. We generated eleven prompt pairs by combining the
+subject, predicate, and object terms identified earlier. Table 4 presents
+                                                                                         For this study, the proposed method was validated using hardhat
+the prompts generated by combining the terms in Table 3. The violation
+                                                                                      images provided by Harvard Dataverse [56]. For the experiment, 600
+prompts were constructed by replacing the predicates “with” and
+                                                                                      images were selected from the image dataset, including 300 workers
+“wearing” with “without” and “not wearing,” respectively.
+                                                                                      wearing hardhats and an equal number of images of workers not
+    The process proposed in this study can be summarized as illustrated
+                                                                                      wearing hardhats. Workers’ compliance with hardhat regulations was
+in Fig. 4. It takes a prompt consisting of a pair of compliance and
+                                                                                      checked through tests that determined whether each worker in the im­
+violation and an onsite image as input and finally outputs the PPE
+                                                                                      ages wore a hardhat. In the selection process, photos that included
+monitoring results of workers. The image data are converted into text
+                                                                                      worker images smaller than 50 × 50 pixels were excluded because they
+through pose estimation and image captioning and are then embedded
+                                                                                      were exceedingly small for the human eye to check for compliance.
+for comparison with the input prompt using cosine similarity after text
+                                                                                      However, regarding other PPE items, including safety vests, goggles, and
+embedding. If the cosine similarity between the captioning output and
+                                                                                      gloves, applicable datasets are not yet publicly available. Therefore, we
+the violation prompt is higher than that between the captioning output
+                                                                                      manually constructed a small dataset with 100 labeled images to test
+and the compliance prompt, the worker’s PPE is determined to be not
+                                                                                      whether the proposed method can be applied to other PPE items.
+worn.
+    For text similarity comparison, this study used sentence bidirectional
+                                                                                      4.2. Prompt engineering
+Table 3
+Terms used to generate prompts and sources.                                              As listed in Table 4, eleven different initial pairs of compliance
+                                                                                      prompts and their corresponding violation prompts were prepared.
+  Subject       Predicate       Object (O)                             Source
+                                                                                      However, the initial pairs of compliance and violation prompts, as
+  (S)           (P)
+                                                                                      shown in Table 4, were not necessarily the optimal pairs of prompts that
+  SPO1: A person shall be protected by protective helmets              OSHA
+                                                                                      could yield the best performance. This study adopted a different
+  S: A         P1: with         O1: a protective helmet                OSHA
+    person                                                                            approach, requiring one run of 11 experiments to determine the optimal
+               P2: wearing      O2: a hardhat                          Collins        pairs of compliance and violation prompts, instead of using a brute-force
+                                O3: protective headgear                Collins        approach to compare the performance of all 9 × 11 combinations of
+                                O4: a hardhat, protective gear, or a   OSHA and       compliance and violation prompts.
+                                helmet                                 Collins
+                                                                                         As the goal of PPE monitoring is to detect violation cases, the
+
+                                                                                  5
+D. Gil and G. Lee                                                                                                            Automation in Construction 164 (2024) 105470
+
+
+
+
+                                                            Fig. 4. Summarized process of the proposed method.
+
+
+violation prompts are set to be positive and always related only to the                 [SP2O4c, SPO2v] against the other pairs of compliance and violation
+results that are judged as positive; the correctly detected violation cases             prompts. The other pairs were those generated by grouping an affir­
+are true positive (TP), and the incorrectly detected violation cases are                mative prompt and the negated prompt of the affirmative prompt listed
+false positives (FP). On the other hand, the compliance prompts are                     in Table 4.
+related only to true negative (TN) and false negative (FN) by the same                      Our study aimed to detect hardhat non-wearers; thus, we set the
+token. Thus, in terms of the performance of the violation prompt, the                   detection of hardhat non-wearers through violation prompts as TP and
+one with the largest difference in mean cosine similarity values (mCS)                  the detection of wearers as TN. Three metrics were used for the vali­
+between the TP and FP cases (mCSTP – mCSFP) is the violation prompt                     dation tests: accuracy, F1-score, and F2-score. In safety studies, the F2-
+with the highest performance. In the case of compliance prompts, the                    score is more crucial because it places twice as much weight on recall
+one with the largest difference in mCS between TN and FN cases (mCSTN                   than on precision due to the prioritization of worker safety; identifying
+– mCSFN) is the compliance prompt with the highest performance.                         as many hardhat non-wearing workers as possible is regarded as more
+Naturally, the pair comprising the best-performing violation and                        important, even if some cases turn out to be false negatives (workers
+compliance prompts forms the best pair.                                                 mistakenly identified as PPE regulation violators).
+    Table 5 shows the accuracy and mean cosine similarity for each                          The optimized pair of prompts exhibited an accuracy of 81.50%, F1-
+prompt. Based on the scores for the various prompts, the best pair was a                score of 82.57%, and F2-score of 85.56%, whereas the other pairs
+combination of the compliance prompt SP2O4c and the violation                           yielded an accuracy of 60.67%, F1-score of 66.19%, and F2-score of
+prompt SPO1v [“a person wearing a hardhat, head protection, protec­                     72.63% at the highest.
+tive gear, or a helmet,” “a person with hair”]. The pair [SP1O4, SP2O4]                     The results also revealed several guidelines for the construction of
+resulted in the largest difference between true and false positive values               prompts.
+(mCSTP – mCSFP) and the largest difference between the true and false
+negative values (mCSTN – mCSFN). Separately combining them is                            • In the case of the compliance prompts, there was not much difference
+possible because each prompt’s performance is independent.                                 between using “with” (SP1O1c to SP1O4c) and using “wearing”
+    Table 6 shows the performance of the optimized prompt pair                             (SP2O1c to SP2O4c) in the <Predicate> part of the prompt.
+
+
+Table 5
+Accuracy and mean cosine similarity for each prompt.                                    Table 6
+                    Mean Cosine similarity (mCS)            (mCSTN –   (mCSTP –         Performance of optimized prompt combination compared to the other pairs.
+                                                            mCSFN)     mCSFP)
+  Prompt pair       mCSTP     mCSFP     mCSFN      mCSTN                                                           Prompt Pair        Accuracy     F1-        F2-
+                                                                                                                                                   score      score
+  [SPO1c,           0.1526    0.2699    0.1571     0.2932     0.1361     − 0.1173
+    SPO1v]                                                                               Optimized                 [SP204c,            81.50%      82.57%      85.56%
+  [SPO1c,           0.3949    0.3687    0.1571     0.2932     0.1361      0.0262                                   SP101v]
+    SPO2v]                                                                                                         [SPO1c, SPO1v]       60.33%     66.19%      72.63%
+                                                                                         OSHA vs. violation
+  [SPO1c,                                                                                                          [SPO1c, SPO2v]       50.17%      3.24%       2.07%
+                    0.2778    0.3110    0.1571     0.2932     0.1361     − 0.0332         statements
+    SPO3v]                                                                                                         [SPO1c, SPO3v]       60.67%     35.52%      25.67%
+  [SP1O1c,                                                                                                         [SP1O1c,
+                    0.1470    0.2606    0.2831     0.4309     0.1478     − 0.1136                                                       49.67%       0.66%      0.42%
+    SP1O1v]                                                                                                        SP1O1v]
+  [SP1O2c,                                                                                                         [SP1O2c,
+                    0.2176    0.3232    0.3262     0.4687     0.1425     − 0.1056                                                       50.00%       1.96%      1.24%
+    SP1O2v]                                                                                                        SP1O2v]
+                                                                                         With vs. without
+  [SP1O3c,                                                                                                         [SP1O3c,
+                    0.2164    0.3116    0.3750     0.4760     0.1010     − 0.0952                                                       49.67%       0.00%      0.00%
+    SP1O3v]                                                                                                        SP1O3v]
+  [SP1O4c,                                                                                                         [SP1O4c,
+                    0.2109    0.3459    0.2966     0.4593     0.1627     − 0.1350                                                       50.33%       2.61%      1.66%
+    SP1O4v]                                                                                                        SP1O4v]
+  [SP2O1c,                                                                                                         [SP2O1c,
+                    0.1239    0.2284    0.2770     0.4285     0.1515     − 0.1045                                                       49.50%       0.00%      0.00%
+    SP2O1v]                                                                                                        SP2O1v]
+  [SP2O2c,                                                                                                         [SP2O2c,
+                    0.2250    0.3229    0.3213     0.4671     0.1458     − 0.0979                                                       49.83%       1.95%      1.24%
+    SP2O2v]                                                                                                        SP2O2v]
+                                                                                         Wearing vs. not wearing
+  [SP2O3c,                                                                                                         [SP2O3c,
+                    0.1836    0.2758    0.3617     0.4709     0.1092     − 0.0922                                                       49.50%       0.00%      0.00%
+    SP2O3v]                                                                                                        SP2O3v]
+  [SP2O4c,                                                                                                         [SP2O4c,
+                    0.2039    0.3206    0.2959     0.4597     0.1638     − 0.1167                                                       50.17%       3.24%      2.07%
+    SP2O4v]                                                                                                        SP2O4v]
+
+
+
+                                                                                    6
+D. Gil and G. Lee                                                                                                       Automation in Construction 164 (2024) 105470
+
+
+ • It was also shown that it is better to include as many synonyms as              improvement.
+   possible rather than using only one PPE word in the <Object> part of
+   the compliance prompt.                                                          4.4. Processing time for PPE detection
+ • In contrast, in the case of violation prompts, good results were ob­
+   tained when the prompts were minimally composed without using                      The time it takes to detect PPE was also measured. The proposed
+   the term “hardhat” or synonyms and when negative sentences were                 method has three steps compared to the traditional one-step object
+   not used.                                                                       detection approach. Previous studies that monitored PPE using Faster R-
+                                                                                   CNN took between 0.206 s [2] and 0.362 s [4] per image. In contrast,
+   Based on these findings, this study recommends composing a pair of              studies using YOLOv5x, which is well known as its efficient processing
+prompts as follows:                                                                time, only took 0.0165 s to process a single image [3].
+                                                                                      Since the previous studies were carried out in diverse environments,
+ • Compliance prompt: A description of a person using a term                       we conducted a new experiment to gauge and compare the processing
+   describing a PPE item and as many synonyms as possible.                         time of both the conventional and the proposed methods. We also used
+ • Violation prompt: A description of a person not using PPE-related               YOLOv5 and YOLOv8 models as the baseline models like the previous
+   terms in a positive sentence.                                                   approach [3] on purpose of giving the reference of the experiment
+                                                                                   environment. All the tests were performed on a workstation equipped
+4.3. Performance comparison with few-shot object detection                         with an NVIDIA RTX 3080 10 GB GPU using 640-pixel by 640-pixel
+                                                                                   images to ensure consistency. The other conditions were the same as
+    Previous studies on construction site monitoring have used CNN                 the other experiments.
+models or variants to perform object detection tasks [2,4,8,57]. Limited              Table 8 shows the mean processing time of the baseline models and
+research has been conducted on zero-shot/few-shot learning or standard             the proposed method. As shown in Table 8, the proposed method took
+datasets for PPE safety monitoring, making it difficult to directly                significantly longer time (1.7180 s) than YOLO models (0.0543 s and
+compare the performance of the proposed method to previous studies.                0.0517 s for the YOLOv5 and YOLOv8 models, respectively). Never­
+Therefore, this study devised an experiment to compare the proposed                theless, it is important to note that the proposed PPE monitoring method
+zero-shot method with general object detection method trained with                 does not aim to be used for an instant warning system that demands an
+few-shot image. It is for showing intuitive comparison on the perfor­              immediate response. Instead, it aims to detect workers who violate PPE
+mance between proposed method and traditional approaches. This study               regulations. Considering this, an average of 1.7180 s for the proposed
+used YOLOv5 and YOLOv8 as comparison models for object detection                   method is fast enough to achieve the objective.
+because of their outstanding performance and wide adoption although
+those models are actually not designed for few-shot learning.                      4.5. Expanded application testing on other PPE types— safety goggles,
+    The YOLO models were trained repeatedly using 10, 20, 30, and 50               vests, and gloves
+labeled images, and the performance levels were compared in terms of
+accuracy, precision, recall, F1-score, and F2-score metrics. For hardhat               Given that target objects can be detected from images without a
+detection, only the labels of the hardhat and head were trained, and the           training dataset, the same method can be utilized to recognize other
+training conditions were set to an image size of 640-pixel × 480-pixel,            objects. In this part of the study, in addition to the detection of hardhat
+batch size of 5, and maximum training epoch of 500.                                wearing, the detection of safety goggles on the face, safety vests on the
+    The results are represented in Table 7. The proposed zero-shot                 torso, and safety gloves on the hands were also tested. Before the
+hardhat monitoring method outperformed the YOLOv5 and YOLOv8                       experiment, the prompts for the PPE items were designated as follows:
+models trained with 50 images, yielding average F2-scores of 85.6%,
+74.4%, and 70.6%, respectively. Although it is difficult to compare                   “head, hardhat”: [“a person wearing a hardhat, protective headgear,
+directly due to the difference of the domain, the performance can be                  or a helmet,” “a person with hair”].
+regarded as an improvement compared to the previous ZSL methods for
+construction site management, which demonstrated an average accu­                  Table 8
+racy of 53% for four unseen classes [40]. Between YOLOv5 and YOLOv8,               Average inference time comparison for PPE detection.
+YOLOv8 exhibited a slightly lower performance than YOLOv5, which                    Method            Task                                     Mean processing time
+signifies recent models do not always perform better than old ones.                                                                            (s)
+    The performance of the YOLO models improved as more images were                                   Object detection (YOLOv5)                              0.0543
+                                                                                    Baseline models
+utilized in the training process. Therefore, it may be possible to improve                            Object detection (YOLOv8)                              0.0517
+hardhat detection performance by increasing the number of training                                    Human detection & body-part
+                                                                                                                                                             0.6722
+                                                                                                      extraction
+images. However, since the purpose of this study is to find a way to                Proposed
+                                                                                                      Image-captioning                                       0.9884
+eliminate the need for generating large datasets, especially for new PPE              method
+                                                                                                      Test-similarity check                                  0.0594
+types, it is not in line with the aim of this study to increase the training                          Total processing time                                  1.7180
+data size as large as possible, solely focusing on performance
+
+Table 7
+Performance comparison between the proposed zero-shot learning method and YOLOv5-based transfer learning method with a small dataset.
+  Method                                  Images              Accuracy                Precision              Recall                 F1-score                F2-score
+
+                                              10               49.73%                  49.80%                72.00%                 58.90%                   66.11%
+                                              20               59.20%                  57.60%                69.30%                 62.90%                   66.59%
+  YOLOv5
+                                              30               63.56%                  61.20%                74.00%                 67.00%                   71.03%
+                                              50               73.08%                  72.10%                75.00%                 73.50%                   74.40%
+                                              10               50.00%                  69.85%                32.57%                 44.42%                   36.46%
+                                              20               51.27%                  65.49%                54.12%                 59.26%                   56.07%
+  YOLOv8
+                                              30               59.03%                  75.97%                60.29%                 67.23%                   62.89%
+                                              50               72.26%                  75.94%                69.42%                 72.53%                   70.63%
+  Proposed zero-shot monitoring                0               81.50%                  78.04%                87.67%                 82.57%                   85.56%
+
+
+                                                                               7
+D. Gil and G. Lee                                                                                                    Automation in Construction 164 (2024) 105470
+
+
+    “face, safety goggle”: [“a person wearing a goggle, or safety glasses,”       example, some previous studies that deployed a large dataset for hard­
+    “a person with a smile”].                                                     hat detection achieved an accuracy of approximately 95% [2–4].
+                                                                                  Notwithstanding, traditional methods can only handle targeted PPE
+    “torso, safety vest”: [“a person wearing a vest, or a safety gear,” “a
+                                                                                  types with a large number of annotated datasets such as hardhats while
+    person wearing a shirt”].
+                                                                                  the proposed method can any PPE types without a dataset.
+    “hand, safety glove”: [“a person wearing a safety glove,” “a person               Second, the proposed approach did not exhibit strong performance
+    holding a tool”].                                                             across all PPE types. As shown in Fig. 5, the proposed method can
+                                                                                  determine whether a worker complies with PPE regulations when
+    The prompt pairs were constructed according to the earlier method:
+                                                                                  automatically generated captions include terms directly or closely
+a full sentence about wearing PPE, with synonyms, and a description of a
+                                                                                  related to PPE items. For example, for hardhat monitoring, terms such as
+person without PPE in a positive sentence. The prompt indicating the
+                                                                                  “helmet” and “hat,” which have a high cosine similarity with “hardhat,”
+head part for hardhat detection was reused, and compliance prompts
+                                                                                  are also allowable. For goggles monitoring, “glasses” are allowable, and
+were written with the inclusion of synonyms for the target PPE following
+                                                                                  for safety vest monitoring, even “apron” is allowable. However, in the
+the clause “a person wearing.” Subsequently, violation prompts were
+                                                                                  case of gloves monitoring, gloves were often ignored in automatically
+written as positive sentences to describe PPE non-wearers. Because there
+                                                                                  generated captions, as listed in Fig. 5. This may be because gloves
+is thus far no available dataset for the other PPEs (in contrast to the
+                                                                                  occupy a very small space in a photo and because bare hands and gloves
+availability of a benchmark dataset for hardhats), we constructed a small
+                                                                                  can be difficult to distinguish, having similar colors and shapes.
+dataset with 100 labeled for this experiment. The dataset included labels
+                                                                                      Third, relying heavily on large pre-trained models, which can be
+for safety goggles, vests, and gloves.
+                                                                                  computationally expensive and time-consuming to train, is another
+    Table 9 outlines the performance results of the proposed PPE
+                                                                                  limitation of the method. As the performance of models used in this
+detection method on the other body parts. The F1 scores for safety
+                                                                                  study improves, naturally the performance of the proposed method will
+goggles, vest, and glove detection were 69.23%, 76.80%, and 55.07%,
+                                                                                  likewise improve. However, one temporary solution to overcome this
+respectively. Although these results were not as high as those of hardhat
+                                                                                  issue is to fine-tune the models used in this study using relatively small
+detection, they are still meaningful because they show that the proposed
+                                                                                  datasets rather than using a pure zero-shot approach.
+method can detect compliance with various PPE items without any
+training data, except for safety gloves.
+                                                                                  6. Conclusion
+    Overall, our proposed zero-shot monitoring method demonstrated an
+F1-score of 82.57% for detecting non-hardhat wearers and 70.93% for
+                                                                                      Several studies have utilized CNN architectures for feature extraction
+overall workers’ PPE, including hardhats, goggles, vests, and gloves.
+                                                                                  in site monitoring [1–4,58]. However, the CNN approach requires a
+Regarding the performance of other PPE, such as safety vests, goggles,
+                                                                                  large dataset of labeled images [59], the construction of which is time-
+and gloves, for which virtually no open datasets are available, our
+                                                                                  consuming and labor-intensive. To address this problem, this study
+proposed method achieved an average F1-score of 67.03%. It is still
+                                                                                  proposes a zero-shot PPE monitoring model that does not require dataset
+meaningful performance of proposed ZSL considering YOLOv8 trained
+                                                                                  preparation or model training. The proposed zero-shot method com­
+with 10 shots for those PPE resulted F1-score of 59.71%, 57.44%, and
+                                                                                  prises the following three steps. First, it detects and extracts human-
+54.30%, respectively.
+                                                                                  body key points using mm-Pose. It then crops human-body-part im­
+                                                                                  ages based on the extracted body key points and generates captions for
+5. Discussion
+                                                                                  each body-part image using ClipCap. Semantic similarity scores between
+                                                                                  automatically generated image captions and predefined prompts based
+    The proposed zero-shot-based method has strengths and limitations.
+                                                                                  on the OSHA regulations were calculated using SBERT with MPNet as
+In terms of strengths, it can achieve relatively very high performance
+                                                                                  the backbone to determine worker compliance with the OSHA PPE
+without having large training datasets for various PPE types, compared
+                                                                                  regulations.
+to other zero-shot or few-shot methods (Section 4.3). Another strength is
+                                                                                      We conducted a series of experiments to validate our proposed
+that it can be easily applied to other tasks, such as construction activity
+                                                                                  method. For hardhat monitoring, which has been studied in several
+monitoring or even tasks outside of the construction domain, because it
+                                                                                  previous studies, the proposed zero-shot monitoring method (an F1-
+deploys general object detection, image captioning, and text similarity
+                                                                                  score of 82.57%) outperformed the few-shot object detection method
+analysis as the three main modules. Similarly, the proposed method can
+                                                                                  using YOLO trained on 50 images (an F1-score of 62.9%). For moni­
+be applied to monitoring of multiple workers, objects, and equipment
+                                                                                  toring of goggles, vests, and gloves, which have not been studied before
+items in a photo because it analyzes each object in a photo individually,
+                                                                                  and therefore do not have publicly available standard datasets, the
+according to the purpose of analysis.
+                                                                                  performance of the proposed zero-shot method decreased to 76.8%,
+    Despite all these strengths, the proposed method also has some
+                                                                                  69.23%, and 55.07%, respectively. Nevertheless, considering that these
+weaknesses. First, when a large dataset is available, the traditional ob­
+                                                                                  results were achieved without using any training data and also small
+ject detection method performs better than the proposed method. For
+                                                                                  gloves and bare hands in a picture are difficult to distinguish even by
+                                                                                  humans, the results are promising.
+Table 9                                                                               A major contribution of the proposed zero-shot method is that it
+Performance of proposed zero-shot monitoring in checking compliance with          significantly improves the zero-shot PPE monitoring, compared to both
+various PPE items.                                                                the previous ZSL method (an average accuracy of 53% for four unseen
+  Target PPE item       Accuracy   Precision   Recall   F1-       F2-
+                                                                                  classes) [40] and the above-mentioned few-shot object detection models
+                                                        score     score           trained on 50 images. Another contribution of the proposed method is its
+                                                                                  generalizability and its ability to be expanded. As demonstrated in the
+  Hardhat                81.50%     78.04%     87.67%   82.57%    85.56%
+  Safety goggle          61.90%     81.82%     60.00%   69.23%    63.38%          expanded application tests, it can be applied to monitor compliance for
+  Safety vest            65.48%     78.69%     75.00%   76.80%    75.71%          hardhats and other PPE types, which do not have large annotated
+  Safety glove           48.33%     67.86%     46.34%   55.07%    49.48%          datasets. Moreover, it can be applied to monitor general objects and
+  Mean (including                                                                 activities in domains beyond construction without any additional
+                         64.60%     76.59%     67.26%   70.93%    68.54%
+    hardhat)
+  Mean (excluding
+                                                                                  training or dataset, simply by changing the prompts. The third contri­
+                         58.57%     76.12%     60.45%   67.03%    62.86%          bution is that the proposed method has a strength in that it can monitor
+    hardhat)
+                                                                                  multiple workers’ PPE compliance because its first step is to identify
+
+                                                                              8
+D. Gil and G. Lee                                                                                                           Automation in Construction 164 (2024) 105470
+
+
+
+
+                                          Fig. 5. Comparison of the hardhat, goggle, safety vest, and glove cases.
+
+
+each worker in a photo. This is then applied individually to each worker         Science and ICT, MSIT) (No. 2021R1A2C3008209).
+for PPE monitoring.
+    The critical limitation of the proposed method is that its performance       References
+relies significantly on the applied large pre-trained models and how the
+large pre-trained model was trained based on these datasets. Never­               [1] V.S.K. Delhi, R. Sankarlal, A. Thomas, Detection of personal protective equipment
+                                                                                      (PPE) compliance on construction site using computer vision based deep learning
+theless, as the performance of large pre-trained models improves expo­                techniques, Front. Built Environ. 6 (2020), https://doi.org/10.3389/
+nentially every year, the performance of the proposed image-captioning-               fbuil.2020.00136.
+based–zero-shot monitoring method will also increase accordingly.                 [2] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-
+                                                                                      use by a deep learning method from far-field surveillance videos, Autom. Constr.
+Currently, there is ample room for improvement. For instance, prompt                  85 (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.
+engineering can further enhance performance [42], this study did not              [3] A. Hayat, F. Morgado-Dias, Deep learning-based automatic safety helmet Detection
+focus on prompt engineering, although. In addition, it is necessary to                system for construction safety, Appl. Sci. 12 (2022) 8268, https://doi.org/
+                                                                                      10.3390/app12168268.
+consider external environmental factors such as weather and lighting              [4] J. Shen, X. Xiong, Y. Li, W. He, P. Li, X. Zheng, Detecting safety helmet wearing on
+conditions, which affect the object detection performance [2,4]. These                construction sites with bounding-box regression and deep transfer learning,
+need to be addressed in future research.                                              Comput.-Aided Civ. Infrastruct. Eng. 36 (2021) 180–196, https://doi.org/10.1111/
+                                                                                      mice.12579.
+    In conclusion, the proposed zero-shot monitoring method is a sig­
+                                                                                  [5] H. Kim, H. Kim, Y.W. Hong, H. Byun, Detecting construction equipment using a
+nificant improvement over previous methods and has the potential to be                region-based fully convolutional network and transfer learning, J. Comput. Civ.
+applied to other domains. Although there are limitations, such as reli­               Eng. 32 (2018) 04017082, https://doi.org/10.1061/(ASCE)CP.1943-
+ance on the performance of the applied large pre-trained model, further               5487.0000731.
+                                                                                  [6] B. Xiao, S.-C. Kang, Development of an image data set of construction Machines for
+development can improve its stability and practicality in the field.                  Deep Learning Object Detection, J. Comput. Civ. Eng. 35 (2021) 05020005,
+                                                                                      https://doi.org/10.1061/(ASCE)CP.1943-5487.0000945.
+                                                                                  [7] H. Tajeen, Z. Zhu, Image dataset development for measuring construction
+Declaration of competing interest                                                     equipment recognition performance, Autom. Constr. 48 (2014) 1–10, https://doi.
+                                                                                      org/10.1016/j.autcon.2014.07.006.
+                                                                                  [8] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn
+    The authors declare that they have no known competing financial                   by construction personnel: a deep learning approach and benchmark dataset,
+interests or personal relationships that could have appeared to influence             Autom. Constr. 106 (2019) 102894, https://doi.org/10.1016/j.
+                                                                                      autcon.2019.102894.
+the work reported in this paper.                                                  [9] N.D. Nath, T. Chaspari, A.H. Behzadan, Single- and multi-label classification of
+                                                                                      construction objects using deep transfer learning methods, J. Inf. Technol. Constr.
+Data availability                                                                     24 (2019) 511–526, https://doi.org/10.36680/j.itcon.2019.028.
+                                                                                 [10] L. Chen, Y. Wang, M.-F.F. Siu, Detecting semantic regions of construction site
+                                                                                      images by transfer learning and saliency computation, Autom. Constr. (2020)
+    Data will be made available on request.                                           103185, https://doi.org/10.1016/j.autcon.2020.103185.
+                                                                                 [11] S. Bang, F. Baek, S. Park, W. Kim, H. Kim, Image augmentation to improve
+                                                                                      construction resource detection using generative adversarial networks, cut-and-
+Acknowledgments                                                                       paste, and image transformation techniques, Autom. Constr. 115 (2020) 103198,
+                                                                                      https://doi.org/10.1016/j.autcon.2020.103198.
+   This work was supported by the National Research Foundation of
+Korea (NRF) grant funded by the Korean government (Ministry of
+
+                                                                             9
+D. Gil and G. Lee                                                                                                                            Automation in Construction 164 (2024) 105470
+
+[12] M. Alawadhi, W. Yan, B.I.M. Hyperreality, Data synthesis using BIM and                           dings.neurips.cc/paper/2017/hash/cb8da6767461f2812ae4290eac7cbc42-Abstra
+     Hyperrealistic rendering for deep, Learning (2021), https://doi.org/10.48550/                    ct.html.
+     arXiv.2105.04103.                                                                           [36] C. Finn, P. Abbeel, S. Levine, Model-agnostic meta-learning for fast adaptation of
+[13] F. Baek, S. Park, H. Kim, Data Augmentation Using Adversarial Training for                       deep networks, in: Proc. 34th Int. Conf. Mach. Learn, PMLR, 2017, pp. 1126–1135,
+     Construction-Equipment Classification, 2019, https://doi.org/10.48550/                           in: https://proceedings.mlr.press/v70/finn17a.html.
+     arXiv.1911.11916.                                                                           [37] Z. Cui, Q. Wang, J. Guo, N. Lu, Few-shot classification of façade defects based on
+[14] J. Kim, S. Chi, A few-shot learning approach for database-free vision-based                      extensible classifier and contrastive learning, Autom. Constr. 141 (2022) 104381,
+     monitoring on construction sites, Autom. Constr. 124 (2021) 103566, https://doi.                 https://doi.org/10.1016/j.autcon.2022.104381.
+     org/10.1016/j.autcon.2021.103566.                                                           [38] B. Romera-Paredes, P. Torr, An embarrassingly simple approach to zero-shot
+[15] M. Kampffmeyer, Y. Chen, X. Liang, H. Wang, Y. Zhang, E.P. Xing, Rethinking                      learning, in: Proc. 32nd Int. Conf. Mach. Learn, PMLR, 2015, pp. 2152–2161, in:
+     knowledge graph propagation for zero-shot learning, in: ArXiv180511724 Cs,                       https://proceedings.mlr.press/v37/romera-paredes15.html.
+     2019, https://doi.org/10.48550/arXiv.1805.11724. Long Beach, California, USA.               [39] F. Pourpanah, M. Abdar, Y. Luo, X. Zhou, R. Wang, C.P. Lim, X.-Z. Wang, Q.M.
+[16] A. Radford, J.W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,                      J. Wu, A review of generalized zero-shot learning methods, IEEE Trans. Pattern
+     A. Askell, P. Mishkin, J. Clark, G. Krueger, I. Sutskever, Learning transferable                 Anal. Mach. Intell. (2022) 4051–4070, https://doi.org/10.1109/
+     visual models from natural language supervision, in: Proc. 38th Int. Conf. Mach.                 TPAMI.2022.3191696.
+     Learn., PMLR, 2021, pp. 8748–8763, in: https://proceedings.mlr.press/v139/r                 [40] Z. Pan, C. Su, Y. Deng, J. Cheng, Video2Entities: a computer vision-based entity
+     adford21a.html.                                                                                  extraction framework for updating the architecture, engineering and construction
+[17] B.L. Suderman, R.W. Hoover, R.P. Ching, I.S. Scher, The effect of hardhats on head               industry knowledge graphs, Autom. Constr. 125 (2021) 103617, https://doi.org/
+     and neck response to vertical impacts from large construction objects, Accid. Anal.              10.1016/j.autcon.2021.103617.
+     Prev. 73 (2014) 116–124, https://doi.org/10.1016/j.aap.2014.08.011.                         [41] U. Mall, B. Hariharan, K. Bala, Zero-shot Learning Using Multimodal Descriptions,
+[18] M.-W. Park, N. Elsafty, Z. Zhu, Hardhat-wearing Detection for enhancing on-site                  in: 2022 IEEECVF Conf. Comput. Vis. Pattern Recognit, Workshop CVPRW, IEEE,
+     safety of construction workers, J. Constr. Eng. Manag. 141 (2015) 04015024,                      New Orleans, LA, USA, 2022, pp. 3930–3938, https://doi.org/10.1109/
+     https://doi.org/10.1061/(ASCE)CO.1943-7862.0000974.                                              CVPRW56347.2022.00438.
+[19] Z. Zhu, M.-W. Park, N. Elsafty, Automated Monitoring of Hardhats Wearing for                [42] X.L. Li, P. Liang, Prefix-Tuning: Optimizing Continuous Prompts for Generation,
+     Onsite Safety Enhancement, 2015, https://doi.org/10.14288/1.0076342.                             2021, https://doi.org/10.48550/arXiv.2101.00190.
+[20] S. Du, M. Shehata, W. Badawy, Hard hat detection in video sequences based on face           [43] G. Yong, K. Jeon, D. Gil, G. Lee, Prompt engineering for zero-shot and few-shot
+     features, motion and color information, in: 2011 3rd Int. Conf. Comput. Res. Dev.,               defect detection and classification using a visual-language pretrained model,
+     Shanghai, China, 2011, pp. 25–29, https://doi.org/10.1109/                                       Comput.-Aided Civ Infrastruct. Eng. (2022), https://doi.org/10.1111/mice.12954.
+     ICCRD.2011.5763846.                                                                         [44] Personal Protective Equipment - Standards | Occupational Safety and Health
+[21] A.H.M. Rubaiyat, T.T. Toma, M. Kalantari-Khandani, S.A. Rahman, L. Chen, Y. Ye,                  Administration. https://www.osha.gov/personal-protective-equipment/standards,
+     C.S. Pan, Automatic detection of helmet uses for construction safety, in: 2016                   2024.
+     IEEEWICACM Int. Conf. Web Intell. Workshop WIW, 2016, pp. 135–142, https://                 [45] A. Sengupta, F. Jin, R. Zhang, S. Cao, Mm-pose: real-time human skeletal posture
+     doi.org/10.1109/WIW.2016.045.                                                                    estimation using mmWave radars and CNNs, IEEE Sensors J. 20 (2020)
+[22] M.-W. Park, I. Brilakis, Construction worker detection in video frames for                       10032–10044, https://doi.org/10.1109/JSEN.2020.2991741.
+     initializing vision trackers, Autom. Constr. 28 (2012) 15–25, https://doi.org/              [46] J. Wang, K. Sun, T. Cheng, B. Jiang, C. Deng, Y. Zhao, D. Liu, Y. Mu, M. Tan,
+     10.1016/j.autcon.2012.06.001.                                                                    X. Wang, W. Liu, B. Xiao, Deep High-Resolution Representation Learning for Visual
+[23] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: towards real-time object Detection             Recognition, 2020, https://doi.org/10.48550/arXiv.1908.07919.
+     with region proposal, Networks (2016), https://doi.org/10.48550/                            [47] R. Mokady, A. Hertz, A.H. Bermano, ClipCap: CLIP Prefix for Image Captioning,
+     arXiv.1506.01497.                                                                                2021, https://doi.org/10.48550/arXiv.2111.09734.
+[24] J. Redmon, S. Divvala, R. Girshick, A. Farhadi, You Only Look, Once: unified, real-         [48] P. Sharma, N. Ding, S. Goodman, R. Soricut, Conceptual captions: A cleaned,
+     time object detection, in: 2016 IEEE Conf. Comput. Vis. Pattern Recognit. CVPR,                  Hypernymed, image alt-text dataset for automatic image captioning, in: Proc. 56th
+     Las Vegas, Nevada, USA, 2016, pp. 779–788. https://www.cv-foundation.org/ope                     Annu. Meet. Assoc. Comput. Linguist vol. 1, Long Pap., Association for
+     naccess/content_cvpr_2016/html/Redmon_You_Only_Look_CVPR_2016_paper.                             Computational Linguistics, Melbourne, Australia, 2018, pp. 2556–2565, https://
+     html.                                                                                            doi.org/10.18653/v1/P18-1238.
+[25] G. Huang, Z. Liu, L.V.D. Maaten, K.Q. Weinberger, Densely connected                         [49] S. Jiang, J. Zhang, Real-time crack assessment using deep neural networks with
+     convolutional networks, in: 2017 IEEE Conf. Comput. Vis. Pattern Recognit. CVPR,                 wall-climbing unmanned aerial system, Comput.-Aided Civ. Infrastruct. Eng. 35
+     IEEE Computer Society, Honolulu, Hawaii, USA, 2017, pp. 2261–2269, https://doi.                  (2020) 549–564, https://doi.org/10.1111/mice.12519.
+     org/10.1109/CVPR.2017.243.                                                                  [50] T. Schick, H. Schütze, Exploiting cloze questions for few shot text classification and
+[26] Z. Kolar, H. Chen, X. Luo, Transfer learning and deep convolutional neural                       natural language inference, ArXiv200107676 Cs (2021), https://doi.org/
+     networks for safety guardrail detection in 2D images, Autom. Constr. 89 (2018)                   10.48550/arXiv.2001.07676.
+     58–70, https://doi.org/10.1016/j.autcon.2018.01.003.                                        [51] P. Liu, W. Yuan, J. Fu, Z. Jiang, H. Hayashi, G. Neubig, Pre-train, Prompt, and
+[27] Z. Zheng, Z. Zhang, W. Pan, Virtual prototyping- and transfer learning-enabled                   Predict: A Systematic Survey of Prompting Methods in Natural Language
+     module detection for modular integrated construction, Autom. Constr. 120 (2020)                  Processing, ACM Comput. Surv. 55 (195) (2023) 1–195, 35, https://doi.org/10.
+     103387, https://doi.org/10.1016/j.autcon.2020.103387.                                            1145/3560815.
+[28] S. Bunrit, N. Kerdprasop, K. Kerdprasop, Evaluating on the transfer learning of CNN         [52] V. Liu, L.B. Chilton, Design guidelines for prompt engineering text-to-image
+     architectures to a construction material image classification task, Int. J. Mach.                generative models, in: CHI Conf. Hum. Factors Comput. Syst., ACM, New Orleans
+     Learn. Comput. 9 (2019) 201–207, https://doi.org/10.18178/ijmlc.2019.9.2.787.                    LA USA, 2022, pp. 1–23, https://doi.org/10.1145/3491102.3501825.
+[29] J. Zhu, C. Zhang, H. Qi, Z. Lu, Vision-based defects detection for bridges using            [53] Collins English Dictionary, in: Collins Engl. Dict, 2021. https://www.collinsdict
+     transfer learning and convolutional neural networks, Struct. Infrastruct. Eng. 16                ionary.com/dictionary/english/protective-headgear.
+     (2020) 1037–1049, https://doi.org/10.1080/15732479.2019.1680709.                            [54] N. Reimers, I. Gurevych, Sentence-BERT: Sentence Embeddings using Siamese
+[30] J. Deng, W. Dong, R. Socher, L.-J. Li, K. Li, L. Fei-Fei, ImageNet: A large-scale                BERT-Networks, ArXiv190810084 Cs (2019), https://doi.org/10.48550/
+     hierarchical image database, in: 2009 IEEE Conf. Comput. Vis. Pattern Recognit,                  arXiv.1908.10084.
+     2009, pp. 248–255, https://doi.org/10.1109/CVPR.2009.5206848.                               [55] K. Song, X. Tan, T. Qin, J. Lu, T.-Y. Liu, MPNet: Masked and permuted pre-training
+[31] T.-Y. Lin, M. Maire, S. Belongie, L. Bourdev, R. Girshick, J. Hays, P. Perona,                   for language understanding, in: Proc. 34th Int. Conf. Neural Inf. Process, Syst.,
+     D. Ramanan, C.L. Zitnick, P. Dollár, Microsoft COCO: Common Objects in Context,                 Curran Associates Inc., Red Hook, NY, USA, 2020, pp. 16857–16867.
+     ArXiv14050312 Cs (2015), https://doi.org/10.48550/arXiv.1405.0312.                          [56] L. Xie, Hardhat, Harvard Dataverse, 2019, https://doi.org/10.7910/DVN/
+[32] R. Duan, H. Deng, M. Tian, Y. Deng, J. Lin, SODA: a large-scale open site object                 7CBGOS.
+     detection dataset for deep learning in construction, Autom. Constr. 142 (2022)              [57] B. Xiao, Q. Lin, Y. Chen, A vision-based method for automatic tracking of
+     104499, https://doi.org/10.1016/j.autcon.2022.104499.                                            construction machines at nighttime based on deep learning illumination
+[33] N.M. Müller, K. Markert, Identifying Mislabeled Instances in Classification                      enhancement, Autom. Constr. 127 (2021) 103721, https://doi.org/10.1016/j.
+     Datasets, in: 2019 Int. Jt. Conf. Neural Netw. IJCNN, Budapest, Hungary, 2019,                   autcon.2021.103721.
+     pp. 1–8, https://doi.org/10.1109/IJCNN.2019.8851920.                                        [58] J. Liu, H. Luo, H. Liu, Deep learning-based data analytics for safety in construction,
+[34] G. Koch, R. Zemel, R. Salakhutdinov, Siamese neural networks for one-shot image                  Autom. Constr. 140 (2022) 104302, https://doi.org/10.1016/j.
+     recognition, in: ICML Deep Learn. Workshop, Lille, 2015. https://www.cs.cmu.                     autcon.2022.104302.
+     edu/~rsalakhu/papers/oneshot1.pdf.                                                          [59] A. Parnami, M. Lee, Learning from few examples: a summary of approaches to few-
+[35] J. Snell, K. Swersky, R. Zemel, Prototypical Networks for few-shot learning, in:                 shot, Learning (2022), https://doi.org/10.48550/arXiv.2203.04291.
+     Adv. Neural Inf. Process. Syst., Curran Associates, Inc., 2017, in: https://procee
+
+
+
+
+                                                                                            10
+

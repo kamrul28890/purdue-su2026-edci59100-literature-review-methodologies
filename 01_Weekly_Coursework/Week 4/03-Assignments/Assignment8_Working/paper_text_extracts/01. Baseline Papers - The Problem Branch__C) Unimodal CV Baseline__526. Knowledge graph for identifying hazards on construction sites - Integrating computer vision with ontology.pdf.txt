@@ -1,0 +1,821 @@
+                                                               Automation in Construction 119 (2020) 103310
+
+
+                                                                  Contents lists available at ScienceDirect
+
+
+                                                            Automation in Construction
+                                                     journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Knowledge graph for identifying hazards on construction sites: Integrating                                                                               T
+computer vision with ontology
+                                           ⁎
+Weili Fanga,b,c,d, Ling Mae, , Peter E.D. Loved, Hanbin Luoa,b, Lieyun Dinga,b, Ao Zhoua,b
+a
+  School of Civil Engineering and Mechanics, Huazhong University of Science and Technology, 430074, Hubei, China
+b
+  Hubei Engineering Research Center for Virtual, Safe and Automated Construction, 430074, Hubei, China
+c
+  Dept. of Civil Engineering and Engineering Mechanics, Columbia University in the City of New York, 10027 New York, USA
+d
+  Dept. of Civil and Mechanical Engineering, Curtin University, Perth, WA 6845, Australia
+e
+  The Bartlett School of Construction and Project Management, University College London, London WC1E 6BT, United Kingdom
+
+
+
+
+A R T I C LE I N FO                                      A B S T R A C T
+
+Keywords:                                                Hazards potentially aﬀect the safety of people on construction sites include falls from heights (FFH), trench and
+Hazards                                                  scaﬀold collapse, electric shock and arc ﬂash/arc blast, and failure to use proper personal protective equipment.
+Ontology                                                 Such hazards are signiﬁcant contributors to accidents and fatalities. Computer vision has been used to auto-
+Computer vision                                          matically detect safety hazards to assist with the mitigation of accidents and fatalities. However, as safety
+Safety
+                                                         regulations are subject to change and become more stringent prevailing computer vision approaches will become
+Knowledge graph database
+                                                         obsolete as they are unable to accommodate the adjustments that are made to practice. This paper integrates
+                                                         computer vision algorithms with ontology models to develop a knowledge graph that can automatically and
+                                                         accurately recognise hazards while adhering to safety regulations, even when they are subjected to change. Our
+                                                         developed knowledge graph consists of: (1) an ontological model for hazards: (2) knowledge extraction; and (3)
+                                                         knowledge inference for hazard identiﬁcation. We focus on the detection of hazards associated with FFH as an
+                                                         example to illustrate our proposed approach. We also demonstrate that our approach can successfully detect FFH
+                                                         hazards in varying contexts from images.
+
+
+
+
+1. Introduction                                                                              as a result of changes to safety regulations and procedures as: (1) ty-
+                                                                                             pically one computer vision algorithm is used to identify a single hazard
+    Over 60,000 fatal injuries are reported to occur every year from                         in a scene. For example, identifying a person who is not wearing their
+construction projects worldwide [40]. According to the Occupation                            safety helmet; and (2) current computer vision approaches are unable
+Safety and Health Administration (OSHA), for example, the construc-                          to extract semantic relationships between detected objects. As a result,
+tion industry is responsible for more than 20% of fatalities in the United                   a ‘semantic gap’ is formed between the low-level features extracted
+States [45]. In the United Kingdom, for example, a similar scenario                          from images and the high-level semantic information that people ob-
+occurs where construction accounts for the highest number of fatalities                      tain.
+across all sectors [15].                                                                         This paper combines computer vision algorithms with ontology to
+    Typically hazard analysis is undertaken before construction and                          construct a knowledge graph that can automatically detect hazards to
+may be performed using manual methods and/or three-dimensional                               address the ‘semantic gap’ that prevails. We aim to determine whether
+(3D) models [24,43]. Hazards can change once construction com-                               our as-built semantic vision-based knowledge graph can identify ha-
+mences, and their identiﬁcation then needs to be undertaken manually,                        zards with complex rules. In doing so, we develop a knowledge graph
+which can be a labour-intensive and time-consuming process. Several                          that integrates computer-vision with ontology. An ontology is used to
+automatic computer vision-based approaches have been developed to                            help experts annotate knowledge and is used to describe the relation-
+overcome the drawbacks of manually identifying hazards [18–22,53].                           ships between the entities. Describing these relationships enables
+    Despite the success of being able to deploy computer vision to                           computer applications to represent and reason about safety knowledge
+identify hazards, it is unable to recognise those that are newly deﬁned                      eﬃciently. When an ontology is used in conjunction wit0068 computer
+
+
+
+    ⁎
+   Corresponding author.
+   E-mail addresses: weili.fang@curtin.edu.au (W. Fang), l.ma@ucl.ac.uk (L. Ma), p.love@curtin.edu.au (P.E.D. Love), luohbcem@hust.edu.cn (H. Luo),
+dly@hust.edu.cn (L. Ding).
+
+https://doi.org/10.1016/j.autcon.2020.103310
+Received 29 July 2019; Received in revised form 7 May 2020; Accepted 5 June 2020
+Available online 18 June 2020
+0926-5805/ © 2020 Elsevier B.V. All rights reserved.
+W. Fang, et al.                                                                                                          Automation in Construction 119 (2020) 103310
+
+
+vision, knowledge can be extracted (i.e., entity recognition and re-              Convolutional Neural Network (CNN) can be used for object detection
+lationship extraction) from images automatically.                                 or action recognition and can automatically extract features due to their
+    We commence our paper by providing a review of computer vision-               ability to stack multiple convolutional (i.e., detects local conjunctions
+based object detection approaches and applications of ontology-based              of features from the previous layer) and pooling layers [36].
+risk management that have been developed in construction (Section 2).                 Several studies have demonstrated the potential of CNN's for object
+Then, we introduce and describe our proposed knowledge graph fra-                 detection and action recognition on construction sites [19,21,22,52].
+mework for identifying hazards (Section 3). Following a description of            For example, Fang et al. [19] developed an improved Faster R-CNN to
+the developed framework, we then demonstrate and test the validity of             identify objects from images and have achieved accuracy with 91% and
+our developed framework using hazards identiﬁed during the con-                   95% when detecting individuals and excavators, respectively [19].
+struction of the Wuhan Rail Transit System in China (Section 4). Next,            Likewise, Fang et al. [20] applied a computer vision approach with
+we discuss our research ﬁndings, speciﬁcally highlighting the beneﬁts             Mask Region-Based CNN (Mask R-CNN) to identify the unsafe beha-
+and limitations of our framework. We conclude our paper by identifying            viour of individuals that traversed structural supports. In this research,
+the paper's contributions to the ﬁeld of computer vision in construction.         a Mask R-CNN was used to accurately identify people and structural
+                                                                                  supports, which achieved satisfactory levels of performance [20].
+2. Research methodology                                                               A review of computer vision-based studies in construction reveals
+                                                                                  that acceptable levels of accuracy (i.e., precision, recall) on object de-
+2.1. Computer vision-based object detection                                       tection and attributes (e.g., distance measure) exist. For example, Kim
+                                                                                  et al. [33] applied a transformation matrix to determine the distance
+    Computer vision has been utilised to perform a variety of tasks in            between objects from a single image. Here Kim et al. [33] applied a
+construction such as productivity analysis [23], progress monitoring              transformation matrix to represent the geometric relationship between
+[26], as well as the recognition of unsafe behaviour [9,18,20]. Vision-           objects. The distance between objects was estimated by measuring the
+based object detection within the domain of construction has focused              pixel distance between them where an object's reference geometric was
+on utilising the following approaches: (1) hand-crafted features; and (2)         known and used [34]. Drawing on the research of Fang et al. [20], we
+deep learning. In Table 1, we present a summary of critical vision-based          can observe that a Mask R-CNN is a suitable approach to detect objects
+object detection studies that have been undertaken.                               from two-dimensional (2D) images, and the production of a transfor-
+    Hand-crafted feature-based methods employ a three-stage proce-                mation matrix [33–35] is appropriate for computing an object's dis-
+dure, which consists of: (1) feature extraction; (2) feature representa-          tance from a single image.
+tion; and (3) classiﬁcation. Descriptors typically used to extract features
+from images and videos include Histogram of Oriented Gradients                    2.2. Ontology-based risk knowledge management
+(HOG) [7], Histogram of Optical Flow (HOF) [48], and Scale Invariant
+Feature Transform (SIFT) [41]. Once features are extracted, they are                  Ontology is a formal conceptualisation of knowledge. It is a sim-
+then inserted into a classiﬁer such as Support Vector Machine (SVM)               pliﬁed view of a domain that describes objects, concepts, and re-
+and k-Nearest Neighbour. There exists a considerable body of work that            lationships between them [14]. Traditional ontology relies on the ex-
+has used hand-crafted feature approaches to detect objects in con-                periences of the individual, knowledge of domain experts, and relevant
+struction.                                                                        managerial personnel to support the decision-making process. Semantic
+    Chi and Caldas [5], for example, applied a background subtraction             Web technology, for example, can allow various sources of information
+algorithm to extract features from images. Then, using a naïve Bayes              to be made available in a format that can be searched and retrieved
+classiﬁer and neural network, people, loaders, and backhoes were                  from the Internet [17]. Thus, the combination of semantic web tech-
+identiﬁed [5]. Contrastingly, Park and Brilakis [46] and Azar and                 nology with ontology can enable the following advantages to be rea-
+McCabe [2] have utilised HOG and Haar-like feature descriptors to                 lised [10,17]:
+detect individuals and equipment (e.g., machinery). Similarly, Mem-
+arzadeh [3] combined a HOG and colour features with new multiple                   • improved model ﬂexibility, enabling the extension of knowledge,
+binary SVM classiﬁers to automatically detect and distinguish between                  which can be readily changed and adapted by application require-
+a person and equipment using videos. Despite the success of hand-                      ments;
+crafted feature-based approaches, they are manually created. There-                •   robust semantic representation, and promotion of the semantical
+fore, there is a trade-oﬀ between detection accuracy and computational                 interaction between diﬀerent computers; and
+eﬃciency (i.e., speed) arises [44]. The uncertainties and changing                 •   support semantic inference and retrieval through improving re-
+conditions that prevail on a construction site can also impact the ex-                 quests from a concept level.
+traction of features from images. For example, view-point scale, in-
+traclass and variance as well background clutter can lead to lower levels            Ontology-based approaches have been extensively applied to nu-
+of accuracy for object detection [30,47].                                         merous aspects of construction [1,4,6,16,28,49], such as energy man-
+    With the advent of large-scale data sets such as ImageNet [8], im-            agement [6,28], building cost estimation [37] and risk management
+proved designs for modelling and training deep networks, and the de-              [54]. For example, Jia and Issa [29] proposed a synthesised metho-
+velopment of computer architectures, deep learning has provided the               dology for taxonomy development in the domain of contractual se-
+ability to automatically extract and learn features in an end to end              mantics to support the development of an ontology model. Similarly,
+manner from images with higher levels of accuracy [36]. A                         Wang et al. [50] used ontology technology to structure knowledge, such
+
+Table 1
+Key object detection studies.
+  Authors (Year)                   Target of interest                Visual object detection methods                                    Type of detection approach
+
+  Kim et al. [32]                  Concrete mixer truck              Three-dimensional (3D) Reconstruction and HOG                      Hand-crafted feature
+  Fang et al. [18]                 People, Safety harness            Faster R-CNN                                                       Deep learning
+  Fang et al. [19]                 People, Excavator                 Improved Faster R-CNN                                              Deep learning
+  Azar and Mccabe [2]              Hydraulic excavator               HOG                                                                Hand-crafted feature
+  Park and Brilakis [46]           People                            Background subtraction, HOG, HSV colour histogram                  Hand-crafted feature
+
+
+
+                                                                              2
+W. Fang, et al.                                                                                                                Automation in Construction 119 (2020) 103310
+
+
+                           Step 1                              Step 2                                     Step 3
+                          Ontology                             Knowledge                                 Knowledge             Hazard
+                          Modeling                             Extraction                                 Inference            Identification
+
+
+                      •    Knowledge base                  •    Named entity                        •    Graph data modeling
+                           domain taxonomy                      recognition                              (i.e., Neo4j)
+                      •    Expert experience               •    Attributes extraction               •    Data store
+                      •    Safety codes                    •    Relations extraction                •    Hazard query
+
+
+                                         Fig. 1. The workﬂow of the proposed hybrid semantic computer vision approach.
+
+
+as activities, job steps, and hazards, to form a Job Hazard Analysis                           using the hazard taxonomy that is established.
+(JHA) database, and then developed the ontological reasoning me-
+chanism to determine safety rules. The studies, as mentioned earlier,                       3. Knowledge inference: A reasoning model for hazard identiﬁcation was
+demonstrate the potential of ontology technology in supporting risk                            developed using the Neo4j database to create nodes, relationships,
+management, primarily as it can be used to raise the level of safety                           and their properties for modelling. The Neo4j database stores and
+awareness. By organising knowledge as a logical semantic expression, it                        records all types of objects, their attributes, and the relationship of
+can be shared using ontology technologies and therefore enable se-                             objects, which were obtained from step two. Thus, hazards in the
+mantic interoperability. As a result, the structured and uniﬁed knowl-                         images are automatically identiﬁed by querying the created Neo4j
+edge in the ontology can be understood and readily operated by dif-                            database.
+ferent parties and computer applications and thus ensure the re-use and
+promotion of knowledge. To the best of our knowledge, however, there                           Each of these steps is examined in further detail below.
+has been no research that has integrated computer vision with ontology
+to identify hazards on construction sites.                                                  3.1. Ontology modelling
+
+3. Knowledge graph framework for hazard identiﬁcation                                           The initial process for implementing our semantic computer vision-
+                                                                                            based hazard identiﬁcation model was to develop an ontology of a
+   In Fig. 1, we present the workﬂow for implementing our proposed                          construction site. The ontology was developed using the Graph
+knowledge graph framework, which comprises three steps:                                     Database Language instead of the traditional RDF mapping models. The
+                                                                                            Chinese code for ‘Quality and Safety Inspection Guide of Urban Rail
+1. Ontology modelling: Engineering documents, historical accident re-                       Transit Engineering,’ for example, was selected as a point of reference
+   ports, experts' experience, and safety codes are used to create a                        to examine hazards that were incurred during the construction of a
+   hazard taxonomy is constructed, which contains both the speciali-                        metro-rail project in Wuhan, China. In our ontological model, the in-
+   sation and relations between entities.                                                   formation is categorised into seven classes: (1) thing; (2) part; (3) at-
+2. Knowledge extraction: Computer vision approaches are used to au-                         tribute; (4) time; (5) space; (6) event; and (7) attribute-value. Within
+   tomatically detect a set of entities and attributes, using the data                      the context of construction, a hazard can be deﬁned by its given time
+   derived from step one. In doing so, object types and their attributes                    and space, and entities (with speciﬁc attributes), which perform certain
+   (i.e., geometric, coordinates in images) are identiﬁed so that they                      activities [11,13,25]. Thus, a hazard event consists of semantic in-
+   can be stored in Neo4j for reasoning and querying. After identifying                     formation that speciﬁes its:
+   objects and their attributes, an intersection over union (IoU) is used
+   to extract the spatial relationships between objects (i.e., within,                      1. Entity: The entities that are the objective existence. In this research,
+   away, or overlap) by using geometric and spatial features. Here, the                        the entities are classiﬁed into four categories: (1) people; (2)
+   relationships between objects for hazards are deﬁned in step one                            equipment; (3) materials: and (4) environment. An example of
+
+
+
+                                                                                   Entities
+
+
+
+
+                          People                          Equipment                                     Materials                    Environment
+
+
+
+                      Worker 1                            Excavator                             Structural Support                 Foundation Pit
+
+
+                      Worker 2                                 Crane                              Safety Harness                       Platform
+
+
+                           ……                                  ……                                         ……                              ……
+
+
+                      Worker n                         Concrete Mixer                                   Scaffold                     Aerial Work
+
+                                                     Fig. 2. Examples of the entities in the ontology model.
+
+
+                                                                                        3
+W. Fang, et al.                                                                                                                                Automation in Construction 119 (2020) 103310
+
+
+
+
+                                          Safety
+                                          Helmet
+
+
+
+
+                                          Spatial Relationship
+                                                                              Distance: number
+                                                                        Topological Relationship: string                                    Height: number
+                                                                                                                                            Position: matrix
+                                                                                                                                          BoundingBox: matrix
+                                                                                                                                             Trade: string
+                                                                                                                          People:
+                                                                                                 ip
+                                                                                        elationsh                          Alex
+                                                                              Spatial R
+
+
+                                          People:                                    Distance: number
+                                           John                                Topological Relationship: string
+
+                                                                                   Spatial
+                                                                                             Relatio
+                                                                                                     n   ship                                   Mode: string
+                                                                                                                             Excava            Position: matrix
+                      Height: number                                                                                           tor           BoundingBox: matrix
+                      Position: matrix                                            Distance: number
+                    BoundingBox: matrix                                     Topological Relationship: string
+                       Trade: string
+
+                                                                 Fig. 3. Examples of the entity relationships in the ontology model.
+
+
+   taxonomy entities is presented in Fig. 2.                                                                    four types of objects: (1) people; (2) equipment; (3) materials; and
+2. Activity: A change that is caused by a hazard, such as its attributes,                                       (4) environment. In this research, two detection approaches are
+   states, and relations, which contain static and dynamic subclasses.                                          used: (1) object; and (2) scene recognition. Here, object detection is
+   For example, “more than two workers standing in a basket”. Here,                                             used to identify people, equipment (i.e., excavator), and materials
+   “standing” represents the activity.                                                                          (e.g., structural support). The scene recognition approach, one of the
+3. Location: Speciﬁc location and the interface with concepts, such as                                          hallmark tasks of computer vision, enables us to deﬁne a context for
+   working “in height”.                                                                                         given object recognition. The Mask R-CNN developed by He et al.
+4. Time: The speciﬁc time involved with hazards, such as their duration                                         [27] adopts a two-stage procedure whereby:
+   on a timeline.
+5. Attribute: Speciﬁc description of properties. For example, distance,                                     1. Images are taken as input for the ResNet network to obtain feature
+   colour, height, and speed.                                                                                  maps. Then candidates of object bounding boxes are obtained by
+                                                                                                               using the Region Proposal Network (RPN); and
+    Examples of the entities in the ontology model is shown in Fig. 2.                                      2. RoiAlign is used to preserve and extract spatial locations from each
+    Fig. 3 shows an example relationship – ‘Spatial relationship’ be-                                          candidate box and perform classiﬁcation, bounding box regression,
+tween entities. The relationship exists between people, between people                                         and mask generation.
+and a safety helmet, and between people and machinery. The model
+will be able to answer the following queries:                                                                  The Mask R-CNN has achieved higher levels of detection accuracy
+                                                                                                           for objects, than other approaches [27]. With this in mind, we adopted
+ • Who is behind ‘John’                                                                                    the Mask R-CNN in our research for entity (i.e., people, equipment)
+ • Is there anyone who stands close to ‘John’ not wearing a safety                                         detection. We assume that this approach can be expanded to identify
+   helmet?                                                                                                 several types of objects (i.e., people, equipment, materials) in con-
+ • Who is driving the excavator?                                                                           struction through a process of training. Speciﬁc details about the Mask
+ • Is there any worker stands outside of the excavator driver's view                                       R-CNN can be found in Fang et al. [20].
+    range?                                                                                                     To understand and accurately recognise scenes (e.g., people
+                                                                                                           working at a height), a Uniﬁed Perceptual Parsing approach (UPP)
+3.2. Knowledge extraction                                                                                  based on a feature pyramid network (FPN) is used to segment concepts
+                                                                                                           from images eﬀectively. The UPP approach was developed by Xiao et al.
+   Knowledge extraction is a vital step in the construction of a                                           [51] and can infer and discover rich visual knowledge from images. The
+knowledge graph, which includes the detection of and relationship                                          UPP performs better than prevailing state-of-the-art machine learning
+between entities.                                                                                          tools that can be used for segmentation (e.g., fully convolutional net-
+                                                                                                           work (FCN), SegNet, and DilatedNet). A detailed description of the UPP
+3.2.1. Computer vision-based entity detection                                                              can be found in Xiao et al. [51].
+    The aim of our research is to develop a computer vision approach
+that can be used to identify and warn people of the likelihood of ha-                                       • Attributes Extraction: As our research focuses on identifying hazards
+zards. For example, if a person is entering an area where a machinery is                                        based on distance and spatial features, as we only need to extract
+present, regardless if it is moving or static, our model, will identify the                                     two types of attributes: (1) the coordinates of each object in the
+action as being ‘unsafe’. Our research solely considers the extraction of                                       image; and (2) distance among objects detected by Mask R-CNN.
+attributes by using a computer vision approach, which was used to                                               We, therefore, utilised the transformation matrix [33] within our
+explore the development of a knowledge graph. To this end, we use                                               hybrid semantic computer vision model to compute distances be-
+computer vision to determine contextual information from a construc-                                            tween objects.`
+tion site by:
+                                                                                                           3.2.2. Extraction of spatial-relationships from images
+ • Entity Recognition: As shown in Fig. 2, entities can be divided into                                        After identifying the types of objects and their attributes, three
+
+                                                                                                     4
+W. Fang, et al.                                                                                                           Automation in Construction 119 (2020) 103310
+
+
+
+
+                                  B
+
+
+                                  A                                      B                                         B
+                                                                                        A
+                                                                                                                                          A
+
+                             (a) Within                            (b) Overlap                                 (c) Away
+
+                                                              Fig. 4. Examples of spatial relationship.
+
+
+spatial relationships between them can be computed: (1) within; (2)                    3.3.1. Data modelling
+overlap; and (3) away. An example of a spatial relationship is presented                   The procedure to extract object classes and their spatial relation-
+in Fig. 4. In this research, the choice of terminology and semantics for               ships have been described above. The outputs from these procedures
+the spatial relationships is based on the distance between objects (i.e.,              are saved as a ‘.csv’ ﬁle and loaded into the Neo4j database. The Neo4j
+between two geometries A and B) and rules speciﬁed by Chinese safety                   database automatically processes the data and then provides an output.
+codes.                                                                                 An example of the detection output is presented in Fig. 6.
+    The spatial relationship between object A and object B is deﬁned as
+the IoU of the bounding box A and B, as shown in Eq. (1):                              3.3.2. Automated reasoning and query
+                                                                                           The ﬁnal step of the modelling process is to identify hazards by
+                    area (A) area (B )      ⎧ 1 within                                 querying the unsafe behaviour rules that had been deﬁned in the model.
+IoU (A, B ) =                              = [0, 1] overlap
+                  min{area (A), area (B )}  ⎨                                          The as-built graph database is constructed based on the objects and
+                                            ⎩ 0      away                    (1)       their spatial relationship; unsafe rules are derived from the safety codes,
+                                                                                       which were re-deﬁned as queries. An unsafe behaviour, for example,
+    For the conditions of within and overlap, we can use the IoU to
+                                                                                       occurs when “people stand on machinery when hoisting”. Then, we can
+identify the spatial relationships between objects. If the IoU of two
+                                                                                       identify the unsafe behaviour by searching for the people (i.e. worker)
+objects is 0, we then compute the distance between them by using the
+                                                                                       “whose bounding box is within a machinery's bounding box”. Fig. 7
+transformation matrix approach. Fig. 5 presents an example of a spatial
+                                                                                       shows that an unsafe condition, in which a person is standing in a
+relationship using the IoU and where distance are extracted.
+                                                                                       machine paw, is identiﬁed by using the rule: “MATCH (x:worker) –
+                                                                                       [r:overlap] – (y:equipment) RETURN x,r,y”.
+3.3. Knowledge inference for hazard identiﬁcation with graph database
+                                                                                       4. Case study
+    We use a graph database to present the knowledge needed to infer
+hazards in a highly accessible way. A graph structure is used to re-                       To demonstrate and test the validity of our developed semantic
+present semantic queries with nodes, relationships and properties, and                 model, we can focus on identifying the unsafe condition that may lead
+store data. Due to its ability to present data in a robust and scalable                to FFH (Table 2). We have selected an urban metro system under
+way, we use the Neo4j graph database management system so that                         construction in Wuhan China to evaluate the eﬀectiveness of detection
+queries with multiple relationships can be identiﬁed [12,31]. To auto-                 for the developed semantic approach. Working in collaboration with a
+matically identify hazards, we perform the following tasks: (1) data                   contractor who is involved with constructing the metro system in
+modelling; and (2) automated reasoning and query.                                      Wuhan (China) we were provided safety data from nearly 120 sites and
+
+
+
+                         (a)                                               (b)
+
+
+
+
+                             Example A: IoU(Person A,
+                             construction basket)=0.135037
+
+
+
+
+                         (c)                                                            Example B: IoU(Person B,
+                                                                                        construction basket)=0.16182
+
+                                                              Fig. 5. Extraction of spatial relationship.
+
+
+                                                                                   5
+W. Fang, et al.                                                                                                                  Automation in Construction 119 (2020) 103310
+
+
+
+                                                                                  Label             Name          Relationship   Label A      Name A
+
+                                                                                 Material      Safety hardhat A      Within       people     Worker A
+
+                                                                                 Material      Safety hardhat A      none         people     Worker B
+
+                                                                                 Material      Safety hardhat B      none         people     Worker A
+
+                                                                                 Material      Safety hardhat B      within       people     Worker B
+
+                                                                                                                                 equipmen   Construction
+                                                                                 Material         Worker A          overlap
+                                                                                                                                     t       basket A
+                                                                                                                                 equipmen   Construction
+                                                                                 Material         Worker B          overlap
+                                                                                                                                     t       basket A
+
+
+                       (a) Computer Vision detection                             (b) Output information from computer vision system
+
+                                                                   Safety
+                                                                  hardhat B
+
+                                                           ne                        wit
+                                                        no                               hin
+
+
+                                        Person A     overlap      Construction         overlap           Person B
+                                                                    basket A
+                                                        wit
+                                                            hin                              ne
+                                                                                          no
+
+                                                                     Safety
+                                                                    hardhat A
+
+
+
+                                                      (c) Data modelling with Neo4j
+
+                                  Fig. 6. An example of computer vision detection results and the output information.
+
+
+images from a Web-based safety hazard management system that had                 adverse consequences, we can make headway toward reducing safety
+been installed on their sites. In sum, we had access to more than 3000           incidents [38]. To validate our approach, we focus on identifying six
+safety hazard reports and over 40,000 related images (Fig. 8).                   types of unsafe behaviour that were selected from the safety hazard
+    The Web-based safety hazard management system contains in-                   reports (Table 2).
+formation about hazards, which includes their references, location,
+categories, description and actions required. An example of the iden-
+tiﬁed hazard is shown in Fig. 8. We speciﬁcally examine FFH as they              4.1. Development of ontology for FFH
+account for a high proportion (over 30%) of fatalities in construction
+[39,42]. By being able to detect of FFH hazards and mitigate their                  A taxonomy of hazards related to FFH was developed based on the
+                                                                                 checklist in Table 2. The core concepts identiﬁed are analysed and
+
+
+
+
+                                     Fig. 7. The reasoning of unsafe conditions by querying in the graph database.
+
+
+                                                                           6
+W. Fang, et al.                                                                                                                   Automation in Construction 119 (2020) 103310
+
+
+Table 2                                                                                     behaviour.
+Checklist of unsafe behaviour related to FFH.
+  Number          Unsafe behaviour description
+                                                                                            5. Discussion
+  1               There should be no more than two people in a lift's basket
+  2               People should not walk on the support of excavation if there has no           To improve the eﬃciency and eﬀectiveness of the safety inspection
+                  guardrail                                                                 process and mitigate unsafe behaviour that occurs on construction sites,
+  3               Edges of excavations (over 2 m deep) should be protected with a
+                                                                                            a semantic computer vision-based approach that integrates computer
+                  guardrail
+  4               People should not stand on machinery when hoisting                        vision algorithms with ontologies was developed to identify hazards
+  5               People should wear a safety harness when working above a certain          from images automatically. This approach provides site management
+                  height                                                                    with a mechanism to proactively identify, record, and analyze unsafe
+  6               It is not allowed to use car hopper to pick up people
+                                                                                            behaviours and therefore enable appropriate action to be undertaken to
+                                                                                            reduce and mitigate the likelihood of FFH. It can also be used for safety
+                                                                                            intervention by site management as a means to highlight potential
+classiﬁed, which can be seen in Table 3 and serve as an extension to the
+                                                                                            hazards and the possible consequences that may materialize from
+taxonomy.
+                                                                                            peoples unsafe actions. If people are made aware that their actions are
+                                                                                            being monitored, then there will be a greater tendency for them to
+4.2. Hazard identiﬁcation results                                                           abide by safety rules.
+                                                                                                In comparison with previous studies that have utilised computer
+    We initially used computer vision to detect objects and their attri-                    vision to identify hazards, our study has the following advantages:
+butes with individuals, structural supports, and the foundation pit, as
+identiﬁed in Fig. 8. The spatial relationships between objects are re-                       • We provide an integrated semantic model that can be used for
+cognised using the IoU and determining the distance between them. As                             training even when data is scarce. The unavailability of unsafe be-
+previously mentioned, the results are stored in the Neo4j database to                            haviour databases, especially for speciﬁc tasks, has hindered the
+identify unsafe conditions using rule the “MATCH (x: labourer)-[r:                               development of deep learning applications in construction. Our
+touch]-(y: structure) RETURN x,r,y” (Fig. 9e).                                                   approach not only relies on accurately detecting objects, but also the
+    The performance of our research results is based on two aspects: (1)                         use of the spatial relationship between objects to reason hazards.
+entity detection; and (2) attributes detection. The preicison and recall                         Studies have demonstrated that prevailing computer-vision based
+are selected as a key evaluation metric for object detection. Our de-                            approaches have achieved a satisfying performance to detect a
+veloped object detection approach is based on the previous work of                               variety of objects, which renders our semantic approach to be useful
+Fang et al. (2019). Also, two key evaluation metrics are used for scene                          [18–20]. Thus, we have combined graph database to model data
+recognition: (1) pixel accuracy (PA); and (2) mean IoU (mIoU). The                               obtained from computer vision detection results to identify hazards,
+applied UPP achieved mIoU and PA of 41.22 and 79.98 on ADE20K                                    which makes our approach useable without a speciﬁc database for
+dataset, respectively [51].                                                                      training; and
+    The performance of attributes detection relies on the extraction of                      •   The integrated approach is more generalizable than data training-
+coordinates and the computation of distance from images. Previous                                based approaches due to its excellent performance (i.e., high accu-
+studies have demonstrated that the transformation matrix can be used                             racy on object detection in the cross-database) on object detection.
+for distance computation for objects [33–35]. Based on these perfor-
+mance metrics, our developed semantic computer vision approach                                 Our knowledge-based graph uses the output (e.g., the location of a
+achieves an acceptable level of accuracy for identifying unsafe                             person or a basket, computed by machine learning as the input of the
+
+
+
+                             Reference: NO0000087                                                                       Metro line number
+                                             Site location                                                               Hazard category
+                                             Hazard level                                                                Hazard location
+         adjacent edges and other protections
+         do not meet requirements         Hazard description
+
+                                                    Reporter                                                                       Time
+
+
+
+
+                              Site picture
+
+
+                                              Responsible person                                                 Due date for the action
+                                              Organization
+                         Action for preventing safety incidents
+
+
+                              Response
+
+
+
+                                                               Fig. 8. A web-based safety hazard management system.
+
+
+                                                                                        7
+W. Fang, et al.                                                                                                                                          Automation in Construction 119 (2020) 103310
+
+
+Table 3
+Concept identiﬁcation of hazard information in FFH.
+  Number     Images of hazards           Description of hazards                   Hazard entity               Activity type                Location                    Attribute              Relationship
+
+  1                                      There should be no more than two         People, lift basket         Stand                                                    Number,                Overlapped/
+                                         people in a lift's basket                                                                                                     coordinate             Within
+
+
+
+
+  2                                      People should not walk on the            People, support,            Stand                                                    coordinate             Touch/overlap
+                                         support of excavation if there has no    excavation, guardrail
+                                         guardrail
+
+
+
+  3                                      Edges of excavations (over 2 m           People, excavation,         stand                                                    Coordinate             Near/overlap
+                                         deep) should be protected with a         over 2 m,
+                                         guardrail
+
+
+
+
+  4                                      people should not stand on               People, machinery           Stand                                                    Coordinate             Overlap/within
+                                         machinery when hoisting
+
+
+
+
+  5                                      People should wear a safety harness      People, safety harness      Wear                         Working at                  Coordinate             Overlap/within
+                                         when working above a certain                                                                      heights
+                                         height
+
+
+
+
+  6                                      There should not use car hopper to       People, car hopper          Pick-up                                                  Coordinate             Within/overlap
+                                         pick up people
+
+
+
+
+                                                                              Classes and
+                                                                              coordinate information
+
+
+                                                                                                                                                                  Structural          Structural
+                                                                                                                                                                  support C           support D
+                                                                                                                                                          ne
+                                                                                                         Safety       within                            no
+                                                                                                                                  Person B
+                                                                                                                                                                                                   to
+
+
+
+
+                                                                                                        hardhat B                                                                     tou
+                                                                                                                                                                                                     uc
+
+
+
+
+                                                                                                                                                                                         ch
+                                                                                                                                                                                                       h
+
+
+
+
+                                                                                                                                                                             near
+                                                                                                                                                          ne        e
+                                                                                                                       no                               no       non
+                                                                                                                         ne                                                                                Foundation
+                                                                                                                      ne                               no
+                                                                                                                                                         ne           no
+                                                                                                                                                                                                              pit A
+                                                                                                                    no                                                  ne    touch
+                                                                                                         Safety
+         (a) Input image                                                                                             within           Person A                                             ch
+                                                                                                                                                                                                         h
+
+
+
+
+                                                                                                                                                                                        tou
+                                                                                                                                                                                                       uc
+
+
+
+
+                                                                                                        hardhat A
+                                                                                                                                                                                                     to
+
+
+
+
+                                                                                                                                                         touch none
+                                                                                                                                                                         Structural
+                                                                                                                                                                         support A       Structural
+                                                                                                                                                                                         support B
+                                                                                                                      (d) Modeling data for reasoning
+
+
+
+                                                                                                                                                         Structural
+                                                                                                                                                         support A
+                                                                                                        Foundation                     touch
+                                                                                                           pit A
+                                                                                                                                                        ch
+
+
+
+
+                                                                                                                              tou
+                                                                                                                                                     tou
+
+
+
+
+                                                                                                                                 ch
+
+
+
+                                                                                                                                          Person A
+                                                                         Relationship extraction
+
+
+      (b) Objects detection             (c) Attributes and relationships extraction                                 (e) Hazard identification
+
+                                                       Fig. 9. Semantic computer vision detection results.
+
+
+                                                                                       8
+W. Fang, et al.                                                                                                               Automation in Construction 119 (2020) 103310
+
+
+graph database (Neo4j)) to detect hazards. The knowledge graph can                 related to FFH from several construction sites. We reveal that our se-
+detect hazards which single computer-vision algorithms unable to do                mantic model can accurately recognise hazards from images with
+due the complexity of the rules that neeed to be considered to deﬁne               complex rules. We also suggest that our proposed semantic model can
+them. Improving the accuracy of computer vision algorithms and de-                 be used by site management to automatically identify potential hazards
+termining how to extract knowledge (i.e., entity detection) has not been           and therefore put in place strategies to mitigate potential injuries and
+the focus of our paper. Instead, we have built on the previous work of             accidents.
+Fang et al. [20] who used deep learning to detect FFH with a Mask R-                   Our future research will focus on (1) combining temporal and spa-
+CNN approach. As a result there was no requirement to develop new                  tial information to identify hazards from video streaming; (2) using
+algorithms. We acknowledge an array of robust vision-based algorithms              stereo a camera to collect data, and then compute the 3D depth in-
+are available, but undertaking a comparison between them, however, is              formation from stereo videos; (3) combining other information tech-
+outside the remit of this paper.                                                   niques and computer vision to extract additional features, such as, the
+                                                                                   size of foundation, and colour of a hardhat, to identify additional ha-
+6. Limitation                                                                      zard types; and (4) expanding our approach to integrate semantic in-
+                                                                                   formation in accordance to our as-built ontological model.
+    Despite the novelty of the research presented, we need to ac-
+knowledge that it has several limitations. Firstly, our research relied on         Acknowledgments
+distance and coordinate information to extract spatial relationship for
+reasoning hazards. Many hazards comprise safety rules with speciﬁc                     The authors would like to acknowledge the ﬁnancial support pro-
+features. For example, due to the presence of apanage management,                  vided by the National Natural Science Foundation of China (Grant No.
+persons on-site may be prohibited from entering a speciﬁc working                  71732001, No.51978302, No. 51678265, No.51878311) and the China
+area. In this case, computer vision cannot be used to extract the attri-           Scholarship Council (CSC). The authors would also like to thank the
+butes and individuals and the area where they are performing their                 three anonymous reviewers for their constructive and insightful com-
+tasks. Our future work will need to integrate other technologies such as           ments that have helped improve this manuscript.
+Radio Frequency Identiﬁcation, to extract additional information to
+address this limitation, (e.g., identity).                                         Declaration of competing interest
+    Secondly, our research extracts the coordinates and the distance
+between objects from 2D images and then obtains spatial-relationship                   The authors declare that they have no known competing ﬁnancial
+following the information obtained (i.e., coordinate, distance). Mistakes          interests or personal relationships that could have appeared to inﬂu-
+can be made when using the transformation matrix to compute the                    ence the work reported in this paper.
+distance of objects from single images. Therefore, we suggest that fu-
+ture research will need to use stereo cameras to collect data and com-             References
+pute depth information to improve the accuracy of calculating spatial
+relationships.                                                                      [1] C.J. Anumba, R.R.A. Issa, J. Pan, I. Mutis, Ontology-based information and
+    Thirdly, our research solely considers the attribute (i.e., the distance            knowledge management in construction, Constr. Innov. 8 (2008) 218–239, https://
+                                                                                        doi.org/10.5220/0003053903310334.
+between entities) in an as-built ontological model to determine whether             [2] E.R. Azar, B. McCabe, Part based model and spatial-temporal reasoning to recognize
+hazards with complex rules are identiﬁable. A hazard is determined by                   hydraulic excavators in construction images and videos, Autom. Constr. 24 (2012)
+combinations of semantic information (i.e., activity, time, and loca-                   194–202, https://doi.org/10.1016/j.autcon.2012.03.003.
+                                                                                    [3] E.R. Azar, B. McCabe, Automated visual recognition of dump trucks in construction
+tion). For example, an individual is not allowed to approach the                        videos, ASCE Journal of Computing in Civil Engineering 26 (2012) 769–781,
+working area of a piece of machinery. In this case, we should detect the                https://doi.org/10.1061/(ASCE)CP.1943-5487.0000179.
+machinery's working status (static or moving). We suggest that our                  [4] N. Chi, K. Lin, S. Hsieh, Using ontology-based text classiﬁcation to assist job Hazard
+                                                                                        analysis, Adv. Eng. Inform. 28 (2014) 381–394, https://doi.org/10.1016/j.aei.
+approach can be expanded with consideration of other semantic in-                       2014.05.001.
+formation according to the as-built ontological model.                              [5] S. Chi, C.H. Caldas, Automated object identiﬁcation using optical video cameras on
+    Fourthly we should acknowledge there have been a limited number                     construction sites, Computer-Aided Civil and Infrastructure Engineering 26 (2011)
+                                                                                        368–380, https://doi.org/10.1111/j.1467-8667.2010.00690.x.
+of examples that have been able to integrate computer vision with
+                                                                                    [6] E. Corry, P. Pauwels, S.S. Hu, M. Keane, J. O’Donnell, A performance assessment
+ontology to identify hazards as data is scarce. Thus, our future research               ontology for the environmental and energy management of buildings, Autom.
+will focus on creating a database with a signiﬁcant number of images in                 Constr. 57 (2015) 249–259, https://doi.org/10.1016/j.autcon.2015.05.002.
+order further validate and improve the reliability of our proposed ap-              [7] N. Dalal, B. Triggs, Histograms of oriented gradients for human detection, IEEE
+                                                                                        Computer Society Conference on Computer Vision and Pattern Recognition, San
+proach.                                                                                 Diego, USA, June 20–25, 2005, pp. 886–893, , https://doi.org/10.1109/cvpr.2005.
+    Finally, we have also assumed that Mask R-CNN can accurately                        177.
+detect a variety of objects. However, if an object is occluded or there are         [8] J. Deng, W. Dong, R. Socher, L.J. Li, F.F. Li, ImageNet: A large-scale hierarchical
+                                                                                        image database, 2009 IEEE Conference on Computer Vision and Pattern
+unavailable images in the database for training, then the error rate for                Recognition, 2009, pp. 248–255, , https://doi.org/10.1109/CVPR.2009.5206848
+object detection may be high. We, therefore, intend to integrate on-                    June.
+tology with the object's features to identify them in the future. For               [9] L. Ding, W. Fang, H. Luo, P.E.D. Love, B. Zhong, X. Ouyang, X, a deep hybrid
+                                                                                        learning model to detect unsafe behavior: integrating convolution neural networks
+example, if an object partly occludes an individual, we may infer their                 and long short-term memory, Autom. Constr. 86 (2018) 118–124, https://doi.org/
+presence using other features, such as shape, size, colour, and clothes.                10.1016/j.autcon.2017.11.002.
+                                                                                   [10] L. Ding, B. Zhong, S. Wu, H. Luo, Construction risk knowledge management in BIM
+                                                                                        using ontology and semantic web technology, Saf. Sci. 87 (2016) 202–213, https://
+7. Conclusion
+                                                                                        doi.org/10.1016/j.ssci.2016.04.008.
+                                                                                   [11] Y.M. Goh, D.K.H. Chua, Case-based reasoning approach to construction safety
+    We have introduced a novel semantic model that integrates com-                      Hazard identiﬁcation: adaptation and utilization, ASCE Journal of Construction
+                                                                                        Engineering and Management 136 (2) (2010) 170–178, https://doi.org/10.1061/
+puter vision and ontology to identify hazards from images auto-
+                                                                                        (ASCE)CO.1943-7862.0000116.
+matically. We utilised the following tools to develop our model: (1)               [12] J. Guia, v.G. Soares, S. Bernardina, Graph database: Neo4j analysis, Proc. of the 19th
+computer vision algorithms, which were used to extract implied                          International Conference on Enterprise Information System, Porta, Portugal, 2017,
+knowledge from images (i.e., objects detection and attributes extrac-                   pp. 351–356, , https://doi.org/10.5220/0006356003510356.
+                                                                                   [13] B.H.W. Guo, Y.M. Goh, Ontology for the design of active fall protection systems,
+tion); and (2) ontological reasoning to identify unsafe conditions based                Autom. Constr. 82 (2017) 138–153, https://doi.org/10.1016/j.autcon.2017.02.
+on their identiﬁed distance and spatial information. To validate our                    009.
+approach, we created a database of individuals unsafe behaviour                    [14] T. Gruber, A translation approach to portable ontologies, Knowl. Acquis. 5 (2)
+
+
+                                                                               9
+W. Fang, et al.                                                                                                                             Automation in Construction 119 (2020) 103310
+
+
+     (1993) 199–220 https://tomgruber.org/writing/ontolingua-kaj-1993.pdf.                       [34] H. Kim, K. Kim, K. Kim, Vision-based object-centric safety assessment using fuzzy
+[15] H. Edwards, Fatal injuries arising from accidents at work in Great Britain 2017 to               inference: monitoring struck-by accidents with moving objects, J. Comput. Civ. Eng.
+     2018, http://www.hse.gov.uk/statistics/fatals.htm, (2017).                                       30 (2016) 04015075, , https://doi.org/10.1061/(ASCE)CP.1943-5487.0000562.
+[16] T.E. El-Diraby, Validating ontologies in informatics systems: approaches and lessons        [35] D. Kim, M. Liu, S. Lee, V.R. Kamat, Remote proximity monitoring between mobile
+     learned for AEC, Journal of Information Technology in Construction 19 (2014)                     construction resources using camera-mounted UAVs, Autom. Constr. 99 (2019)
+     474–493 http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.663.7511&                       168–182, https://doi.org/10.1016/j.autcon.2018.12.014.
+     rep=rep1&type=pdf.                                                                          [36] Y. LeCun, Y. Bengio, G. Hinton, Deep learning, Nature 521 (2015) 436–444,
+[17] T. Elghamrawy, F. Boukamp, H.S. Kim, Ontology-based, semi-automatic framework                    https://doi.org/10.1038/nature14539.
+     for storing and retrieving on-site construction problem information — An RFID-              [37] S.K. Lee, K.R. Kim, J.H. Yu, BIM and ontology-based approach for building cost
+     based case study, in: Construction Research Congress, Seattle, Washington, United                estimation, Autom. Constr. 41 (2014) 94–105, https://doi.org/10.1016/j.autcon.
+     States, 2009, April5–7, pp. 457–466. doi:https://doi.org/10.1061/41020(339)47.                   2013.10.020.
+[18] W. Fang, L. Ding, H. Luo, P.E.D. Love, Falls from heights: a computer vision-based          [38] P.E.D. Love, J. Smith, P. Teo, Putting into practice error management theory: un-
+     approach for safety harness detection, Autom. Constr. 91 (2018) 53–61, https://doi.              learning and learning to manage action errors in construction, Appl. Ergon. 69
+     org/10.1016/j.autcon.2018.02.018.                                                                (2018) 104–114, https://doi.org/10.1016/j.apergo.2018.01.007.
+[19] W. Fang, L. Ding, B. Zhong, P.E.D. Love, H. Luo, Automated detection of workers             [39] P.E.D. Love, P. Teo, J. Smith, F. Ackermann, Y. Zhou, The nature and severity of
+     and heavy equipment on construction sites: a convolutional neural network ap-                    workplace injuries in construction: engendering operational benchmarking,
+     proach, Adv. Eng. Inform. 37 (2018) 139–149, https://doi.org/10.1016/j.aei.2018.                 Ergonomics 62 (10) (2019) 1273–1288, https://doi.org/10.1080/00140139.2019.
+     05.003.                                                                                          1644379.
+[20] W. Fang, B. Zhong, N. Zhao, P.E.D. Love, H. Luo, J. Xue, S. Xu, A deep learning-            [40] H. Lingard, Occupational health and safety in the construction industry, Constr.
+     based approach for mitigating falls from a height with computer vision: convolu-                 Manag. Econ. 31 (2013) 505–514, https://doi.org/10.1080/01446193.2013.
+     tional neural network, Adv. Eng. Inform. 39 (2019) 170–177, https://doi.org/10.                  816435.
+     1016/j.aei.2018.12.005.                                                                     [41] D.G. Lowe, Distinctive image features from scale-invariant keypoints, Int. J.
+[21] W. Fang, L. Ding, P.E.D. Love, H. Luo, H. Li, F. Peña-Mora, B. Zhong, C. Zhou,                   Comput. Vis. 60 (2004) 91–110, https://doi.org/10.1023/b:visi.0000029664.
+     Computer vision applications in construction safety assurance, Autom. Constr. 110                99615.94.
+     (2020) 103013, , https://doi.org/10.1016/j.autcon.2019.103013.                              [42] E.A. Nadhim, C. Hon, B. Xia, I. Stewart, Falls from height in the construction in-
+[22] W. Fang, P.E.D. Love, H. Luo, L. Ding, Computer vision for behavior-based safety in              dustry: a critical review of the scientiﬁc literature, Int. J. Environ. Res. Public
+     construction: a review and future directions, Adv. Eng. Inform. 43 (2020) 100980, ,              Health 13 (7) (2016) 638, https://doi.org/10.3390/ijerph13070638.
+     https://doi.org/10.1016/j.aei.2019.100980.                                                  [43] M. Martinez-Aires, M. Lopez-Alonso, M. Martinez-Rojas, Building information
+[23] J. Gong, C.H. Caldas, Computer vision-based video interpretation model for auto-                 modeling and safety management: a systematic review, Saf. Sci. 101 (2018) 11–18,
+     mated productivity analysis of construction operations, ASCE Journal of Computing                https://doi.org/10.1016/j.ssci.2017.08.015.
+     in Civil Engineering 24 (2009) 252–263, https://doi.org/10.1061/(ASCE)CP.1943-              [44] L. Nanni, S. Ghidoni, S. Brahnam, Handcrafted vs. non-handcrafted features for
+     5487.0000027.                                                                                    computer vision classiﬁcation, Pattern Recogn. 71 (2017) 158–172, https://doi.
+[24] B.H.W. Hadikusumo, S. Rowlinson, Integration of virtually real construction model                org/10.1016/j.patcog.2017.05.025.
+     and design-for-safety-process database, Autom. Constr. 11 (5) (2002) 501–509,               [45] OSHA, Commonly used statistics, https://www.osha.gov/oshstats/commonstats.
+     https://doi.org/10.1016/S0926-5805(01)00061-9.                                                   html2014 (January 17, 2015).
+[25] B. Zhong, H. Li, H. Luo, J. Zhou, W. Fang, X. Xing, Ontology-Based Semantic                 [46] M.W. Park, I. Brilakis, Construction worker detection in video frames for initializing
+     Modeling of Knowledge in Construction: Classiﬁcation and Identiﬁcation of Hazards                vision trackers, Autom. Constr. 28 (2012) 15–25, https://doi.org/10.1016/j.autcon.
+     Implied in Images, J. Constr. Eng. Manage. 146 (2020), https://doi.org/10.1061/                  2012.06.001.
+     (ASCE)CO.1943-7862.0001767.                                                                 [47] K. Simonyan, A. Zisserman, Two-stream convolutional networks for action re-
+[26] K.K. Han, M. Golparvar-Fard, Appearance-based material classiﬁcation for mon-                    cognition in videos. Part of Advances in Neural Information Processing Systems
+     itoring of operation-level construction progress using 4D BIM and site photologs,                (NIPS 2014). http://papers.nips.cc/paper/5353-two-stream-convolutional-
+     Autom. Constr. 53 (2015) 44–57, https://doi.org/10.1016/j.autcon.2015.02.007.                    networks-for-action-recognition-in-videos.pdf.
+[27] K. He, G. Gkioxari, P. Dollar, R. Girshick, R, Mask R-CNN, IEEE International               [48] H. Wang, C. Schmid, C, action recognition with improved trajectories, IEEE
+     Conference on Computer Vision, 2017, pp. 22–29 Venice, Italy, 2017. october                      International Conference on Computer Vision, 2013, pp. 3551–3558, , https://doi.
+     https://doi.org/10.1109/ICCV.2017.322.                                                           org/10.1109/iccv.2013.441.
+[28] J.L. Hippolyte, Y. Rezgui, H. Li, B. Jayan, S. Howell, Ontology-driven development          [49] H.H. Wang, F. Boukamp, T. Elghamrawy, Ontology-based approach to context re-
+     of web services to support district energy applications, Autom. Constr. 86 (2018)                presentation and reasoning for managing context-sensitive construction informa-
+     210–225, https://doi.org/10.1016/j.autcon.2017.10.004.                                           tion, J. Comput. Civ. Eng. 25 (2011) 331–346, https://doi.org/10.1061/(ASCE)cp.
+[29] N. Jia, R.R.A. Issa, Developing taxonomy for the domain ontology of construction                 1943-5487.0000094.
+     contractual semantics: a case study on the AIA A201 document, Adv. Eng. Inform.             [50] H.H. Wang, F. Boukamp, Ontology-based representation and reasoning framework
+     29 (2015) 472–482, https://doi.org/10.1016/j.aei.2015.03.009.                                    for supporting job Hazard analysis, J. Comput. Civ. Eng. 25 (2011) 442–456,
+[30] S. Ji, W. Xu, M. Yang, K. Yu, 3D convolutional neural networks for human action                  https://doi.org/10.1061/(ASCE)cp.1943-5487.0000125.
+     recognition, IEEE Trans. Pattern Anal. Mach. Intell. 35 (1) (2013) 221–231, https://        [51] T. Xiao, Y.C. Liu, B.L. Zhou, Y.N. Jiang, J. Sun, Uniﬁed perceptual parsing for scene
+     doi.org/10.1109/TPAMI.2012.59.                                                                   understanding, Lect. Notes Comput. Sci (2018) 432–448, https://doi.org/10.1007/
+[31] C.I. Johnpaul, T. Mathew, A cypher query based NoSQL data mining on protein                      978-3-030-01228-1_26.
+     databases using Neo4j graph database, 4th International Conference on Advanced              [52] Y. Yu, H. Guo, Q. Ding, H. Li, M. Skitmore, An experimental study of real-time
+     Computing and Communication Systems. Coimbatore, India, 2017, https://doi.org/                   identiﬁcation of construction workers’ unsafe behaviors, Autom. Constr. 82 (2017)
+     10.1109/ICACCS.2017.8014558 Janurary 6-7.                                                        193–206, https://doi.org/10.1016/j.autcon.2017.05.002.
+[32] H. Kim, H. Kim, 3D reconstruction of a concrete mixer truck for training object             [53] M. Zhang, T. Cao, X. Zhao, Applying sensor-based technology to improve con-
+     detectors, Autom. Constr. 88 (2018) 23–30, https://doi.org/10.1016/j.autcon.                     struction safety management, Sensors 17 (8) (2017) 1481, https://doi.org/10.
+     2017.12.034.                                                                                     3390/s17081841.
+[33] K. Kim, K. Kim, K. Kim, Image-based construction hazard avoidance system using              [54] Z. Zhou, Y.M. Goh, L. Shen, Overview and analysis of ontology studies supporting
+     augmented reality in a wearable device, Autom. Constr. 83 (2017) 390–403,                        development of the construction industry, J. Comput. Civ. Eng. 30 (6) (2016)
+     https://doi.org/10.1016/j.autcon.2017.06.014.                                                    0406026, , https://doi.org/10.1061/(ASCE)CP.1943-5487.0000594.
+
+
+
+
+                                                                                            10
+

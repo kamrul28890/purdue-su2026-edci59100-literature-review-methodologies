@@ -1,0 +1,1601 @@
+                                                             Expert Systems With Applications 258 (2024) 125124
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                        Expert Systems With Applications
+                                                          journal homepage: www.elsevier.com/locate/eswa
+
+
+
+
+DART: An automated end-to-end object detection pipeline with data
+Diversification, open-vocabulary bounding box Annotation, pseudo-label
+Review, and model Training
+Chen Xin a,b ,∗, Andreas Hartel b , Enkelejda Kasneci a
+a
+    Technical University of Munich, Arcisstraße 21, München, 80333, Germany
+b Liebherr-Electronics and Drives GmbH, Peter-Dornier-Straße 11, Lindau Bodensee, 88131, Germany
+
+
+
+
+ARTICLE                 INFO                              ABSTRACT
+
+Keywords:                                                 Accurate real-time object detection is vital across numerous industrial applications, from safety monitoring
+Open-vocabulary object detection (OVD)                    to quality control. Traditional approaches, however, are hindered by arduous manual annotation and data
+Data diversification                                      collection, struggling to adapt to ever-changing environments and novel target objects. To address these
+Pseudo-label
+                                                          limitations, this paper presents DART, an innovative automated end-to-end pipeline that revolutionizes object
+Large multimodal model (LMM)
+                                                          detection workflows from data collection to model evaluation. It eliminates the need for laborious human
+Stable diffusion
+YOLO
+                                                          labeling and extensive data collection while achieving outstanding accuracy across diverse scenarios. DART
+                                                          encompasses four key stages: (1) Data Diversification using subject-driven image generation (DreamBooth with
+                                                          SDXL), (2) Annotation via open-vocabulary object detection (Grounding DINO) to generate bounding box
+                                                          and class labels, (3) Review of generated images and pseudo-labels by large multimodal models (InternVL-
+                                                          1.5 and GPT-4o) to guarantee credibility, and (4) Training of real-time object detectors (YOLOv8 and
+                                                          YOLOv10) using the verified data. We apply DART to a self-collected dataset of construction machines named
+                                                          Liebherr Product, which contains over 15K high-quality images across 23 categories. The current instantiation
+                                                          of DART significantly increases average precision (AP) from 0.064 to 0.832. Its modular design ensures
+                                                          easy exchangeability and extensibility, allowing for future algorithm upgrades, seamless integration of new
+                                                          object categories, and adaptability to customized environments without manual labeling and additional data
+                                                          collection. The code and dataset are released at https://github.com/chen-xin-94/DART.
+
+
+
+1. Introduction                                                                             between textual and visual data, significantly enhancing the capabili-
+                                                                                            ties of comprehensive semantic understanding and interaction in vision-
+    In recent years, computer vision has witnessed rapid advancements,                      language tasks. Concurrently, traditional computer vision areas like
+revolutionizing various applications through innovative methodologies.                      object detection have also experienced expedited breakthroughs. Open-
+A significant development is the emergence of generative AI techniques,                     vocabulary object detection (OVD) models like Grounding DINO (Liu,
+exemplified by text-to-image Diffusion models (Podell et al., 2024;                         Zeng et al., 2023) have expanded the scope of object recognition,
+Ramesh, Dhariwal, Nichol, Chu, & Chen, 2022; Rombach, Blattmann,                            allowing systems to detect and classify objects beyond the constraints
+Lorenz, Esser, & Ommer, 2022; Saharia et al., 2022a, 2022b). They                           of predefined categories. Meanwhile, the YOLO (You Only Look Once)
+establish a robust backbone for generating high-fidelity, contextually                      families (Anon, 2020; Bochkovskiy, Wang, & Liao, 2020; Jocher, 2023;
+rich images, which in turn enables other specialized frameworks (Gal,                       Li, Li et al., 2023; Li et al., 2022; Redmon, Divvala, Girshick, & Farhadi,
+Alaluf, Atzmon, Patashnik, Bermano, Chechik, & Cohen-Or, 2022; Mou                          2016; Redmon & Farhadi, 2017, 2018; Wang, Bochkovskiy, Liao &
+et al., 2023; Ye, Zhang, Liu, Han, & Yang, 2023) including Dream-                           Mark, 2023; Wang, Chen et al., 2024; Wang, Yeh & Liao, 2024) of
+Booth (Ruiz et al., 2023). These frameworks build upon this foundation                      real-time object detection systems continue to push the Pareto frontier
+to enhance the personalization and precision of the generated images,                       of speed and accuracy, achieving significant advancement through fast
+providing more nuanced and versatile controls. Another prominent                            and continuous iterations.
+advancement in generative AI is the large multimodal model (LMM),                               Despite the above-mentioned remarkable progress in image gen-
+notably GPT-4 series (OpenAI, 2023, 2024). LMM leverages the synergy                        eration, LMM, OVD, and real-time object detection, each technology
+
+
+     ∗ Corresponding author at: Technical University of Munich, Arcisstraße 21, München, 80333, Germany.
+       E-mail addresses: chen.xin@tum.de (C. Xin), andreas.hartel@liebherr.com (A. Hartel), enkelejda.kasneci@tum.de (E. Kasneci).
+
+https://doi.org/10.1016/j.eswa.2024.125124
+Received 26 July 2024; Received in revised form 10 August 2024; Accepted 14 August 2024
+Available online 22 August 2024
+0957-4174/© 2024 The Author(s). Published by Elsevier Ltd. This is an open access article under the CC BY-NC license (http://creativecommons.org/licenses/by-
+nc/4.0/).
+C. Xin et al.                                                                                                               Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+Fig. 1. DART, an automated end-to-end pipeline spanning the entire workflow of an object detection application from data collection to model evaluation. After preprocessing,
+DART enters the data Diversification stage, where a subject-driven image generation module (Dreambooth with SDXL) creates diversified images. The Annotation stage (red)
+utilizes both approved diversified data and original clean data to produce bounding boxes through open-vocabulary object detection (Grounding DINO). These pseudo-labels are
+then Reviewed by another large multimodal model (GPT-4o) and subsequently serve as ground truth for the Training of real-time object detectors (YOLO).
+
+
+still has its prominent strengths and weaknesses. Image generation                            Ideally, an object detection application should be capable of detect-
+produces high-quality images but can sometimes not be photorealistic.                     ing any target object both quickly and accurately in diverse environ-
+LMMs excel in semantic understanding of images but struggle with                          ments. However, current technologies do not allow for the simulta-
+directly handling numerical data. OVD can detect a wide range of                          neous achievement of open-vocabulary detection, real-time capability,
+object categories but is often too slow. In contrast, real-time object                    high accuracy, and robustness. The most common approach in the
+                                                                                          industry is to use real-time object detection to meet the essential
+detection is fast but limited to predefined categories. If the strengths
+                                                                                          requirement for speed while manually collecting and annotating as
+of these four technologies can be effectively combined and integrated,
+                                                                                          much data as possible to approach the other three goals (Cho & Kim,
+it will undoubtedly result in a significantly improved outcome. The
+                                                                                          2023; Dong, Jiang, Hu, Du, & Pan, 2024; Gao, Zhang, Geng, Tang,
+proposed DART pipeline (Fig. 1) aims to achieve this complementary                        & Bhatti, 2024; Xu, Jha, Mehadi & Mandal, 2024). Despite the avail-
+combination of image generation, LMM, OVD, and real-time object                           ability of numerous public datasets, they offer limited assistance in
+detection, leveraging their strengths and compensating for their weak-                    this regard because a majority of specific objects are not covered by
+nesses to create a comprehensive and efficient object detection solution                  public datasets. For instance, LVIS (Gupta, Dollar, & Girshick, 2019),
+from data collection to model evaluation.                                                 one of the most diversified object detection datasets, only includes
+
+                                                                                      2
+C. Xin et al.                                                                                                  Expert Systems With Applications 258 (2024) 125124
+
+
+little more than 1000 entry-level object categories, which is inadequate         extensive human efforts in labeling and data collection. Additionally,
+for many industrial applications. OVD models, on the contrary, are               we design the pipeline to be easily interchangeable and extendable,
+designed to alleviate the object coverage and manual labeling issue.             facilitating the adoption of more advanced algorithms in the future and
+However, they are excessively demanding in terms of computation                  enabling the seamless integration of new data and object categories
+and memory, making them unsuitable for real-time and on-device                   with minimal human effort.
+applications. On the other hand, the latest image generation tools,                  In summary, our major contributions are as follows:
+such as Stable Diffusion models, are promising alternatives to the
+                                                                                    1. We propose an automated end-to-end object detection pipeline
+inefficient and costly manual collection of more images of the same
+                                                                                       named DART (Fig. 1). It covers the entire workflow of an object
+target object from different scenarios due to their ability for diverse
+                                                                                       detection application, from data collection to model evalua-
+image generation. However, these models lack the ability to mimic the
+                                                                                       tion. Specifically, it utilizes subject-driven image generation for
+appearance of a specific subject given by visual prompts. Customized
+                                                                                       data Diversification, open-vocabulary object detection (OVD) for
+frameworks such as DreamBooth could be applied on top for subject-
+                                                                                       ground truth bounding box Annotation, large multimodal model
+driven image generation instead to address this issue. The generated
+                                                                                       (LMM) for Reviewing generated images and pseudo-labels, and
+images can then serve as inputs for OVD to produce bounding boxes,
+                                                                                       Trained real-time object detector as the final output.
+acting as pseudo-labels for training downstream real-time object detec-
+tion models. However, the results from generative AI can sometimes be               2. We instantiate the core module (bold text in Fig. 1) of the four
+overly fanciful, and the quality of bounding boxes produced by OVD                     major stages in the DART pipeline with the current best options
+can be difficult to guarantee. This necessitates a filtering mechanism to              available. Specifically, we
+ensure the quality of both generated images and pseudo-labels for the                      • Customize DreamBooth with Stable Diffusion XL (SDXL) to
+downstream training. This task was previously thought to be exclusive                        generate images of the same instances but with different
+to humans, but now LMMs are well-suited for this task. Although                              postures and backgrounds for data diversification,
+falling short in performing number-related tasks, such as generating                       • apply Grounding DINO to both collected and generated
+bounding box coordinates directly from an input image, they excel in                         images for bounding box annotation as pseudo-labels,
+understanding the semantic context of images. As a result, LMM can                         • Adopt GPT-4o and InternVL-1.5 to review the quality of
+review the quality of generated images and annotations by solving a                          pseudo-labels and photorealism of generated images to
+designed vision-language task in a Visual Question Answering (VQA)                           determine their suitability as training data.
+manner. To summarize, the foundational advancements in four areas                          • And finally train models from YOLOv8 and YOLOv10 fam-
+of computer vision collectively form the backbone of the proposed                            ilies as the final real-time object detector.
+automated end-to-end object detection pipeline DART to fulfill the
+four objectives of an ideal object detection application. Specifically,             3. We collect a dataset, named Liebherr Products (LP), of more
+DART utilizes subject-driven image generation frameworks for data                      than 15 K images covering 23 categories of construction ma-
+Diversification to enhance robustness, OVD for ground truth bounding                   chines from Liebherr products. We apply the instantiated DART
+box Annotation to extend object categories without human efforts,                      pipeline on the LP dataset and obtain a highly capable YOLOv8n
+LMM for Reviewing generated images and bounding boxes to ensure                        that can accurately identify and localize all object categories
+accuracy and explainability, and Trained real-time object detector as                  with an AP of 0.832 and a latency of 2.47 ms on a T4 GPU
+the final output model.                                                                without any effort of human labeling. In contrast, an AP of only
+     To prove the effectiveness of the DART pipeline for industrial object             0.064 is achieved without the DART pipeline.
+detection applications and further exploit its potential, we collect a              4. The four key phases in the DART pipeline are fully automated,
+dataset from the internal database of Libherr, a German-Swiss multina-                 eliminating the need for human intervention, especially in an-
+tional equipment manufacturer. The collected dataset comprises images                  notation and extra data collection. Additionally, we employ a
+of Liebherr products covering a wide variety of heavy machinery such                   modular design in DART to ensure easy exchangeability and ex-
+as construction machines, earthmoving equipment, deep foundation                       tensibility. This facilitates a smooth transition to more advanced
+machines, mining machines, various types of cranes, material handling                  future algorithms, seamless integration of new object categories,
+machines, and more. We apply dataset-specific preprocessing tech-                      and adaptability to environments with customized requirements
+niques to the raw images to obtain a clean and refined dataset named                   with minimal human intervention.
+Liebherr Products (LP).                                                             5. We conduct numerous experiments to demonstrate the effec-
+     In this paper, we instantiate the DART using the current best al-                 tiveness of DART by showing the continuous improvement in
+gorithms for core modules and utilize the pipeline on the LP dataset.                  detection performance with the incremental addition of each
+Specifically, we use DreamBooth (Ruiz et al., 2023) with Stable Diffu-                 of the four major components and finding the optimal tradeoff
+sion XL (SDXL) (Podell et al., 2024) for data diversification, Grounding               within each block.
+DINO (Liu, Zeng et al., 2023) for bounding box annotation, GPT-
+4o (OpenAI, 2024) for pseudo-label review, InternVL-1.5 (Chen, Wang              2. Related work
+et al., 2024) for generated image review, and finally YOLOv8 (Jocher,
+2023) and YOLOv10 (Wang, Chen et al., 2024) families as the final                    In the related work section, we will focus on four areas correspond-
+object detector to be deployed. This instantiation results in an excep-          ing to the DART pipeline’s core stages in order: subject-driven image
+tional real-time object detector capable of accurately identifying and           generation, open-vocabulary object detection, and large multimodal
+localizing all object categories with an average precision (AP) of 0.832.        models, real-time object detection. By discussing progress in these
+Without using DART, the result is a disastrous 0.064. The dramatic               fields, we aim to justify our current implementation of state-of-the-
+difference between object detection with and without DART is vividly             art methods and explore the potential for further enhancements by
+illustrated in Fig. 13 and Fig. C.15 through qualitative comparisons.            incorporating more advanced modules in the future.
+Quantitatively, we also demonstrate the effectiveness of all four ma-
+jor components of DART by showing the continuous improvement in                  2.1. Subject-driven image generation
+detection performance with the incremental addition of each block.
+Notably, all four major blocks in the DART pipeline are fully auto-                 Text-to-image diffusion models (Podell et al., 2024; Ramesh et al.,
+mated, completely eliminating the need for human intervention. This              2022; Rombach et al., 2022; Saharia et al., 2022a, 2022b) have swiftly
+starkly contrasts traditional supervised training methods that require           advanced in recent years, establishing themselves as powerful tools in
+
+                                                                             3
+C. Xin et al.                                                                                                     Expert Systems With Applications 258 (2024) 125124
+
+
+generative AI. These models generate high-quality images from textual           unprecedented capabilities in combining visual inputs with advanced
+descriptions through iterative denoising processes, forming the foun-           language processing. Recently, GPT-4o (OpenAI, 2024) further extends
+dation for subject-driven text-to-image generation. Given only a few            these capabilities with enhanced contextual awareness and multimodal
+(typically 3–5) casually captured images of a specific subject, subject-        reasoning, pushing the boundaries of LMM by achieving state-of-the-art
+driven image generation aims to produce customized images with                  performance across a wide range of vision-language tasks. Meanwhile,
+high detail fidelity and variations guided by text prompts. One typical         the open-source community has also been actively advancing in this
+approach is to fine-tune a special prompt token to describe the concept         domain. Flamingo (Alayrac et al., 2022) utilizes visual and language
+of the specific subject. Textual Inversion (Gal et al., 2022) shows evi-        inputs as prompts, demonstrating exceptional few-shot performance
+dence that a single-word embedding is sufficient for capturing unique           in VQA. LLaVA series (Liu, Li, Li, & Lee, 2024; Liu, Li, Wu, Lee &
+concepts. Recent methods introduce additional modules to the subject-           Jae, 2023; Xu et al., 2024) and MiniGPT-4 (Zhu, Chen, Shen, Li, &
+driven image generation framework and only update the newly added               Elhoseiny, 2023) introduce visual instruction tuning to improve the
+modules during training while keeping the pre-trained text-to-image             instruction-following ability of LMMs. InternVL family (Chen, Wang
+frozen. T2I-Adapter (Mou et al., 2023) aligns pre-trained T2I models            et al., 2024; Chen, Wu et al., 2024) scales up vision foundation models
+with external control signals extracted from trainable CNNs to enhance          and trains on a curated high-quality dataset to achieve comparable
+controllability in text-to-image generation without greatly affecting the       results to GPT-4v among various multimodal benchmarks. Although
+original generation ability. IP-Adapter (Ye et al., 2023) decouples the         open-source models have proven adequate for basic semantic under-
+cross-attention mechanism by separating the cross-attention layers for          standing tasks such as image review (Lee & Zhai, 2023; Li, Wong et al.,
+text features and image features to achieve image prompt capability             2023), proprietary models, especially GPT-4o, still demonstrate supe-
+for the pre-trained text-to-image diffusion models. InstantID (Wang, Bai        rior performance in handling intricate visual data and sophisticated
+et al., 2024) follow the path of decoupled cross-attention and leverage         multimodal interactions, especially when additional visual hints are ap-
+a pre-trained face model to detect and extract face ID embedding from           plied (Yang, Zhang et al., 2023). However, they both struggle with tasks
+the reference facial image to generate ID-preserving images. Although           requiring numerical outputs, such as directly generating bounding box
+these fine-tuning methods are quick and simple, the generated images            coordinates (Yang, Li et al., 2023). Therefore, our DART pipeline only
+often fail to completely resemble the given subject. Therefore, we              leverages GPT-4o/InternVL-1.5 to judge whether a model-generated
+adopt a full fine-tuning framework, DreamBooth, which directly fine-            output is suitable as pseudo-labels/input data for the downstream real-
+tunes both the text-to-image backbone with a few images of a specific           time object detection training while leaving the specialized task of
+subject and the token embedding, enabling the generation of diverse             bounding box annotation to OVD. Additionally, to better handle the
+                                                                                review task, we craft specialized prompts tailored to the characteristics
+high-fidelity images of the specific subjects. To maximize the diversity
+                                                                                of the two LMMs, resulting in excellent outcomes.
+and fidelity of the generations, we select the powerful SDXL as the
+backbone for the DreamBooth framework. We also improve the training
+                                                                                2.4. Real-time object detection
+process to maximize the potential of Dreambooth with SDXL and design
+diversified prompts to generate new images with diversified contexts.
+                                                                                    Real-time object detection aims to accurately classify and locate
+                                                                                objects with low latency, which is essential in numerous industrial ap-
+2.2. Open-vocabulary object detection
+                                                                                plications. This area has witnessed significant advancements in recent
+                                                                                years, primarily driven by the iterative development of state-of-the-
+    Open-vocabulary object detection (OVD) has become a cutting-edge
+                                                                                art YOLO models. Early development of YOLO from v1 to v3 (Red-
+approach in modern object detection. It aims to detect any objects
+                                                                                mon et al., 2016; Redmon & Farhadi, 2017, 2018) determined the
+given their corresponding text prompts beyond predefined categories.
+                                                                                optimal segmentation of the real-time object detection network struc-
+Recent groundbreaking works in OVD include ViLD (Gu, Lin, Kuo, &
+                                                                                ture: backbone, neck, and head. YOLOv4 (Bochkovskiy et al., 2020)
+Cui, 2022) which distills CLIP (Radford et al., 2021) embeddings to             and YOLOv5 (Anon, 2020) changed the backbone to CSPNet (Wang
+cropped image embeddings from region proposal network (RPN) (Ren,               et al., 2020) and introduced a series of best practices in computer
+He, Girshick, & Sun, 2015), as well as GLIP (Li*, Zhang*, Zhang*,               vision regarding training strategy, post-processing, as well as plu-
+Yang, Li, Zhong, Wang, Yuan, Zhang, Hwang, Chang, & Gao, 2022)                  gin modules. Based on these improvements, YOLOv6 (Li, Li et al.,
+where object detection is reformulated as a grounding task by aligning          2023) and YOLOv7 (Wang et al., 2023) are further fine-tuned in
+bounding boxes to phrases using early fusion. Moreover, Grounding               label assignment strategy (Feng, Zhong, Gao, Scott, & Huang, 2021)
+DINO (Liu, Zeng et al., 2023) extends the idea of cross-modality fusion         and loss functions (Gevorgyan, 2022; Rezatofighi et al., 2019; Zheng
+to both feature extraction and decoder layers. It excels in zero-shot           et al., 2020), and they utilize Repblock (Ding et al., 2021) and E-
+scenarios, demonstrating an impressive generalization ability to detect         ELAN (Wang, Liao, & Yeh, 2022) as the core of their backbone re-
+unseen objects. Nevertheless, one major issue of OVDs is that they              spectively. YOLOv8 (Jocher, 2023) introduces the C2f building block
+are too computation- and memory-intensive to meet the needs of                  for effective feature extraction and fusion, along with a comprehensive
+real-time and on-device applications. This perspective holds true even          set of integrated tools, solidifying its position as the go-to choice
+for the latest lightweight OVDs such as YOLO-world (Cheng et al.,               for real-time object detection. YOLOv9 (Wang et al., 2024) proposes
+2024). Therefore, instead of directly using OVD to solve our tasks, the         programmable gradient information (PGI) to refine the training process
+proposed DART pipeline leverages OVD to generate ground truth as                and a new lightweight network architecture – Generalized Efficient
+training data for downstream real-time object detectors. Combined with          Layer Aggregation Network (GELAN). Finally, the concurrent work
+the LMM-based bounding box review (see Section 2.3 and Section 3.4),            YOLOv10 (Wang, Chen et al., 2024) presents a training strategy without
+our approach results in a faster downstream detector and alleviates the         Non-Maximum Suppression (NMS) and polishes the mode architec-
+speed limitations inherent in OVD.                                              ture with holistic efficiency-accuracy-driven design, contributing to
+                                                                                its state-of-the-art real-time object detection capabilities. Considering
+2.3. Large multimodal model                                                     YOLOv8’s ease of use and YOLOv10’s optimal tradeoff between speed
+                                                                                and accuracy, this work employs both the YOLOv8 and YOLOv10
+    Recent advancements in large multimodal models (LMMs) have                  families as the real-time object detectors of choice. Although we have
+been characterized by the release of several groundbreaking propri-             selected the best YOLO models, their reliance on predefined object
+etary systems, including GPT-4v (OpenAI, 2023), Claude 3 (Anthropic,            categories restricts their applicability in open scenarios. Therefore, real-
+2024), and Gemini (Google, 2024). These models have collectively                time object detection only serves as the last stage in DART, depending
+set a new standard for vision-language understanding, demonstrating             on the other three stages to provide high-quality training data.
+
+                                                                            4
+C. Xin et al.                                                                                                     Expert Systems With Applications 258 (2024) 125124
+
+
+3. Methods                                                                        3.2. Data diversification based on DreamBooth with stable diffusion XL
+
+    The proposed method, DART, is an automated end-to-end object                      Data diversification and augmentation in DART are deeply rooted in
+detection pipeline that spans the entire workflow of an object detection          the latest image-generation techniques. One of the most popular ones
+application from data collection to model evaluation. As illustrated in           is Stable Diffusion, which represents a series of latent diffusion models
+Fig. 1, DART starts with dataset preprocessing, followed by four main             that iteratively denoises random Gaussian noise in the latent space of
+stages: data Diversification through subject-driven image generation,             a pre-trained autoencoder using a U-Net architecture (Ronneberger,
+bounding box Annotation via OVD, LMM-based Review of generated                    Fischer, & Brox, 2015) conditioned on textual prompts. Stable Diffusion
+images and pseudo-labels, as well as real-time object detector Training.          XL (SDXL) introduces several architectural improvements over previous
+The core module (bold text in Fig. 1) of each phase is instantiated with          versions of Stable Diffusion, including a larger U-Net backbone, more
+state-of-the-art techniques, including the framework DreamBooth with              powerful text encoders, and novel conditioning schemes to enhance the
+SDXL for subject-driven image generation, the application of Grounding            visual fidelity of generated samples, resulting in significantly improved
+DINO for OVD, the adoption of GPT-4o and InternVL-1.5 for generation              performance. However, SDXL takes only text prompts and, therefore,
+quality review, and the training of YOLOv8 and YOLOv10 models for                 cannot mimic the appearance of a specific subject given by visual
+real-time object detection. The following sections provide a detailed             prompts, which is essentially our goal for the data diversification stage.
+breakdown of each component of the proposed DART pipeline.                        DreamBooth addresses this issue by fine-tuning a pre-trained SDXL
+                                                                                  model using a few images of a specific subject as ground truth. The
+3.1. Dataset preprocessing                                                        key idea is to bind a unique textual identifier with the visual subject,
+                                                                                  allowing the model to synthesize novel photorealistic images of the
+    The data preprocessing phase, illustrated by the orange block in              subject in diverse scenes and poses with the help of diversified text
+Fig. 1, involves identifying classes and instances from raw data as input         prompts. The framework of DreamBooth with SDXL is illustrated in
+for prompt engineering and deduplication to obtain clean data.                    Fig. 2. Without loss of generality, we showcase the class ‘‘articulated
+    Class identification. The raw dataset is sourced from Liebherr’s              dump truck’’ and one of its instances, ‘‘TA230’’.
+internal digital system, where images of Liebherr’s products are initially            During training, a pre-trained SDXL model 𝛺𝜽 with frozen weights
+roughly categorized in the database. By refining these preliminary                𝜽 is first applied to generate a bunch of class images 𝐱𝐜𝐥𝐬 = 𝛺𝜽 (𝝐 ′ , 𝐜𝐜𝐥𝐬 )
+classifications with detailed product descriptions, we establish 23 ac-           , given initial noises 𝝐 ′ ∼  (0, 𝐼) and a conditioning vector 𝐜𝐜𝐥𝐬 =
+curately defined classes, as detailed in Section 4.1. We find the precise         𝛤𝜽′ (𝐏𝐜𝐥𝐬 ) generated by a text encoder 𝛤 with frozen weights 𝜽′ using
+definition of the class name essential because it highly affects the per-         a class-specific text prompt 𝐏𝐜𝐥𝐬 , which takes the form ‘‘a photo of a
+formance of the following data diversification phase since ambiguous              {class_name}’’. Then, the same SDXL model is fine-tuned by setting
+class definition leads to inferior quality of generated data of that class.       𝜽 and 𝜽′ to be trainable. In the actual implementation, we do not
+As a result, each image in the raw dataset is assigned at least one precise       train the original parameters of the SDXL model and its text encoder
+class name based on its primary object, and this broad assignment will            directly but adopt LoRA (Low-Rank Adaptation) (Hu, Shen, Wallis,
+be used as one of the text prompts for bounding box annotation, as                Allen-Zhu, Li, Wang, Wang, & Chen, 2022) instead which freezes the
+described in Section 3.3.                                                         pre-trained model weights and injects trainable low-rank matrices into
+    Instance identification. For images containing a single object, we            the transformer layers’ weight matrices to enable efficient adapta-
+tag them at the instance level using distinctive metadata information,            tion with minimal additional parameters. Here, we slightly abuse the
+such as product numbers. For each class, we randomly selected 2–                  notation of 𝜽 and 𝜽′ to also represent LoRA parameters.
+5 instances and manually curated approximately 10 images for each                     The loss of the fine-tuning process is composed of two parts. The
+instance (see Fig. A.14). These images will be further utilized for data          first part is the standard reconstruction loss 𝐿rec for diffusion model
+diversification (Section 3.2). Note that tagging with instance labels is a        training. Specifically, it is a squared error (SE) loss between a ground
+straightforward and easy task since we only need 20–50 images in total            truth instance image 𝐱 and a denoised version of it, predicted by the
+for each class.                                                                   model 𝛺𝜽 at a specific diffusion timestep 𝑡 ∼  [0, 1]:
+    Prompt engineering. Class names for images are the cornerstone                             (                        )2
+                                                                                  𝐿rec = 𝑤𝑡 𝛺𝜽 (𝛼𝑡 𝐱 + 𝜎𝑡 𝝐, 𝐜ins ) − 𝐱                                    (1)
+for prompt construction for image generation (Section 3.2), OVD (Sec-
+tion 3.3), and LMM-based review (Section 3.4). The constructed class-             where 𝛼𝑡 , and 𝜎𝑡 are functions of timestep 𝑡 that control the noise
+specific prompts vary slightly for different tasks. Instance tags, how-           schedule of the diffusion process. As for 𝑤𝑡 in Eq. (1), we adopt Min-
+ever, will only serve as the backbone for instance-specific prompts               SNR weighting strategy (Hang et al., 2023) to avoid the inefficiency
+for training SDXL models under the DreamBooth framework. Specific                 and instability caused by conflicts among timesteps. Specifically, 𝑤𝑡 =
+prompt construction rules will be introduced in the corresponding                 min(𝛼𝑡2 ∕𝜎𝑡2 , 𝛾), where 𝛾 is a hyperparameter to avoid the model focusing
+sections mentioned above and further detailed in Appendix B. The                  too much on small noise levels. Note that the encoded instance-specific
+precise text prompts for data diversification, annotation, and review             prompt 𝐜ins is used for the prediction of the ground truth instance.
+stage are listed in Table B.9, Table B.11, and Table B.12, respectively.          In contrast to class-specific prompts 𝐏𝐜𝐥𝐬 that only provide a general
+    Deduplication. The initial raw dataset contains many duplicated               description of a class, instance-specific prompts 𝐏𝐢𝐧𝐬 should include
+images. We employ perceptual hashing (pHash) (Klinger & Stark-                    both a general class description for better image quality and a unique
+weather, 2008) for preliminary deduplication. However, cash tends to              identifier to build the correspondence to the given visual instance.
+misidentify similar images as duplicates, for example, consecutive shots          Therefore, 𝐏𝐢𝐧𝐬 utilizes the extracted instance name (usually the product
+of the same scene from slightly different angles. These near duplicates           number) wrapped in angle brackets as the identifier (e.g. ‘‘<TA230>’’
+are manually retained in the dataset but are ensured to appear only in            in Fig. 2) followed by the original class name.
+the training set.                                                                     The second component of the overall loss is the class-specific prior
+    Upon completing these steps, we obtain a clean dataset, dubbed                preservation loss 𝐿𝑝𝑟 which is essentially the same SE loss but treats the
+Liebherr Products (LP). We also acquire instance-specific and class-              class images 𝐱𝐜𝐥𝐬 as ground truth instead. It is introduced to mitigate the
+specific prompts for the following phases. It should be noted that all            overfitting issue of the standard fine-tuning. With both reconstruction
+human interventions within the DART framework conclude here, and                  loss 𝐿rec and class-specific prior preservation loss 𝐿𝑝𝑟 , DreamBooth
+the subsequent four phases of DART are fully automated.                           encourages diversity in the generated images while preserving the key
+
+                                                                              5
+C. Xin et al.                                                                                                                    Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+Fig. 2. DreamBooth with SDXL. Initially, class images are generated by a frozen SDXL model using a class-specific prompt (e.g., "a photo of articulated dump truck"). The model is
+then fine-tuned with an instance-specific prompt (e.g., "a photo of a <TA230> articulated dump truck"), optimizing both reconstruction and class-specific prior preservation losses.
+Source: Modified from Ruiz et al. (2023).
+
+
+visual features of the subject. The total loss 𝐿 can be expressed as                         image-to-text cross-attention based on features extracted from text and
+follows:                                                                                     image backbones in the early stage. The language-guided query selec-
+𝐿 = 𝐿rec + 𝜆𝐿𝑝𝑟                                                                              tion uses language information (text features) to guide the selection of
+       (                            )2                                                       detection queries from image features, and the cross-modality decoder
+  = 𝑤𝑡 𝛺𝜽 (𝛼𝑡 𝐱 + 𝜎𝑡 𝝐, 𝐜ins ) − 𝐱                                                 (2)       extends standard cross attention to two layers using image and text
+         (                                      )2
+  + 𝜆𝑤𝑡′ 𝛺𝜽 (𝛼𝑡′ 𝐱𝐜𝐥𝐬 + 𝜎𝑡′ 𝝐 ′ , 𝐜cls ) − 𝐱𝐜𝐥𝐬                                              features as keys and values right before model outputs.
+                                                                                                 In this study, we leverage Grounding DINO for the bounding box an-
+We fine-tune a specific SDXL model with the DreamBooth framework                             notation of target classes. An intuitive approach is to concatenate class
+for each instance. Diversified text prompts can then guide the trained                       names with delimiters (‘.’ for Grounding DINO) into one text prompt
+SDXL models to depict each specific instance in novel contexts. We                           as input to the model. However, we find that the model performance
+carefully design 67 text prompts in total that cover a wide and di-                          decreases exponentially as the length of the text grows. Thus, we turn to
+verse range of scenarios, weather, poses, and quantities. Please refer                       a strategy of incrementally adding and replacing text prompts to ensure
+to Table B.9 for the list of prompts used during inference for data                          that we ensure higher scores for ground truth accuracy.
+generation. Note that to achieve our goal of diversification, we sam-                            As described in Algorithm 1, we start by using the class name that is
+pled a wide range of prompts covering various scenarios. As we will                          roughly assigned during data collection (see Section 3.1) as the original
+see in Section 4.6 and Appendix C, DART’s data diversification stage                         prompt. To avoid misunderstanding caused by unclear semantics of the
+effectively follows the scenarios and requirements mentioned in the                          text, we design the synonym prompt using synonyms for the categories
+text, demonstrating excellent adaptability to customized environments                        with ambiguous meanings (e.g., a handler can mean either the machine
+with minimal human intervention. At the end of the data diversification                      or the human operator), common aliases (e.g., dozer for bulldozer)
+block, we obtain diversified data ready to be annotated.                                     or explicit superclasses (e.g., crane for crawler crane). A list of all
+                                                                                             synonyms can be found in Table B.10. Note that we input one synonym
+3.3. Open-vocabulary bounding box annotation via groundingdino                               at a time to the model to generate bounding boxes for all synonym
+                                                                                             prompts to trade redundancy for high accuracy. The class-agnostic
+    Grounding DINO is an open-vocabulary object detector that marries                        NMS (the last step of Algorithm 2) will finally address the redundant
+a transformer-based detector DINO (Podell et al., 2024) with grounded                        annotations.
+pre-training, which can draw bounding boxes for arbitrary objects                                To address the common phenomenon of multiple object categories
+given inputs as plain text. The key to Grounding DINO’s open-set ca-                         in a single image and avoid the subpar performance of concatenating
+pability is the tight fusion of language and vision modalities, achieved                     all classes as text prompts, we utilize the information (collected during
+through three main components: a feature enhancer, a language-guided                         data preprocessing) on frequently co-occurring object combinations to
+query selection, and a cross-modality decoder. The feature enhancer                          create another type of prompt dubbed co-occurring prompt. Unlike the
+fuses language and visual features by interleaving text-to-image and                         original and synonym prompts, where one phrase is presented at a time,
+
+                                                                                         6
+C. Xin et al.                                                                                                              Expert Systems With Applications 258 (2024) 125124
+
+
+Algorithm 1 Bounding Box Annotation                                                      Algorithm 2 Filtering and NMS
+Require: Pre-trained Grounding DINO model  which takes given text                       Require: A dataset of 𝑁 images  = {𝑛 }𝑁                    , the non-maximum-
+                                                                                                                                                  𝑛=1
+  prompt  and image  to generate bounding boxes  with confidence                        suppression (NMS) function  , bounding box annotations results
+  scores  and corresponding phrases , i.e.  ∶  ,  → , , ,                          consisting of generated box coordinates 𝑏, the confidence score 𝑠, and
+Require: A dataset of 𝑁 images  = {𝑛 }𝑁           𝑛=1
+                                                        , a mapping of each image          the corresponding phrase 𝑟 stored as a 3-tuple for all 𝑀 annotations
+  to its pre-defined class cls ∶  → , a mapping of each class to its                    returned from Algorithm 1, i.e.  = {(𝑏, 𝑠, 𝑟)𝑚 }𝑀       𝑚=1
+  list of synonyms syn ∶  → syn , and a mapping of each class to                      Ensure: Final annotations final for all images in 
+  its list of common co-occurring classes co ∶  → co , a prompt                         final ← [ ]
+  construction rule that takes class names and provides specific text                      for 𝐼 ∈  do
+  pormpt  ∶  →                                                                              𝐵𝐼raw ← a list of each annotation tuple (𝑏, 𝑠, 𝑟) in  that belongs to
+Ensure: Bounding box annotations  for all images in                                      Image 𝐼
+  ←[]                                                                                         𝐵𝐼 ← a list of each annotation tuple in 𝐵𝐼raw but with its original
+  for 𝐼 ∈  do                                                                             class name (𝑏, 𝑠, 𝑐)
+      𝐵𝐼 ← [ ] ⊳ a list to store temporary annotation results for Image                        Filtering
+  𝐼                                                                                            𝐵filtered ← [ ]
+      𝑐 ← cls (𝐼)                            ⊳ extract pre-assigned class name 𝑐              if 𝑙𝑒𝑛𝑔𝑡ℎ(𝐵𝐼 ) == 1 then            ⊳ for images with single annotation
+      𝐿syn ← syn (𝑐)                   ⊳ extract the list of synonyms for class 𝑐                 𝐵filtered ← 𝐵filtered ∪ 𝐵𝐼                 ⊳ take the single annotation
+      𝐿co ← co (𝑐) ⊳ extract the list of co-occurring classes for class 𝑐                     else
+      Bounding box generation for the original prompt                                              for (𝑏, 𝑠, 𝑟) ∈ 𝐵𝐼 do ⊳ for images with multiple annotations
+      𝑡 ← (𝑐)                                       ⊳ construct original prompt                        if 𝑠 ≥ 0.5 then ⊳ extract only annotations with score ≥ 0.5
+      (𝑏, 𝑠, 𝑟) ← (𝑡, 𝐼)                                ⊳ apply Grounding DINO                             𝐵filtered ← 𝐵filtered ∪ (𝑏, 𝑠, 𝑟)             ⊳ Append results
+      𝐵𝐼 ← 𝐵𝐼 ∪ (𝑏, 𝑠, 𝑟)                                         ⊳ Append results                      end if
+      Bounding box generation for the co-occurring prompt                                          end for
+      if 𝐿co ≠ ∅ then              ⊳ if there’re co-occurring classes for class 𝑐              end if
+           𝑡co ← (𝐿co , 𝑐)                ⊳ construct co-occurring prompt using               Non-Maximum Suppression (NMS)
+  original class names                                                                         𝐵, 𝑆 ← all 𝑏 and 𝑠 in 𝐵𝑓 𝑖𝑙𝑡𝑒𝑟𝑒𝑑                ⊳ extract boxes with scores
+           (𝑏, 𝑠, 𝑟) ← (𝑡co , 𝐼)                        ⊳ apply Grounding DINO                𝐵nms ←  (𝐵, 𝑆)                                               ⊳ apply NMS
+           𝐵𝐼 ← 𝐵𝐼 ∪ (𝑏, 𝑠, 𝑟)                                    ⊳ Append results             final ← final ∪ 𝐵nms            ⊳ Append final annotation results for
+      end if                                                                               Image 𝐼
+      Bounding box generation for synonym prompts                                          end for
+      if 𝐿syn ≠ ∅ then                                      ⊳ if there’re synonyms         return final
+           for 𝑐syn ∈ 𝐿syn do            ⊳ Loop through all synonyms for class 𝑐
+                𝑡syn ← (𝑐syn )                     ⊳ construct synonym prompt
+                (𝑏, 𝑠, 𝑟) ← (𝑡syn , 𝐼)                  ⊳ apply Grounding DINO
+                𝐵𝐼 ← 𝐵𝐼 ∪ (𝑏, 𝑠, 𝑟)                               ⊳ Append results           After getting the output bounding boxes and their corresponding
+                if 𝐿co ≠ [ ] then ⊳ if there’re co-occurring classes for class           confidence scores from original, synonym, and co-occurring prompts
+  𝑐                                                                                      for all images, we apply filtering and non-maximum suppression (NMS)
+                     𝑡′co ← (𝐿co , 𝑐syn )       ⊳ construct co-occurring prompt         to keep only the best bounding boxes. As illustrated in Algorithm 2,
+  using the synoynm                                                                      we first sift out the ones with confidence scores bigger than 0.5 unless
+                     (𝑏, 𝑠, 𝑟) ← (𝑡′co , 𝐼)             ⊳ apply Grounding DINO          there is only one box for an image, in which case we take the one
+                     𝐵𝐼 ← 𝐵𝐼 ∪ (𝑏, 𝑠, 𝑟)                          ⊳ Append results       regardless. Then, we transform labels derived from various text prompts
+                end if                                                                   back to their original class names from synonyms and finally adopt
+           end for                                                                       class-agnostic NMS to address the issue of confusing similar labels and
+      end if                                                                             keep only the most feasible annotations. The remaining bounding boxes
+       ←  ∪ 𝐵𝐼                  ⊳ Append all annotation results for Image 𝐼            with their given class labels and scores are the candidate pseudo-labels
+  end for                                                                                to be reviewed.
+  return 
+                                                                                         3.4. LMM-based review of pseudo-labels and image photorealism using
+                                                                                         InternVL-1.5 and GPT-4o
+
+the co-occurring prompt concatenates the names of objects commonly                           LMM leverages the synergy between textual and visual data to per-
+appearing together with delimiters into a single text. For instance,                     form tasks that require cross-modality comprehension, such as visual
+three classes of the LP dataset, ‘‘mining trucks’’, ’’mining excavators’’,               question answering (VQA). In the VQA setup, questions with hints and
+and ’’mining bulldozers’’, often appear simultaneously but rarely with                   requirements are first summarized as text prompts and then further
+other classes. Thus, images categorized into these three classes during                  processed by a (preferably transformer-based Vaswani et al., 2017)
+preprocessing are given a co-occurring prompt that combines the names                    language model. The extracted text features are combined with encoded
+of the corresponding classes. This construction rule is necessary because                image features (usually by a ViT Dosovitskiy et al., 2021) and then
+Grounding DINO tends to produce identical boxes but different class                      passed through another transformer to generate the text answer.
+labels when the separately given text prompt is semantically similar,                        While LMMs excel in semantic understanding and comprehension,
+which is often the case for co-occurring classes. This issue is signifi-                 they face challenges in numeric-related tasks. For instance, directly
+cantly alleviated when these semantically similar texts are input into                   generating bounding boxes can be problematic, as depicted in a failure
+Grounding DINO as one text prompt. However, the ultimate solution to                     case of GPT-4o in Fig. 3(a). In contrast, GPT-4o can precisely interpret
+this problem is the class-agnostic NMS, which will be discussed in the                   the bounding box and its associated class label drawn directly on the
+next paragraph. Additionally, we apply the same rule for constructing                    image as visual hints, demonstrated by its correct judgments of whether
+co-occurring prompts for classes with synonyms, iterating through all                    the given boxes and labels are both accurate and complete, as shown
+combinations of these synonyms.                                                          in (b)–(c) in Fig. 3.
+
+                                                                                     7
+C. Xin et al.                                                                                                                      Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+Fig. 3. Bounding box annotation and review with GPT-4o. For (a), GPT-4o is asked to directly generate the bounding box coordinates given class labels and the raw image. The
+returned output is drawn on the image. They are nonfunctional, as expected. In other cases, GPT-4o is requested to review the candidate pseudo-labels drawn directly on top of the
+image and return Yes/No answers indicating whether the labeling process is flawless. The exact text prompt used for the review task can be found in Appendix B.3. For (b) and
+(c), only partial labels are provided, and GPT-4o correctly responds with ‘‘No’’. In (d), complete labels are presented, resulting in the appropriate response of ‘‘Yes’’ from GPT-4o.
+
+
+    The proposed DART pipeline leverages GPT-4o to review the pseudo-                         labeled only if all three questions receive positive responses. Otherwise,
+labels generated in the bounding box annotation stage. We draw the                            the image is removed from the training data.
+predicted bounding boxes together with their corresponding class labels                           Like bounding boxes, the generated images via Grouding DINO in
+and confidence scores on top of the raw images and use these synthe-                          Section 3.2 must be validated to ensure they adhere to the requirements
+sized images as the visual prompts. In the text prompt, we ask GPT-4o                         of downstream tasks. This verification is crucial as current SDXL models
+to behave as an expert bounding box reviewer and make judgments                               tend to produce overly imaginative images. Compared to the bounding
+based on three criteria: precision, recall, and fit. The corresponding                        box review based on three criteria, the image photorealism review is
+three questions are:                                                                          an easier task as it only considers photorealism. InternVL-1.5, with its
+                                                                                              robust visual comprehension, handles this task efficiently. Specifically,
+    1. Precision: Does each bounding box perfectly enclose one single                         it is employed to conduct a preliminary review (with text prompt
+       target object?                                                                         listed in Table B.12) of images generated by SDXL after training with
+    2. Recall: Are all target objects localized by a bounding box?                            DreamBooth for all selected instances, assessing their photorealism
+    3. Fit: Is each bounding box neither too loose nor too tight?                             and overall quality. Only the approved images further go through the
+                                                                                              annotation phase (Section 3.3).
+Besides the problem statement and requirement specification, the re-
+                                                                                                  After GPT-4o and InternVL-1.5, only high-quality pseudo-labels and
+minder section for the text prompt is also vital for an optimal re-
+                                                                                              high-fidelity images are kept for real-time object detection training. We
+sponse. We find that GPT-4 models tend to be overly strict for bound-                         show convincing evidence in Section 4.4 and Section 4.5.3 that both
+ing box edges and inconsistent when dealing with occluded objects.                            LMM-based reviews significantly enhance the overall performance and
+Consequently, we summarize these common issues in text form (see                              accuracy of the final output models.
+Table B.11 and other specific requirements for the prompt detailed
+in Appendix B.3) and append them at the end of the original text                              3.5. Real-time object detector training for YOLOv8 and YOLOv10
+prompt as a reminder. This operation makes GPT-4o much less likely to
+make the same mistakes. Furthermore, we also utilize Chain-of-Thought                             In the realm of real-time object detection, YOLO frameworks have
+(COT) (Wei et al., 2023) reasoning to enhance the model’s performance.                        established themselves as the dominant methodology primarily be-
+The final text prompt used for pseudo-label review task is detailed in                        cause they effectively balance computational efficiency with high de-
+Appendix B.3.                                                                                 tection accuracy. Currently, the most popular YOLO variant is YOLOv8.
+   GPT-4o’s output is instructed to be the responses for the three key                        As illustrated in the figure, YOLOv8’s architecture (Fig. 4) inherits
+questions with brief explanations. We consider an image to be correctly                       the overall framework from previous YOLO iterations, utilizing the
+
+                                                                                          8
+C. Xin et al.                                                                                                                   Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+Fig. 4. Model architecture of YOLOv8. It begins with the backbone extracting multi-scale features from the input image. The last three levels of features are then passed to the
+"neck", where a novel C2f module is employed to effectively combine high-level semantic features with low-level spatial information. In the final stage, decoupled head modules
+process these features to predict bounding boxes, objectness scores, and class probabilities for each grid cell in the multi-scale feature maps. These predictions are subsequently
+aggregated (not shown in the figure) to produce the final detections.
+Source: Modified from Jocher (2023), RangeKing (2023).
+
+
+Darknet (Redmon & Farhadi, 2018) backbone, SPP (Spatial Pyramid                              material handling machines, and so on. A list of the exact 23 categories
+Pooling He, Zhang, Ren, & Sun, 2014) and PAN (Path Aggregation                               can be found either as the 𝑥-axis tick labels in Fig. 5 or in the first
+Network Liu, Qi, Qin, Shi, & Jia, 2018) structure in the neck, and three                     column of Table B.10. Fig. 5 illustrates the distribution of images
+multi-scale decoupled heads to predict bounding box coordinates and                          in each category, represented by the blue bars labeled ‘‘0:1’’. The
+class labels. For the major block in the backbone and neck, YOLOv8                           unbalanced data distribution in the LP dataset makes the downstream
+employs the C2f module, which is a faster implementation of the                              object detection task even more challenging. However, as we will
+CSPBlock (Wang et al., 2020) featuring two convolution layers at each                        see in Fig. 9, the final YOLO models still achieve consistently good
+end, with the CSP Bottlenecks in between (depicted as the red block                          results across various classes, highlighting the effectiveness of DART.
+in Fig. 4). In terms of training strategy, the model adopts an anchor-                       Furthermore, Fig. 5 also shows the data distribution after incorporating
+free approach and incorporates Task Alignment Learning (TAL) (Feng                           varying proportions of generated data, which will be elaborated on
+et al., 2021) for ground truth assignment and Distribution Focal Loss                        in Section 4.5.1.
+(DFL) (Li et al., 2020) as the regression loss. These enhancements con-                          Dataset split. The dataset is initially split into a training and a test
+tribute to improved computational efficiency and detection accuracy.                         set with an 80/20 distribution. To address class imbalance, stratified
+The concurrent YOLOv10 is the latest release in the YOLO family. It                          random sampling ensures each class is adequately represented in the
+proposes a consistent dual assignments strategy for NMS-free training                        test set. We allocate 20% of the training set to create a validation
+as well as a holistic efficiency-accuracy-driven model design featuring                      set, which is used for hyperparameter fine-tuning. After obtaining
+comprehensive adoption of pointwise, depthwise, and large-kernel con-                        the optimal hyperparameter set, the model is trained on the original
+volutions with partial self-attention (PSA), which greatly reduces the                       training with 12 K images and evaluated on the 3K images from the
+computational overhead and enhances model capability.                                        test set. The training set could incorporate generated data in specific
+    With approved (Section 3.4) diversified (Section 3.2) images and                         experiment setups to enhance data diversification. Unless otherwise
+their corresponding pseudo-labels (Section 3.3), training a real-time                        specified, the generated-to-original data ratio is maintained at the opti-
+object detector becomes plain and easy. Since DART’s output will be                          mal proportion of 3:1, as outlined in Section 4.5.1. Notably, categories
+deployed on edge devices, we select and train only the nano (n) and                          that already exhibit strong performance with only the original data are
+small (s) variants of YOLOv8 and YOLOv10. These models, pre-trained                          excluded from the augmentation with generated data, as detailed in
+on the COCO dataset (Lin et al., 2014), are fine-tuned using approved                        Section 4.5.4. All performance metrics reported in the tables and figures
+diversified data and pseudo-labels. Extensive experimentation reveals                        of this paper are based on the test set.
+the best-performing YOLO models, considering the tradeoff between
+accuracy, speed, and model size (see Section 4.5.4). By demonstrating                        4.2. Evaluation metrics
+the superior performance of the YOLO models under various conditions
+(see Section 4.4 and Section 4.5), our experiments also underline the                            In this work, we utilize the average precision (AP) of the trained
+outstanding performance of the DART pipeline, validate the effective-                        object detection models in the last stage as the evaluation metrics for
+ness of the DART pipeline, and pinpoint the optimal variant for each                         the proposed DART pipeline. AP summarizes the precision–recall (PR)
+stage.                                                                                       curve into a single value, serving as an approximation of the area under
+                                                                                             the PR curve. To compute AP, precision 𝑝 and recall 𝑟 are first evaluated
+4. Experiments                                                                               as follows:
+                                                                                                        TP               TP
+4.1. Dataset                                                                                 𝑝(𝑡) =           , 𝑟(𝑡) =         ,                                               (3)
+                                                                                                      TP + FP          TP + FN
+                                                                                             where detections are classified as true (T) or false (F) according to their
+    Data collection. We collect a dataset named Liebherr Products (LP)
+                                                                                             confidence scores and determined as positive (P) or negative (N) based
+from the internal database of Libherr, a German-Swiss multinational
+                                                                                             on the Intersection over Union (IoU) threshold 𝑡.
+equipment manufacturer. During data collection, we also employ class
+                                                                                                                                        ̃ 𝑡, 𝑐) is constructed for each
+                                                                                                 Then a modified version of PR curve 𝑝(𝑟,
+and instance identification (in Section 3.1) for bounding box annotation
+                                                                                             class 𝑐 ∈ 𝐶 given a certain IoU 𝑡:
+(in Section 3.3) and data diversification (in Section 3.2), respectively.
+    Dataset composition. The LP dataset (after preprocessing) encom-                         ̃ 𝑡, 𝑐) = max 𝑝(𝑟′ , 𝑡, 𝑐),
+                                                                                             𝑝(𝑟,                                                                              (4)
+passes more than 15 K images of Liebherr’s extensive range of heavy                                       𝑟′ ≥𝑟
+
+machinery such as construction machines, earthmoving equipment,                              so that the curve will decrease monotonically instead of in a zigzag
+deep foundation machines, mining machines, various types of cranes,                          pattern.
+
+                                                                                         9
+C. Xin et al.                                                                                                                     Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+Fig. 5. Number of images per category for different ratios of generated to original data. Each color in the color bar represents the incremental data increase from the previous
+to the current ratio. Note that five classes (marked by *) are not considered during the data diversification phase given their already strong initial performance. See Section 4.5.4
+for more details.
+
+
+    Following COCO (Lin et al., 2014), 𝑝(𝑟,     ̃ 𝑡, 𝑐) is interpolated and                   while the majority of instances have 10 images each (see Fig. A.14). We
+evaluated at 101 points where recall 𝑟 ∈ [0 ∶ .01 ∶ 1] for AP calculation.                    implement dynamic training steps by adjusting the maximum training
+We specify the IoU thresholds of interest by adopting two commonly                            steps based on the number of images collected for the corresponding
+used AP metrics: AP50 and AP50−95 . The former measures precision at                          instance. 100–160 steps per image are proven to be suitable, combining
+a single IoU of 50%, while the latter averages precision across 10 IoU                        with the AdamW optimizer (Loshchilov & Hutter, 2019) with a learning
+thresholds ranging from 50% to 95% in increments of 5% (𝑡 ∈ [.50 ∶                            rate 1×10−4 for U-Net and 5×10−6 for the text encoder. The SNR-gamma
+.05 ∶ .95]). To summarize, AP50−95 can be expressed as follows:                               is set to 5 by default. Other important hyperparameters are explained
+                              (        (                        ))                            in Appendix A.1.
+             1       ∑          1 ∑              ∑
+AP50−95 =                               0.01             𝑝(𝑟,
+                                                         ̃ 𝑡, 𝑐)         (5)                      We fine-tune two models from the same official pre-trained check-
+            10 𝑡∈[.50∶.05∶.95] |𝐶| 𝑐∈𝐶       𝑟∈[0∶.01∶1]                                      point for each instance: one with slightly more steps to ensure resem-
+                                                                                              blance and one with fewer for diversification. For training, a general
+Note that AP50−95 is no greater than AP50 since the precision decreases
+                                                                                              class-specific prompt, ‘‘a photo of a {class_name}’’, is employed to gen-
+for a given recall with higher thresholds. For a well-trained model
+                                                                                              erate class images for prior preservation loss. As for instance-specific
+on diverse and complex datasets, such as LP, both metrics exhibit
+                                                                                              prompts, we use the instance name (product number if available,
+similar trends. These two consistent patterns will also be observed in
+                                                                                              otherwise a descriptive word) to form the prompt as ’’a photo of a <{in-
+the following tables. Consequently, the following sections will primarily
+                                                                                              stance_name}> {class_name}’’. We also explore different approaches
+focus on the AP50−95 . Since AP50−95 is also commonly abbreviated as AP,
+                                                                                              to constructing identifiers and class names. However, our experiments
+we will use these two terms interchangeably.
+                                                                                              reveal that subtle modifications have negligible effects on performance
+                                                                                              as long as the identifier is sufficiently distinctive and the class name is
+4.3. Implementation details                                                                   adequately precise. To meet the requirements of data diversification,
+                                                                                              we craft inference text prompts encompassing a broad spectrum of
+4.3.1. Implementation of DreamBooth with SDXL                                                 scenarios, as listed in Appendix B.1. The training processes are executed
+    We instantiate DreamBooth with SDXL as the subject-driven image                           on either a single NVIDIA A100 80 GB GPU or two NVIDIA 3090
+generation framework for the data diversification phase. The SDXL                             GPUs, with each configuration capable of completing the training of
+model is preferable, as it significantly outperforms previous versions                        one instance-specific SDXL model in less than an hour. The inference
+of Stable Diffusion models such as SD-1.5 (Rombach et al., 2022). We                          process requires substantially less GPU memory and is compatible with
+incorporate prior preservation loss to prevent overfitting and adjust                         any memory optimization techniques for SDXL.
+its weight (𝜆 in Eq. (2)) to 1.0. Contrary to SD-1.5, training the text
+encoder of SDXL has limited effects; we still opt to fine-tune it to                          4.3.2. Implementation of Grounding DINO
+enhance overall performance marginally. We extract 69 instances for                              Off-the-shelf Grounding DINO base model is employed for bound-
+the training of DreamBooth with SDXL in total. The minimum number                             ing box annotation. Through extensive comparative experiments, we
+of images per instance is set to 3 (as suggested by Ruiz et al., 2023),                       determined that a box threshold of 0.27 and a text threshold of 0.25
+
+                                                                                         10
+C. Xin et al.                                                                                                  Expert Systems With Applications 258 (2024) 125124
+
+
+generally returns high-quality bounding boxes, resulting in only 18             representative model. For the complete test results on the other models,
+images without annotations, which are consequently excluded from the            please refer to Table 1.
+pipeline. The original collected images and approved generated images               Our baseline configuration (#0) utilizes a YOLOv8n model without
+are isometrically resized to 800/1333 pixels for the shorter/longer             any additional modules from DART, yielding the lowest performance
+side before going through the model. As for text prompts, we follow             with an AP of just 0.064. In this setup, the model is trained on one
+instructions given in Section 3.3 to construct all three prompt types as        of the most abundant datasets, LVIS (Gupta et al., 2019). Despite
+separate inputs to the Grounding DINO model and apply filtering and             LVIS’s extensive coverage of over 1.2K categories across 164K images,
+NMS to the combined results to obtain the candidate bounding boxes              it falls short of capturing all the classes present in our self-collected LP
+to be reviewed. The annotation process is mainly carried out (including         dataset. Consequently, we assign each LP’s category to its closest kin
+speed test as shown in Table 3) by an NVIDIA A100 80 GB GPU with                in LVIS during inference, guided by similarity scores calculated from
+                                                                                class names and descriptions by SBERT (Reimers & Gurevych, 2019).
+FP16 for our case.
+                                                                                The results, however, are still disastrous, with a merely non-zero AP
+                                                                                of 0.064, suggesting the necessity of the DART pipeline. Integrating
+4.3.3. Implementation of LMM
+                                                                                the bounding box annotation stage of DART improves the AP to a
+    We leverage GPT-4o by calling OpenAI’s API for pseudo-label re-
+                                                                                usable level 0.771. Further incorporation of GPT-4o to rule out inferior
+view. The bounding boxes and class labels are directly drawn on top of
+                                                                                pseudo-labels shows an incremental performance increase, resulting in
+the image, and the synthesized image is compressed to 512 pixels on the         a proper AP of 0.802 and thereby indicating the additional value of
+longer side while keeping the aspect ratio before being specified as the        LMMs for the DART pipeline. The full power of DART is achieved
+vision prompt for the API. Detailed task descriptions, judging criteria,        by the final integration of data diversification. Adding data generated
+hints, suggestions, and reminders are all listed in the text prompt.            by SDXLs trained for each instance in a DreamBooth framework (and
+The prompt construction rule is outlined in Section 3.4, and the exact          approved by InternVL-1.5) to the original training set boosts the final
+content of text prompts is detailed in Appendix B.3. We employ the              best AP to 0.832 for the YOLOv8n model, underlining the superior
+GPT-4o-based pseudo-label review only to images containing multiple             efficacy of the comprehensive DART pipeline.
+annotations or annotations with confidence scores lower than 0.5 (after
+NMS in Section 3.3), which accounts for approximately 5K images since           4.5. Quantitative analysis
+we empirically find that Grounding DINO generally provides accurate
+bounding boxes and labels when the confidence score exceeds 0.5. As                In this section, we conduct internal analyses for the four major
+for InternVL-1.5, we use it for a simpler task of photorealism review           stages of the proposed DART pipeline by investigating the best solutions
+to filter out unrealistic images generated by each SDXL model trained           for each key module via comprehensive experiments and ablation
+by the DreamBooth framework. We run the InternVL-1.5 model locally              studies within each stage.
+on an NVIDIA A100 80 GB GPU with the visual prompt as a single
+                                                                                4.5.1. Analysis of DreamBooth with SDXL
+generated image and the text prompt given in Table B.12.
+                                                                                    We begin by examining the impact of incorporating extra train-
+                                                                                ing data generated by SDXL models trained for each instance using
+4.3.4. Implementation of YOLO
+                                                                                the DreamBooth framework. Across all configurations, we maintain a
+    As the final step of the DART pipeline, we fine-tune COCO pre-              consistent test set of 3K images and augment the training set with
+trained YOLOv8 and YOLOv10 models as the output object detector to              generated data (with both images and pseudo-labels approved by LMM)
+be deployed. We follow common practice (Anon, 2020; Jocher, 2023;               in varying multiples (from 0 to 4) of the original 12K images.
+Li, Li et al., 2023; Li et al., 2022; Wang et al., 2023; Wang, Chen                 Table 2 presents the results of training YOLOv8 models with dif-
+et al., 2024; Wang et al., 2024) to resize all images to 640 × 640.             ferent ratios of generated to original data. When the training data
+Then, AdamW is implemented with a weight decay set to 5e−4 as the               comprises entirely generated data (0:1 ratio), the YOLOv8n model
+optimizer. Next, we conduct extensive experiments focusing on learning          achieves an AP of only 0.031. This outcome is expected due to two
+rate and its scheduling for each model and each experiment setup. The           primary factors. First, our objective of data diversification drives us to
+optimal initial learning rates range from 7e−5 to 5e−4, with a general          intentionally describe scenarios in the text prompts during inference
+trend indicating that larger models and bigger datasets benefit from            that are entirely different from the original images (see Appendix B.2).
+lower learning rates. Mosaic augmentation (Anon, 2020; Bochkovskiy              Secondly, the current DreamBooth with SDXL cannot produce results
+et al., 2020) is adopted to enhance data diversity. Details on other            identical to the original objects but with slight differences. Both factors
+critical hyperparameters are provided in Appendix A.3. Speed tests              contribute to a significant disparity between the train and test data
+(including NMS for YOLOv8, referenced from the official codebase or             distributions. In other words, we deliberately induce an extreme data
+paper) are conducted on an NVIDIA T4 GPU using TensorRT and FP16.               shift, leading to poor performance on the test set. Conversely, using
+The test results are reported in Table 6.                                       only original data (ratio 0:1) and hereby eliminating both issues boosts
+                                                                                the AP to 0.815.
+4.4. Ablation study on the overall DART pipeline                                    However, as we gradually increase the amount of generated data,
+                                                                                the AP continues to rise, reaching 0.832 for YOLOv8n at a 3:1 ratio
+                                                                                (see also Fig. 6 for a visualization of this increase). This phenomenon
+    In this section, we perform an ablation study on the overall DART
+                                                                                is due to the influence of another opposing mechanism to data shift:
+pipeline. We systematically analyze the contributions of each major
+                                                                                introducing diversified data simultaneously enriches the training data
+component by evaluating the test performances of trained real-time
+                                                                                diversity, benefiting the model’s learning process. The changes in model
+object detection models under various configurations. Specifically, we
+                                                                                performance at different ratios result from the interplay between data
+incrementally integrate the first three stages of DART, i.e., Ground-           shift and enrichment mechanisms. As shown in Fig. 6, further increas-
+ing DINO for annotation, GPT-4o for review, and DreamBooth with                 ing the generated data causes the data shift mechanism to slightly
+SDXL for data diversification, as shown in Table 1. To evaluate the             dominate, adversely affecting test performance.
+impact of each newly incorporated component, we leverage the overall                In summary, original data is indispensable for a decent test perfor-
+performance of DART’s final stage as the metric. Various YOLO mod-              mance, while generated data offers significant benefits, especially when
+els with different versions and scales, including YOLOv8n, YOLOv8s,             at a ratio when data shift and diversification mechanisms balance.
+YOLOv10n, and YOLOv10s, are fine-tuned for a comprehensive assess-              For the LP dataset, the optimal scenario involves using three times
+ment. We observe a consistent trend in performance increase across              the generated data as the original data. The almost identical trends
+all four YOLO models as new components of DART are introduced.                  observed in both YOLOv8n and YOLOv8s models clearly illustrated in
+Therefore, the subsequent analyses will primarily use YOLOv8n as the            Fig. 6 corroborate this conclusion.
+
+                                                                           11
+C. Xin et al.                                                                                                                                  Expert Systems With Applications 258 (2024) 125124
+
+                                                    Table 1
+                                                    Ablations on key stages of the DART pipeline.
+
+                                                     #        Model       Grounding DINO   GPT-4o    DreamBooth      AP𝑡𝑒𝑠𝑡      AP𝑡𝑒𝑠𝑡
+                                                                                                                       50          50−95
+                                                         0                                                            0.091          0.064
+                                                         1                      ✓                                     0.864          0.771
+                                                             YOLOv8n
+                                                         2                      ✓            ✓                        0.899          0.802
+                                                         3                      ✓            ✓           ✓            0.915          0.832
+
+                                                         4                      ✓                                     0.883          0.789
+                                                         5   YOLOv8s            ✓            ✓                        0.903          0.815
+                                                         6                      ✓            ✓           ✓            0.924          0.850
+
+                                                         7                      ✓                                     0.854          0.738
+                                                         8   YOLOv10n           ✓            ✓                        0.877          0.777
+                                                         9                      ✓            ✓           ✓            0.879          0.802
+
+                                                     10                         ✓                                     0.867          0.781
+                                                     11      YOLOv10s           ✓            ✓                        0.889          0.809
+                                                     12                         ✓            ✓           ✓            0.917          0.833
+
+
+
+                Table 2                                                                                       Table 3
+                Impact of training data ratios (generated:original) on YOLOv8                                 Comparisons between Grounding DINO tiny and base.
+                model performance.
+                                                                                                                  Grounding DINO         Input size    Latencya    AP𝑡𝑒𝑠𝑡 b    AP𝑡𝑒𝑠𝑡 b
+                                                                                                                                                                     50          50−95
+                 Training data ratio        YOLOv8n               YOLOv8s
+                                                                                                                       Tiny              800 × 1333     112 ms      0.858         0.745
+                 generated:original    AP𝑡𝑒𝑠𝑡   AP𝑡𝑒𝑠𝑡       AP𝑡𝑒𝑠𝑡   AP𝑡𝑒𝑠𝑡
+                                         50       50−95        50       50−95                                          Base              800 × 1333     161 ms      0.864         0.771
+                         1:0           0.047     0.031       0.047      0.031
+                                                                                                              a Latency is tested on a NVIDIA A100 80GB with FP16.
+                         0:1           0.899     0.802       0.903      0.815
+                        0.5:1          0.902     0.815       0.911      0.834                                b APs are provided by a YOLOv8n model trained on all original images annotated
+                         1:1           0.908     0.822       0.916      0.836                                by Grounding DINO tiny and base, respectively.
+                         2:1           0.909     0.825       0.914      0.843
+                         3:1           0.915     0.832       0.924      0.850
+                         4:1           0.914     0.826       0.918      0.839
+
+                                                                                                                   Table 4
+                                                                                                                   Quantities and average confidence scores of Grounding
+                                                                                                                   DINO annotations under various types of text prompts
+                                                                                                                   and operations. In particular, ‘‘all’’ means concatenating
+                                                                                                                   all class names as one text prompt for each image. The
+                                                                                                                   three prompt types that are practically applied in DART are
+                                                                                                                   ‘‘original,’’ ‘‘synonym,’’ and ‘‘co-occurring’’. After combin-
+                                                                                                                   ing the output from these three prompt types, ‘‘filtering’’ is
+                                                                                                                   applied to sift out most annotations with a confidence score
+                                                                                                                   < 0.5. Finally, class-agnostic non-maximum suppression
+                                                                                                                   ‘‘NMS’’ is employed to get rid of overlapping annotations.
+                                                                                                                   More details regarding prompt types and operations can be
+                                                                                                                   found in Section 3.3.
+
+                                                                                                                              Type                # annotations   Average score
+
+                                                                                                                               all                    76913             0.33
+
+                                                                                                                      original/co-occurring           33271             0.49
+                                                                                                                    + synonym/co-occurring            76664             0.47
+                                                                                                                    + filtering (≥0.5)                30580             0.66
+                                                                                                                    + NMS                             17309             0.65
+Fig. 6. Test performance of YOLOv8 models across different training data ratios
+(generated:original).
+
+
+                                                                                                    the table and qualitatively by the first row of Fig. 12. Therefore, we
+4.5.2. Analysis of grounding DINO                                                                   start with only a predefined class name as the original prompt and the
+    Two Grounding DINO variants, which utilize Swin tiny and base                                   co-occurring trick for multiple categories. Next, synonym replacement
+(Liu et al., 2021) as the backbone, respectively, are tested for the                                is applied for all text prompts, which results in more than double
+bounding box annotation task. It can be seen from Table 3 that us-                                  annotations with only a marginal change in the average confidence
+ing the more powerful base variant increases test performance for                                   score. Synonym prompts are indispensable because our experiments
+the YOLOv8n model, suggesting better consistency in bounding box                                    reveal that a substantial number of remaining bounding boxes, which
+annotations and label assignment. However, both of the Grounding                                    survive the high-probability filtering and class-agnostic NMS, are orig-
+DINO variants run too slow to fit the real-time requirements, even on                               inally derived from synonyms. We ultimately achieve non-overlapping
+one of the most powerful GPUs, NVIDIA A100. Consequently, we only                                   bounding boxes with an overall score of 0.65, where the average score
+adopt the Grounding DINO base model for all data annotation tasks for                               for each category is depicted by the blue bars in Fig. 5 (note that the
+better bounding box quality despite a slightly slower speed, which is                               𝑦-axis starts at 0.5). This ensures that, at least within the Grounding
+negligible for the offline labeling process.                                                        DINO framework, only high-quality bounding boxes are selected. These
+    Prompt engineering plays a vital role in the performance of Ground-                             bounding boxes will be further examined by GPT-4o.
+ing DINO. In Section 3.3, we outline the construction process for three
+types of prompts (original, synonym, and co-occurring) and introduce                                4.5.3. Analysis of LMM
+approaches for merging their outputs, including filtering and NMS.                                      DART utilizes GPT-4o for bounding box review. The detailed con-
+In this section, we will discuss the results from these prompts and                                 struction of visual and text prompts is thoroughly discussed in Sec-
+merging operations reported thoroughly in Table 4. As reported in                                   tion 3.4 and further detailed in Appendix B.3. According to the re-
+Section 3.3, simple concatenation of all class names as a single text                               sponses from the pseudo-label review by GPT-4o, we eliminate slightly
+prompt for one image (type ‘‘all’’) leads to inferior performance re-                               less than 2K images with only disapproved bounding boxes. This results
+flected quantitatively by the low average confidence score of 0.33 in                               in improvements in the confidence score of bounding boxes among
+
+                                                                                              12
+C. Xin et al.                                                                                                              Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                       Fig. 7. Class-wise average confidence score of Grounding DINO annotations after NMS filtering (blue) and GPT-4o review (red).
+
+
+
+
+Fig. 8. Comparisons of bounding box review consistency. The left confusion matrix displays the agreement between GPT-4o and the human average, whereas the right matrix
+compares the annotations of two experienced human labelers. GPT-4o demonstrates human-level performance in bounding box review given the same text and visual information.
+
+
+all categories as displayed by the red bars in Fig. 5, indicating the                                       Table 5
+consistent judgment between GPT-4o and Grounding DINO regarding                                             Ablations on LMM-based reviews.
+high-quality bounding box annotations.
+                                                                                                             GPT-4o    InternVL 1.5   AP𝑡𝑒𝑠𝑡   AP𝑡𝑒𝑠𝑡
+                                                                                                                                        50       50−95
+    It turns out that GPT-4o’s decision is even more in line with expe-
+                                                                                                                                      0.871     0.782
+rienced human labelers. We conduct a small-scale human evaluation                                              ✓                      0.909     0.818
+experiment by providing experienced labelers with the same instruc-                                            ✓            ✓         0.915     0.832
+
+tions as GPT-4o and recording their responses to 50 randomly selected
+images with pseudo-labels drawn on top. In Fig. 8, the left confusion
+matrix illustrates the results of GPT-4o vs average human performance,
+while the right exhibits the agreement level between two labelers                           Despite GPT’s exceptional visual comprehension abilities, its API
+for reference. Notably, GPT-4o and human labelers give consistent                        costs are high. Therefore, we leverage the open-source model InternVL-
+responses for approximately 85% of the cases, a rate comparable to                       1.5 for the straightforward task of verifying the photorealism of gener-
+the agreement between two human labelers.                                                ated images. More details on this task are also given in Appendix B.3.
+
+                                                                                    13
+C. Xin et al.                                                                                                                      Expert Systems With Applications 258 (2024) 125124
+
+    Table 6                                                                                             Finally, the statistics for all real-time object detectors in this study
+    Comparisons of YOLO models.
+                                                                                                    are listed in Table 6. Each YOLO variant is enhanced by the best
+        Model           Input size   #Param.   FLOPs     Latencya     AP𝑡𝑒𝑠𝑡
+                                                                        50
+                                                                                AP𝑡𝑒𝑠𝑡
+                                                                                  50−95
+                                                                                                    options provided by each DART component, i.e. photorealistic gen-
+       YOLOv8n          640 × 640     3.2M     8.7G      2.47 ms      0.915       0.832             erated images judged by InternVL-1.5 and mixed with original data
+       YOLOv8s          640 × 640     11.2M    28.6G     2.74 ms      0.924       0.850             at the optimal ratio of 3:1, bounding box annotations carried out by
+      YOLOv10n          640 × 640     2.3M     6.7G      1.84 ms      0.879       0.802
+      YOLOv10s          640 × 640     7.2M     21.6G     2.49 ms      0.917       0.833
+                                                                                                    Grounding DINO base model, pseudo-labels approved by the LMMs,
+                                                                                                    and the best hyperparameter set sifting through extensive fine-tuning
+   a Latency is tested on a NVIDIA Tesla T4 with TensorRT FP16, referenced from the official
+                                                                                                    experiments. The AP values are always derived from the same test set.
+   codebase or paper.
+                                                                                                    As seen from the third column, the YOLOv10 models are designed to
+                                                                                                    possess fewer parameters than the YOLOv8 model of the same category
+                                                                                                    (indicated by the suffix n or s). Due to efficiency-driven model design,
+   We design a scenario to validate the effectiveness of both LMMs
+                                                                                                    the YOLOv10n model achieves an AP of 0.802 in just 1.84 ms (on a T4
+by comparing the test performance of a YOLOv8n model trained with
+                                                                                                    GPU with TensorRT FP16). This is emphasized in the left subfigure of
+and without the images they disapproved. First, we construct a dataset
+                                                                                                    Fig. 10, where other models fall slightly behind YOLOv10n in the AP-
+using the optimal generated-to-original data ratio of 3:1 obtained in
+                                                                                                    speed tradeoff. Increasing the number of parameters by approximately
+a Section 4.5.2. As indicated in the first row of Table 5, training a
+                                                                                                    40% and inference time by 30%, the YOLOv8n model significantly
+YOLOv8n directly on this dataset results in a test performance of AP
+                                                                                                    boosts the AP to 0.832. The right diagram of Fig. 10 clearly shows that
+0.782. Subsequently, when we remove the images not approved by
+                                                                                                    YOLOv8n achieves a Pareto optimal balance between AP and model
+GPT-4o from the original dataset and retrain the model, the AP climbs                               size, outperforming all other models in this regard. If the sole focus is
+up to 0.818. Note that this is already better than training without any                             on AP, YOLOv8s becomes the optimal choice, albeit at the cost of the
+generated data, which provides an AP of 0.802 as reported in case                                   highest parameter count and the slowest inference time. We reasonably
+#2 of Table 1, exhibiting not only the clear advantages of employing                                speculate that larger and more complex models, such as the m/l/x
+GPT-4o-based filtering but also the pure benefit of data diversification.                           variants of the YOLO series or state-of-the-art transformer-based object
+Finally, by applying InternVL-1.5 to sift through images generated by                               detectors (Wang, Dai et al., 2023; Zong, Song, & Liu, 2023) would
+SDXL and retain the photorealistic ones, the trained model achieves the                             further elevate AP. However, this contradicts DART’s goal of real-time
+best performance with an AP of 0.832.                                                               performance on edge devices, so they are not included in this study.
+                                                                                                        In summary, the fastest model is YOLOv10n, the most accurate is
+4.5.4. Analysis of YOLO                                                                             YOLOv8s, but the overall best model for real-time object detection pur-
+    YOLO models are chosen as the final real-time object detector for                               poses is YOLOv8n, as it achieves the Pareto optimal balance between
+DART. Fig. 9 depicts the class-wise test performance of two identical                               AP and model size, with a practical AP performance of 0.832. We
+YOLOv8n models applied with partial (a) and full (b) DART. The first                                propose the trained YOLOv8n as the final output of the DART pipeline.
+confusion matrix is derived from the YOLOv8n model, on which only                                   In contrast to the disastrous performance without DARG and the subpar
+the annotation and training stage of DART is employed. Note that we                                 results of an incomplete DART, the comprehensive DART pipeline
+choose these two DART components from the outset since the pre-                                     clearly demonstrates superior efficacy in enhancing the capabilities
+trained YOLO models fail catastrophically in object detection on the                                of real-time object detection models. Compared to the catastrophic
+LP dataset as explained in Section 4.4. The realization that providing                              performance without DARG and the subpar results of an incomplete
+zero-shot performance comparison is meaningless already emphasizes                                  DART, the comprehensive DART pipeline clearly demonstrates superior
+the essential need for DART.                                                                        efficacy in enhancing the capabilities of real-time object detection
+    Without the full ability of DART, we observe several misclassifica-                             models. The fact that DART accomplishes these advancements without
+tions (non-diagonal elements) and subpar true positive rates (diagonal                              needing manual annotation and extra data collection further highlights
+elements), particularly in categories such as ‘‘combined pilling and                                its significance in effectiveness and efficiency.
+drilling rig’’, ‘‘crawler loader’’, ‘‘log loaders’’, and so on, indicating
+room for improvement. However, certain categories, such as crawler                                  4.6. Qualitative analysis
+excavators and truck mixers, already exhibit satisfactory performance.
+We hypothesize that this is due to their relative prevalence com-                                       In this section, we conduct qualitative analyses using visualiza-
+pared to other categories and their inclusion in several public datasets                            tions to examine the model’s performance during the data diversifi-
+(e.g., LVIS). This enables Grounding DINO to provide more accurate                                  cation, bounding box annotation, and LMM-based review stages. We
+and consistent bounding boxes, as indicated by the high confidence                                  focus on three specific scenarios in this section, while numerous other
+scores of these classes in Fig. 7. Consequently, these categories do not                            visualizations can be found in Appendix C.
+require further data diversification. Instead, we focus on diversifying                                 Fig. 11 showcases a randomly selected category, ‘‘combined pilling
+data for categories with temporarily lower performance, allocating                                  and drilling rig’’, to demonstrate the visualization of the data diversi-
+more quota of generated images to these classes to improve their                                    fication and bounding box annotation stages. Additional illustrations
+results. We name this strategy selective data diversification.                                      of other categories can be found in Figs. C.16 and C.20. As described
+    The second confusion matrix in Fig. 9 represents the results from the                           in Section 3, we first select some instance data and use them to train
+full DART pipeline. Obviously, the selective data diversification process                           SDXL under the DreamBooth framework. The trained SDXL generates
+described above pays off. Misclassifications are reduced across almost                              diversified data during inference with the help of designed prompts
+all categories. True positive detections for the diversified categories                             (with their IDs and descriptions shown as subtitles for each generated
+considerably elevate without negatively impacting the performance                                   image on the right side; refer to Table B.9 for the corresponding text).
+of the previously well-performing categories. Note that selective data                              After approval by InternVL-1.5 (omitted in the figure but showcased
+diversification exacerbates the imbalance in the dataset by favoring                                in Fig. C.19), pseudo-labels (directly drawn on top of each image) are
+other categories over five unchosen ones. Despite this, the model’s per-                            obtained through Grounding Dino. As illustrated in Fig. 11, the SDXL
+formance on the five underrepresented categories remains unaffected,                                model trained with DreamBooth accurately generated realistic objects.
+highlighting DART’s resilience to data imbalance. This observation con-                             Guided by diversified text prompts, the resulting generated images ef-
+firms the efficacy of selective data diversification, leading to its overall                        fectively depicted the scenes described. The designed prompts used for
+deployment for all experiments involving the addition of generated                                  data generation also allow for the customization of background, pose,
+diversified data.                                                                                   and quantity of target objects, greatly enriching the original dataset
+
+                                                                                               14
+C. Xin et al.                                                                                                              Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+          Fig. 9. Confusion matrices derived from the class-wise test performance of the same YOLOv8n model enhanced by incomplete (a) and full (b) DART pipeline.
+
+
+
+
+                                                                                    15
+C. Xin et al.                                                                                                                      Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+Fig. 10. Test performance comparisons of YOLOv8 and YOLOv10 models in terms of accuracy-latency (left) and accuracy-size (right) tradeoff. YOLOv10n and YOLOv8n reach the
+Pareto frontier in these two scenarios, AP vs. inference speed and AP vs. model size, respectively. The dotted lines in both figures are derived from nearly collinear points of the
+three non-optimal models and are translated to the position of the optimal model to highlight its superiority.
+
+
+
+
+Fig. 11. Visualization of data diversification and bounding box annotation for the category ‘‘combined pilling and drilling rig’’. Instance data on the left are utilized for training
+an SDXL under the DreamBooth framework. The trained SDXL generates diversified data during inference using designed prompts. The IDs and descriptions of the corresponding
+prompts used to generate the image are shown as the corresponding subtitles. Please refer to Table B.9 for the exact content of each text prompt. Bounding box coordinates and
+labels are given by Grounding DINO and are drawn directly on top of the generated images on the right side. Also see Figs. C.16 and C.20 for more illustrations of other classes.
+
+
+to meet personalized requirements. The bounding box annotations are                           ground truth (labeled by Grounding DINO and approved by GPT-
+also highly precise. In summary, DART significantly increases dataset                         4o), while the other two showcase prediction results of a YOLOv8n
+diversity and generates accurate pseudo-labels for the newly created                          model trained with and without DART. Each row picks an image
+data. These enhancements substantially improve the performance of                             from the test set, which is never seen by the object detector in either
+downstream YOLO models compared to training on the original dataset                           scenario. Clearly, without DART’s customized diversification and anno-
+alone, as shown repeatedly in Section 4.4 and Section 4.5.                                    tation, the model performance remains poor even after fine-tuning on
+    Derived from the responses from GPT-4o-based pseudo-label review,
+                                                                                              LVIS. On the contrary, introducing DART leads to a substantial perfor-
+Grounding DINO delivers feasible results in even 60% of hard cases
+                                                                                              mance boost, yielding almost identical results to the ground truth. This
+with confidence scores below 0.5. Nonetheless, current state-of-the-art
+                                                                                              aligns with the dramatic AP increase from 0.064 to 0.832 discussed in
+open-vocabulary detection (OVD) models still exhibit certain issues. As
+shown in Fig. 12, Grounding DINO’s performance significantly declines                         Section 4.5.4, demonstrating the necessity and effectiveness of DART.
+when the prompt is simply too long. This limitation prevents us from                              In the last row of Fig. 13, we demonstrate an even more intriguing
+using fully concatenated class names as a single text prompt (which                           benefit of DART: the final YOLO model of DART can capture missed
+is the case for the first row in Fig. 12 and marked as ‘‘all prompt’’).                       objects during the bounding box annotation process. We argue that the
+Instead, we must adopt a workaround involving original class names,                           YOLO model benefits from the diversity of poses and backgrounds for
+synonyms, and co-occurring classes and their combinations as detailed                         the target object category provided by DART, allowing it to better learn
+in Section 3.3. Additionally, text ambiguity can pose problems. For                           the target object’s concept. Conversely, Grounding DINO is limited
+instance, ‘‘handler’’ (case d in Fig. 12) can mean either an object or                        by the extensive range of its pre-trained public dataset, making it
+a person, and ‘‘gantry crane’’ (e) can refer to either the entire structure                   sometimes less effective in specialized detection tasks. This suggests a
+or individual cranes. Furthermore, OVD is certainly not immune to
+                                                                                              new approach for the annotation stage: fine-tuning OVD with manually
+common challenges faced by all object detection models, including
+                                                                                              labeled target objects before using it for bounding box generation.
+omitted target objects (f), difficulties with small objects (g), incorrect
+                                                                                              We leave this idea for future exploration. On the other hand, the fact
+classification (h), or box coordinates (i). Fortunately, LMM can assist in
+identifying these errors. Our GPT-4o-based pseudo-label review detects                        that training a tiny real-time object detection model under the DART
+5 out of 6 instances of errors in the last two rows of Fig. 12, demon-                        framework without any manual labeling and extra data collection leads
+strating both the necessity and efficacy of the proposed LMM-based                            to rectifying errors made by the state-of-the-art OVD model highlights
+review.                                                                                       the effectiveness of the DART pipeline. Despite the imperfections of
+    Finally, we first visually compare object detection results with and                      existing OVD models, DART’s robust framework compensates for their
+without DART in Fig. 13. The first column in the figure visualizes                            shortcomings.
+
+                                                                                         16
+C. Xin et al.                                                                                                              Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+Fig. 12. Common data annotation errors by OVD (Grounding DINO). The first row is annotation results using all class names as a single text prompt. The second and third rows
+demonstrate common issues for OVD. The * denotes the only case when the issue is not discovered by GPT-4o-based pseudo-label review.
+
+
+
+5. Discussion                                                                            process and even addressing the challenge of numerical coordinate
+                                                                                         generation. Nonetheless, we still recommend retaining both the anno-
+     Limitation. While our DART pipeline demonstrates significant per-                   tation and review stages. Employing different model architectures for
+formance, boosting the AP of an already fine-tuned YOLOv8n model                         these tasks mirrors the roles of annotators and reviewers in manual
+from 0.064 to 0.832 without any manual labeling, it is still constrained                 labeling, ensuring maximum reliability of the ground truth. Although
+by weaknesses in the current instantiations of each module. Grounding                    our experience indicates that hallucinations in generated images do not
+DINO’s issues are illustrated and discussed in Section 4.6. The Dream-                   result in severe consequences, more realistic objects are undeniably
+booth with SDXL for data diversification generates objects that closely                  beneficial. Finally, improved real-time object detectors will naturally
+mimic originals in various poses and scenes but still suffer from slight                 boost the model’s overall performance.
+dissimilarity and hallucination, which result in initially unrealistic gen-
+erations and, eventually, the necessity of original data during training.                6. Conclusion
+For images disapproved by pseudo-label review, human intervention is
+still preferred to indiscriminate deletion, which leads to an inevitable                     In this paper, we introduce DART, an automated end-to-end object
+loss of information. Compared to proprietary LMMs such as GPT-4o,                        detection pipeline to eliminate the need for human labeling and exten-
+open-source models like InternVL perform suboptimally and can only                       sive data collection while maintaining high model performance. The
+handle simple scenarios. A few categories show minimal improvement                       Liebherr Product (LP) dataset with 15K images across 23 categories of
+after diversification, primarily due to inadequate labeling of test set                  construction machines is collected to validate the effectiveness of our
+data and deficiencies noted above.                                                       approach. We have demonstrated the efficacy of the DART pipeline
+     Future work. The modular design of our proposed DART system                         through extensive experimentation and analysis. Our results consis-
+ensures both easy exchangeability and extensibility. This allows for                     tently show that incremental incorporation of each component of DART
+future algorithm upgrades, the seamless integration of new object                        always contributes to significant improvements in AP. Detailed quan-
+categories, and adaptability to customized environments without the                      titative ablation studies, coupled with qualitative analyses, reveal the
+need for manual labeling or additional data collection. Given that                       optimal configuration of each stage. Notably, our researches indicate
+the current major bottleneck of DART is providing candidate ground                       that a 3:1 ratio of generated (by fine-tuned SDXL models via Dream-
+truths through Grounding DINO, we hope future work will incorporate                      Booth) to original data yields the best results for data diversification on
+more robust OVD for annotations. The rapid advancement of Large                          the LP dataset. Open-vocabulary bounding box annotation (Grounding
+Multimodal Models (LMMs) suggests that, in the near future, more                         DINO) has proven effective in generating credible bounding boxes
+powerful LMMs will be capable of effectively handling the review                         without human intervention. GPT-4o has demonstrated human-level
+
+                                                                                    17
+C. Xin et al.                                                                                                         Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                                   Fig. 13. Comparisons of object detection results with and without DART on test set images.
+
+
+
+
+semantic understanding capabilities in the task of pseudo-label review.            customization for any specific target object or environment. Remark-
+Furthermore, our analysis reveals that YOLOv8n offers the best tradeoff            ably, DART accomplishes these results without requiring any manual
+between accuracy and model size, making it the optimal choice for
+                                                                                   annotation and extra data collection, further highlighting its signifi-
+real-time object detection on edge devices. These findings demonstrate
+                                                                                   cance. The efficiency and automation of DART not only streamline ob-
+DART’s superior efficacy in enhancing the capabilities of real-time
+object detection models. In addition to its effectiveness, the modu-               ject detection applications but also reveal its potential to revolutionize
+larity of DART ensures its adaptability to future advancements and                 the field.
+
+                                                                              18
+C. Xin et al.                                                                                                                  Expert Systems With Applications 258 (2024) 125124
+
+Table A.7                                                                                        Table A.8
+Hyperparameters of Dreambooth with SDXL.                                                         Hyperparameters of YOLOv8 and YOLOv10 models.
+ Hyperparameters                           Values                                                 Hyperparameter                            YOLOv8n/v8s/v10n/v10s
+ pre-trained SDXL model                    stabilityai/stable-diffusion-xl-base-1.0               epochs                                    60
+ pre-trained VAE model                     madebyollin/sdxl-vae-fp16-fix                          optimizer                                 AdamW
+ optimizer                                 AdamW                                                  𝛽1                                        0.9
+ 𝛽1                                        0.9                                                    𝛽2                                        0.999
+ 𝛽2                                        0.999                                                  weight decay                              5 × 10−4
+ weight decay                              1 × 10−4                                               mixed precision                           FP16
+ mixed precision                           BF16                                                   resolution                                640 × 640
+ resolution                                1024 × 1024                                            initial learning rate                     27/7.3/50/7.0 × 10−5
+ batch size                                1                                                      final learning rate factor                0.5
+ learning rate for U-Net                   1 × 10−4                                               batch size                                64/32/32/32
+ learning rate for text encoder            5 × 10−6                                               learning rate schedule                    cosine/cosine/cosine/linear
+ learning rate schedule                    constant                                               warm-up epochs                            4/1/3/4
+ learning rate warmup steps                0                                                      warm-up momentum                          0.8
+ training steps                            max(800, {120, 140} × #images)                         warm-up bias learning rate                0.1
+ gradient accumulation steps               1                                                      box loss weight                           7.5
+ prior preservation loss weight            1                                                      class loss weight                         0.5
+ SNR-gamma                                 5                                                      DFL loss weight                           1.5
+                                                                                                  HSV saturation                            0.7
+                                                                                                  HSV value                                 0.4
+                                                                                                  HSV hue                                   0.015
+                                                                                                  translation                               0.1
+CRediT authorship contribution statement
+                                                                                                  flip probability                          0.5
+                                                                                                  scale                                     0.5
+   Chen Xin: Conceptualization, Methodology, Software, Validation,                                mosaic probability                        1.0
+Formal analysis, Investigation, Data curation, Writing – original draft,                          close mosaic epochs                       10
+Writing – review & editing, Visualization. Andreas Hartel: Resources,
+Project administration, Funding acquisition. Enkelejda Kasneci: Re-
+sources, Writing – review & editing, Supervision.
+                                                                                           A.2. LMM
+Declaration of competing interest
+                                                                                               Besides GPT-4o, we have also tried GPT-4v with the ‘‘gpt-4-vision-
+                                                                                           preview’’ API and observed that GPT-4v is particularly strict when
+    The authors declare that they have no known competing finan-
+                                                                                           handling bounding boxes, which leads to the ‘‘relaxation’’ and ‘‘re-
+cial interests or personal relationships that could have appeared to
+influence the work reported in this paper.                                                 minder’’ section of the user prompt listed in Table B.11. Additionally,
+                                                                                           we find that if the prompt is too lengthy, all LMM, except for GPT-4O,
+Data availability                                                                          experience a decline in performance. Therefore, we deliberately shorten
+                                                                                           the prompt for InternVL-1.5, as shown in Table B.12. For GPT-4v, we
+    Data will be made available on request.                                                discover a workaround for this issue: using multi-turn dialogues, where
+                                                                                           we first ask the questions (which corresponds to ‘‘task’’, ‘‘question’’, and
+Appendix A. More model details                                                             ‘‘output’’ section in Table B.11) and then give suggestions (‘‘relaxation’’
+                                                                                           and ‘‘reminder’’ section in Table B.11) in the second turn. This approach
+   In this section, we discuss additional implementation details of the                    helps avoid overly long prompts and improves model performance. In
+core modules of DART.                                                                      contrast, GPT-4o does not suffer from long prompts and dominates its
+                                                                                           predecessor in the bounding box review task. Therefore, we exclusively
+A.1. DreamBooth                                                                            use it for the pseudo-label review segment of our DART pipeline.
+
+    The hyperparameters used for the Dreambooth with SDXL model                            A.3. YOLO
+are detailed in Table A.7. We use the official SDXL checkpoint from
+Stability AI but replace the VAE with madebyollin’s version (for a                             Table A.8 presents hyperparameters used for YOLO models. We
+fair comparison of FP16 and BF16, where we later find no appar-                            follow common practice (Anon, 2020; Jocher, 2023; Li, Li et al., 2023;
+ent differences between the two) to initialize the SDXL model. The                         Li et al., 2022; Wang et al., 2023; Wang, Chen et al., 2024; Wang et al.,
+initialized SDXL model is then trained using LoRA. We choose the                           2024) to resize all images to 640 × 640. In almost all experiments,
+AdamW optimizer with a learning rate 1 × 10−4 for U-Net and 5 × 10−6                       training is conducted over 60 epochs since model performance plateaus
+for the text encoder. The learning rate schedule is constant, with no                      after 20–30 epochs. AdamW optimizer is always employed with default
+warmup steps. We implement dynamic training steps by adjusting the                         beta settings and a weight decay set to 5 × 10−4 . For each experiment
+maximum training steps based on the number of images collected for                         setup and model type, we meticulously fine-tune learning-rate-related
+the corresponding instance. Specifically, two models are trained for                       parameters and only display the optimal hyperparameter sets derived
+each instance with maximum training steps set to either 120 or 140                         from the experiment setup of the optimal generated-to-original data
+times the actual number of images collected for the corresponding                          ratio (3:1) in Table A.8. It turns out that the optimal learning rates
+instance during preprocessing. For weighting, the prior preservation                       range from 7e−5 to 5e−4, with a general trend indicating that larger
+loss’s weight is set to 1 and the SNR-gamma to 5 for all experiments.                      models and bigger datasets benefit from lower learning rates. The final
+    Fig. A.14 illustrates the distribution of the number of instances by                   learning rate factor is always 50% at best. The learning rate schedule is
+the number of images per instance. The minimum number of images                            either cosine or linear, depending on the model. Warm-up epochs are
+per instance is set to 3 (as suggested by Ruiz et al., 2023), while the                    set between 1 and 4, with a warm-up momentum of 0.8 and a warm-
+maximum is 16. We do not find a significant correlation between the                        up bias learning rate of 0.1. The box loss weight is set to 7.5, class
+number of images per instance and the quality of the trained SDXL via                      loss weight to 0.5, and DFL loss weight to 1.5. HSV augmentations
+DreamBooth. Most instances contain approximately 10 images each,                           are specified by saturation with 0.7, value with 0.4, and hue with
+which we empirically find to be a suitable choice.                                         0.015. Mosaic augmentation is always applied (with probability 100%)
+
+                                                                                      19
+C. Xin et al.                                                                                                                    Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                                              Fig. A.14. Distribution of instance numbers by the number of images per instance.
+
+
+Table B.9
+A list of all prompts used during data generation via trained SDXL by DreamBooth. The ‘‘{placeholder}’’ refers to the specific instance name wrapped by ‘‘<>’’ followed by its
+class name, e.g. ‘‘<TA230> articulated dump truck’’ for the case in Fig. 2.
+
+ ID             Description            Prompt text
+
+ 1              construction site      A photo of a {placeholder} on a construction site. The image is high quality and photorealistic. The {placeholder} may be partially
+                                       visible, at a distance, or obscured. The background is complex, providing a realistic context.
+ 2              Sunny                  A high-quality, photorealistic image of a {placeholder} under a bright, sunny sky at a bustling construction site.
+                construction site
+ 3              Cloudy                 A detailed, photorealistic image of a {placeholder} operating at a construction site on a cloudy day.
+                construction site
+ 4              Rainy                  A high-resolution, photorealistic image of a {placeholder} working at a muddy construction site during heavy rain.
+                construction site
+ 5              City street            A photorealistic image of a {placeholder} on a busy city street, surrounded by tall buildings and traffic.
+ 6              Rural area             A high-quality, photorealistic image of a {placeholder} operating in a rural area, with fields and farmhouses in the background.
+ 7              Mining site            A detailed, photorealistic image of a {placeholder} working at a mining site, with rocky terrain and machinery in the background.
+ 8              Harbor                 A high-resolution, photorealistic image of a {placeholder} operating at a harbor, with ships and cranes in the background.
+ 9              Left side              A photorealistic image of a {placeholder} positioned on the left side of the frame at a construction site, with workers in the background.
+ 10             Right side             A high-quality, photorealistic image of a {placeholder} on the right side of the image, operating in a busy urban environment.
+ 11             In the distance        A detailed, photorealistic image of a {placeholder} visible in the distance at a construction site, with a panoramic view of the area.
+ 12             Facing left            A high-resolution, photorealistic image of a {placeholder} facing left, working at a construction site with scaffolding in the background.
+ 13             Facing right           A photorealistic image of a {placeholder} facing right, operating in a rural setting with rolling hills in the background.
+ 14             Partially visible      A high-quality, photorealistic image of a {placeholder} partially visible behind a building at a construction site.
+ 15             Nighttime              A photorealistic image of a {placeholder} working at night under artificial lights at a construction site.
+                construction
+ 16             Foggy morning          A detailed, photorealistic image of a {placeholder} operating on a foggy morning, with limited visibility at a rural construction site.
+ 17             Snowy day              A high-resolution, photorealistic image of a {placeholder} working at a construction site during snowfall, with snow-covered equipment
+                                       and ground.
+ 18             Highway                A photorealistic image of a {placeholder} operating on a highway under construction, with traffic cones and barriers.
+                construction
+ 19             Desert construction    A high-quality, photorealistic image of a {placeholder} working at a construction site in a desert area, with sand dunes in the
+                                       background.
+ 20             Urban demolition       A high-resolution, photorealistic image of a {placeholder} demolishing an old building in an urban area, with debris flying.
+ 21             Windy day              A high-quality, photorealistic image of a {placeholder} working at a construction site on a windy day, with dust and debris blowing in
+                                       the wind.
+ 22             Industrial area        A detailed, photorealistic image of a {placeholder} operating in an industrial area, surrounded by factories and heavy machinery.
+ 23             Riverbank              A high-resolution, photorealistic image of a {placeholder} working on a riverbank, with water and vegetation in the background.
+                construction
+
+                                                                                                                                                             (continued on next page)
+
+
+
+
+                                                                                        20
+C. Xin et al.                                                                                                                        Expert Systems With Applications 258 (2024) 125124
+
+
+
+Table B.9 (continued).
+ ID             Description                Prompt text
+ 24             Urban parking lot          A photorealistic image of a {placeholder} operating in an urban parking lot construction site, with buildings and cars nearby.
+ 25             Dam construction           A high-quality, photorealistic image of {placeholder} working on a dam construction project, with water and concrete structures in the
+                                           background.
+ 26             Railway                    A detailed, photorealistic image of a {placeholder} working on a railway construction site, with tracks and trains in the background.
+                construction
+ 27             Solar farm                 A high-resolution, photorealistic image of a {placeholder} operating at a solar farm construction site, with solar panels and wide open
+                construction               fields.
+ 28             Skyscraper                 A photorealistic image of a {placeholder} working at a skyscraper construction site, with towering steel structures and cranes.
+                construction
+ 29             Wind farm                  A high-quality, photorealistic image of a {placeholder} operating at a wind farm construction site, with wind turbines in the background.
+                construction
+ 30             Bridge                     A detailed, photorealistic image of a {placeholder} working on a bridge construction site over a river.
+                construction
+ 31             Mountain                   A high-quality, photorealistic image of a {placeholder} operating on a steep mountain construction site with rocky terrain.
+                construction
+ 32             Forest                     A photorealistic image of a {placeholder} working in a forest area, with tall trees and underbrush surrounding the site.
+                construction
+ 33             Coastal                    A detailed, photorealistic image of a {placeholder} operating at a coastal construction site, with the ocean and waves in the background.
+                construction
+ 34             Underground                A high-resolution, photorealistic image of a {placeholder} working in an underground tunnel construction site, with dim lighting and
+                construction               rocky walls.
+ 35             Large scale                A high-quality, photorealistic image of multiple {placeholder}s working together on a large-scale construction project, with cranes and
+                construction               scaffolding.
+ 36             Airport                    A photorealistic image of a {placeholder} operating at an airport construction site, with planes and runways in the background.
+                construction
+ 37             Suburban                   A detailed, photorealistic image of a {placeholder} working in a suburban area, with houses and trees around the construction site.
+                construction
+ 38             Island construction        A high-resolution, photorealistic image of a {placeholder} operating on an island construction site, surrounded by water and palm trees.
+ 39             Urban renewal              A high-quality, photorealistic image of a {placeholder} working on an urban renewal project, surrounded by modern buildings and
+                                           greenery.
+ 40             Industrial site            A photorealistic image of a {placeholder} operating at an industrial construction site, with factories and smokestacks in the background.
+ 41             Multiple machines sunny    A high-quality, photorealistic image of several {placeholder}s working together under a bright, sunny sky at a bustling construction site.
+ 42             Multiple machines rainy    A high-resolution, photorealistic image of several {placeholder}s operating at a muddy construction site during heavy rain.
+ 43             Multiple machines city     A photorealistic image of multiple {placeholder}s on a busy city street, surrounded by tall buildings and traffic.
+                street
+ 44             Multiple machines rural    A high-quality, photorealistic image of several {placeholder}s operating in a rural area, with fields and farmhouses in the background.
+                area
+ 45             Multiple machines harbor   A high-resolution, photorealistic image of several {placeholder}s operating at a harbor, with ships and cranes in the background.
+ 46             Multiple machines night    A photorealistic image of several {placeholder}s working at night under artificial lights at a construction site.
+ 47             Multiple machines snowy    A high-resolution, photorealistic image of several {placeholder}s working at a construction site during snowfall, with snow-covered
+                day                        equipment and ground.
+ 48             Multiple machines          A photorealistic image of several {placeholder}s operating on a highway under construction, with traffic cones and barriers.
+                highway
+ 49             Open pit mine              A high-quality, photorealistic image of a {placeholder} working in an open-pit mine, with terraced rock formations and heavy
+                                           machinery around.
+ 50             Underground mine           A detailed, photorealistic image of a {placeholder} operating in an underground mine, with tunnels and mining equipment.
+ 51             Mining town                A high-resolution, photorealistic image of a {placeholder} working near a mining town, with workers’ housing and facilities in the
+                                           background.
+ 52             Quarry operation           A photorealistic image of a {placeholder} working in a quarry, with large stone blocks and cutting equipment.
+ 53             Mountain mining            A high-quality, photorealistic image of a {placeholder} operating in a mountain mining site, with steep slopes and rocky terrain.
+ 54             Remote mine                A photorealistic image of a {placeholder} working in a remote mining location, with rugged terrain and minimal infrastructure.
+ 55             Ore processing             A high-quality, photorealistic image of a {placeholder} involved in ore processing, with conveyor belts and sorting equipment.
+ 56             Tailings dam               A detailed, photorealistic image of a {placeholder} working near a tailings dam, with water and waste materials.
+ 57             Mining reclamation         A high-resolution, photorealistic image of a {placeholder} involved in mining reclamation, with land restoration and vegetation.
+ 58             Ocean dockyard             A high-quality, photorealistic image of a {placeholder} operating in an ocean dockyard, with large ships and containers in the
+                                           background.
+ 59             River dredging             A detailed, photorealistic image of a {placeholder} dredging a river, with muddy water and vegetation along the banks.
+ 60             Coastal                    A high-resolution, photorealistic image of a {placeholder} performing coastal maintenance, with waves crashing in the background.
+                maintenance
+ 61             Offshore                   A photorealistic image of a {placeholder} working on an offshore construction project, with deep sea and platform structures.
+                construction
+ 62             Flood control              A high-quality, photorealistic image of a {placeholder} engaged in flood control operations, with sandbags and rising water levels.
+ 63             Canal work                 A detailed, photorealistic image of a {placeholder} working on a canal, with narrow waterways and boats passing by.
+                                                                                                                                                                (continued on next page)
+
+
+
+
+                                                                                            21
+C. Xin et al.                                                                                                                     Expert Systems With Applications 258 (2024) 125124
+
+Table B.9 (continued).
+ ID             Description             Prompt text
+ 64             Shipyard repair         A photorealistic image of a {placeholder} in a shipyard, repairing large vessels with workers around.
+ 65             Waterfront park         A high-quality, photorealistic image of a {placeholder} operating in a waterfront park, with recreational areas and people nearby.
+ 66             Marine research         A detailed, photorealistic image of a {placeholder} assisting in marine research activities, with scientists and research equipment around.
+ 67             Dockside assembly       A photorealistic image of a {placeholder} involved in dockside assembly of marine structures, with cranes and construction materials.
+
+
+
+                                    Table B.10
+                                    A list of synonyms (including superclasses) for each class in LP dataset.
+
+                                     Original class name                                        Synonyms
+
+                                     articulated dump truck                                     N/A
+                                     bulldozer                                                  dozer, crawler tractor
+                                     crawler crane                                              track crane, crane
+                                     crawler excavator                                          track excavator, excavator
+                                     crawler loader                                             track loader
+                                     combined piling and drilling                               drilling rig, piling rig
+                                     rig
+                                     duty cycle crane                                           dragline, dragline excavator
+                                     gantry crane                                               container crane, maritime crane
+                                     log loader                                                 log handling machine
+                                     maritime crane                                             harbor crane, port crane, crane
+                                     material handling machine                                  material handler
+                                     mining bulldozer                                           N/A
+                                     mining excavator                                           N/A
+                                     mining truck                                               N/A
+                                     mobile crane                                               crane
+                                     pipelayer                                                  sideboom
+                                     pontoon excavator                                          floating excavator, amphibious excavator,
+                                                                                                excavator
+                                     reachstacker                                               container handler, material handling
+                                                                                                equipment
+                                     telescopic handler                                         lull, telehandler, reach forklift, zoom boom,
+                                                                                                material handling equipment
+                                     tower crane                                                crane
+                                     truck mixer                                                cement mixer truck, concrete mixer truck
+                                     wheel loader                                               front end loader, bucket loader
+                                     wheel excavator                                            mobile excavator, excavator
+
+
+
+except for the last 10 epochs when it is turned off for better alignment.                     B.3. LMM
+Additional parameters include translation at 0.1 fraction of total width
+and height, horizontal flip rate at 0.5, and scale at 0.5 (resizing between                       GPT-4o receives detailed prompts for bounding box review. The
+50% and 150%).                                                                                prompts are broken into parts in Table B.11, with the purposes given
+                                                                                              on the left and the exact text contents given on the right. First, The
+Appendix B. Prompt engineering
+                                                                                              system prompt briefly summarizes the bounding box review task and
+   Prompt engineering is critical for the performance of three out of                         highlights three key metrics: precision, recall, and fit. The user prompt
+four major components of our proposed DART pipeline. In this section,                         consists of the five remaining sections. The ‘‘task’’ section outlines the
+we provide details about how the prompts are constructed for each                             task and objectives in more detail, with {target} referring to the pre-
+component.                                                                                    defined class during data collection and {secondary_target} indicating
+                                                                                              commonly co-occurring classes also recorded during data collection.
+B.1. DreamBooth                                                                               Note that explicit mention of target types is not mandatory since the
+                                                                                              boxes in the images already have class labels, and GPT-4o exhibits
+   Table B.9 displays all the prompts used for inference in DreamBooth                        excellent OCR capability. But it is still beneficial for corner cases where
+with SDXL to diversify our dataset. For each prompt, we provide an                            the label in the image is occluded. Next, the ‘‘questions’’ section elabo-
+overall description, the exact prompt text, and their respective IDs.                         rates on the specific questions corresponding to the three main criteria.
+prompts 1–48 are general prompts applied across all classes. Prompts                          The output format is specified in the ‘‘output’’ segment to facilitate
+49–57 are specific to large land-based machinery, such as mining equip-
+                                                                                              subsequent processing. The ‘‘output’’ section also follows the guidelines
+ment, while prompts 58–67 are tailored for water-related machines,
+                                                                                              of COT to enhance the model’s performance. In our early experiments,
+such as maritime cranes.
+                                                                                              we found that GPT-4 models tend to be overly strict in their judgments
+B.2. Grounding DINO                                                                           regarding the bounding box. To mitigate this, we summarize common
+                                                                                              issues in the ‘‘relaxation’’ and ‘‘reminder’’ sections and attach them to
+   Table B.10 presents the synonyms (and superclasses, combined as                            the end of the user prompt. Additionally, our tests with GPT-4v show
+one column) for each category in the LP dataset. The synonyms are                             that including the ‘‘relaxation’’ and ‘‘reminder’’ sections as part of the
+used to construct specific prompts during the annotation phase. The                           second round of dialogue instead of a single long text is more effective.
+detailed procedure is described in Section 3.3.                                               However, GPT-4o can handle all sections of the user prompt at once.
+
+                                                                                         22
+C. Xin et al.                                                                                                                      Expert Systems With Applications 258 (2024) 125124
+
+                                  Table B.11
+                                  Text prompt for GPT-4o-based bounding box review. The ‘‘system’’ prompt in the table is used as the system
+                                  prompt for the API, while the user prompt is created by sequentially concatenating the remaining parts.
+                                   Description                               Prompt text
+                                   system                                    You are an AI bounding box annotation evaluator. Your task is
+                                                                             to evaluate the correctness of bounding box annotations for
+                                                                             given images and target objects. The bounding boxes are
+                                                                             directly drawn as colored rectangles on top of the image. The
+                                                                             class label is shown at the top-left corner of the corresponding
+                                                                             bounding box. You will evaluate each bounding box
+                                                                             annotation based on three criteria: precision, recall, and fit.
+                                   task                                      In this image, the target object for bounding box annotation is
+                                                                             {target}. There may also be {secondary_target}. Each of
+                                                                             existing {target}s and {secondary_target}s should be annotated
+                                                                             by a bounding box drawn as a colored rectangle. The goal is
+                                                                             to accurately localize all {target}s and {secondary_target}s
+                                                                             using these bounding boxes. Your task is to evaluate whether
+                                                                             all bounding boxes are correct.
+                                   questions                                 Correctness should be assessed in terms of precision, recall,
+                                                                             and fit. Specifically, consider the following questions before
+                                                                             making your judgment:
+                                                                             1. Does each bounding box perfectly enclose one single target
+                                                                             object?
+                                                                             2. Are all target objects localized by a bounding box?
+                                                                             3. Is each bounding box neither too loose nor too tight?
+                                   output                                    Please provide your evaluation in the following JSON format:
+                                                                             ‘‘‘json{
+                                                                             ‘‘Precision’’: ‘‘Yes/No answer to question 1’’,
+                                                                             ‘‘Recall’’: ‘‘Yes/No answer to question 2’’,
+                                                                             ‘‘Fit’’: ‘‘Yes/No answer to question 3’’
+                                                                             }
+                                                                             Please think step-by-step and be sure to provide the correct
+                                                                             answers. Very briefly explain yourself before answering the
+                                                                             question.
+                                   relaxation                                Before finalizing your evaluation, please consider the following
+                                                                             suggestions:
+                                                                             1. For question 1 (Precision), if an object is occluded, the
+                                                                             bounding box should be inferred based on a reasonable
+                                                                             estimation of the object’s size.
+                                                                             2. For question 2 (Recall), it is fairly normal to have only one
+                                                                             object in the dataset.
+                                                                             3. For question 3 (Fit), don’t be too harsh when bounding box
+                                                                             edges just slightly cut off the object or just enclose a little bit
+                                                                             of the outside area.
+                                   reminder                                  Always consider my suggestions before answering questions.
+                                                                             But the suggestions are not strict rules. You can also use your
+                                                                             own judgment. The most important thing is to answer the
+                                                                             three questions correctly.
+
+
+Table B.12                                                                                       Fig. C.16 provides more examples for visualization of data diversi-
+Text prompt for InternVL-1.5-based image photorealism review. The ‘‘{target}’’ is a
+                                                                                             fication and bounding box annotation detailed in Section 4.6.
+placeholder for the actual class name.
+ Description        Prompt text
+                                                                                                 Figs. C.17, C.18, and C.19 showcase the effectiveness of LMM-
+                                                                                             based review. Specifically, Figs. C.17 and C.18 illustrate annotated
+ User               Is this image suitable as training data object detection for
+                    {target}? Answer YES or NO.                                              images approved and disapproved by GPT-4o during pseudo-label re-
+                    Does the main object in the image look like an authentic                 view, respectively. GPT-4o not only accurately assesses bounding box
+                    {target}? Answer YES or NO.                                              annotations in complex scenarios, including multiple objects and oc-
+                                                                                             clusion, but also identifies common annotation errors, such as missing
+                                                                                             objects, wrong labels, and inaccurate bounding box coordinates. On
+    For InternVL-1.5, concise prompts are used to review the photo-                          the other hand, the results of the photorealism review of generated
+realism of a generated image, avoiding unnecessary complexity and                            images are demonstrated in Fig. C.19. InternVL-1.5 can detect unreal-
+the performance degradation issue for long text. There is only a single                      istic objects and scenes. Preventing these inferiors from being included
+prompt used for each image, which is listed in Table B.12. Like the                          in the dataset is proven (in Sections 4.4 and 4.5.3) to help improve
+bounding box review, we only keep images receiving positive feedback                         the performance. The cases provided by these figures further validate
+for all questions from InternVL-1.5.                                                         the efficacy and essential role of the LMM-based review in the DART
+                                                                                             pipeline.
+Appendix C. More visualizations
+                                                                                                 Finally, Fig. C.20 illustrates comparisons between SDXL and SD-
+    In this section, we provide additional visualization results for qual-                   1.5 for data diversification. The two rows of generated images on the
+itative analysis of the DART pipeline.                                                       right side of the figure are produced by SD-1.5 and SDXL, respectively.
+    We provide additional visual comparisons of object detection results                     To ensure a fair comparison, both models are trained under the same
+with and without DART in Fig. C.15. Same as in Fig. 13, the implemen-                        DreamBooth framework by identical instance data, and the images are
+tation of DART leads to a significant increase in model performance.                         induced by the exact same prompts (with ID and description given as
+
+                                                                                        23
+C. Xin et al.                                                                                                         Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                                Fig. C.15. More comparisons of object detection results with and without DART on test set images.
+
+
+
+
+captions underneath; refer to Table B.9 for the exact text prompt) dur-             to have monotonous poses and simple scenes. More importantly, SD-
+ing inference. It is clear from the figure that images generated by SDXL            1.5 fails to capture the diverse scenarios described in the text prompts,
+are not only more detailed and realistic but also better at interpreting            especially for unusual scenes. Therefore, we only adopt DreamBooth
+and following complex text prompts. In contrast, SD-1.5 images tend                 with SDXL for our data diversification phase.
+
+                                                                               24
+C. Xin et al.                                                                                             Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                Fig. C.16. Visualization of data diversification and bounding box annotation for additional categories.
+
+
+
+
+                                                                  25
+C. Xin et al.                                                                              Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                Fig. C.17. Original images annotated by Grounding DINO and approved by GPT-4o.
+
+
+
+
+                                                     26
+C. Xin et al.                                                                               Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                Fig. C.18. Original images annotated by Grounding DINO but disapproved by GPT-4o.
+
+
+
+
+                                                       27
+C. Xin et al.                                                                                 Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                Fig. C.19. Generated images by DreamBooth with SDXL but disapproved by InternVL-1.5.
+
+
+
+
+                                                        28
+C. Xin et al.                                                                                                                            Expert Systems With Applications 258 (2024) 125124
+
+
+
+
+                                                                               Fig. C.20. SDXL vs SD-1.5.
+
+
+References                                                                                         Hang, T., Gu, S., Li, C., Bao, J., Chen, D., Hu, H., et al. (2023). Efficient diffusion
+                                                                                                        training via min-SNR weighting strategy. In Proceedings of the IEEE/CVF international
+Alayrac, J.-B., Donahue, J., Luc, P., Miech, A., Barr, I., Hasson, Y., et al. (2022).                   conference on computer vision (pp. 7441–7451).
+    Flamingo: A visual language model for few-shot learning. http://dx.doi.org/10.                 He, K., Zhang, X., Ren, S., & Sun, J. (2014). Spatial pyramid pooling in deep
+    48550/arXiv.2204.14198, arXiv:2204.14198.                                                           convolutional networks for visual recognition. In D. Fleet, T. Pajdla, B. Schiele, &
+Anon (2020). YOLOv5 by ultralytics. URL https://github.com/ultralytics/yolov5.                          T. Tuytelaars (Eds.), Computer vision – ECCV 2014 (pp. 346–361). Cham: Springer
+Anthropic (2024). Claude 3 family. URL https://www.anthropic.com/news/claude-3-                         International Publishing.
+    family.                                                                                        Hu, E. J., Shen, Y., Wallis, P., Allen-Zhu, Z., Li, Y., Wang, S., et al. (2022). LoRA: Low-
+Bochkovskiy, A., Wang, C.-Y., & Liao, H.-Y. M. (2020). YOLOv4: Optimal speed and                        rank adaptation of large language models. In International conference on learning
+    accuracy of object detection. http://dx.doi.org/10.48550/arXiv.2004.10934, arXiv:                   representations. URL https://openreview.net/forum?id=nZeVKeeFYf9.
+    2004.10934.                                                                                    Jocher, G. (2023). Ultralytics YOLOv8. URL https://github.com/ultralytics/ultralytics.
+Chen, Z., Wang, W., Tian, H., Ye, S., Gao, Z., Cui, E., et al. (2024). How far are we              Klinger, E., & Starkweather, D. (2008). pHash.org: Home of pHash, the open source
+    to GPT-4V? closing the gap to commercial multimodal models with open-source                         perceptual hash library. URL http://www.phash.org/.
+    suites. http://dx.doi.org/10.48550/arXiv.2404.16821, arXiv:2404.16821.                         Lee, G.-G., & Zhai, X. (2023). NERIF: GPT-4V for automatic scoring of drawn models.
+Chen, Z., Wu, J., Wang, W., Su, W., Chen, G., Xing, S., et al. (2024). InternVL:                        http://dx.doi.org/10.48550/arXiv.2311.12990, arXiv:2311.12990.
+    Scaling up vision foundation models and aligning for generic visual-linguistic tasks.          Li, C., Li, L., Geng, Y., Jiang, H., Cheng, M., Zhang, B., et al. (2023). YOLOv6
+    http://dx.doi.org/10.48550/arXiv.2312.14238, arXiv:2312.14238.                                      v3.0: A full-scale reloading. http://dx.doi.org/10.48550/arXiv.2301.05586, arXiv:
+Cheng, T., Song, L., Ge, Y., Liu, W., Wang, X., & Shan, Y. (2024). YOLO-world: Real-time                2301.05586.
+    open-vocabulary object detection. In Proc. IEEE conf. computer vision and pattern              Li, C., Li, L., Jiang, H., Weng, K., Geng, Y., Li, L., et al. (2022). YOLOv6: A single-
+    recognition.                                                                                        stage object detection framework for industrial applications. arXiv:2209.02976, URL
+Cho, J., & Kim, K. (2023). Detection of moving objects in multi-complex environments                    http://arxiv.org/abs/2209.02976.
+    using selective attention networks (SANet). Automation in Construction, 155, Article           Li, X., Wang, W., Wu, L., Chen, S., Hu, X., Li, J., et al. (2020). Generalized focal loss:
+    105066. http://dx.doi.org/10.1016/j.autcon.2023.105066.                                             Learning qualified and distributed bounding boxes for dense object detection. In
+Ding, X., Zhang, X., Ma, N., Han, J., Ding, G., & Sun, J. (2021). Repvgg: Making vgg-                   NeurIPS.
+    style convnets great again. In Proceedings of the IEEE/CVF conference on computer
+                                                                                                   Li, C., Wong, C., Zhang, S., Usuyama, N., Liu, H., Yang, J., et al. (2023). LLaVA-med:
+    vision and pattern recognition (pp. 13733–13742).
+                                                                                                        Training a large language-and-vision assistant for biomedicine in one day. In Thirty-
+Dong, C., Jiang, X., Hu, Y., Du, Y., & Pan, L. (2024). EL-Net: An efficient and
+                                                                                                        seventh conference on neural information processing systems datasets and benchmarks
+    lightweight optimized network for object detection in remote sensing images. Expert
+                                                                                                        track. URL https://openreview.net/forum?id=GSuP99u2kR.
+    Systems with Applications, 255, Article 124661. http://dx.doi.org/10.1016/j.eswa.
+                                                                                                   Li*, L. H., Zhang*, P., Zhang*, H., Yang, J., Li, C., Zhong, Y., et al. (2022). Grounded
+    2024.124661.
+                                                                                                        language-image pre-training. In CVPR.
+Dosovitskiy, A., Beyer, L., Kolesnikov, A., Weissenborn, D., Zhai, X., Unterthiner, T., et
+                                                                                                   Lin, T.-Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ramanan, D., et al. (2014). Mi-
+    al. (2021). An image is worth 16x16 words: transformers for image recognition at
+                                                                                                        crosoft COCO: Common objects in context. In ECCV (ECCV). European Conference
+    scale. http://dx.doi.org/10.48550/arxiv.2010.11929, arXiv:2010.11929, [cs].
+                                                                                                        on Computer Vision, URL https://www.microsoft.com/en-us/research/publication/
+Feng, C., Zhong, Y., Gao, Y., Scott, M. R., & Huang, W. (2021). TOOD: Task-aligned
+                                                                                                        microsoft-coco-common-objects-in-context/.
+    one-stage object detection. In ICCV.
+                                                                                                   Liu, H., Li, C., Li, Y., & Lee, Y. J. (2024). Improved baselines with visual instruction
+Gal, R., Alaluf, Y., Atzmon, Y., Patashnik, O., Bermano, A. H., Chechik, G., et al. (2022).
+                                                                                                        tuning. http://dx.doi.org/10.48550/arXiv.2310.03744, arXiv:2310.03744.
+    An image is worth one word: personalizing text-to-image generation using textual
+    inversion. http://dx.doi.org/10.48550/arXiv.2208.01618, arXiv:2208.01618.                      Liu, H., Li, C., Wu, Q., & Lee, Y. J. (2023). Visual instruction tuning.
+Gao, J., Zhang, Y., Geng, X., Tang, H., & Bhatti, U. A. (2024). PE-Transformer:                    Liu, Z., Lin, Y., Cao, Y., Hu, H., Wei, Y., Zhang, Z., et al. (2021). Swin transformer: Hi-
+    Path enhanced transformer for improving underwater object detection. Expert                         erarchical vision transformer using shifted windows. In Proceedings of the IEEE/CVF
+    Systems with Applications, 246, Article 123253. http://dx.doi.org/10.1016/j.eswa.                   international conference on computer vision (pp. 10012–10022).
+    2024.123253.                                                                                   Liu, S., Qi, L., Qin, H., Shi, J., & Jia, J. (2018). Path aggregation network for instance
+Gevorgyan, Z. (2022). SIoU Loss: More powerful learning for bounding box regression.                    segmentation. http://dx.doi.org/10.48550/arXiv.1803.01534, arXiv:1803.01534.
+    arXiv:2205.12740, URL http://arxiv.org/abs/2205.12740.                                         Liu, S., Zeng, Z., Ren, T., Li, F., Zhang, H., Yang, J., et al. (2023). Grounding
+Google, G. T. (2024). Gemini: A family of highly capable multimodal models. arXiv:                      DINO: Marrying DINO with grounded pre-training for open-set object detection.
+    2312.11805, URL http://arxiv.org/abs/2312.11805.                                                    http://dx.doi.org/10.48550/arXiv.2303.05499, arXiv:2303.05499.
+Gu, X., Lin, T.-Y., Kuo, W., & Cui, Y. (2022). Open-vocabulary object detection via                Loshchilov, I., & Hutter, F. (2019). Decoupled weight decay regularization. In Interna-
+    vision and language knowledge distillation. In International conference on learning                 tional conference on learning representations. URL https://openreview.net/forum?id=
+    representations. URL https://openreview.net/forum?id=lL3lnMbR4WU.                                   Bkg6RiCqY7.
+Gupta, A., Dollar, P., & Girshick, R. (2019). Lvis: A dataset for large vocabulary instance        Mou, C., Wang, X., Xie, L., Wu, Y., Zhang, J., Qi, Z., et al. (2023). T2I-Adapter: Learning
+    segmentation. In Proceedings of the IEEE/CVF conference on computer vision and                      adapters to dig out more controllable ability for text-to-image diffusion models.
+    pattern recognition (pp. 5356–5364).                                                                http://dx.doi.org/10.48550/arXiv.2302.08453, arXiv:2302.08453.
+
+
+                                                                                              29
+C. Xin et al.                                                                                                                            Expert Systems With Applications 258 (2024) 125124
+
+
+OpenAI (2023). GPT-4 technical report. http://dx.doi.org/10.48550/arXiv.2303.08774,                Wang, Q., Bai, X., Wang, H., Qin, Z., Chen, A., Li, H., et al. (2024). InstantID:
+    arXiv:2303.08774.                                                                                  Zero-shot identity-preserving generation in seconds. arXiv:2401.07519, URL http:
+OpenAI (2024). GPT-4o. URL https://openai.com/index/hello-gpt-4o/.                                     //arxiv.org/abs/2401.07519.
+Podell, D., English, Z., Lacey, K., Blattmann, A., Dockhorn, T., Müller, J., et al. (2024).        Wang, C.-Y., Bochkovskiy, A., & Liao, H.-Y. M. (2023). YOLOv7: Trainable bag-of-
+    SDXL: Improving latent diffusion models for high-resolution image synthesis. In The                freebies sets new state-of-the-art for real-time object detectors. In Proceedings of the
+    twelfth international conference on learning representations. URL https://openreview.              IEEE/CVF conference on computer vision and pattern recognition.
+    net/forum?id=di52zR8xgf.                                                                       Wang, A., Chen, H., Liu, L., Chen, K., Lin, Z., Han, J., et al. (2024). YOLOv10: Real-
+Radford, A., Kim, J. W., Hallacy, C., Ramesh, A., Goh, G., Agarwal, S., et al.                         time end-to-end object detection. http://dx.doi.org/10.48550/arXiv.2405.14458,
+    (2021). Learning transferable visual models from natural language supervision. In                  arXiv:2405.14458.
+    International conference on machine learning (pp. 8748–8763). PMLR.                            Wang, W., Dai, J., Chen, Z., Huang, Z., Li, Z., Zhu, X., et al. (2023). InternImage:
+Ramesh, A., Dhariwal, P., Nichol, A., Chu, C., & Chen, M. (2022). Hierarchical                         Exploring large-scale vision foundation models with deformable convolutions. http:
+    text-conditional image generation with CLIP latents. arXiv:2204.06125, URL http:                   //dx.doi.org/10.48550/arXiv.2211.05778, arXiv:2211.05778.
+    //arxiv.org/abs/2204.06125.                                                                    Wang, C.-Y., Liao, H.-Y. M., & Yeh, I.-H. (2022). Designing network design strategies
+RangeKing (2023). Brief summary of YOLOv8 model structure. URL https://github.com/                     through gradient path analysis. arXiv:2211.04800, URL http://arxiv.org/abs/2211.
+    ultralytics/ultralytics/issues/189.                                                                04800.
+Redmon, J., Divvala, S., Girshick, R., & Farhadi, A. (2016). You only look once: unified,          Wang, C.-Y., Mark Liao, H.-Y., Wu, Y.-H., Chen, P.-Y., Hsieh, J.-W., & Yeh, I.-H. (2020).
+    real-time object detection. In CVPR.                                                               CSPNet: A new backbone that can enhance learning capability of cnn. In Proceedings
+Redmon, J., & Farhadi, A. (2017). YOLO9000: Better, faster, stronger. In CVPR.                         of the IEEE/CVF conference on computer vision and pattern recognition workshops (pp.
+Redmon, J., & Farhadi, A. (2018). YOLOv3: An incremental improvement. http://dx.                       390–391).
+    doi.org/10.48550/arXiv.1804.02767, arXiv:1804.02767.                                           Wang, C.-Y., Yeh, I.-H., & Liao, H.-Y. M. (2024). YOLOv9: Learning what you want to
+Reimers, N., & Gurevych, I. (2019). Sentence-BERT: Sentence embeddings using siamese                   learn using programmable gradient information. http://dx.doi.org/10.48550/arXiv.
+    BERT-networks. In Proceedings of the 2019 conference on empirical methods in natural               2402.13616, arXiv:2402.13616.
+    language processing. Association for Computational Linguistics, URL http://arxiv.org/          Wei, J., Wang, X., Schuurmans, D., Bosma, M., Ichter, B., Xia, F., et al. (2023). Chain-
+    abs/1908.10084.                                                                                    of-thought prompting elicits reasoning in large language models. http://dx.doi.org/
+Ren, S., He, K., Girshick, R., & Sun, J. (2015). Faster R-CNN: Towards real-time                       10.48550/arXiv.2201.11903, arXiv:2201.11903.
+    object detection with region proposal networks. In C. Cortes, N. Lawrence, D. Lee,             Xu, Z., Jha, N., Mehadi, S., & Mandal, M. (2024). Multiscale object detection on
+    M. Sugiyama, & R. Garnett (Eds.), Vol. 28, Advances in neural information processing               complex architectural floor plans. Automation in Construction, 165, Article 105486.
+    systems. Curran Associates, Inc., URL https://proceedings.neurips.cc/paper_files/                  http://dx.doi.org/10.1016/j.autcon.2024.105486.
+    paper/2015/file/14bfa6bb14875e45bba028a21ed38046-Paper.pdf.                                    Xu, R., Yao, Y., Guo, Z., Cui, J., Ni, Z., Ge, C., et al. (2024). LLaVA-UHD: An
+Rezatofighi, H., Tsoi, N., Gwak, J., Sadeghian, A., Reid, I., & Savarese, S. (2019).                   LMM perceiving any aspect ratio and high-resolution images. http://dx.doi.org/
+    Generalized intersection over union: a metric and A loss for bounding box                          10.48550/arXiv.2403.11703, arXiv:2403.11703.
+    regression. In CVPR.                                                                           Yang, Z., Li, L., Lin, K., Wang, J., Lin, C.-C., Liu, Z., et al. (2023). The Dawn of
+Rombach, R., Blattmann, A., Lorenz, D., Esser, P., & Ommer, B. (2022). High-resolution                 LMMs: preliminary explorations with GPT-4V(ision). http://dx.doi.org/10.48550/
+    image synthesis with latent diffusion models. In Proceedings of the IEEE/CVF                       arXiv.2309.17421, arXiv:2309.17421.
+    conference on computer vision and pattern recognition (pp. 10684–10695).                       Yang, J., Zhang, H., Li, F., Zou, X., Li, C., & Gao, J. (2023). Set-of-mark prompting
+Ronneberger, O., Fischer, P., & Brox, T. (2015). U-Net: Convolutional networks                         unleashes extraordinary visual grounding in GPT-4V. http://dx.doi.org/10.48550/
+    for biomedical image segmentation. http://dx.doi.org/10.48550/arXiv.1505.04597,                    arXiv.2310.11441, arXiv:2310.11441.
+    arXiv:1505.04597.                                                                              Ye, H., Zhang, J., Liu, S., Han, X., & Yang, W. (2023). IP-Adapter: Text compatible
+Ruiz, N., Li, Y., Jampani, V., Pritch, Y., Rubinstein, M., & Aberman, K. (2023). Dream-                image prompt adapter for text-to-image diffusion models. http://dx.doi.org/10.
+    Booth: Fine tuning text-to-image diffusion models for subject-driven generation.                   48550/arXiv.2308.06721, arXiv:2308.06721.
+    http://dx.doi.org/10.48550/arXiv.2208.12242, arXiv:2208.12242.                                 Zheng, Z., Wang, P., Liu, W., Li, J., Ye, R., & Ren, D. (2020). Distance-IoU loss: Faster
+Saharia, C., Chan, W., Saxena, S., Li, L., Whang, J., Denton, E., et al. (2022a).                      and better learning for bounding box regression. In The AAAI conference on artificial
+    Photorealistic text-to-image diffusion models with deep language understanding.                    intelligence (pp. 12993–13000).
+    http://dx.doi.org/10.48550/arXiv.2205.11487, arXiv:2205.11487.                                 Zhu, D., Chen, J., Shen, X., Li, X., & Elhoseiny, M. (2023). MiniGPT-4: Enhancing
+Saharia, C., Chan, W., Saxena, S., Li, L., Whang, J., Denton, E. L., et al. (2022b).                   vision-language understanding with advanced large language models. http://dx.
+    Photorealistic text-to-image diffusion models with deep language understanding.                    doi.org/10.48550/arXiv.2304.10592, arXiv:2304.10592.
+    Advances in Neural Information Processing Systems, 35, 36479–36494.                            Zong, Z., Song, G., & Liu, Y. (2023). DETRs with collaborative hybrid assignments
+Vaswani, A., Shazeer, N., Parmar, N., Uszkoreit, J., Jones, L., Gomez, A. N., et al.                   training. arXiv:2211.12860, URL http://arxiv.org/abs/2211.12860.
+    (2017). Attention is all you need. Advances in Neural Information Processing Systems,
+    30.
+
+
+
+
+                                                                                              30
+

@@ -1,0 +1,1045 @@
+                                                                  Automation in Construction 167 (2024) 105696
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                               Automation in Construction
+                                                           journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Make it till you fake it: Construction-centric computational framework for
+simultaneous image synthetization and multimodal labeling
+Ali Tohidifar a , Daeho Kim a,*, SangHyun Lee b
+a
+    Civil and Mineral Engineering, University of Toronto, 35 St. George St., Toronto, ON M5S1A4, Canada
+b
+    Civil and Environmental Engineering, University of Michigan, 2350 Hayward St., Ann Arbor, MI 48109-2125, United States of America
+
+
+
+
+A R T I C L E I N F O                                       A B S T R A C T
+
+Keywords:                                                   This paper introduces BlendCon, a fully automated framework capable of simultaneously synthesizing and la­
+Visual artificial intelligence                              beling construction imagery data. This framework simulates a construction site by orchestrating 3D mobile
+Deep neural network                                         objects against a 3D background and produces multimodal labels for target entities. The effectiveness of the
+DNN training
+                                                            synthetic data in training object detection models was thoroughly validated. For the construction worker
+Image synthetization
+Automated labeling
+                                                            detection task, a YOLOv7 model trained with synthetic data nearly matched the performance of a model trained
+Computer-generated imagery                                  with real data: it achieved 71% AP@0.5–0.95 compared to 75% for the real data-trained model. Moreover, the
+2D worker detection                                         model trained with synthetic data surpassed its real data counterpart in scenarios requiring stricter IoU
+                                                            thresholds, particularly above 85%. Acquiring a sufficient quantity and diverse range of imagery data has been a
+                                                            primary challenge in construction studies that focus on automation and digitization through deep neural net­
+                                                            works. BlendCon can significantly contribute to addressing this data scarcity challenge.
+
+
+
+
+1. Background and motivation: unlocking the potential of visual                                 the construction sector lags behind other major sectors, creating an ever-
+AI in construction                                                                              widening gap. While the computer science domain continually in­
+                                                                                                troduces new DNN architectures, novel training algorithms, innovative
+    The construction industry, while still in the early stages of trans­                        training platforms, and new data modalities, adoption and imple­
+formation, is embracing visual AI solutions. This can be marked by a                            mentation in construction research have been slow. One instance of this
+growing number of studies exploring potential applications of Deep                              lag is the limited availability of public datasets. For example, we found
+Neural Network (DNN)-based computer vision such as progress moni­                               only two limited public datasets specifically for object detection in
+toring [1–3], safety monitoring [4], quality control [5], and the cutting-                      construction: Moving Objects in Construction Sites (MOCS) [13]; and
+edge concept of live digital twining [6]. This trend of visual AI's wide                        the Large-Scale Small Object Detection Dataset (SODA) [14] with only
+adoption in construction is propelled by three major factors. Since 2016,                       40 and 20 thousands datapoints respectively. This study attempts to
+there has been a notable evolution in DNN architectures and the                                 address the primary reason behind this slow progress: the absence of a
+development of more varied DNN training algorithms [7]. Concurrently,                           sufficient number and diverse range of DNN training data specifically
+computing hardware, such as GPUs, has continued to increase in power                            crafted for construction-centric applications.
+while becoming more accessible and affordable [8], with cloud-based
+solutions offering affordable computation [9]. Additionally, more                               2. The bottleneck: how data scarcity affects DNN excellence
+diverse benchmark datasets with new modalities tailored for emerging
+vision tasks have become increasingly available online. Datasets like                               At the core of visual AI lies supervised DNN models, which are
+ImageNet [10] with more than 1200 thousand, COCO [11] with more                                 replete with millions of learnable parameters [15]. Success in training
+than 330 thousand or Open Image Dataset [12] with more than 15                                  these models relies heavily on the quantity and diversity of training
+million labelled images have set a great development platform in the                            data, and this scarcity of DNN training data has been a significant hurdle
+computer vision society.                                                                        for many construction studies. Typically, the volume and diversity of
+    Despite these advancements, the pace of research into visual AI for                         training data used in previous construction studies were insufficient to
+
+
+
+    * Corresponding author.
+      E-mail addresses: ali.tohidifar@mail.utoronto.ca (A. Tohidifar), civdaeho.kim@utoronto.ca (D. Kim), shdpm@umich.edu (S. Lee).
+
+https://doi.org/10.1016/j.autcon.2024.105696
+Received 2 February 2024; Received in revised form 8 August 2024; Accepted 10 August 2024
+Available online 25 August 2024
+0926-5805/© 2024 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY-NC license (http://creativecommons.org/licenses/by-
+nc/4.0/).
+A. Tohidifar et al.                                                                                                    Automation in Construction 167 (2024) 105696
+
+
+fully saturate a DNN architecture, leading to invalid conclusions                   • Worker-centric dynamic simulation: Field workers, the key players of
+[13,14]. Expecting a DNN model trained on such a limited dataset to                   a construction project, are the key elements of productivity and
+achieve performance comparable to one trained on a multimillion-                      thereby the major target to monitor. The most critical research gap
+image dataset is, from a theoretical standpoint, untenable.                           that the authors identified at the outset of this study was the lack of a
+    Given that every construction project is both unique and ever-                    computational tool that can simulate virtual construction workers
+changing, developing effective DNN models requires training with                      with realistic motions. Recent studies, such as those by Acharya [25],
+large-scale datasets that capture a wide spectrum of backgrounds, ob­                 Ma et al. [26], Hong et al. [27], and Ying et al. [28], leveraged virtual
+jects, materials, equipment, and workers at various scales, viewpoints,               data that building information models generate. However, those
+and illumination conditions [16]. Despite its critical importance to DNN              studies were required to scope down to static structural components
+optimization, assembling a sufficiently large set of construction scene               as the platforms used did not allow for modeling of the dynamic
+training images has so far proved logistically impossible. Manual data                mobility inherent in construction resources. Recent endeavors by
+collection and labeling are prohibitively costly and time-consuming (e.               Soltani et al. [29], Kim and Kim [30], and Mahmood et al. [31], have
+g., segmentation of a single image on Google AI Platform costs                        used 3D modeling tools to synthetize virtual construction equipment
+approximately $2.72 [17]). Also, there are cases where labeling data                  data from varied viewpoints. While these efforts addressed con­
+necessitates deploying physical sensors (e.g., motion capture sensors for             struction equipment, the dynamic presence of field workers with
+3D pose labeling), which is not feasible on real construction sites. Last             realistic construction motions remains largely unexplored. Only a
+but not least, the sharing of construction site images is not allowed in              few studies, for example, Neuhausen et al. [22], have explored the
+many cases due to issues of confidentiality.                                          inclusion of human workers, but in limited settings involving limited
+    Although many construction studies have invested significant re­                  diversity in background textures, workers' motions, and avatar de­
+sources into manual data collection and labeling, these datasets are                  signs, combined with confined imaging conditions. The previous
+typically small and biased. These low-quality datasets result in over­                literature highlights this evident research gap and calls attention to
+fitted DNN models of low accuracy and scalability [18], miss opportu­                 the need for a reproducible method to simulate and label realistic
+nities to develop deeper DNN architectures [19], and do not allow for                 construction workers in motions [22].
+competitive benchmarking against other research outcomes due to the                 • Multimodal labeling: The integration of diverse sensory data, such as
+lack of standardized training, validation, and test datasets [18].                    coupling depth maps with RGB images [32] or merging semantic
+Recognizing these challenges, the potential of synthetic datasets as a                segmentation masks with other imagery data [33], has been recog­
+solution to data scarcity in construction is increasingly recognized.                 nized as a promising approach for enriching DNN training processes
+                                                                                      [34]. Despite this, construction studies have encountered challenges
+3. Research question: can synthetic data be the answer to the                         in capitalizing on these advancements, primarily due to a dearth of
+data scarcity problem?                                                                suitable multimodal datasets. For multimodal data to effectively
+                                                                                      augment DNN training, all modalities must be collected at the same
+    Unlike human vision, DNNs can effectively interpret synthetic im­                 viewpoint, not to mention that an extensive amount of data is
+ages that visually characterize realistic scenes, making them a viable                required [35]. Manually compiling such datasets presents significant
+alternative to real images for training purposes [20]. This perspective               hurdles, particularly due to the dynamic nature of construction en­
+opens a novel approach to preparing DNN training images—the use of                    vironments resulting in viewpoint or timeframe inconsistencies in
+computational image synthetization and automated labeling. The holy                   collected data. This challenge highlights the need for innovative
+grail of this approach is to automatically generate and label non-real but            solutions to multimodal labeling under dynamic imaging conditions.
+real-looking construction scene images using a process that does not                • The reality gap: The level of reality (or fidelity) of synthetically
+require any manual inputs or site visits. This can create large datasets for          generated images is paramount in DNN training. The “reality gap” is
+DNN training, saving time and resources. Currently, this innovative                   a term that refers to the divergence between the distributions of real
+approach to addressing the serious gap in construction training data                  and synthetic images as a result of their disparate origins [36].
+remains underexplored.                                                                Earlier construction research that attempted to use synthetic images
+    This technique capitalizes on computational power to synthesize                   in DNN training overlayed 3D synthetic avatars onto a 2D real
+new data from analogous sources. One of the most well-known studies in                background image [37,38], which often compromised the fidelity of
+this domain, known as the ‘Flying Chairs’ research [21], generated                    the resulting outcome. This approach faced challenges in convinc­
+synthetic images using 3D models of chairs in a virtual world, proving                ingly placing avatars within 2D backgrounds, a task that can be more
+effective in boosting DNN training. The process includes automatic and                suitably addressed in a 3D environment (refer to Fig. 1). Addition­
+simultaneous labeling of each image, allowing for virtually unlimited                 ally, the resulting discrepancy in lighting conditions between the
+datasets [22], as exemplified by the SYNTHIA dataset [23]. Another                    avatar and the background was evident. Avatars rendered under
+recent benchmark study validated the effectiveness of synthetic data on               unique lighting conditions contrasted with their backgrounds,
+DNN training by using the engine of the ‘GTA’ video game to generate a                inadvertently providing DNNs with misleading cues during train­
+large dataset for multi-person human detection and tracking [24]. This                ing—a visual cue absent during real-world inference. When present,
+experiment demonstrated that well-crafted synthetic data can effec­                   such discrepancies ultimately diminish the effectiveness of DNN
+tively replace real data for vision tasks such as pedestrian detection, re-           models trained with synthetic images in real-world applications,
+identification, segmentation, and tracking. This growing body of                      underscoring the need for high fidelity approaches to synthetic
+research supports the proposition that synthetic data, provided it is                 image generation.
+sufficiently realistic, can serve as a viable substitute for real-world im­
+ages in training DNNs [24].                                                        4. Research objectives
+    Despite its potential, synthetic image generation and labeling for
+DNN training in construction is still in early developmental stages.                   This study had two main objectives: (i) developing an end-to-end
+Previous attempts using building information modeling (BIM) for data               automated framework to synthesize and label multimodal construction
+generation have often omitted key elements, such as human workers,                 images, and (ii) conducting DNN training experiments to validate the
+and faced challenges with multimodal labeling and the realism of syn­              effectiveness of the synthetic data. We first developed the computational
+thetic images. This study aims to bridge these gaps.                               framework from scratch, incorporating extensive source coding, and
+    The following outlines the three specific research gaps that were              named it BlendConstruction (BlendCon), which offers several novel
+identified and addressed in our research:                                          functionalities.
+
+                                                                               2
+A. Tohidifar et al.                                                                                                       Automation in Construction 167 (2024) 105696
+
+
+
+
+                                           Fig. 1. Samples of synthetic construction images: prior study [37] vs. ours.
+
+
+ • Worker-centric simulation: BlendCon integrates dynamic elements,                 visual verification. For scalability, we quantitatively evaluated the
+   simulating construction workers with realistic motions under vary­               performance of DNNs trained on synthetic data in real-world scenarios
+   ing camera viewpoints, thus maximizing dataset diversity. While                  by comparing it to models trained on real data using various quantita­
+   BlendCon is capable of simulating other construction equipment                   tive metrics.
+   along workers, the focus in this study was on worker-centric simu­                   The body of this paper provides details on the technical aspects of
+   lation and validation due to its complexity and research gap.                    BlendCon (Section 5 below) and presents the validation procedure and
+ • Multimodal labeling: BlendCon generates various labels, including                the results achieved as measured by the trainability and the scalability of
+   2D and 3D bounding boxes, 2D/3D poses, semantic segmentation                     the synthetic data-trained model (Section 6). Finally, our key insights
+   masks, and depth maps. It automatically generates precise labels                 (Section 7) and conclusion (Section 8) are presented.
+   simultaneously with image generation.
+ • Mitigated reality gap: BlendCon enhances image quality by incor­                 5. BlendCon: the construction-centric worker-focused
+   porating 3D backgrounds and simulations, ensuring realistic avatar               computational framework for simultaneous image
+   placements (e.g., on the floor, not floating in air; see Fig. 1) and             synthetization and multimodal labeling
+   harmonized lighting conditions, thus providing high-fidelity
+   outcomes.                                                                            BlendCon is built upon the Blender graphic simulation engine [39]
+                                                                                    (Fig. 2), with its operation structured in two primary stages: (i) image
+    Following the development of BlendCon, we conducted DNN                         synthetization; and (ii) multimodal labeling.
+training experiments to test the effectiveness of the synthetic data in
+terms of trainability and scalability. For trainability, through a quali­            • Stage #1 - image synthetization: BlendCon initiates a synthetization
+tative verification, we confirmed that DNNs could be trained from                      process, loading a meticulously designed realistic horizon (e.g., a sky
+scratch with synthetic data at levels comparable to real data through                  model; Fig. 2). Subsequently, a pre-processed construction scene (e.
+
+
+
+
+Fig. 2. Overview of BlendCon.
+Note: BB(s) stands for bounding box(es).
+
+                                                                                3
+A. Tohidifar et al.                                                                                                       Automation in Construction 167 (2024) 105696
+
+
+   g., a 3D point cloud), which is randomly chosen from the back-end
+   data archive, is encapsulated inside of the horizon. Following this,
+   a designated number of animated avatars with motions are posi­
+   tioned within predefined locations within the scene. The camera
+   parameters, including camera distance, focal length, and resolution,
+   along with lighting variables, such as time of day, atmospheric
+   conditions, and the sun's angle, are then meticulously configured.
+   Following these configurations, BlendCon sets and simulates a vir­
+   tual construction scene, which is in turn used to render synthetic
+   image sequences, generating the first major research outcome.
+ • Stage #2 - multimodal labeling: Having a computational and math­
+   ematical simulation as the base, BlendCon retrieves and tracks pre­
+   cise details of all elements and hyper-parameter values activated                                     Fig. 4. Sample of avatars archived.
+   during the simulation. This retrieved data serves as the foundation
+   for subsequent mathematical processing that generates multimodal                   workers. To collect our own motion capture (MoCap) data, we uti­
+   labels. This stage manages the conversion of raw scene element data                lized a wearable motion capture (MoCap) system (Smartsuit Pro,
+   (e.g., camera's extrinsic and intrinsic parameters and kinematic in­               Rokoko [43]), specifically emphasizing actions commonly observed
+   formation of animated avatars) into a series of ground truths.                     at construction sites (Table 1). We collected 15 types of construction
+                                                                                      MoCap data, each resembling typical construction activities,
+   The following describes the specific stages BlendCon uses to syn­                  including bricklaying, material handling and carrying, shoveling,
+thetize and label construction scene images.                                          hammering, drilling, cutting, and more. Each MoCap data is
+                                                                                      collected at 100 frames per second (FPS).
+5.1. Stage #0: preparation of Back-end data archive                                 • Step #3, avatar-motion mapping: This process involves retargeting
+                                                                                      MoCap data to static avatars using a specialized algorithm. Built on
+    Prior to the two main stages, there is Stage #0, which involves                   Rokoko's retargeting function [44], this method matches each bone
+archiving back-end data (e.g., pre-processed 3D point clouds and                      location of the avatars with the corresponding location in the motion
+animated avatars). BlendCon completes simulations by blending these                   data. A series of normalizations are applied to both the motion data
+data; therefore, the diversity of simulations BlendCon can produce is                 and avatars, ensuring a compatible naming convention between
+directly influenced by the diversity of the back-end data. This subsection            them. Once normalized, each joint movement in the avatar is
+offers potential users a set of guidelines for preparing the necessary                determined by its corresponding joint in the motion data for each
+back-end data, and details the extent and nature of data the authors                  frame. As a result, we successfully archived a total of 555 animated
+prepared for this study.                                                              construction worker avatars (37 static avatars × 15 MoCap data =
+    The primary inputs to BlendCon are animated 3D construction                        555 animated avatars).
+worker avatars (foreground) and 3D construction scenes (background).
+These inputs require preprocessing to facilitate the full automation of            5.1.2. Preparation of 3D construction scenes
+BlendCon. Fig. 3 illustrates an overview of the data preparation process,             In BlendCon, a 3D scene serves as a digital background where
+which is described in detail in the rest of this subsection.
+                                                                                   Table 1
+5.1.1. Preparation of 3D construction avatars animated with motions                List of all animation collected and used for this study.
+   We followed a three-step procedure as illustrated in Fig. 3(a).                  Motion Type                                           Duration (unit = seconds)
+
+                                                                                    Brick Laying                                          19.5
+ • Step #1, collecting 3D static avatars: We collected pre-designed                 Carrying Wheelbarrow                                  13.7
+   static avatars from online sources [40–42]. These avatars are                    Checking Design Sheet                                 16.1
+   meticulously designed by expert artists, yet static without any mo­              Curing Concrete                                       17.5
+   tions embodied. To boost the diversity, we expanded our selection to             Cutting Plate                                         15.9
+                                                                                    Digging                                               20
+   varied body shapes, heights, weights, and the range of skin tones, as
+                                                                                    Drilling                                              16.5
+   illustrated in Fig. 4. In this study, we collected 37 avatars: 18 avatars        Hammering – Standing                                  17.7
+   resemble construction workers and the remaining 19 avatars wear                  Hammering – Bending Knees                             18.1
+   non-construction clothing. We included this mix not only to mirror               Hammering – Knees on Ground                           17.2
+   the typical attire found on construction sites but also to add richness          Loading Wheelbarrow                                   9.4
+                                                                                    Looking Around                                        5.9
+   to the diversity of our archived data.                                           Shaking Hand                                          1.9
+                                                                                    Walking                                               15.5
+ • Step #2, collecting construction motion data: Motion is fundamental              Leaning on Wall                                       27.2
+   to spatio-temporal simulations of mobile objects such as construction
+
+
+
+
+                                                  Fig. 3. Overview of BlendCon's input data pre-processing.
+
+                                                                               4
+A. Tohidifar et al.                                                                                                  Automation in Construction 167 (2024) 105696
+
+
+animated avatars are deployed. This background can simply be a colored            5.2.2. Step #2: positioning the camera
+and meshed 3D point cloud; however, to facilitate the initial stages of               Once global scene setup is complete a camera is placed in the scene
+the simulation process it needs to be pre-processed. First, these digital         (Fig. 6). The camera's primary role is to project 3D points on the global
+arenas need to be scaled to real-world dimensions. Second, a ‘work zone’          coordinate system back to a local 2D image plane (i.e., pixel coordinate
+needs to be defined within each 3D point cloud to determine plausible             system) through extrinsic and intrinsic transformations. This section
+areas where animated avatars can stand up and navigate through (e.g.,             explains how a camera is set up before rendering, with an emphasis on
+the orange shaded areas in Fig. 5). We collected 47 instances of 3D point         defining the appropriate extrinsic and intrinsic camera parameters, as
+clouds from online source [40–42] each of which captures a unique                 these settings are essential to achieving a high degree of realism.
+construction site. Then, we manually adjusted the scale and defined                   To ensure the presence of at least one worker in the camera's view, a
+work zones for each 3D scene. The pre-processing ensures that all 3D              virtual camera is set up around a primary avatar who is chosen at
+point clouds in our set are accurately aligned and scaled, realistically,         random. Functionally, this is achieved by positioning a camera on a
+within the fully automated BlendCon. When pre-processing of all these             sphere with a radius specified by a user, centered on the target avatar
+instances was completed we had realized 647,971 m2 of work zone.                  (see Fig. 7). Our heuristic experiments and observations led us to define
+Fig. 5 visualizes some samples of the scene dataset and their corre­              a realistic range for the radius of this virtual sphere. We selected the
+sponding work zones, highlighted in orange.                                       radius from a normal distribution, with an average of 6 m and a variance
+                                                                                  of 18 m.
+5.2. Stage #1: image synthetization                                                   BlendCon also allows users to define intrinsic camera parameters,
+                                                                                  namely its focal length and resolution. Through heuristic experiments,
+    Image synthetization, the first main stage of BlendCon, consists of           we determined that a focal length spanning from 32 to 70 mm yields
+four major steps: (i) setting up an arena; (ii) positioning a camera; (iii)       realistic images suitable for our research. The choice of resolution is
+setting up lighting conditions; and (iv) rendering.                               largely influenced by computational capacity. The larger the image, the
+                                                                                  more computation needs to render a single image. In our study, we opted
+5.2.1. Step #1: setting up an arena                                               for an image resolution of 1920 by 1920 pixels. To render this resolution
+    The data synthetization process begins with setting up a realistic            of synthetic image in an RTX 3080 GPU it takes around 1 min per image.
+arena. First, a real-looking horizon is added to an empty space (Fig. 6),         In summary, Table 2 details the camera parameters used.
+noting that this horizon functions as a boundary. A pre-designed horizon              As a final step we added an occlusion measurement function to
+is used, consisting of a vast half-sphere with a high-dynamic-range               camera positioning in BlendCon. This is essential to ensure a clear or
+image mapped onto it. The half-sphere provides a visual representa­               partially unobstructed view of the target avatar. By calculating the oc­
+tion of the atmosphere and horizon simultaneously. Next, a processed              clusion percentage of the target avatar from the camera's perspective,
+scene is picked randomly from our back-end data archive (Fig. 6). This            this function helps BlendCon place the camera with an optimal view of
+scene already matches to the real-world scene scale and comes with a              the scene, ensuring the target avatar remains unblocked by any scene
+pre-defined work zone, setting the simulation arena for the animated              meshes. This function is also beneficial for users who intentionally want
+construction avatars. Subsequently, a user-specified number of avatars            to simulate occlusion data, although it was not addressed in this study.
+are randomly selected from the back-end data archive and placed within
+the predefined work zone (Fig. 6). BlendCon allows users to determine             5.2.3. Step #3: setting the lighting conditions
+the number of avatars to be placed in a simulation.                                  Lastly, lighting conditions need to be set up before the final
+                                                                                  rendering of the camera-ready simulation (Fig. 6). To this end, we
+                                                                                  employed a sky rendering model proposed by Nishita et al. [45],
+
+
+
+
+                                 Fig. 5. Samples of 3D scenes with their corresponding 'work zones' designed for BlendCon.
+
+                                                                              5
+A. Tohidifar et al.                                                                                                               Automation in Construction 167 (2024) 105696
+
+
+
+
+                                                                       Fig. 6. Procedural set up of arena.
+
+
+
+
+Fig. 7. Camera positioning on a user-defined sphere around an animated avatar in BlendCon.
+Note: On the sphere, green circles show some of the available positions for camera locations, while red circle shows the randomly selected camera location.
+
+
+
+Table 2                                                                                     Table 3
+Overview of default setting of BlendCon for camera parameters.                              Overview of lighting-related parameters in BlendCon.
+  Camera              Type        Values (Default; User-adjustable)                          Lighting Parameter                                    Value
+  Parameter
+                                                                                             Sun Size                                              0.545
+                                  Localized around target avatar with distance with          Sun Intensity                                         0.1
+  Location            Extrinsic                     )
+                                  N(μ = 6, σ2 = 18                                           Sun Elevation                                         π
+                                                                                                                                                     × N(μ = 0.5, σ2 = 0.16
+                                                                                                                                                                              )
+  Orientation         Extrinsic   Set to track the head of the primary target avatar                                                               2
+                                                                                             Altitude                                              0
+  Focal Length        Intrinsic   Uniform range between 32 and 70 mm
+                                                                                             Density of Air Molecules                              10 × W(α = 1, β = 1.1)
+  Resolution          Intrinsic   1920 by 1920
+                                                                                             Density of Dust and Water Droplets                    Clear day atmosphere
+Note: N represents a normal (Gaussian) distribution.                                         Density Of Ozone Molecules                            Clear day atmosphere
+
+                                                                                            Note: N represents a Normal (Gaussian), and W represents a Weibull
+                                                                                            distribution.
+implemented in Blender as a ‘sky texture’ [46]. This model facilitates the
+simulation of sky lighting with several parameters including sun size,
+intensity, elevation, rotation, altitude, density of air molecules, dust and
+water droplets, and ozone molecules (Table 3). The Nishita model is
+
+                                                                                        6
+A. Tohidifar et al.                                                                                                    Automation in Construction 167 (2024) 105696
+
+
+particularly advantageous in this case because it provides a physically            5.2.4. Step #4: rendering
+accurate representation of atmospheric scattering, resulting in highly                 Once the arena (i.e., scene stage), players (i.e., animated construc­
+realistic sky colors. By adjusting the parameters of this model, BlendCon          tion worker avatars), a camera, and imaging conditions have been set
+is able to render different lighting scenarios, from clear skies to overcast       up, BlendCon starts synthetizing images. Rendering of a scene is enabled
+conditions, and simulate the full spectrum of natural lighting conditions          by a render engine called Cycles [47]. This rendering engine uses
+throughout the day. This flexibility ensures that our simulations can              NVIDIA-Optix [48] to construct images from the camera's viewpoint.
+account for various environmental conditions, enhancing the realism                Each image pixel is constructed by sampling ray traces. These rays
+and accuracy of our renderings.                                                    propagate within the scene, reflecting off materials until they either
+    In this research we aimed for photo-realism. To this end, we utilized          encounter a light source or hit a set bounce limit [49]. The resulting light
+the default values for sun size, altitude, dust density, water droplet             capture is translated into pixel values in the image. BlendCon uses an
+density, and ozone molecule density as suggested by Nishita et al. [45].           adaptive sampling algorithm [47] to automatically sample ray traces of
+For the reminder of the parameters, we used values determined through              lights for each pixel to produce images with a controlled level of noise
+our heuristic experiments. A sun intensity of 0.1 best suited our day-time         threshold. As a hyperparameter, we set the noise threshold to 0.01 in
+realistic simulation. Sun elevation, which represents the sun's angular            this study. The noise threshold can be any value between 1 and 0.0001.
+displacement from the horizon in degrees, was observed to provide                  Tweaking this threshold can speed up the rendering process at the
+realistic daytime lighting when values were sourced from a Gaussian                expense of image quality, or conversely, enhance image quality at the
+distribution with a mean of 0.5 and a variance of 0.16. The last hyper­            cost of rendering time.
+parameter was the density of air molecules which is critical in capturing              Another key hyperparameter is the frame sampling rate. Images are
+the reddish hues of the sky at dawn and dusk [45]. For this study, the             generated in sequences, drawing from the animations of the avatars.
+ideal density was determined experimentally by multiplying ten with a              Users can determine this sampling rate. In our study we selected a rate of
+value sourced from a Weibull distribution, which had a shape parameter             10 frames per second. With the motion capture data used in BlendCon
+of one and a scale parameter of 1.1.                                               captured at 100 frames per second (FPS), our research extracted one
+                                                                                   frame for every 10 frames of the animation sequence.
+
+
+
+
+Fig. 8. Illustration of BlendCon's multimodal annotation capabilities.
+Note: Visualization of (a) 2D bounding boxes, (b) 3D bounding boxes and keypoints, (c) keypoints, (d and e) segmentation masks, and (f) depth map translating
+distance information into grayscale values.
+
+                                                                               7
+A. Tohidifar et al.                                                                                                    Automation in Construction 167 (2024) 105696
+
+
+5.3. Stage #2: multimodal labeling                                                 avatars that are already placed in work zones of the scene. This function
+                                                                                   gets the 3D coordinates of the avatars' joints in Blender's global coor­
+    Multimodal labeling in computer vision refers to the process of                dinate system (see Fig. 9 (a)). The function then translates these 3D
+annotating images with multiple types of information or labels that                coordinates from Blender's global coordinate system into the camera's
+come from different modalities. These annotations can include spatial              coordinate system (see Fig. 9 (b)). This step generates the labels needed
+coordinates of body joints, known as 3D [50] and 2D [51] keypoints,                to train 3D pose estimation models. These coordinates are expressed as
+which are necessary to understand body positions and movements.                    x, y, and z values in the camera's coordinate system.
+Similarly, object detection relies on 3D [32,52,53] and 2D [54]                        Next, the function employs these coordinates to outline the 3D
+bounding boxes to define the parameters of objects in three-dimensional            bounding boxes around the workers. To determine the precise di­
+and/or two-dimensional space. For tasks that necessitate depth                     mensions of the 3D bounding boxes, we calculated the extremities of the
+perception, depth maps [55] provide the distance between objects and               keypoints in the camera's coordinate frame (see Fig. 9 (c)), which is
+the camera. And finally, semantic segmentation masks [56] are utilized             essential when predicting 3D bounding boxes in 3D coordinates [53].
+to uniquely identify and classify each object in a scene, enhancing the                To meet the requirements of DNN models requiring pixel-level pre­
+model's ability to understand complex visual inputs. Fig. 8 illustrates the        diction [32,52], the joint tracking function also transforms these 3D
+different types of labels generated by BlendCon, showcasing how each               bounding boxes defined in the camera coordinate system into 2D pro­
+modality provides distinct yet complementary information for compre­               jections within the pixel coordinate system. This is achieved by
+hensive scene understanding.                                                       computing a transformation matrix from the camera's intrinsic and
+    To ensure accuracy and consistency in multimodal labeling, Blend­              extrinsic parameters, projecting the 3D information onto a 2D pixel grid
+Con employs three distinct coordinate systems. First, there is Blender's           (see Fig. 9 (d)).
+global coordinate system, the natural reference frame for scenes or ob­                The function then proceeds to extract 2D keypoints, projecting the
+jects within Blender. Second, the camera's coordinate system originates            3D joint locations onto the pixel coordinates, resulting in a set of 2D
+on the image plane, with the Z-axis extending outwards, perpendicular              coordinates that serve as training labels for models focused on 2D
+to this plane. This system represents the camera's viewpoint, with world           human pose estimation (see Fig. 9 (e)). Subsequently, it applies a min-
+coordinates transformed to camera view coordinates through rotation                max selection algorithm to these 2D keypoints to deduce the 2D
+and translation defined by the camera's extrinsic parameters in Blender.           bounding boxes (see Fig. 9 (f)).
+Lastly, the pixel coordinate system projects the 3D world into 2D, as
+perceived by the camera, with coordinates in pixels and the origin at the          5.3.2. Depth estimation function
+top left corner of the image.                                                          The depth estimation function in BlendCon translates the distances of
+    Crucially, the labels generated by BlendCon are both calibrated and            scene objects from the camera lens into grayscale pixel values, a crucial
+synchronized. Calibration ensures that spatial information is consis­              step for creating depth maps. This transformation is accomplished using
+tently matched across different modalities, providing an accurate rep­             Blender's 'map range node,' which acts as a converter, mapping the
+resentation of objects in the scene. Synchronization guarantees that               distance of an object from the camera to a pixel value on a scale from 0 to
+these modalities are aligned in time, maintaining temporal consistency             255. This scale corresponds to the grayscale spectrum, allowing for the
+and ensuring that dynamic events are accurately captured and                       visualization of distance through shades of gray. Our empirical tests
+represented.                                                                       have shown that setting the maximum input range to 100 m results in
+    Table 4 offers a comprehensive overview of the labels supported by             the most accurate depth maps, as it optimizes the representation of
+the current version of BlendCon. This table not only delineates each               distances up to that point. Distances beyond 100 m are assigned the
+label type but also specifies their corresponding coordinate systems and           maximum grayscale value, appearing as white in the depth map. By
+the functions responsible for generating these labels.                             applying this mapping technique, BlendCon can render detailed depth
+    The labeling process of BlendCon consists of three distinct functions:         maps that accurately reflect the spatial layout of a scene. It should be
+the (i) joint tracking function; (ii) depth estimation function; and (iii)         highlighted that because the depth map is processed using the same
+semantic segmentation function. These functions play an essential role             viewpoint as the corresponding RGB image they can be used as a set, i.e.,
+in the accurate depiction of the scene, and the rest of this subsection will       as a 4-channel training source for both 2D and 3D computer vision tasks.
+delve into the technical details of each function.
+                                                                                   5.3.3. Semantic segmentation function
+5.3.1. Joint tracking function                                                         Semantic segmentation is a process in computer vision where each
+   The joint tracking function of BlendCon is designed to capture the              pixel in an image is classified into distinct categories, delineating
+kinematic details of 3D animated worker avatars by extracting precise              different objects and elements within the scene. As currently realized
+2D and 3D labels from their bone structures, which are analogous to                within BlendCon, it specifically involves classifying each pixel as part of
+human skeletal systems. This process is depicted in Fig. 9.                        an individual avatar, the sky, or the background (i.e., any object except
+   The joint tracking function begins with tracking the joint position of          avatars and sky in the scene), thus distinctly separating the avatars from
+                                                                                   other elements. To achieve this, the semantic segmentation function
+Table 4                                                                            capitalizes on Blender's object index rendering feature. This feature
+Comprehensive summary of BlendCon's labeling capabilities.                         enabled us to assign distinct indices to each avatar individually, while
+  Label Type          Coordinate          Function Involved   Data Type
+                                                                                   the sky and the background were indexed separately. To assign indices,
+                      System                                                       we used the names of objects to distinguish between them. We set the 3D
+                                                                                   scene to have index of 50 and the horizon to be zero. Then, for each
+                      Camera
+  3D Keypoint
+                      Coordinates
+                                          Joint Tracking      [x, y, z]            avatar, we assign a value starting from 254, decremental by steps of 10
+  2D Keypoint         Pixel Coordinates   Joint Tracking      [x, y]               for each avatar. These indices are then converted into pixel values
+  3D Bounding Box
+                      Camera
+                                          Joint Tracking      [x, y, z]            within the grayscale spectrum. The resulting image, composed of these
+                      Coordinates                                                  object-specific indices, enables the precise segmentation of each object
+  3D Bounding Box     Pixel Coordinates   Joint Tracking      [x, y]
+  2D Bounding Box     Pixel Coordinates   Joint Tracking      [x, y]
+                                                                                   based on their unique pixel values.
+                                                              Greyscale
+  Depth Map           Pixel Coordinates   Depth Estimator
+                                                              Image                5.4. BlendCon: a scalable solution for diverse use cases
+  Semantic                                Semantic            Greyscale
+                      Pixel Coordinates
+    Segmentation                          Segmentation        Image
+                                                                                      The simplicity and flexibility inherent in BlendCon's design
+
+                                                                               8
+A. Tohidifar et al.                                                                                                          Automation in Construction 167 (2024) 105696
+
+
+
+
+Fig. 9. Joint tracking function's data pipeline.
+Note: Just like real humans, each worker in BlendCon is designed with a bone structure. The joint tracking function leverages these bones and joints to extract labels.
+
+
+contributes significantly to its scalability, enabling it to effectively meet          • Application scenario: While designing the experiments, we decided
+the demands of diverse use cases, whether in research or industrial                      to focus on a practical scenario where an autonomous ground vehicle
+settings. To confirm the usability of BlendCon in an academic context,                   (AGV) requires 2D worker detection DNN. Basically, we intended to
+we installed and ran the framework to generate a small dataset                           develop 2D worker detection DNNs for the AGV using two distinct
+comprising 25,000 images. For this purpose, we utilized three NVIDIA                     datasets: one consisting solely of synthetic data, and the other using
+GPUs (RTX3080s) on our local machines, and the framework was suc­                        exclusively real data. This approach was intended to demonstrate the
+cessful in generating the required dataset for our specific use case. The                genuine value of synthetic data in the development of DNNs for real-
+framework demonstrated similar success in an industrial context at a                     world commercial applications. For the purposes of this research, the
+considerably larger scale. Our industry partner, utilized BlendCon to                    objective of the trained DNNs was set to reliably detect construction
+generate 985,660 images using 260 virtual machines on Amazon AWS                         workers within a 20-m range of the AGV.
+service within 2 days. This successful large-scale application was a sig­              • Training approach: To achieve a pure comparison between synthetic
+nificant milestone in confirming both the usability and flexibility of                   and real data, we meticulously trained the YOLOv7 models from
+BlendCon in the hands of third-party users, as well as the ability of the                scratch across all experiments. In addition, our heuristic observations
+platform to successfully scale.                                                          led us to set our training duration to 800 epochs, which would
+                                                                                         typically be considered quite long. We noticed that terminating the
+6. Validation of the effectiveness of synthetic construction data:                       training at earlier epochs often resulted in the most recent model
+trainability and scalability                                                             being the best, suggesting that the saturation point had not been
+                                                                                         reached. Therefore, to ensure comprehensive learning and to accu­
+   To assess the impact of synthetic construction data on DNN training                   rately gauge the model's potential we extended the training to 800
+we conducted two experiments, with one focusing on trainability and                      epochs. This ensured the models could fully assimilate the dataset,
+the other scalability. Below is an outline of our experimental design:                   crucial for an unadulterated evaluation of synthetic versus real data
+                                                                                         training outcomes. Moreover, we decided to keep the image size on
+ • Assigned computer vision task and selected architecture: 2D object                    1024 and 960 when training yolo models with synthetic or real im­
+   detection is central to modern computer vision pipelines. In addition                 ages, respectively.
+   to being a core function, 2D object detection serves as a precursor for             • Evaluation metric: We narrowed our focus to the Average Precision
+   advanced tasks like 3D object detection and 2D/3D pose estimation,                    (AP), which has been widely employed in computer vision studies.
+   or action recognition. Our validation experiments targeted the 2D                     The AP combines the meaning of both precision and recall, offsetting
+   detection of construction workers, employing the YOLOv7 archi­                        potential bias that individual metrics could yield. It computes the
+   tecture [54]. Proven by previous researches [57–62], YOLOv7 is                        average of precision values for varying recall levels across multiple
+   particularly favored among construction researchers due to its                        thresholds. This comprehensive measure reflects the accuracy and
+   accessibility and immediate applicability, alongside its accuracy and                 completeness of the detections, making it suitable for evaluating
+   computational efficiency.                                                             scenarios demanding high recall (detecting as many objects as
+
+                                                                                   9
+A. Tohidifar et al.                                                                                                 Automation in Construction 167 (2024) 105696
+
+
+    possible) and high precision (ensuring these detections are accurate).        • Assembling the real dataset: We utilized two public benchmark
+    While adopting the AP, another consideration was the extent of                  datasets as our starting point: (i) MOCS [13]; and (ii) SODA [14].
+    Intersection over Union (IoU). While AP at the IoU of 0.5 (AP@0.5) is           Both datasets are large-scale and tailored for 2D object detection. We
+    a common benchmark — balancing leniency and strictness — it does                selectively filtered these datasets, retaining images featuring human
+    not suffice, especially in evaluating industry-grade AIs. In our ex­            workers along with their corresponding labels, as dictated by our
+    periments, we chose to assess APs from 0.5 to 0.95 IoUs to capture a            focus on worker detection. By combining images from MOCS and
+    nuanced understanding of the model's performance across various                 SODA we prepared a diversified and balanced real-image dataset,
+    localization precision requirements. AP@0.5–0.95 (i.e., the average             containing a total of 22,773 images with 74,026 bounding boxes.
+    of the APs across the IoU of 0.5–0.95) was also adopted for a single-           This integrative approach was deliberately chosen to mitigate po­
+    shot comparison.                                                                tential biases that could arise from relying exclusively on a single
+                                                                                    dataset. To keep the consistency, we converted all the real images
+                                                                                    into 960 × 960 by adding gray boundaries whenever needed.
+6.1. Synthetic data generation and real data collection                           • Filtering process: Both synthetic and real datasets underwent a series
+                                                                                    of filters equally. First, filters were applied based on bounding box
+    Creating or obtaining suitable datasets is a fundamental prerequisite           sizes to suit our use case: worker detection within 20 m. Validation
+for any machine learning experiment. Our experiments used BlendCon                  and test subsets excluded bounding boxes smaller than 9% of the
+to generate the synthetic dataset, and our team assembled the real                  image size, while training subsets removed those smaller than 4%.
+dataset through careful curation and combining two public benchmark                 This approach was based on heuristic observations: workers within
+datasets.                                                                           20 m typically have bounding boxes over 172 pixels, about 9% of a
+                                                                                    1920 × 1920 image. Extending training sets to include images with
+ • Generating the synthetic dataset: Using BlendCon with the hyper­                 bounding boxes down to 4% of image size was found to enhance
+   parameter settings described previously in this paper, we rendered               model learning. Exclusively for real dataset, additional filters were
+   1578 sets of construction simulations, resulting in a synthetic dataset          applied to sort out night-time shots, blurred, cropped, watermarked
+   with 24,008 images which in turn contained 40,322 bounding boxes.                images, and aerial drone shots.
+   Fig. 10 provides samples of the generated synthetic data.                      • Dataset splitting: In splitting the synthetic dataset between the
+                                                                                    training, validation, and test sets, we took precautions to prevent any
+                                                                                    data leakage caused by scene contexts. The data was split based on
+
+
+
+
+                                               Fig. 10. Samples of synthetic images with 2D bounding boxes
+
+                                                                             10
+A. Tohidifar et al.                                                                                                     Automation in Construction 167 (2024) 105696
+
+
+    video names, not individual images, ensuring that during training,              the model's learning of object detection, suggesting that synthetic data
+    the model would not be exposed to familiar scene contexts present in            remains a viable training resource.
+    the test or validation sets. As a result, the synthetic training set had            Furthermore, a consistent decrease in total loss during the early
+    35,708 bounding boxes; the validation set contained 3689, and the               training phase is visible for both models, reinforcing the notion that
+    test set had 2917 bounding boxes. We also split the real dataset based          synthetic data can be as effective as real data for initial learning stages.
+    on bounding box counts, sampling images for the test and validation             These observations affirm that training with synthetic data is not
+    sets until we reached a near thousand bounding boxes for each. The              significantly different from training with real data in terms of the overall
+    remaining pool of images constituted the training set.                          training process and loss patterns. This similarity bolsters our confidence
+                                                                                    in the efficacy of synthetic data for training DNN models, as it appears to
+    The number of images and bounding boxes in each of the synthetic                provide a comparable learning experience to real-world data.
+and real datasets is provided in Table 5.
+    The distribution of bounding boxes in the real and synthetic datasets           6.3. Validation of scalability
+is demonstrated in Fig. 11. In this figure, each bounding box is repre­
+sented as a single dot. The horizontal axis illustrates the ratio of the                To set the stage for our scalability experiment, we crafted a multi-
+bounding box width to the image width, while the vertical axis shows                tiered benchmarking approach. The objective was to analyze the
+the ratio of the bounding box height to the image height. A small empty             impact of training data volume on model performance and to establish
+square at the bottom right of the graph is evident due to the data filtering        where the synthetic model stands compared to real models trained on
+process. Additionally, kernel density estimates are plotted on the top and          datasets of varying size. We segmented the real data pool into smaller,
+right marginal axes, which demonstrate a close proximity in the peak of             incremental datasets, training multiple YOLOv7 models to create a
+the bounding boxes in both datasets.                                                spectrum ranging from data-scarce to data-rich conditions. We achieved
+                                                                                    this by sampling a series of datasets, each with different sizes for the
+                                                                                    training set, but with identical validation and test sets. These training
+6.2. Validation of trainability
+                                                                                    sets were sampled from the pool, ranging from 5000 to 35,000 samples,
+                                                                                    in increments of 5000. This partitioning strategy, detailed in Table 6,
+    A YOLOv7 model was trained with and validated on synthetic data.
+                                                                                    enabled us to not only scrutinize the performance gradient across
+For comparison, another model was trained with and validated on real
+                                                                                    differently trained models but also to pinpoint the synthetic model's
+data. Our goal was to visually examine the training loss history for both
+                                                                                    relative position in terms of data sufficiency and model robustness.
+models to identify any similarities or differences in training patterns
+                                                                                        To provide a fair basis for comparison, we set a limit on our largest
+between synthetic and real data. Fig. 12 shows training and validation
+                                                                                    real dataset of 35,000 bounding boxes. This decision was taken to pre­
+losses for both instances. YOLO's loss function comprises box loss, object
+                                                                                    vent the real dataset from surpassing the synthetic dataset. With our
+loss, and class loss [54]. Class loss is a measure of how accurately the
+                                                                                    seven distinct real datasets at hand, we proceeded to train seven
+model can identify the correct category of an object in multi-class
+                                                                                    different YOLOv7 models. These models were all trained from scratch,
+detection tasks. However, given our dataset's focus on a single class,
+                                                                                    using YOLOv7's default hyperparameters. The AP@0.5–0.95 of these
+class loss becomes irrelevant in our context. Box loss measures the ac­
+                                                                                    models on the real test dataset are displayed in Fig. 13. The result ob­
+curacy in predicting target object bounding boxes, while object loss
+                                                                                    tained from the synthetic model is displayed as a dashed line. It should
+evaluates the model's ability in identifying target object presence within
+                                                                                    be noted that the DNN model trained with synthetic data was also
+these boxes. The total loss linearly combines box, object, and class losses
+                                                                                    validated with synthetic data, with no real data of any kind used during
+[54].
+                                                                                    the development stage, ensuring that the results observed were achieved
+    Fig. 12 provides a comparative analysis of the learning curves for
+                                                                                    solely from synthetic data.
+both the synthetic and real YOLOv7 models, which was central to our
+                                                                                        Upon analyzing the AP@0.5–0.95, a notable observation emerges.
+‘trainability’ validation objective. It demonstrates that the synthetic
+                                                                                    The models trained solely on synthetic data, despite their lack of expo­
+model's learning trajectory mirrors that of the real model, with both
+                                                                                    sure to real-world scenarios, outperform those trained with limited real
+exhibiting similar patterns in their loss reduction over epochs.
+                                                                                    data. Further, when the same amount of training samples used (i.e.,
+    When examining box loss, both models display a rapid decline in the
+                                                                                    around 35,000 bounding boxes in this case), the AP@0.5–0.95 differ­
+initial phases of training, indicative of quick adaptation and efficient
+                                                                                    ence between the synthetic and real models was merely about 4%. The
+bounding box prediction. This convergence suggests that both datasets
+                                                                                    promising performance of the synthetic model, achieved without any
+equip the model with sufficient information for identifying object
+                                                                                    exposure to real images, highlights its potential. It demonstrates the
+boundaries early in the training process.
+                                                                                    synthetic model's ability to effectively bridge the reality gap and adeptly
+    In terms of object loss, the early plateau in the synthetic model's
+                                                                                    generalize to the unfamiliar domain of the real world.
+learning curve suggests it may not encounter the same dataset
+                                                                                        Another critical observation is the direct correlation between the
+complexity as the real data. Here, ‘complexity’ pertains to the dataset's
+                                                                                    volume of training data and the performance of real models. This trend
+variety and intricacy. This diversity is critical, as it pressures the model
+                                                                                    solidifies the idea that the efficacy of DNN models is deeply intertwined
+to generalize better to real-world diversity. A less complex dataset may
+                                                                                    with the abundance of data. In scenarios of data scarcity, even the most
+lead to quicker mastery of simpler patterns, as indicated by a steep initial
+                                                                                    potent models may falter. It was evident that performance of the models
+decline in box loss for the synthetic model. However, this could hinder
+                                                                                    was sub-optimum and stagnant when using training datasets containing
+the model's performance in more varied real-world scenarios. Despite
+                                                                                    5000 or 10,000 bounding boxes. However, increasing the size of datasets
+these concerns, the parallel trends in object loss for both datasets indi­
+                                                                                    beyond this threshold realized a significant surge in model efficiency,
+cate that the synthetic dataset's simplicity does not significantly impede
+                                                                                    suggesting a pivotal point in the learning curve.
+                                                                                        Upon examination, the performance of a synthetic model trained on
+Table 5                                                                             a dataset of 35,708 labelled bounding boxes was comparable to a real
+Number of samples in synthetic and real datasets.
+                                                                                    model trained on a dataset of 20,000 bounding boxes. As the amount of
+  Dataset Name        Data Type         Training      Validation      Test          training data increases beyond 20,000 images, real models improve but
+                      Bounding Box      35,708        3689            925           not dramatically so. This gap in the performance of the synthetic and
+  Synthetic
+                      Image             20,997        2336            675           real DNN models is presumably a manifestation of the reality gap, and it
+                      Bounding Box      74,026        998             925           does not significantly widen even with enhanced training data for real
+  Real
+                      Image             19,862        418             391
+                                                                                    models. We posit that this slight disparity can be bridged either by
+
+                                                                               11
+A. Tohidifar et al.                                                                                                      Automation in Construction 167 (2024) 105696
+
+
+
+
+Fig. 11. Distribution of bounding box size ratio in real and synthetic datasets.
+Note: Each bounding box is represented as a single dot. Also, kernel density estimates are plotted on the top and right marginal axes.
+
+
+
+
+                                                     Fig. 12. Learning curves of real and synthetic models.
+
+
+
+                                                                               12
+A. Tohidifar et al.                                                                                                           Automation in Construction 167 (2024) 105696
+
+
+Table 6                                                                                        To interpret these results with more detail, we evaluated the AP at
+Number of bounding boxes in each training, validation, and test datasets.                  each IoU threshold value, from 0.5 to 0.95. Table 7 presents the APs of
+  Dataset Name        Training                    Validation            Test               all models.
+                                                                                               Table 7 sets the stage for a deeper analysis by comparing the preci­
+  Synthetic           35,708 (synthetic)          3689 (synthetic)      925 (real)
+  Real 5 K            5004                        998                   925                sion of detection at various degrees of overlap between predicted and
+  Real 10 K           10,001                      998                   925                ground-truth bounding boxes. Fig. 14 delineates the AP scores over a
+  Real 15 K           15,007                      998                   925                range of IoUs, plotting the synthetic model's performance against that of
+  Real 20 K           20,005                      998                   925                the real models.
+  Real 25 K           25,003                      998                   925
+  Real 30 K           30,002                      998                   925
+                                                                                               Based on Fig. 14, the synthetic model initially appears to underper­
+  Real 35 K           35,017                      998                   925                form compared to the real models, particularly at lower Intersection
+                                                                                           over Union (IoU) thresholds. This trend persists until an IoU of 0.6,
+Note: It was assumed that no real data are available while training the synthetic
+                                                                                           where the synthetic model reaches the performance level of the real
+model. Thus, no real data were used while training the synthetic model, even for
+validation. Also, note that each data point represents a bounding box, and due to
+                                                                                           model trained with the smallest data volume. As the IoU threshold in­
+multiple bounding boxes per image, the total may slightly exceed the originally            creases, the synthetic model shows progressive improvement, surpass­
+targeted numbers.                                                                          ing all real models at an IoU of 0.85. This pattern may be attributed to
+                                                                                           the inherently precise bounding boxes of synthetic data. In contrast,
+augmenting the diversity or the volume of synthetic data, or by imple­                     real-world data labeling, often prone to human error, may result in less
+menting strategies to reconcile domain differences, transitioning                          accurate bounding box definitions. This becomes more noticeable at
+smoothly from synthetic to real scenarios.                                                 higher IoU thresholds, where precision is critical. The decline in AP for
+
+
+
+
+                                                  Fig. 13. AP@0.5–0.95 of real and synthetic models on real test dataset.
+
+
+Table 7
+Average precision scores at different IoU thresholds.
+                        IoU Thresholds
+
+  Model Name            0.5                0.55           0.6           0.65              0.7          0.75          0.8           0.85            0.9             0.95
+
+  Synthetic             0.88               0.86           0.84          0.81              0.79         0.76          0.71          0.63            0.52            0.27
+  Real 5 K              0.91               0.89           0.86          0.82              0.76         0.67          0.56          0.36            0.16            0.02
+  Real 10 K             0.91               0.89           0.86          0.81              0.75         0.66          0.55          0.36            0.16            0.01
+  Real 15 K             0.95               0.94           0.92          0.89              0.84         0.79          0.69          0.55            0.32            0.06
+  Real 20 K             0.96               0.95           0.92          0.89              0.85         0.79          0.71          0.57            0.36            0.09
+  Real 25 K             0.97               0.96           0.93          0.91              0.88         0.82          0.71          0.58            0.38            0.12
+  Real 30 K             0.97               0.96           0.94          0.91              0.88         0.80          0.73          0.60            0.41            0.16
+  Real 35 K             0.97               0.96           0.95          0.92              0.89         0.83          0.74          0.61            0.44            0.16
+
+
+                                                                                     13
+A. Tohidifar et al.                                                                                                   Automation in Construction 167 (2024) 105696
+
+
+
+
+                                                      Fig. 14. Synthetic vs. Real Model Performance.
+
+
+real models is steeper than for the synthetic model as IoU thresholds rise,        outperforms the real model, correctly identifying workers and handling
+underscoring the value of the meticulous and precise labeling that                 occlusions better.
+synthetic data offers. It leads to more consistent detection results, even            Conversely, Fig. 16 highlights scenarios where the real model excels,
+with tightening IoU thresholds. This observation suggests that for tasks           particularly with occluded workers and varied clothing. The synthetic
+requiring high localization accuracy, investing in the quality of data             model struggles with color distortions and non-standard worker
+labeling could be as important, if not more so, than merely increasing             appearances.
+the quantity of training data—a potentially significant insight for future            It should be noted that these images serve as illustrative examples of
+research.                                                                          the strengths and weaknesses of the two models. But more extensive
+   To visually examine the performance of models trained on real and               experiments are needed to draw definitive conclusions.
+synthetic data, we selected examples of both successful and erroneous
+predictions. Fig. 15 shows instances where the synthetic model
+
+
+
+
+                                           Fig. 15. Cases where the synthetic model outperforms the real model.
+
+                                                                              14
+A. Tohidifar et al.                                                                                                     Automation in Construction 167 (2024) 105696
+
+
+
+
+                                             Fig. 16. Cases where the real model outperforms the synthetic model.
+
+
+7. Discussion: the impact of synthetic data on construction-                         for visual AI, this tool opens up new avenues of academic research.
+centric DNN                                                                          Extrapolating from our study's outcomes, we see vast new horizons for
+                                                                                     synthetic data-led development by both academic researchers and in­
+   This section explores the potential implications and impacts of using             dustry professionals. The following spotlights a series of unanticipated
+synthetic data in DNN training within the context of the construction                insights, emergent challenges, and prospective trajectories in harnessing
+industry. Based on the results of our study, we discuss the significant              synthetic data for DNN training endeavors.
+opportunities that the use of BlendCon opens up for researchers and
+industry professionals. We also highlight a number of unexpected find­               7.2.1. BIM-integrated BlendCon: a journey into the future to generate
+ings, new challenges, and future research directions.                                prospective images
+                                                                                         One of BlendCon's standout features is its adaptability to diverse
+7.1. Unleashing potential: the implications of BlendCon in DNN training              input data. BlendCon needs a 3D scene as an arena for the animated
+                                                                                     avatars. This scene sets the background of the generated images. In this
+    Our study unearthed a important observation. Synthetic data holds                study, we used point clouds as the primary source of the 3D scene.
+the potential to serve as a primary dataset in DNN training. The parity in           However, the construction sector offers another valuable resource: BIM.
+performance between models trained on synthetic data and their real-                 BIM files are fully compatible and can be utilized as inputs for Blend­
+data counterparts, especially when assessed using average precision, is              Con's 3D scene creation. Tapping into BIM enables the generation of
+a compelling testament. Such findings underscore the capability of                   synthetic images with backgrounds that mirror the actual structure to be
+BlendCon-generated synthetic images to effectively replace real images.              constructed. Given that building information models are conceived and
+This positions BlendCon as a uniquely valuable tool in the toolkit of DNN            realized during the early phases of a building's lifecycle, integrating
+training methodologies.                                                              them with BlendCon essentially offers a glimpse into the future, gener­
+    Moreover, synthetic data proved to be an economical alternative to               ating imagery from sites yet to be constructed. This forward-thinking
+traditional data collection methods. Our experiments suggest that                    image generation allows DNN models to familiarize themselves with
+achieving the DNN performance synthetic data provides would require                  forthcoming construction landscapes. In essence, by integrating BIM
+over 20,000 real images. Synthetic data's ease of generation—merely a                with BlendCon, we may be able to equip DNN models with a temporal
+few clicks away, particularly with cloud computing—stands in stark                   advantage, enabling them to gain acquaintance with future sites.
+contrast to the hefty costs and efforts of collecting and labeling real data.
+For example, just the manual labeling process for segmentation masks                 7.2.2. Beyond single modalities: embracing multimodal data generated by
+costs around $2.27 per image, costing well over $40,000 for a 20 K                   BlendCon
+dataset. Meanwhile, synthetic data, being readily available at the click                 An increasing number of studies indicate that DNN models trained
+of a button, eliminates such financial and logistical burdens.                       with multimodal data demonstrate improved performance [35]. Multi­
+    Additionally, employing synthetic data enhances the efficiency of                modal DNNs leverage diverse data inputs—such as RGB, depth, and
+training DNNs for rare but significant scenarios. Tailored synthetic data            segmentation indexes—to create more comprehensive data representa­
+can be created for unique DNN use-cases, bypassing the challenges of                 tions, thereby enhancing their capability to perform complex visual
+data collection and privacy concerns associated with real construction               tasks. However, a significant hurdle is the dearth of multimodal data­
+sites while facilitating training for uncommon but crucial situations. For           sets, which stems from the intricacies involved in both the spatial cali­
+instance, there might be limited real-world data on specific safety in­              bration of data across various sensors and the temporal synchronization
+cidents like proximal human-robot collaboration on sites. Sole reliance              of data streams [35]. BlendCon addresses these challenges by efficiently
+on this sparse real data isn't viable. Synthetic data, however, offers cost-         generating and aligning multimodal data for individual scenes,
+effective simulation of such situations, allowing for the development of             streamlining the process of data collection and labeling. This capability
+DNNs adept at managing even highly uncommon and unlikely scenarios.                  broadens the spectrum of vision tasks that can be addressed. For
+                                                                                     instance, by integrating multiple modalities into a single training sam­
+7.2. Looking ahead: the future with BlendCon                                         ple—like combining RGB with depth maps for improved 3D perception,
+                                                                                     or depth with segmentation for advanced spatial recognition—BlendCon
+    In addition to BlendCon's contribution to the training of DNN models             paves the way for DNNs to tackle a wider array of applications, from
+
+                                                                                15
+A. Tohidifar et al.                                                                                                     Automation in Construction 167 (2024) 105696
+
+
+night vision enhancement to complex spatial analyses.                                Given that a major contribution of BlendCon is the automated multi­
+                                                                                     modal labeling, DNN training experiments for other labels and vision
+7.2.3. Active learning with BlendCon: advancement of DNN training                    tasks will follow. The next stage of validation will include 3D object
+paradigms                                                                            detection, 2D and 3D pose estimations, semantic segmentation, and
+    Beyond its image generation capabilities, BlendCon's engine offers               depth estimation. We also plan to tackle more challenging vision tasks,
+adaptability. While this study focused on the applicability of the data              such as detecting extremely small-sized workers from dynamic aerial
+generated by the platform, it's also worth noting that the flexibility of the        viewpoints and conducting 4-channel (i.e., RGB + D) training to
+platform itself is a valuable asset. It is a stepping stone towards inte­            enhance both daylight and potentially night vision capabilities.
+grating the platform more directly with the DNN training frameworks.                 Throughout these validation experiments, we will perform more in-
+This integration could open the possibility of automated, continuous,                depth analysis, such as characterizing the relationship between syn­
+and iterative learning for DNN models. We could design a training                    thetic imaging conditions (e.g., viewpoint, illumination, scale of fore­
+framework wherein a DNN model identifies its failure cases, maps these               ground) and the DNN's final inference performance. Last but not least,
+failures to the inputs of BlendCon, and generates synthetic images cor­              there is untapped potential for improving DNN model performance by
+responding to that failure. The model could then enrich the existing                 combining synthetic and real data. Previous studies [26] demonstrate
+dataset with synthetic data that is specifically tailored to the observed            that this combination can be more effective. Our efforts to understand
+failure case and retrain the model for continuous improvement. This                  and identify the genuine potential of synthetic data will continue.
+potential for automated learning and adaptation could revolutionize the                 With these advancements in follow-up studies, BlendCon will have
+way we approach DNN training and significantly enhance model per­                    another chance to improve its effectiveness.
+formance over time.
+                                                                                     8. Conclusion
+7.3. Investigation of BlendCon's potential enhancements
+                                                                                         The construction industry, faced with enduring challenges in pro­
+    When considering how BlendCon's functionality can be enhanced,                   ductivity and safety, stands to benefit greatly from advancements in
+three areas stand out: (1) diversity; (2) level of reality; and (3) in-depth         DNN-based visual AI. However, the industry's lack of access to high-
+characterization and validation of synthetic data.                                   quality, diversified data significantly limits this potential. This study
+    In synthetic data generation for DNN training, diversity is critical             addresses the roadblock by presenting BlendCon, a fully automated
+[20]. This encompasses the diversity of avatar poses and shapes,                     computational framework designed to generate synthetic data for DNN
+clothing, motions, and background scenes. The more diverse the input to              training. By harnessing the power of graphic engines, BlendCon can
+the data generation process, the more inclusive the features in the                  create a realistic virtual replica of a construction site, generating non-
+resulting data, leading to better generalization in real-world applica­              real yet realistic images. The framework's design allows for full con­
+tions. However, providing this level of diversity in the data generation             trol over image properties, lighting conditions, and avatar custom­
+process is a challenge. The repository of open-source 3D assets suitable             izations, enabling a high degree of diversity and flexibility in the
+for data generation is not only limited but often comes entangled with               synthetic data generated.
+licensing complexities that can impede the DNN training workflow. To                     Through this research, we not only introduce a computational
+truly harness the potential of BlendCon in enhancing DNN training, a                 (synthetic) data generation solution that eliminates the time-consuming
+deliberate investment in developing a high-quality dataset of diversified            manual data collection process, but also demonstrates the potential of
+3D assets is essential. This involves the accumulation of detailed 3D                this synthetic data in training scalable, field-applicable DNNs. Our
+backgrounds and the creation of dynamic, lifelike animated avatars that              experimental findings validate the trainability of models using synthetic
+closely mimic the appearance and actions of actual construction                      datasets and demonstrate that synthetic data can indeed act as a viable
+workers. Our efforts to expand this library of back-end data will be                 substitute for real data, specifically in the task of construction worker
+progressive and ongoing.                                                             detection. The research team will continue to improve BlendCon, aiming
+    Realism is the other significant area for improvement. Some studies              to enhance its diversity and realism. Future DNN training experiments
+suggest that the realism of synthetic data plays a vital role in DNN                 across diverse 2D and 3D computer vision tasks will also be conducted to
+training [63]. The argument posits that increasing the realism of                    fully understand the relationship between synthetic data and DNN
+generated images can help DNN models bridge the “reality gap” between                performance.
+synthetic and real domains when deployed in real-world applications.                     With the usability and validity of BlendCon established, the research
+To address the reality gap, recent efforts include advanced generative               team identifies several promising future research directions. Integrating
+models that introduce targeted noise into synthetic images to mimic                  BlendCon with BIM could facilitate project-specific data generation,
+real-world imperfections. With the emergence of controllable diffusion               while coupling it with a generative AI could further diversify the syn­
+models, these techniques have become more practical, showing promise                 thetic data produced. As BlendCon supports depth labeling, it could also
+in increasing the realism of synthetic datasets. However, the challenge of           be utilized for multimodal DNN training (e.g., RGB + D) for 3D com­
+realism extends beyond just the fine details and noise patterns of the               puter vision tasks. Additionally, the closed-loop active DNN training
+images. Enhancing realism would require complex modeling of real-                    introduced in the discussion (Section 7) presents a bold yet promising
+world dynamics, which can be particularly challenging. To enhance                    area for further investigation. There could be more research opportu­
+realism, the interactions of avatars with their environment need to be               nities to be uncovered. The BlendCon codebase will be made publicly
+modeled in detail. This would include simulating complex scenarios,                  available in the project's GitHub repository: https://github.com/Ali
+where multiple entities interact with one another. It would also require             -Tohidifar/BlendCon.
+the adaptation of worker motions based on their specific working en­
+vironments. Last but not least, modeling more realistic clothing would               CRediT authorship contribution statement
+be another challenge. In our study, we used fixed meshes attached to the
+avatars as clothes. To simulate the real world more accurately, we would                Ali Tohidifar: Writing – review & editing, Writing – original draft,
+need to adopt a new approach that allows the modeling of realistic                   Visualization, Validation, Software, Resources, Methodology, Investi­
+clothing for construction worker avatars.                                            gation, Formal analysis, Data curation. Daeho Kim: Writing – review &
+    Our validation experiment with BlendCon was just the beginning.                  editing, Writing – original draft, Visualization, Validation, Supervision,
+Many more validation experiments are necessary to understand the                     Resources, Project administration, Methodology, Investigation, Funding
+relationship between input data distribution and DNN performance.                    acquisition, Formal analysis, Conceptualization. SangHyun Lee:
+
+                                                                                16
+A. Tohidifar et al.                                                                                                                            Automation in Construction 167 (2024) 105696
+
+
+Writing – review             &     editing,     Supervision,        Formal      analysis,          [10] A. Krizhevsky, I. Sutskever, G.E. Hinton, in: F. Pereira, C.J.C. Burges, L. Bottou, K.
+                                                                                                        Q. Weinberger (Eds.), ImageNet Classification with Deep Convolutional Neural
+Conceptualization.
+                                                                                                        Networks 25, 2012, https://doi.org/10.1145/3065386.
+                                                                                                   [11] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollár, C.
+Declaration of generative AI and AI-assisted Technologies in the                                        L. Zitnick, Microsoft COCO: Common Objects in Context, Cham, Switzerland, 2014,
+                                                                                                        https://doi.org/10.1007/978-3-319-10602-1_48.
+Writing Process
+                                                                                                   [12] A. Kuznetsova, H. Rom, N. Alldrin, J. Uijlings, I. Krasin, J. Pont-Tuset, S. Kamali,
+                                                                                                        S. Popov, M. Malloci, A. Kolesnikov, T. Duerig, V. Ferrari, The open images dataset
+    During the preparation of this work the authors used ChatGPT4.0 in                                  V4, Int. J. Comput. Vis. 128 (7) (2020) 1956–1981, https://doi.org/10.1007/
+order to spot and revise grammatical errors and typos in our draft                                      s11263-020-01316-z.
+                                                                                                   [13] A. Xuehui, Z. Li, L. Zuguang, W. Chengzhi, L. Pengfei, L. Zhiwei, Dataset and
+manuscript. After using this tool/service, the authors reviewed and                                     benchmark for detecting moving objects in construction sites, Autom. Constr. 122
+edited the content as needed and take full responsibility for the content                               (2021) 103482, https://doi.org/10.1016/j.autcon.2020.103482.
+of the publication.                                                                                [14] R. Duan, H. Deng, M. Tian, Y. Deng, J. Lin, SODA: a large-scale open site object
+                                                                                                        detection dataset for deep learning in construction, Autom. Constr. 142 (2022)
+                                                                                                        104499, https://doi.org/10.1016/j.autcon.2022.104499.
+Declaration of competing interest                                                                  [15] S. Gupta, A. Agrawal, K. Gopalakrishnan, P. Narayanan, Deep learning with limited
+                                                                                                        numerical precision, in: Presented at the International Conference on Machine
+                                                                                                        Learning, 2015, https://doi.org/10.48550/arXiv.1502.02551.
+    The authors declare the following financial interests/personal re­                             [16] S. Xu, J. Wang, W. Shou, T. Ngo, A.-M. Sadick, X. Wang, Computer vision
+lationships which may be considered as potential competing interests.                                   techniques in construction: a critical review, Arch. Computa. Meth. Eng. 28 (5)
+    Daeho Kim reports financial support was provided by Natural Sci­                                    (2021) 3383–3397, https://doi.org/10.1007/s11831-020-09504-3.
+                                                                                                   [17] Google Data Labeling Service, Google Cloud, Retrieved 10 July, https://cloud.
+ences and Engineering Research Council of Canada. If there are other                                    google.com/ai-platform/data-labeling/pricing, 2023.
+authors, they declare that they have no known competing financial in­                              [18] J.M.D. Delgado, L. Oyedele, Deep learning with small datasets: using autoencoders
+terests or personal relationships that could have appeared to influence                                 to address limited datasets in construction management, Appl. Soft Comput. 112
+                                                                                                        (2021) 107836, https://doi.org/10.1016/j.asoc.2021.107836.
+the work reported in this paper.                                                                   [19] T.D. Akinosho, L.O. Oyedele, M. Bilal, A.O. Ajayi, M.D. Delgado, O.O. Akinade, A.
+                                                                                                        A. Ahmed, Deep learning in the construction industry: a review of present status
+Data availability                                                                                       and future innovations, J. Build. Eng. 32 (2020) 101827, https://doi.org/10.1016/
+                                                                                                        j.jobe.2020.101827.
+                                                                                                   [20] J. Tremblay, A. Prakash, D. Acuna, M. Brophy, V. Jampani, C. Anil, To, T,
+    Data will be made available on request.                                                             E. Cameracci, S. Boochoon, S. Birchfield, Training deep networks with synthetic
+                                                                                                        data: Bridging the reality gap by domain randomization, in: Presented at the
+                                                                                                        Conference on Computer Vision and Pattern Recognition Workshops (CVPRW),
+Acknowledgement
+                                                                                                        Salt Lake City, UT, 2018, https://doi.org/10.1109/CVPRW.2018.00143.
+                                                                                                   [21] A. Dosovitskiy, P. Fischer, E. Ilg, P. Hausser, C. Hazirbas, V. Golkov, P. Van Der
+    This research was supported financially by Natural Sciences and                                     Smagt, D. Cremers, T. Brox, Flownet: Learning Optical Flow with Convolutional
+Engineering Research Council of Canada (NSERC) Awards (#1: Dis­                                         Networks, 2015, https://doi.org/10.48550/arXiv.1504.06852.
+                                                                                                   [22] M. Neuhausen, P. Herbers, M. König, Using synthetic data to improve and evaluate
+covery Grant, RGPIN-2022-04429, ‘Development and Evaluation of                                          the tracking performance of construction workers on site, Appl. Sci. 10 (14) (2020)
+Real-like Synthetic Construction Images to Enhance the Performances of                                  4948, https://doi.org/10.3390/app10144948.
+Deep Neural Network for Construction Applications’ and #2: Collabo­                                [23] G. Ros, L. Sellart, J. Materzynska, D. Vazquez, A.M. Lopez, The Synthia Dataset: A
+                                                                                                        Large Collection of Synthetic Images for Semantic Segmentation of Urban Scenes,
+rative Research and Development Grant, 530550-2018, ‘BIM-Driven                                         2016, https://doi.org/10.1109/CVPR.2016.352.
+Productivity Improvements for the Canadian Construction Industry’).                                [24] M. Fabbri, G. Brasó, G. Maugeri, O. Cetintas, R. Gasparini, A. Ošep, S. Calderara,
+The authors would like to extend special thanks to Mr. Francis Baek from                                L. Leal-Taixé, R. Cucchiara, MOTSynth: How Can Synthetic Data Help Pedestrian
+                                                                                                        Detection and Tracking?, 2021, https://doi.org/10.48550/arXiv.2108.09518.
+the University of Michigan for his cooperation in research.                                        [25] D. Acharya, K. Khoshelham, S. Winter, BIM-PoseNet: indoor camera localisation
+                                                                                                        using a 3D indoor model and deep learning from synthetic images, ISPRS J.
+References                                                                                              Photogramm. Remote Sens. 150 (2019) 245–258, https://doi.org/10.1016/j.
+                                                                                                        isprsjprs.2019.02.020.
+                                                                                                   [26] J.W. Ma, T. Czerniawski, F. Leite, Semantic segmentation of point clouds of
+ [1] A. Braun, S. Tuttas, A. Borrmann, U. Stilla, Improving Progress monitoring by
+                                                                                                        building interiors with deep learning: augmenting training datasets with synthetic
+     fusing point clouds, semantic data and computer vision, Autom. Constr. 116 (2020)
+                                                                                                        BIM-based point clouds, Autom. Constr. 113 (2020) 103144, https://doi.org/
+     103210, https://doi.org/10.1016/j.autcon.2020.103210.
+                                                                                                        10.1016/j.autcon.2020.103144.
+ [2] M.-Y. Cheng, M.-T. Cao, C.K. Nuralim, Computer vision-based deep learning for
+                                                                                                   [27] Y. Hong, S. Park, H. Kim, H. Kim, Synthetic data generation using building
+     supervising excavator operations and measuring real-time earthwork productivity,
+                                                                                                        information models, Autom. Constr. 130 (2021) 103871, https://doi.org/10.1016/
+     J. Supercomput. 79 (4) (2023) 4468–4492, https://doi.org/10.1007/s11227-022-
+                                                                                                        j.autcon.2021.103871.
+     04803-x.
+                                                                                                   [28] H. Ying, R. Sacks, A. Degani, Synthetic image data generation using BIM and
+ [3] A. Pal, J.J. Lin, S.-H. Hsieh, M. Golparvar-Fard, Activity-level construction Progress
+                                                                                                        computer graphics for building scene understanding, Autom. Constr. 154 (2023)
+     monitoring through semantic segmentation of 3D-informed orthographic images,
+                                                                                                        105016, https://doi.org/10.1016/j.autcon.2023.105016.
+     Autom. Constr. 157 (2024) 105157, https://doi.org/10.1016/j.
+                                                                                                   [29] M. Soltani, Z. Zhu, A. Hammad, Framework for location data fusion and pose
+     autcon.2023.105157.
+                                                                                                        estimation of excavators using stereo vision, J. Comput. Civ. Eng. 32 (6) (2018)
+ [4] Kim Daeho, Lee SangHyun, Vineet R. Kamat, Proximity prediction of Mobile
+                                                                                                        04018045, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000783.
+     objects to prevent contact-driven accidents in co-robotic construction, J. Comput.
+                                                                                                   [30] H. Kim, H. Kim, 3D reconstruction of a concrete mixer truck for training object
+     Civ. Eng. 34 (4) (2020) 04020022, https://doi.org/10.1061/(ASCE)CP.1943-
+                                                                                                        detectors, Autom. Constr. 88 (2018) 23–30, https://doi.org/10.1016/j.
+     5487.0000899.
+                                                                                                        autcon.2017.12.034.
+ [5] J. Deng, A. Singh, Y. Zhou, Y. Lu, V.C.-S. Lee, Review on computer vision-based
+                                                                                                   [31] B. Mahmood, S. Han, J. Seo, Implementation experiments on convolutional neural
+     crack detection and quantification methodologies for civil structures, Constr. Build.
+                                                                                                        network training using synthetic images for 3D pose estimation of an excavator on
+     Mater. 356 (2022) 129238, https://doi.org/10.1016/j.conbuildmat.2022.129238.
+                                                                                                        real images, Autom. Constr. 133 (2022) 103996, https://doi.org/10.1016/j.
+ [6] C. Boje, A. Guerriero, S. Kubicki, Y. Rezgui, Towards a semantic construction
+                                                                                                        autcon.2021.103996.
+     digital twin: directions for future research, Autom. Constr. 114 (2020) 103179,
+                                                                                                   [32] K.-C. Huang, T.-H. Wu, H.-T. Su, W.H. Hsu, MonoDTR: monocular 3D object
+     https://doi.org/10.1016/j.autcon.2020.103179.
+                                                                                                        detection with depth-aware transformer, in: Presented at the Computer Vision and
+ [7] S.K. Baduge, S. Thilakarathna, J.S. Perera, M. Arashpour, P. Sharafi, B. Teodosio,
+                                                                                                        Pattern Recognition, 2022, https://doi.org/10.48550/arXiv.2203.10981.
+     A. Shringi, P. Mendis, Artificial intelligence and smart vision for building and
+                                                                                                   [33] L. Deng, M. Yang, T. Li, Y. He, C. Wang, RFBNet: deep multimodal networks with
+     construction 4.0: machine and deep learning methods and applications, Autom.
+                                                                                                        residual fusion blocks for RGB-D semantic segmentation, in: Presented at the
+     Constr. 141 (2022) 104440, https://doi.org/10.1016/j.autcon.2022.104440.
+                                                                                                        Computer Vision and Pattern Recognition, 2019, https://doi.org/10.48550/
+ [8] X. Feng, Y. Jiang, X. Yang, M. Du, X. Li, Computer vision algorithms and hardware
+                                                                                                        arXiv.1907.00135.
+     implementations: a survey, Integration 69 (2019) 309–320, https://doi.org/
+                                                                                                   [34] A. Rahate, R. Walambe, S. Ramanna, K. Kotecha, Multimodal co-learning:
+     10.1016/j.vlsi.2019.07.005.
+                                                                                                        challenges, applications with datasets, recent advances and future directions,
+ [9] S.S. Gill, M. Xu, C. Ottaviani, P. Patros, R. Bahsoon, A. Shaghaghi, M. Golec,
+                                                                                                        Informat. Fusion 81 (2022) 203–239, https://doi.org/10.1016/j.
+     V. Stankovski, H. Wu, A. Abraham, M. Singh, H. Mehta, S.K. Ghosh, T. Baker, A.
+                                                                                                        inffus.2021.12.003.
+     K. Parlikad, H. Lutfiyya, S.S. Kanhere, R. Sakellariou, S. Dustdar, O. Rana,
+                                                                                                   [35] K. Bayoudh, R. Knani, F. Hamdaoui, A. Mtibaa, A survey on deep multimodal
+     I. Brandic, S. Uhlig, AI for next generation computing: emerging trends and future
+                                                                                                        learning for computer vision: advances, trends, applications, and datasets, Vis.
+     directions, Internet Thing. 19 (2022) 100514, https://doi.org/10.1016/j.
+                                                                                                        Comput. 38 (8) (2022) 2939–2970, https://doi.org/10.1007/s00371-021-02166-7.
+     iot.2022.100514.
+
+
+                                                                                              17
+A. Tohidifar et al.                                                                                                                            Automation in Construction 167 (2024) 105696
+
+[36] K. Mullick, H. Jain, S. Gupta, A.A. Kale, Domain adaptation of synthetic driving               [52] M. Ding, Y. Huo, H. Yi, Z. Wang, J. Shi, Z. Lu, P. Luo, Learning Depth-guided
+     datasets for real-world autonomous driving, in: Presented at the Computer Vision                    convolutions for monocular 3D object detection, in: Presented at the Computer
+     and Pattern Recognition, 2023, https://doi.org/10.48550/arXiv.2302.04149.                           Vision and Pattern Recognition, 2019, https://doi.org/10.48550/
+[37] J. Kim, D. Kim, S. Lee, S. Chi, Hybrid DNN training using both synthetic and real                   arXiv.1912.04799.
+     construction images to overcome training data shortage, Autom. Constr. 149                     [53] Z. Liu, H. Tang, A. Amini, X. Yang, H. Mao, D. Rus, S. Han, BEVFusion: multi-task
+     (2023) 104771, https://doi.org/10.1016/j.autcon.2023.104771.                                        multi-sensor fusion with Unified Bird’s-Eye View Representation, in: Presented at
+[38] J. Hwang, J. Kim, S. Chi, Site-optimized training image database development                        the Computer Vision and Pattern Recognition, 2022, https://doi.org/10.48550/
+     using web-crawled and synthetic images, Autom. Constr. 151 (2023) 104886,                           arXiv.2205.13542.
+     https://doi.org/10.1016/j.autcon.2023.104886.                                                  [54] C.-Y. Wang, A. Bochkovskiy, H.-Y.M. Liao, YOLOv7: Trainable Bag-of-Freebies Sets
+[39] Blender Foundation, Blender, Retrieved 10 April 2022, https://www.blender.org/,                     New State-of-the-Art for Real-Time Object Detectors, in: Presented at the Computer
+     2023.                                                                                               Vision and Pattern Recognition, 2022, https://doi.org/10.48550/
+[40] CGTrader: 3D Model Store, CGTrader, Retrieved 23 May, https://www.cgtrader.                         arXiv.2207.02696.
+     com/, 2024.                                                                                    [55] H. Laga, L.V. Jospin, F. Boussaid, M. Bennamoun, A survey on deep learning
+[41] TurboSquid: 3D Models for Professionals, Retrieved 23 May, https://www.turbos                       techniques for stereo-based depth estimation, IEEE Trans. Pattern Anal. Mach.
+     quid.com/, 2024.                                                                                    Intell. 44 (4) (2022) 1738–1764, https://doi.org/10.1109/TPAMI.2020.3032602.
+[42] Sketchfab, Retrieved 23 May, https://sketchfab.com/, 2024.                                     [56] A.M. Hafiz, G.M. Bhat, A survey on instance segmentation: state of the art, Int. J.
+[43] Rokoko Electronics, Smartsuit Pro: Quality Motion Capture in One Simple Suit,                       Multimed. Inf. Retr. 9 (3) (2020) 171–189, https://doi.org/10.1007/s13735-020-
+     Retrieved 25 September, https://www.rokoko.com/products/smartsuit-pro, 2021.                        00195-x.
+[44] Real-Time Motion Capture in Blender with Rokoko's Native Integration, Retrieved                [57] M. Park, D.Q. Tran, J. Bak, S. Park, Small and overlapping worker detection at
+     10 July, https://www.rokoko.com/integrations/blender, 2023.                                         construction sites, Autom. Constr. 151 (2023) 104856, https://doi.org/10.1016/j.
+[45] T. Nishita, T. Sirai, K. Tadamura, E. Nakamae, Display of the earth taking into                     autcon.2023.104856.
+     account atmospheric scattering, in: Presented at the Proceedings of the 20th                   [58] F. Pfitzner, A. Braun, A. Borrmann, From data to knowledge: construction process
+     Annual Conference on Computer Graphics and Interactive Techniques, New York,                        analysis through continuous image capturing, object detection, and knowledge
+     NY, USA, 1993, https://doi.org/10.1145/166117.166140.                                               graph creation, Autom. Constr. 164 (2024) 105451, https://doi.org/10.1016/j.
+[46] Blender 3.6 Reference Manual, Sky Texture Node, Blender 3.6 Reference Manual,                       autcon.2024.105451.
+     https://docs.blender.org/manual/en/latest/render/shader_nodes/textures/sky.                    [59] I.O. Agyemang, X. Zhang, I. Adjei-Mensah, D. Acheampong, L.D. Fiasam, C. Sey, S.
+     html#sky-texture-node, 2023.                                                                        B. Yussif, D. Effah, Automated vision-based structural health inspection and
+[47] The Blender Foundation, Cycles Rendering Engine, Retrieved 22 August, htt                           assessment for post-construction civil infrastructure, Autom. Constr. 156 (2023)
+     ps://www.cycles-renderer.org/, 2023.                                                                105153, https://doi.org/10.1016/j.autcon.2023.105153.
+[48] Blender Foundation, Accelerating Cycles Using NVIDIA RTX, Developer Blog,                      [60] P. Schönfelder, F. Stebel, N. Andreou, M. König, Deep learning-based text detection
+     2023. Retrieved 3 September, https://code.blender.org/2019/07/accelera                              and recognition on architectural floor plans, Autom. Constr. 157 (2024) 105156,
+     ting-cycles-using-nvidia-rtx/.                                                                      https://doi.org/10.1016/j.autcon.2023.105156.
+[49] Blender Foundation, Light Paths — Blender Manual, Retrieved 25 September, http                 [61] W. Ye, J. Ren, C. Lu, A.A. Zhang, Y. Zhan, J. Liu, Intelligent detection of fastener
+     s://docs.blender.org/manual/en/latest/render/cycles/render_settings/light_paths.                    defects in Ballastless tracks based on deep learning, Autom. Constr. 159 (2024)
+     html, 2023.                                                                                         105280, https://doi.org/10.1016/j.autcon.2024.105280.
+[50] J. Martinez, R. Hossain, J. Romero, J.J. Little, A simple yet effective baseline for 3d        [62] T. Zhang, D. Wang, Y. Lu, A data-centric strategy to improve performance of
+     human pose estimation, in: Presented at the 2017 IEEE International Conference on                   automatic pavement defects detection, Autom. Constr. 160 (2024) 105334,
+     Computer Vision (ICCV), Venice, 2017, https://doi.org/10.1109/ICCV.2017.288.                        https://doi.org/10.1016/j.autcon.2024.105334.
+[51] H. Chen, R. Feng, S. Wu, H. Xu, F. Zhou, Z. Liu, 2D human pose estimation: a                   [63] E. Wood, T. Baltrušaitis, C. Hewitt, S. Dziadzio, T.J. Cashman, J. Shotton, Fake It
+     survey, Multimedia Systems 29 (5) (2023) 3115–3138, https://doi.org/10.1007/                        Till You Make It: Face Analysis in the Wild Using Synthetic Data Alone, in:
+     s00530-022-01019-0.                                                                                 Presented at the Proceedings of the IEEE/CVF International Conference on
+                                                                                                         Computer Vision, 2021, https://doi.org/10.48550/arXiv.2109.15102.
+
+
+
+
+                                                                                               18
+

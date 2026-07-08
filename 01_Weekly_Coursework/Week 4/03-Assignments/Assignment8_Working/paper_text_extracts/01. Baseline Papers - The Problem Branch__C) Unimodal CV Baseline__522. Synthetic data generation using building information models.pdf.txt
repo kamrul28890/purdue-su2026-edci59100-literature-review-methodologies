@@ -1,0 +1,875 @@
+                                                                 Automation in Construction 130 (2021) 103871
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                          journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Synthetic data generation using building information models
+Yeji Hong, Somin Park, Hongjo Kim, Hyoungkwan Kim *
+School of Civil and Environmental Engineering, Yonsei University, 50, Yonsei-ro, Seodaemun-gu, Seoul 03722, Republic of Korea
+
+
+
+
+A R T I C L E I N F O                                      A B S T R A C T
+
+Keywords:                                                  Infrastructure scene understanding from image data aids diverse applications in construction and maintenance.
+Automatic annotation                                       Recently, deep learning models have been employed to extract information regarding infrastructure from visual
+Two-stage synthetic data generation                        data. The performance of these models depends significantly on the volume of training data. However, preparing
+Building information model
+                                                           the training data is time-consuming and laborious, as it entails labeling numerous images. To address this issue,
+Deep learning model
+Image-to-image translation
+                                                           this paper proposes a method for generating high-quality synthetic data that includes the automatic annotation of
+Infrastructure scene understanding                         infrastructure scenes. The method consists of three steps: 1) translating building information model (BIM) images
+                                                           into real-world images, 2) automatically labeling them using the spatial information contained in the BIM to
+                                                           generate various synthetic datasets, and 3) splicing the selected synthetic datasets together to form the final
+                                                           synthetic dataset. The Mask R-CNN models trained with building and bridge synthetic data achieved average
+                                                           precisions of 71.6% and 84.9%, respectively.
+
+
+
+
+1. Introduction                                                                                 infrastructure scene.
+                                                                                                    The diversity of the types, shapes, and materials of the objects that
+    In the architecture, engineering, construction, and facility manage­                        constitute infrastructure complicates implementing a recognition model
+ment (AEC & FM) industry, the scene understanding of civil infra­                               that performs well for all infrastructure scenes. Two challenges are faced
+structure is crucial for carrying out diverse vision-based automated tasks                      while preparing data for infrastructure scene understanding: The first is
+[1]. Understanding infrastructure scenes involves obtaining the loca­                           that image labeling is performed manually, which is time-consuming
+tion, shape, color, and quantity information of the physical objects                            and costly. Image labeling for object recognition is the task of marking
+constituting a construction structure. This information can be employed                         the area containing the object using a polygon and specifying the class of
+for safety monitoring [2], progress monitoring [3,4], and structural in­                        the object. Marking a polygon requires a dozen clicks on a single object.
+spection [5–9].                                                                                 The Google Cloud data labeling service charges $257 to generate 1000
+    A significant amount of research has been conducted on the under­                           polygons for instance segmentation [14]. Cordts et al. [12] stated that
+standing of the civil infrastructure scene. In the past decades, methods of                     each fine annotation of a single cityscape image took more than 90 min.
+extracting features, such as color, texture, and shape, that can distin­                        The second challenge is that domain knowledge is required to label the
+guish target infrastructure from other objects have been studied using                          physical objects that constitute the infrastructure. Expertise is required
+image processing and machine learning techniques. More recently, with                           to identify the area and class of the objects in an infrastructure scene
+the advancement of computers, such as the advent of GPUs with                                   image. For example, skill is entailed in determining a color code that
+improved speed, deep learning models, particularly those that employ                            identifies the contents of a pipe in a plumbing system. The labeler may
+convolutional neural networks (CNNs), have been applied for contextual                          need additional training to acquire this knowledge.
+awareness of the infrastructure scene. Such applications require the                                The challenge of image labeling can be addressed by utilizing
+collection of a substantial amount of labeled image data. To this end,                          building information models (BIMs) with comprehensive information
+large-scale publicly available datasets such as the Scene Understanding                         regarding civil infrastructure. BIMs include a variety of information,
+(SUN) database [10], Common Objects in Context (COCO) dataset [11],                             termed resources, such as information regarding the geometry and
+Cityscapes dataset [12], and ADE20K [13] have been created. However,                            material of all components constituting the AEC product. Therefore,
+data regarding civil infrastructure scenes are lacking. Thus, there is a                        pixel-level labeling can be performed for the images obtained by
+vital requirement for large-scale annotated image data regarding the                            capturing the views of BIMs using a virtual camera in BIM software.
+
+
+ * Corresponding author.
+   E-mail address: hyoungkwan@yonsei.ac.kr (H. Kim).
+
+https://doi.org/10.1016/j.autcon.2021.103871
+Received 7 October 2020; Received in revised form 28 July 2021; Accepted 30 July 2021
+Available online 9 August 2021
+0926-5805/© 2021 Elsevier B.V. All rights reserved.
+Y. Hong et al.                                                                                                            Automation in Construction 130 (2021) 103871
+
+
+
+
+Fig. 1. Research framework: (a) image-to-image translation, (b) synthetic data generation, and (c) synthetic data splice, where n is the number of GBA and k is the
+number of classes.
+
+
+However, differences in color and texture between BIM and real-world                 crack and noncrack images and a pavement crack detection dataset
+images—mainly photographs—cause differences in spatial features                      consisting of 2620 images. Wu et al. [24] generated a dataset on con­
+that serve as the training criteria of CNNs [15]. Therefore, for BIM im­             struction workers, referred to as GDUT-HWD, that consists of 3174 im­
+ages to be used as training data for the analysis of photographs, these              ages for hardhat detection. Kim et al. [25] generated a construction
+must be transformed into a photographic style.                                       equipment dataset, referred to as the AIM dataset, consisting of 2920
+    The generative adversarial networks (GANs) [16] architecture is                  images for equipment classification. Despite these efforts, and consid­
+presently being studied as a novel data generation method. It is used to             ering that ImageNet [26], a representative open dataset in the field of
+create synthetic images, such as handwritten images [16] and human                   computer vision, contains 21,000 classes and 14 million images, data­
+facial images [17], that are similar to the corresponding actual images.             sets in the civil engineering field are still inadequate in terms of the
+The GANs also facilitate image transformation, such as that of grayscale             diversity and quantity of construction objects.
+images into color images and day scenes into night scenes [18]. Cycle-                   To circumvent the lack of datasets, methods that use a three-
+consistent adversarial networks (CycleGAN) [19] are models that map                  dimensional (3D) model or a style transfer method to generate syn­
+images from two different domains. In this paper, we propose a                       thetic data have been developed. Soltani et al. [27] proposed a method
+CycleGAN-based method to generate synthetic data for the improved                    for generating automatically labeled synthetic data using a 3D excavator
+training of deep learning models for the infrastructure scene under­                 model and construction site background images to improve the perfor­
+standing. The research framework is depicted in Fig. 1. First, as depicted           mance of construction equipment detectors. Kim and Kim [28] recon­
+in Fig. 1(a), multiple generators, GBAs, that perform the translation from           structed a 3D model of a concrete mixer truck using the multiview stereo
+BIM images to photographs are acquired. Next, GBAs generate synthetic                algorithm to generate synthetic data. Further, with the rapid increase in
+images with labels from the BIM images as shown in Fig. 1(b). Subse­                 the prevalence and effectiveness of BIM, research is underway to
+quently, experiments are performed using mask regions with CNN fea­                  generate synthetic data from BIM. Acharya et al. [29] and Acharya et al.
+tures (Mask R-CNN) [20] to assess the efficiency of each synthetic                   [30] used the indoor images derived from BIM as training data of a deep
+dataset for the training of CNNs for object recognition. Finally, as                 learning network that estimates the pose of a camera. Acharya et al. [29]
+illustrated in Fig. 1(c), the synthetic datasets that achieve the highest            used pre-processed images to extract edges from BIM images for fine-
+performance for each category of objects are selected as the components              tuning of CNN, and Acharya et al. [30] used BIM images rendered in
+of the final dataset. The final synthetic dataset is constructed by splicing         five different ways to train a network consisting of a Bayesian CNN and a
+the pixels from the selected synthetic datasets. In the experiments, the             long short-term memory layer. Ma et al. [31] used synthetic point clouds
+performance of each Mask R-CNN trained on photographs, BIM images,                   obtained from BIM as the training data for point cloud segmentation
+and synthetic datasets was evaluated. The contribution of this study lies            networks. To create new images by combining the content and style of
+in the creation of a novel method to automatically generate annotated                original images, Gatys et al. [32] proposed an algorithm to change a
+synthetic infrastructure scene images that significantly improve the                 white noise image to a resultant image with the content and style of the
+performance of instance segmentation models.                                         target image using CNN. Johnson et al. [33] used an image trans­
+                                                                                     formation network with a deep residual CNN for the style transfer of
+2. Related work                                                                      multiple images.
+                                                                                         The GAN [16] has been proposed for generating images that are
+    In the construction industry, supervised learning has emerged as a               similar to real images. It is a deep learning model in which the gener­
+means for automating existing construction tasks. Therefore, the crea­               ative model G and discriminative model D, defined by multilayer per­
+tion of a large number of data is in the common interest of civil engi­              ceptrons, are simultaneously trained using the adversarial method. G is
+neers, and efforts are being made to create a substantial amount of                  trained to generate images with features similar to real images, and D is
+publicly available construction object datasets. One of the outcomes of              trained to distinguish between real and fake images. Radford et al. [17]
+such efforts is Structural ImageNet [21,22]. Gao et al. [21] and Gao and             proposed a deep convolutional GAN (DCGAN) by applying CNN archi­
+Mosalam [22] collected over 10,000 pre-disaster and post-disaster im­                tectures and a series of constraints to the GAN architecture. The
+ages from online archives and image search engines to create a dataset of            generator and discriminator of the DCGAN were composed of fractional-
+structural damage images referred to as Structural ImageNet. Qurishee                strided and strided convolutions, respectively. With the advent of
+et al. [23] created a concrete crack detection dataset consisting of 2088            DCGAN, the GAN has been applied in various fields. As an application of
+
+
+                                                                                 2
+Y. Hong et al.                                                                                                     Automation in Construction 130 (2021) 103871
+
+
+
+
+                                                       Fig. 2. Framework for training CycleGAN.
+
+
+the GAN, image-to-image translation, which transforms an image into             has been a lack of studies to address the difference between synthetic
+another image with a different representation, was performed. Isola             data and real-world data. A domain adaptation is a technique to teach a
+et al. [18] proposed the Pix2pix model, in which an input condition was         shift between source domain data and target domain data so that a
+added to the loss function of the GAN to create an output image related         model trained with source data performs well with target data. Among
+to the input image. Whereas a basic GAN maps random noise vector z to           domain adaptation methods, the adversarial-based approach can be
+output image y, the generator of Pix2pix creates y using z and input            divided into generative models and non-generative models [38].
+image x, and the discriminator determines whether y is both a real image        Generative models include Pix2pix, which create simulated data similar
+and an image created from x. Pix2pix successfully solves the image-to-          to target domain data based on GAN. Non-generative models adopt a
+image translation problem in various domains, but it can only be                method of simultaneous training for the main task and domain confu­
+trained when paired images exist. CycleGAN [19] is a model that enables         sion so that the feature extractor derives the discriminative represen­
+translation between two domain images using unpaired training data. It          tation and the domain-invariant representation. Ganin et al. [39]
+was found to generate more natural-looking images in comparison with            proposed a Gradient Reversal Layer that is added to the feed-forward
+the algorithm presented in [32].                                                model to form a non-generative model for the effect of adaptation
+    In the construction field, research using the GAN is being conducted        behavior. In the domain adaptation context, CycleGAN is categorized as
+to synthesize images to provide training data for deep learning models.         the adversarial reconstruction approach that reconstructs source or
+Bang et al. [34] used a GAN as a tool to create augmented data for the          target samples through cyclic mapping using GAN to improve domain
+detection of construction resources. In their study, inpainting was per­        adaptation performance.
+formed using a GAN to generate various object placement patterns by                 We propose a methodology for generating synthetic data regarding
+adding new objects to the construction images. Gao et al. [35] created a        infrastructure scenes based on both 3D models and actual images. The
+labeled structural image dataset using DCGAN and the leaf-                      proposed methodology creates a mapping function that transforms BIM
+bootstrapping method. The resulting dataset was used to train a model           images into real-world images through CycleGAN training. The mapping
+that classifies the scene levels and damage conditions of structural im­        function transforms BIM images such that they become photorealistic
+ages. Baek et al. [36] improved the performance of construction                 while maintaining their structure. Therefore, the synthetic data have the
+equipment classifiers using a GAN and adversarial training. They                spatial features of real-world images and contain labels for all the
+designed a model that combines a generator, discriminator, and classi­          components of the infrastructure in the images. These synthetic data
+fier so that the classifier can be trained using adversarial samples. The       have excellent potential to train deep learning models for analyzing
+model improved the classifier performance by over 4% on average by              infrastructure scene in real-world images.
+addressing the issue of weak classification boundaries. Hong et al. [37]
+proposed the initial idea of using CycleGAN to generate photorealistic          3. Methodology
+synthetic data from BIM images for semantic segmentation at an aca­
+demic conference. This paper strengthens the original and add new                  The procedure for generating synthetic data is divided into three
+contents of the conference paper for academic rigor.                            steps. The first is to train CycleGAN to enable translation between
+    Although previous studies have advanced the state of the art in             photographs and BIM images. The second is to create labeled synthetic
+synthetic data generation with regard to the construction industry, there       images that are similar to photographs from the BIM images using the
+
+
+
+
+                                                                            3
+Y. Hong et al.                                                                                                                           Automation in Construction 130 (2021) 103871
+
+
+generators of the trained CycleGAN. The last is to splice synthetic images                           calculating the loss amount is represented by orange arrows in Fig. 2.
+together in order to create effective synthetic data in training deep                                Further, the black arrows represent the inputs to the discriminators and
+learning models for infrastructure scene understanding. The following                                their outputs. As a result, we obtain GAB and GBA that enable mapping
+paragraphs describe the details of these steps.                                                      between photographs and BIM images while maintaining the structure
+                                                                                                     so that the resultant image can be reverted to the original image.
+3.1. Image-to-image translation
+                                                                                                     3.2. Synthetic data generation
+   CycleGAN is a network that learns the mapping function between the
+source domain A and the target domain B. The network consists of two                                     Synthetic images are created using a generator GBA trained to
+                                                                                                     generate BIM images in a photographic style. As the training of Cycle­
+generators and two discriminators. CycleGAN is trained through
+adversarial loss [16], L GAN (GAB , DB , A, B), as expressed by Eq. (1):                             GAN progresses, the weights of GBA change, which affects the creation of
+                                                                                                     synthetic images. Therefore, to obtain the GBA that generates synthetic
+L GAN (GAB , DB , A, B) = Eb∼pdata (b) [logDB (b) ] + Ea∼pdata (a) [log(1 − DB (GAB (a) ) ) ],       images that are the most suitable for instance segmentation, GBA was
+                                                                                       (1)           stored for every 20 epochs out of 200 epochs and used to create synthetic
+                                                                                                     images. As depicted in Fig. 1(b), when the BIM image is fed as an input to
+where a and b represent the training samples {ai}i=1N in domain A and                                GBA, a synthetic image is created in a photographic style. Because the
+{bj}j=1M in domain B, respectively, with subscripts omitted. The gener­                              structure of the BIM images is maintained in the synthetic images, the
+ator GAB is a network that translates a into b, and generator GBA trans­                             annotation of the BIM images stored in the BIM software is transferred to
+lates b into a. The discriminator DA distinguishes between a and a fake a                            the synthetic images as it is.
+created by the generator, and DB plays the same role for b. Through
+adversarial loss, GAB is trained to make GAB(a) similar to b, and DB is                              3.3. Splicing synthetic datasets
+trained to better distinguish between b and GAB(a). L GAN (GBA , DA , B, A)
+operates similarly.                                                                                      A new algorithm, splicing synthetic datasets, is designed to enable
+    Cycle-consistency loss [40] was applied because a network with only                              “two-stage synthetic image generation” to make the best use of GAN-
+adversarial losses could generate a specific image characteristic that                               based models in the context of infrastructure scene understanding.
+deceives the discriminator while ignoring the input image. With regard                               The algorithm is to address a critical problem that the quality of syn­
+to the expression for cycle-consistency loss L cyc (GAB , GBA ), represented                         thetic images cannot be guaranteed despite the training epoch of
+by Eq. (2), GBA(GAB(ai)) and GAB(GBA(bj)) are trained to have the same                               CycleGAN is increasing. In experiments, we observed that the segmen­
+values as ai and bj, respectively. That is, GAB and GBA are derived to have                          tation performance fluctuates for each synthetic dataset generated by
+an inverse functional relationship with each other:                                                  different training epochs of CycleGAN with respect to most of target
+                                               [                       ]                             object classes. It is hard to decide when to stop training CycleGAN to get
+              L cyc (GAB , GBA ) = Ea∼pdata (a) ‖GBA (GAB (a) ) − a ‖1
+                                               [                       ]                             the best synthetic images for all classes. It is conjectured that a lack of
+                                 + Eb∼pdata (b) ‖GAB (GBA (b) ) − b ‖1   (2)                         visual features of the target infrastructure classes resulted in such per­
+  The loss function of CycleGAN is summarized by Eq. (3), and the                                    formance variations.
+model is trained to produce GAB* and GBA* that satisfy Eq. (4):                                          To address the problem, the new algorithm selects the best synthetic
+                                                                                                     images by comparing the performance of Mask R-CNN in each training
+    L (GAB , GBA , DA , DB ) = L GAN (GAB , DB , A, B) + L GAN (GBA , DA , B, A)                     epoch of CycleGAN. A key idea is to produce the best synthetic image
+                                   + λL cyc (GAB , GBA )                               (3)           dataset by combining synthetic object masks from multiple synthetic
+                                                                                                     datasets generated from different CycleGAN models and assigning them
+G*AB , G*BA = min max L (GAB , GBA , DA , DB )                                         (4)           to the background synthetic images. The details are as follows: First,
+                                                                                                     CycleGAN generates a number of synthetic datasets with different
+                 GAB ,GBA DA ,DB
+
+
+    In this study, the mapping between photographs and BIM images was                                hyper-parameters of a training epoch, a learning rate, and a decay rate.
+performed using CycleGAN. The training framework of CycleGAN is                                      Second, Mask R-CNN is separately trained using each synthetic dataset,
+depicted in Fig. 2. The generator GBA receives the BIM image b as an                                 and the best model is determined by AP for all classes. The synthetic
+input and generates GBA(b) similar to the photograph a as an output. The                             dataset used for training the best model is selected. This dataset will be
+generator GAB receives GBA(b) as an input and generates an image                                     used as the background images. Third, the best model for each class is
+GAB(GBA(b)) similar to b, which is the original BIM image. The genera­                               determined based on AP; for the synthetic dataset used in training the
+tion process of GBA and GAB is represented by the dotted red arrows.                                 best model, pixels corresponding to the target object class are extracted.
+Similarly, GAB(a) and GBA(GAB(a)) are generated from GAB and GBA for                                 Fourth, the extracted pixels of a synthetic image are overlaid to a
+the photograph a, as represented by the dotted purple arrows in Fig. 2.                              background image. Since each synthetic image has a corresponding BIM
+With regard to the cycle-consistency loss, the differences between b and                             image, a final synthetic image has the same scene structure as its cor­
+GAB(GBA(b)) and a and GBA(GAB(a)) are calculated using the L1-norm.                                  responding BIM image. But the difference is that the final image is
+Discriminator DA determines whether input photograph a and fake                                      composed of one background image and multiple object masks
+photograph GBA(b) are real; similarly, discriminator DB determines the                               (extracted pixels) from different synthetic image datasets. By this
+authenticity of b and GAB(GBA(b)). Using adversarial loss                                            composition, the final images have better visual representations for
+L GAN (GBA , DA , B, A), DA is trained to distinguish between real and fake                          target infrastructure classes that are advantageous to train Mask R-CNN.
+photographs, and thereafter, GBA is trained to create images that deceive                            Algorithm 1 elaborates the implementation details.
+DA, that is, images that are similar to the real photographs, using the
+input BIM images, each of which is represented by b. The process of
+
+
+
+
+                                                                                                 4
+Y. Hong et al.                                                                                                      Automation in Construction 130 (2021) 103871
+
+
+
+
+                                                                                 extracted region proposals are passed through a CNN and the region
+Table 1                                                                          determined as an object is regressed and classified. Subsequently, Fast R-
+Training dataset of Mask R-CNN for instance segmentation of infrastructure       CNN [42], which reduced the amount of computation required by
+scenes.                                                                          adding a region of interest (RoI) pooling layer to R-CNN, was developed.
+  Name                           Type                            Number
+                                                                                 Fast R-CNN has evolved into Faster R-CNN [43], which exhibits
+                                                                                 improved computational speed by replacing selective search with a re­
+  Photograph                     Photographs                     100
+                                                                                 gion proposal network. Mask R-CNN is a model with a layer added to
+  BIM                            BIM images                      100
+  Synthetic20                    Synthetic data                  100             Faster R-CNN that determines whether each pixel inside a bounding box
+  Synthetic40                                                                    belongs to an object or not. In Mask R-CNN, errors occurring in RoI
+  Synthetic60                                                                    pooling have also been reduced by aligning the RoI. At the time of its
+  Synthetic80
+                                                                                 publication, Mask R-CNN, with ResNeXt-101-FPN set as the backbone,
+  Synthetic100
+  Synthetic120
+                                                                                 achieved the highest instance segmentation performance among the
+  Synthetic120d                                                                  existing single models. Currently, Mask R-CNN, with SpineNet [44] as
+  Synthetic140                                                                   the backbone, ranks third in instance segmentation performance on the
+  Synthetic140d                                                                  COCO test-dev dataset [45]. Therefore, we concluded that the Mask R-
+  Synthetic160
+                                                                                 CNN architecture is still promising for object recognition tasks and
+  Synthetic160d
+  Synthetic180                                                                   adopted it as a desirable model to verify the effectiveness of the
+  Synthetic180d                                                                  generated synthetic data.
+  Synthetic200
+  Synthetic200d
+                                                                                 4.2. Implementation details
+  SUN database                   Photographs                     10,000
+
+                                                                                     The proposed methodology was implemented using Python on the
+4. Experimental study                                                            Ubuntu 16.04 operating system with a Geforce RTX 2080 Ti GPU and an
+                                                                                 Intel Core i5–7600 CPU. The deep learning libraries Keras [46] and
+    Synthetic data generation, and instance segmentation for synthetic           TensorFlow [47] were used to implement both CycleGAN and Mask R-
+data evaluation were performed using data acquired from the first en­            CNN. The batch size of CycleGAN was set to 1, and λ, which is the weight
+gineering building of Yonsei University and Jungnang Railway Bridge              of the cycle-consistency loss expressed in Eq. (3), was set to 10. Two
+located in Seoul, Korea. For the instance segmentation of the building           learning rates were applied to train CycleGAN for a total of 200 epochs:
+scene, five classes were selected: door, wall, floor, ceiling, and window.       the first learning rate was set to a constant value of 0.0002 for 200
+Four classes were selected for the instance segmentation of the bridge           epochs (constant case), and the second learning rate was set to 0.0002
+scene: slab, girder, coping, and column. Synthetic datasets were evalu­          for the first 100 epochs and linearly decreased from 0.0002 to zero for
+ated by training the instance segmentation network (Mask R-CNN) using            the remaining 100 epochs (decay case).
+photographs, a BIM dataset, and synthetic datasets and testing the                   The configuration of Mask R-CNN was set with the backbone of
+network using a photograph test dataset. Herein, “synthetic datasets”            ResNet-101 [48] and a batch size of 2. We initialized the Mask R-CNNs
+refer to datasets generated from GBA stored every 20 epochs in Cycle­            with COCO pre-trained weights. We applied a learning rate of 0.001 on
+GAN and the dataset made by splicing them; each dataset was used to              the first epoch and a learning rate of 0.0001 from the second epoch, and
+train different Mask R-CNNs.                                                     trained the models for 1000 epochs for all training datasets. When
+                                                                                 selecting synthetic datasets in Algorithm 1, there could be a case when
+                                                                                 the best performance of Mask R-CNN for a certain class is the same for
+4.1. Mask R-CNN
+                                                                                 different synthetic training datasets. In such case, a dataset with the
+                                                                                 higher value of AP for all classes is selected.
+   Mask R-CNN is a model developed from R-CNN [41], an object
+detection model. In R-CNN, object detection is performed through two
+steps: 1) A region of interest is extracted through selective search; 2)
+
+                                                                             5
+Y. Hong et al.                                                                                                     Automation in Construction 130 (2021) 103871
+
+
+
+
+                                                Fig. 3. Sample data from the Mask R-CNN training datasets.
+
+
+                                                                                synthetic images were all captured from the same position and angle as
+                                                                                shown in Fig. 3.
+                                                                                    The synthetic datasets are denoted as “Synthetic” followed by the
+                                                                                number of epochs corresponding to the generator of the CycleGAN from
+                                                                                which the datasets were obtained. The suffix “d” is added to datasets
+                                                                                created from the generator trained with the decaying learning rate. For
+                                                                                example, the eighth and ninth datasets in Table 1, Synthetic120 and
+                                                                                Synthetic120d, contain synthetic data generated based on the weights
+                                                                                obtained in the 120th epoch using the generators trained with the
+                                                                                constant and decaying learning rates, respectively. The datasets of
+                                                                                synthetic images were obtained by feeding the BIM images to the
+                                                                                generator GBA obtained every 20 epochs during the training process of
+                                                                                CycleGAN. Therefore, five generators were created during the first 100
+                                                                                epochs. Owing to the two different learning rates (constant case and
+                                                                                decay case) mentioned in Section 4.2, 10 additional generators were
+                                                                                created during the remaining 100 epochs, resulting in a total of 15
+                 Fig. 4. Annotation example of photographs.
+                                                                                generators.
+                                                                                    The 18th training dataset was acquired from the SUN database, a
+4.3. Experiment on building elements
+                                                                                benchmark dataset consisting of 908 scene categories. The SUN database
+                                                                                was selected as a training dataset to compare the building synthetic data
+4.3.1. Datasets for training CycleGAN
+                                                                                with large-scale publicly available datasets. From the fully annotated
+    To train CycleGAN, photographs and BIM images of the first engi­
+                                                                                16,873 images of the SUN database, corrupt files and images that did not
+neering building of Yonsei University were used. The region of interest
+                                                                                include the target classes were removed, and 10,000 images were
+for data acquisition was an L-shaped corridor approximately 32 m long
+                                                                                randomly selected from the remaining images. The test dataset consisted
+and 1.8 to 2.5 m wide. The BIM images were extracted from the BIM
+                                                                                of 100 photographs captured from the perspective of a pedestrian
+implemented using the Revit software [49]. For the photographic data
+                                                                                walking down the corridor while varying the position and angle of the
+required to train CycleGAN, 550 photographs were captured from the
+                                                                                camera.
+perspective of a pedestrian in the corridor. In this set of photographs,
+                                                                                    The photographs were labeled manually using a VGG Image Anno­
+those of size 3024 × 3024 were reduced to a size of 512 × 512 to
+                                                                                tator (VIA) [50]. As exhibited in Fig. 4. Annotation example of photo­
+decrease the required computational power. For the BIM data required
+                                                                                graphs., the labeling was performed by drawing a polygon for each
+to train CycleGAN, 564 BIM images of size 512 × 512 were acquired by
+                                                                                instance and designating a class to it. The BIM images were labeled
+creating 3D views in Revit and extracting the views as images, leading to
+                                                                                through the view template function of Revit, which can be employed to
+the creation of BIM images.
+                                                                                change the visibility and graphic settings of the view. As presented in
+                                                                                Fig. 5(a), the visibility for each element category was set in the V/G
+4.3.2. Datasets for mask R-CNN
+                                                                                Overrides Model parameter of the View Template menu so that the five
+    The Mask R-CNNs were trained on 18 datasets, which are presented
+                                                                                classes could be classified by color. Views to which the view template
+in Table 1. Among them, 17 datasets consisted of 100 images, each of
+                                                                                was applied were extracted as 512 × 512 images (color masks) and used
+size 512 × 512, and the other dataset consisted of 10,000 images of size
+                                                                                as annotations for the original BIM images. The synthetic images have
+512 × 512. The 17 datasets were as follows: a dataset of photographs
+                                                                                the same content as the BIM images; therefore, the color masks of the
+(Photograph in Table 1), a dataset of BIM images (BIM in Table 1), and
+                                                                                BIM images were designated as the labels of the synthetic images.
+15 datasets of synthetic images. The photographs, BIM images, and
+                                                                                Finally, approximately 0.25% of the instances of the image area that
+
+
+                                                                            6
+Y. Hong et al.                                                                                                           Automation in Construction 130 (2021) 103871
+
+
+
+
+                 Fig. 5. Annotation example of BIM and synthetic images: (a) view template setting for creating color mask, (b) color mask example.
+
+
+
+
+                           Fig. 6. Jungnang Railway Bridge: (a) the photograph of the whole view and (b) the corresponding BIM image.
+
+
+
+
+                                                                                 7
+Y. Hong et al.                                                                                                                    Automation in Construction 130 (2021) 103871
+
+
+Table 2
+Performance of Mask R-CNNs trained on 18 datasets (%).
+                              APdoor           APwall            APfloor           APceiling           APwindow          APS           APM             APL             AP
+
+  Photograph                  85.1             86.0              100               95.0                68.5              14.7          74.1            93.7            86.7
+  BIM                         17.4             64.0              100               71.0                14.8              0.7           33.7            66.5            52.3
+  Synthetic20                 37.5             72.8              100               86.0                11.1              2.6           47.7            75.5            63.7
+  Synthetic40                 46.1             71.5              100               82.0                13.0              6.1           45.3            77.1            64.9
+  Synthetic60                 75.1             67.5              100               84.0                22.2              6.6           54.7            80.9            71.0
+  Synthetic80                 62.1             70.8              100               87.0                5.6               6.4           49.1            80.9            68.4
+  Synthetic100                66.5             74.8              100               84.5                11.1              8.4           54.4            80.5            71.7
+  Synthetic120                70.7             74.2              99.0              87.0                1.9               12.5          53.3            84.0            72.5
+  Synthetic120d               48.1             74.0              77.0              87.0                42.6              11.0          56.3            72.9            65.7
+  Synthetic140                47.6             74.5              97.0              87.0                13.0              8.2           50.4            77.7            67.4
+  Synthetic140d               53.1             76.9              98.5              88.5                3.7               6.6           51.8            81.0            69.7
+  Synthetic160                66.9             71.4              98.0              90.5                11.1              3.5           51.1            82.2            71.1
+  Synthetic160d               53.9             76.5              99.0              87.2                29.6              2.9           52.1            82.6            70.3
+  Synthetic180                58.4             72.0              99.0              91.0                7.4               8.8           51.8            79.7            68.9
+  Synthetic180d               51.1             76.9              98.0              87.0                1.9               15.4          50.7            79.5            69.0
+  Synthetic200                44.0             72.7              100               84.5                9.3               10.5          48.9            77.9            64.9
+  Synthetic200d               63.9             75.7              98.0              87.0                0                 9.6           53.2            81.1            71.4
+  Avg(Synthetic)              56.3             73.5              97.6              86.7                12.2              7.9           51.4            79.6            68.7
+  SUN database                27.2             41.7              100               87.5                1.9               0             14.9            66.1            44.8
+
+
+
+
+         Fig. 7. The training loss curves for the building scenes (Left: loss curves for a constant learning rate; Right: loss curves for a changing learning rate).
+
+
+
+                                                                                               were smaller than 655 pixels were excluded from the label because even
+                                                                                               humans could not distinguish among them.
+Table 3
+Number of instances by class and size in the building test dataset.
+                                                                                               4.4. Experiment on structural elements of bridge
+  Door       Wall     Floor     Ceiling   Window         Small    Medium     Large
+
+  276        529      100       128       42             60       416        599                  This experiment was conducted on the Jungnang Railway Bridge, a
+                                                                                               box girder bridge located in Seoul, Korea. Fig. 6 shows the whole view of
+                                                                                               the bridge and the corresponding BIM image. Among the photographs
+                                                                                               acquired within 50 m from the bridge, 300, 200, and 150 images were
+
+
+
+
+                                                        Fig. 8. Comparison of windows in the different domain images.
+
+                                                                                          8
+Y. Hong et al.                                                                                           Automation in Construction 130 (2021) 103871
+
+
+
+
+                            Fig. 9. Sample images of Photograph (A), BIM (B), and Synthetic120 (C).
+
+
+
+
+                 Fig. 10. Comparison of instance segmentation results obtained using different training datasets.
+
+
+                                                                9
+Y. Hong et al.                                                                                                              Automation in Construction 130 (2021) 103871
+
+
+Table 4
+Performance of Mask R-CNNs trained with the four additional datasets (%). The number in parentheses means the number of images randomly selected from the
+dataset.
+                                            APdoor         APwall        APfloor          APceiling      APwindow        APS          APM          APL           AP
+
+  Photograph (5)                            34.3           63.8          85.0             80.5           0               0            32.7         71.2          54.5
+  Photograph (5) & Synthetic120 (95)        64.8           78.7          100              89.0           31.5            8.3          54.0         85.8          74.5
+  Photograph (10)                           60.2           73.7          97.0             74.0           18.5            6.6          54.0         78.9          68.2
+  Photograph (10) & Synthetic120 (90)       72.1           81.3          99.0             88.0           18.5            16.7         61.9         85.7          77.5
+
+
+
+randomly selected and used as training data of CycleGAN, training data                  5. Experimental results and discussion
+of Mask R-CNN, and test data of Mask R-CNN, respectively. 300 BIM
+images for training of CycleGAN and 200 BIM images for training of                      5.1. Experimental results and discussion on building elements
+Mask R-CNN were acquired from the Revit walkthrough video, where
+the path and pose were similarly set as when taking the photographs. All                    Table 2 illustrates the performance of the Mask R-CNNs trained on
+photographs and BIM images used in the experiment were cropped and                      the 18 training datasets for the building scenes. The training loss curves
+resized to 512 × 512 size. As in the experiment on building elements, 15                for the generator and discriminator are drawn in Fig. 7. The APs of the
+synthetic datasets were acquired using the generators of CycleGAN ob­                   model trained with each training dataset are displayed for each class and
+tained every 20 epochs and the BIM images for the training of Mask R-                   size of the instance. The last column shows the APs for all instances. The
+CNN. As aforementioned, four main structural elements were used as the                  Avg(Synthetic) row is the arithmetic mean of all the synthetic dataset
+classes for scene analysis of the girder bridge: slab, girder, coping, and              rows. APS, APM, and APL are the APs corresponding to instances with
+column. The slab is a plate-shaped structural member that forms the                     small, medium, and large sizes, respectively. The criteria used to classify
+floor of a bridge, and the girder is a beam that supports the slab. The                 the sizes of the instances were set as 1024 (322) and 9216 (962), which
+girder is in the form of a box made of steel in this bridge. The copings and            follows COCO test-dev metrics [52]. Table 3 shows the number of in­
+columns are substructures of the bridge which support the load of the                   stances by class and size of the test dataset. As datasets 1–17 represent
+upper structure.                                                                        the same scene, the differences in performance among them are attrib­
+                                                                                        uted to the differences in the image styles and translation capabilities of
+4.5. Quantitative measure: AP                                                           the generators.
+                                                                                            Table 2 indicates that all the models trained on the synthetic dataset
+   Average precision (AP) was used as a quantitative measure to eval­                   achieved better instance segmentation performance than that of the
+uate the performance of the Mask R-CNNs. For each image, the AP was                     model trained on the BIM. The model trained on the BIM had an AP of
+calculated in the same way as in PASCAL Visual Object Classes Chal­                     52.3%, whereas the models trained on the synthetic datasets yielded an
+lenge 2010 (VOC2010) [51]. We evaluated the arithmetic mean of the                      AP between 63.7% (Synthetic20) and 72.5% (Synthetic120). A differ­
+APs of all the images to assess the instance segmentation performance.                  ence of at least 11.4 percentage points and a maximum difference of
+The value of the AP is between 0 and 1. The more accurate the pre­                      20.2 percentage points in performance between the results obtained
+dictions, the closer the AP is to 1.                                                    using the BIM and synthetic data indicate that the synthetic data suc­
+                                                                                        cessfully simulated the features of the photographs.
+                                                                                            In the Avg(Synthetic) column of Table 2, the AP for the window class
+                                                                                        is significantly lower than the Photograph column. As seen from the
+                                                                                        windows in Fig. 8, the exterior lighting condition of a photograph in
+
+
+
+
+Fig. 11. Impact of the distance between the object and the camera on the quality of synthetic data; rows (A) and (B) show images from a relatively short distance and
+long distance, respectively; columns (a), (b), and (c) indicate the BIM, Synthetic200, and Photograph datasets, respectively.
+
+                                                                                   10
+Y. Hong et al.                                                                                                               Automation in Construction 130 (2021) 103871
+
+
+
+
+       Fig. 12. The training loss curves for the bridge scenes (Left: loss curves for a constant learning rate; Right: loss curves for a changing learning rate).
+
+
+
+Table 5
+Performance of Mask R-CNNs trained with 17 datasets on the bridge scenes (%).
+                             APslab            APgirder            APcoping             APcolumn             APS                 APM            APL                 AP
+
+  Photograph                 85.5              96.8                97.8                 98.2                 71.5                89.0           94.5                95.0
+  BIM                        21.2              39.3                11.6                 30.8                 0                   13.5           31.5                23.0
+  Synthetic20                38.3              60.9                53.2                 79.0                 15.7                56.6           53.0                59.9
+  Synthetic40                48.5              81.7                62.7                 88.0                 24.7                62.5           75.8                71.6
+  Synthetic60                55.6              87.9                77.8                 89.6                 30.0                69.2           84.2                78.8
+  Synthetic80                46.8              91.9                77.3                 86.4                 28.4                68.5           81.2                77.8
+  Synthetic100               68.5              89.3                74.8                 87.5                 26.1                68.2           81.9                79.5
+  Synthetic120               54.0              91.8                80.4                 91.9                 30.3                72.0           84.5                81.9
+  Synthetic120d              41.5              90.0                76.1                 92.8                 25.2                70.2           78.7                78.5
+  Synthetic140               46.0              90.5                77.3                 90.5                 26.7                70.2           78.1                78.1
+  Synthetic140d              35.5              91.0                76.5                 92.1                 34.6                69.8           79.7                77.6
+  Synthetic160               57.3              89.6                78.3                 92.8                 34.8                71.5           84.7                81.4
+  Synthetic160d              35.1              87.9                78.5                 87.1                 20.6                66.6           77.9                75.2
+  Synthetic180               61.3              90.0                80.2                 90.1                 23.5                72.0           85.9                81.8
+  Synthetic180d              32.7              86.0                77.1                 92.4                 29.1                70.7           76.4                76.2
+  Synthetic200               47.2              87.7                87.3                 94.5                 32.6                74.2           81.2                82.3
+  Synthetic200d              40.3              88.3                78.6                 92.7                 32.3                72.0           76.5                78.7
+  Avg(Synthetic)             47.2              87.0                75.7                 89.8                 27.6                68.9           78.6                77.3
+
+
+
+Fig. 8(a) is different from those of a BIM image in Fig. 8(b) and a syn­
+                                                                                       Table 6
+thetic image in Fig. 8(c). In other words, the generator GBA failed to
+                                                                                       Number of instances by class and size in the bridge test dataset.
+represent the darkness in the windows of the synthetic images. There are
+two reasons why generators failed to represent darkness. The first reason               Slab       Girder     Coping       Column       Small      Medium        Large
+is that among the training data of CycleGAN, the number of images,                      129        307        273          452          54         577           530
+including the window, was smaller than that of other classes. The second
+reason is that the photograph was taken at a night time whereas the BIM
+image is captured in a daytime lighting setting; as can be seen in Fig. 8,             patterns appear repeatedly along the boundary line, making the
+what is seen through the window of the BIM image is represented as a                   boundaries between instances unclear. The architecture of the Cycle­
+dark area in the photograph. As a result, we consider that Mask R-CNN                  GAN discriminator could be the reason for such frequent generation of
+was not trained enough with respect to the characteristics of the real                 objects that do not exist in the BIM images but exist only in photographs.
+window when it was trained on the synthetic datasets.                                  For the CycleGAN discriminator network, 70 × 70 PatchGAN [18] was
+    The synthetic dataset that yielded the best performance indicated a                used; it is a network that determines whether an image is real or fake
+14.2% lower performance than that derived from the Photograph. This                    using the average of the probability that each local image patch is real.
+difference in performance can be attributed to the remaining difference                The strong locality seems to have contributed to the generation of
+in the characteristics of the synthetic data compared to those of the                  improper small objects in the synthetic images.
+original photographs, although this deviation has been significantly                      The performance of the model trained on the SUN database was
+reduced. Fig. 9 presents sample images corresponding to the Photo­                     44.8%, which was lower than that of the model trained on the BIM,
+graph, BIM, and Synthetic120. From Fig. 9(a), it is confirmed that a part              52.3%. When comparing the performance derived from the synthetic
+of the image texture is not well reflected in the synthetic image. The grid            datasets and the SUN database in Table 2, the average AP of synthetic
+pattern on the floor, which is hardly noticeable in the actual photograph,             datasets in the door, wall, and window classes are 10 to 30 points higher
+is clearly visible in the synthetic image. Fig. 9(b) indicates that small              than that of the SUN database. Although the SUN database contains 100
+objects that are present in the photograph, but not in the BIM image,                  times more images and a wide variety of scenes, the synthetic datasets
+appeared at inappropriate locations in the synthetic image. For example,               seem to better capture the characteristics of the three classes used in the
+the nameplate that should be attached to the door is located on the                    experiment. The model trained with various features in the SUN data­
+ceiling in the synthetic image. In Fig. 9(c), the aforementioned object                base was not effective in precisely detecting instances of a specific
+                                                                                       appearance.
+
+                                                                                  11
+Y. Hong et al.                                                                                                              Automation in Construction 130 (2021) 103871
+
+
+Table 7
+Performance of Mask R-CNNs trained with the six bridge datasets (%). The number in parentheses means the number of images randomly selected from the dataset.
+                                               APslab          APgirder         APcoping          APcolumn          APS           APM             APL             AP
+
+  Photograph (5)                               38.7            73.6             72.2              81.4              11.9          53.8            77.5            69.5
+  Photograph (5) & Synthetic200 (195)          66.1            91.1             90.3              95.3              37.5          77.9            89.4            87.3
+  Photograph (10)                              71.0            82.1             82.8              93.6              21.2          71.1            90.2            83.3
+  Photograph (10) & Synthetic200 (190)         76.6            93.5             91.1              96.1              31.9          79.7            92.5            89.7
+  Photograph (20)                              70.2            89.9             90.6              93.8              29.9          80.1            89.1            87.1
+  Photograph (20) & Synthetic200 (180)         77.0            94.2             93.0              96.2              46.4          81.3            91.4            90.7
+
+
+
+
+       Fig. 13. The generator loss and the AP for each synthetic dataset (Top: the results for the building scenes; Bottom: the results for the bridge scenes).
+
+
+   An example of the result of instance segmentation of building ele­                  walls, and windows located far from the camera, often appear. In gen­
+ments is shown in Fig. 10. In Fig. 10(a), the labels of all instances are              eral, the models trained on the synthetic datasets did not detect such
+displayed as different colors. In Fig. 10(b)–(e), the areas corresponding              small-sized instances well as shown in Fig. 10(d). However, Synthe­
+to correct and wrong predictions are displayed in green and red,                       tic180d achieved an exceptionally higher APS than one derived from the
+respectively. The blue areas in Fig. 10(b)–(e) represent the regions that              Photograph. This result suggests that synthetic data has the potential as
+were not successfully identified by the Mask R-CNNs. Therefore, some                   effective training data that surpasses photographs.
+areas exhibit a purple color because the areas of misclassification (rep­                  We created four additional training datasets by combining a large
+resented by red) can overlap with the areas that were not identified                   amount of synthetic data and a small number of photographs. The first
+(represented by blue).                                                                 and third training datasets consisted of five and 10 images randomly
+   In the images of the corridor, which were employed for testing the                  selected from the Photograph. The second and fourth training datasets
+models in this experiment, instances with small areas, such as doors,                  were constructed by adding 95 and 90 synthetic images from
+
+
+                                                                                 12
+Y. Hong et al.                                                                                                                  Automation in Construction 130 (2021) 103871
+
+
+
+
+                                                Fig. 14. Example of a spliced image and the components of it.
+
+
+
+
+Table 8
+Performance of Mask R-CNNs trained with the Spliced Synthetic dataset on the building scenes (%).
+                                 APdoor         APwall         APfloor              APceiling          APwindow          APS             APM          APL            AP
+
+  Spliced Synthetic dataset      51.0           80.0           100                  89.5               24.1              6.58            53.9         81.5           71.6
+
+
+
+
+Table 9
+Performance of Mask R-CNNs trained with the Spliced Synthetic dataset on the bridge scenes (%).
+                                   APslab          APgirder              APcoping               APcolumn          APS              APM              APL              AP
+
+  Spliced Synthetic dataset        63.3            93.2                  83.2                   93.5              36.9             75.5             87.5             84.9
+
+
+
+
+                                                                                         Fig. 16. AP graph of Mask R-CNNs trained with Spliced Synthetic dataset and
+Fig. 15. Comparison of Mask R-CNNs performance derived from the Spliced                  the other Synthetic datasets on bridge scenes.
+Synthetic dataset and the other Synthetic datasets.
+
+
+
+
+                                                                                    13
+Y. Hong et al.                                                                                                          Automation in Construction 130 (2021) 103871
+
+
+Synthetic120 to the first and third training datasets, respectively. The 95         Photograph. In other words, the instance segmentation model that
+and 90 synthetic images were selected such that they did not overlap                performs well on the real-world domain data was implemented by using
+with the five and 10 images from the Photograph, respectively. Table 4              small amount of photographs and large amount synthetic data.
+shows the performance of the Mask R-CNN trained on the four datasets.
+The first training dataset did not contain any instance of the window               5.3. Discussion on the correlation between generator loss curves and AP
+class, so the AP for the window class was 0. The first training dataset did
+not sufficiently cover the characteristics of the space to be tested.                   In Fig. 13, we displayed the loss curve of the generator with synthetic
+However, with the addition of synthetic data, the information shortage              datasets generated from different training epochs of CycleGAN; the AP
+was resolved and achieved the AP improvement of 20 percentage points.               of Mask R-CNN trained with the synthetic datasets was also plotted to
+The fourth training dataset resulted in the AP of 77.5%. Although there             figure out the correlation between those two values. The upper graph
+was no improvement for the window class, the AP was 9.3 percentage                  and the lower graph are regarding the building and the bridge scenes,
+points higher than the AP of the model trained on the third dataset. Even           respectively. It is confirmed that the synthetic data generated from
+if only a small amount of photographs is used, it can be seen that when a           lower loss values do not guarantee the high performance of the instance
+large amount of synthetic data is added, the performance can be greatly             segmentation model. This means that a well-trained generator does not
+improved. This performance improvement suggests that our methodol­                  always create synthetic data suitable for training instance segmentation
+ogy can reduce the time and cost required for data augmentation.                    models.
+
+5.2. Experimental results and discussion on structural elements                     5.4. Experimental results and discussion on two-stage synthetic image
+                                                                                    generation
+    Fig. 13 shows the impact of the distance between the object and the
+camera on the quality of Synthetic200 data. The synthetic image of                      Fig. 14 illustrates a process of creating synthetic training data
+Fig. 11(A)(b) created from the BIM image of Fig. 13(A)(a) is similar in             through image splicing. In this example, Synthetic120, which recorded
+texture, color, and pattern to the photograph of Fig. 11(A)(c). An                  the highest AP, was used as a background. The pixels corresponding to
+example showing the high similarity to Fig. 11(A)(c) is the railing of the          door, wall, floor, ceiling, and window from Synthetic60, Synthetic140d,
+coping created in Fig. 11(A)(b). On the other hand, in the synthetic                Synthetic100, Synthetic180, and Synthetic120d were overlaid on top of
+image of Fig. 11(B)(b) created from the BIM image of Fig. 11(B)(a), a               the background to form a spliced image.
+relatively low level of similarity was observed, due to the distance be­                The Spliced Synthetic datasets were made by Algorithm 1 for the
+tween the camera and the subject. When the subject is captured as an                building and bridge scenes, respectively. The datasets were used to train
+image from a short distance, the subject occupies a large area in the               Mask R-CNN and the test results are shown in Table 8 and Table 9.
+image, and it is clear what the generator will do to create a realistic             Figs. 15 and 16 showed the performance curves for target object classes.
+image. However, in the case of a long distance, the area occupied by the                Using the proposed splicing algorithm, Mask R-CNN model recorded
+subject is small, so the generator is rather trained with the characteris­          AP of 71.6% for the building scenes and 84.9% for the bridge scenes, as
+tics of the background and tries to create it. Therefore, in order to obtain        shown in Figs. 15 and 16. The advantage of the two-stage synthetic
+good quality synthetic images, it is important to increase the area                 image generation algorithm is clear in that Mask R-CNN shows the better
+occupied by the subject in the image.                                               performances on most target classes compared to the model achieved
+    For the bridge scenes, the training loss curves for the generator and           the best performance in the original experimental setting. For the
+discriminator are drawn in Fig. 12. Table 5 shows the performance of                building scenes, the segmentation performance with respect to four
+Mask R-CNN trained with the Photograph, BIM, and Synthetic datasets.                classes—wall, floor, ceiling, and window—was improved by the margin
+Table 6 shows the number of instances for each class and size included in           of 5.8%, 1.0%, 2.5%, and 22.2%, respectively. For the bridge scenes, the
+the test dataset. Synthetic200 scored a maximum AP of 82.3%. This AP is             segmentation performance with respect to three classes—slab and gir­
+59.3 percentage points higher than the AP derived from the BIM                      der—was increased by the margin of 16.1% and 5.5%, respectively.
+(23.0%). In the Avg(Synthetic) row of Table 5, the AP for small-sized               Moreover, the proposed algorithm achieved the best performance for the
+instances is notably lower than for the Photograph column. The poor                 bridge scenes in terms of AP for all classes, recording 84.9%. Although
+segmentation performance for small-size instances could be attributed to            the performance was not the highest in the building scenes, the proposed
+the cycle-consistency loss, a constraint that allows images to retain their         algorithm helped to secure the higher performance of Mask R-CNN on
+content after translation. The cycle-consistency loss is the L1-norm of the         most of target classes (four out of five classes) compared to the previous
+original image and the image that has passed through the mapping                    best model. The findings demonstrate how GAN-based models can be
+functions in both directions, that is, the sum of the differences between           used to improve the instance segmentation performance and be applied
+the pixel values of the two images. Therefore, because an instance with a           to situations when the number of training data is insufficient.
+small area exerts a low impact on the cycle-consistency loss, such an
+instance is more likely to lose its content when compared with an                   6. Conclusions
+instance with a large area.
+    We created six training datasets for the structural elements of the                 Contextual awareness of the civil infrastructure scene is a technology
+bridge in the same way as the building experiment. The first, third, and            that enables various automated tasks in the construction industry using
+fifth training datasets were created by randomly extracting five, 10, and           visual data. For contextual awareness using deep learning, the prepa­
+20 images from the Photograph. The second, fourth, and sixth training               ration of large labeled training datasets is essential. The non-availability
+data were created by randomly selecting 195, 190, and 180 images from               of infrastructure scene images and the difficulties faced while anno­
+Synthetic200 and adding them to the first, third, and fifth dataset,                tating them are factors that hinder the development of intelligent
+respectively. Table 7 shows the performance of Mask R-CNNs trained                  models for infrastructure status understanding. To address this chal­
+with the six new datasets. Comparisons of the first and second, third and           lenge, we developed a CycleGAN-based methodology to automatically
+fourth, and fifth and sixth rows of Table 7 showed that the performance             generate labeled infrastructure images. The proposed method can
+of the model trained on the dataset to which synthetic data was added               generate synthetic image data based on image-to-image translation and
+was improved compared to the model trained only on the photographs.                 BIM images to considerably improve the performance of instance seg­
+In particular, the sixth training dataset, which includes only 10% of the           mentation for infrastructure monitoring.
+images in the Photograph, showed a more than 90% AP. This is only 4.3                   The synthetic data generated using the proposed method for the
+percentage points lower than the AP of the model trained with the                   infrastructure scene understanding were validated through experiments
+
+                                                                               14
+Y. Hong et al.                                                                                                                              Automation in Construction 130 (2021) 103871
+
+
+on training Mask R-CNNs for building elements and the structural ele­                                neural network, Adv. Eng. Inform. 39 (2019) 170–177, https://doi.org/10.1016/j.
+                                                                                                     aei.2018.12.005.
+ments of a bridge. Through training the instance segmentation networks
+                                                                                                 [3] X. Luo, H. Li, D. Cao, F. Dai, J. Seo, S. Lee, Recognizing diverse construction
+on synthetic datasets of the building elements, average precisions be­                               activities in site images via relevance networks of construction-related objects
+tween 63.7% and 72.5% were derived, corresponding to performances                                    detected by convolutional neural networks, J. Comput. Civ. Eng. 32 (3) (2018),
+that were significantly higher than those of the model trained on the BIM                            04018012, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000756.
+                                                                                                 [4] H. Hamledari, B. McCabe, S. Davari, Automated computer vision-based detection
+dataset (52.3%) and the SUN database (44.8%). In the experiment on                                   of components of under-construction indoor partitions, Autom. Constr. 74 (2017)
+structural elements of the bridge, the model trained on the synthetic                                78–94, https://doi.org/10.1016/j.autcon.2016.11.009.
+dataset achieved an AP of 82.3%, an improvement of 59.3 percentage                               [5] X. Liang, Image-based post-disaster inspection of reinforced concrete bridge
+                                                                                                     systems using deep learning with Bayesian optimization, Comput. Aid. Civil
+points over that of the model trained on the BIM dataset. By employing                               Infrastruct. Eng. 34 (5) (2019) 415–430, https://doi.org/10.1111/mice.12425.
+Algorithm 1, the instance segmentation performance was improved such                             [6] Y. Narazaki, V. Hoskere, T.A. Hoang, Y. Fujino, A. Sakurai, B.F. Spencer Jr., Vision-
+that most target object classes have the better performance of class AP                              based automated bridge component recognition with high-level scene consistency,
+                                                                                                     Comput. Aid. Civil Infrastruct. Eng. 35 (5) (2020) 465–482, https://doi.org/
+compared with the best performance of the previous model without                                     10.1111/mice.12505.
+using Spliced Synthetic datasets.                                                                [7] S. German, J.S. Jeon, Z. Zhu, C. Bearman, I. Brilakis, R. DesRoches, L. Lowes,
+    The contribution of this study to the body of knowledge is three-fold.                           Machine vision-enhanced postearthquake inspection, J. Comput. Civ. Eng. 27 (6)
+                                                                                                     (2013) 622–634, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000333.
+First, a novel methodology was created to generate 2D labeled synthetic                          [8] V. Hoskere, Y. Narazaki, T.A. Hoang, B.F. Spencer Jr., Towards Automated Post-
+data, which can be effectively used for object detection of infrastructure                           earthquake Inspections With Deep Learning-based Condition-aware Models, arXiv
+scenes. The methodology drastically reduces the time and cost required                               preprint, arXiv:1809.09195, 2018.
+                                                                                                 [9] Y. Narazaki, V. Hoskere, T.A. Hoang, B.F. Spencer Jr., Automated Bridge
+for data augmentation of infrastructure images. Through our method­
+                                                                                                     Component Recognition Using Video Data, arXiv preprint, arXiv:1806.06820,
+ology, labeled synthetic images are efficiently obtained without image                               2018.
+annotation effort by using the BIM images. It has been demonstrated in                          [10] J. Xiao, J. Hays, K.A. Ehinger, A. Oliva, A. Torralba, Sun database: large-scale scene
+experimental studies that the instance segmentation performance                                      recognition from abbey to zoo, in: Proceedings of the IEEE Computer Society
+                                                                                                     Conference on Computer Vision and Pattern Recognition, 2010, June,
+significantly improves when the model is trained on a dataset including                              pp. 3485–3492, https://doi.org/10.1109/CVPR.2010.5539970 (dataset).
+the synthetic data. Second, it was found that the domain difference                             [11] T.Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, C.L. Zitnick,
+between photographs and BIM images can be overcome through the                                       Microsoft coco: common objects in context, in: European Conference on Computer
+                                                                                                     Vision, Springer, Cham, 2014 September, pp. 740–755, https://doi.org/10.1007/
+style-transfer approach. To the best of our knowledge, there is no pre­                              978-3-319-10602-1_48.
+cedent for synthetic data generation on infrastructure scenes by trans­                         [12] M. Cordts, M. Omran, S. Ramos, T. Rehfeld, M. Enzweiler, R. Benenson, B. Schiele,
+lating 2D images extracted from BIM into photorealistic images. The                                  The cityscapes dataset for semantic urban scene understanding, in: Proceedings of
+                                                                                                     the IEEE Conference on Computer Vision and Pattern Recognition, 2016,
+generated synthetic data derived from the generators are powerful, with                              pp. 3213–3223, https://doi.org/10.1109/CVPR.2016.350 (dataset).
+realistic features and labels; thus, they can be effectively used to train                      [13] B. Zhou, H. Zhao, X. Puig, S. Fidler, A. Barriuso, A. Torralba, Scene parsing through
+deep learning models for object detection in images of infrastructure                                ade20k dataset, in: Proceedings of the IEEE Conference on Computer Vision and
+                                                                                                     Pattern Recognition, 2017, pp. 633–641, https://doi.org/10.1109/CVPR.2017.544
+such as buildings and bridges. Third, this study presents a novel method                             (dataset).
+to select best synthetic images and how to splice them to create effective                      [14] Google Cloud [Website] (last access: 2020, June 12). Retrieved from, https://clou
+training data for instance segmentation models that can secure the high                              d.google.com/ai-platform/data-labeling/pricing?hl=ko.
+                                                                                                [15] I. Ha, H. Kim, S. Park, H. Kim, Image retrieval using BIM and features from
+performance.
+                                                                                                     pretrained VGG network for indoor localization, Build. Environ. 140 (2018) 23–31,
+    The experiment performed in this study demonstrated promising                                    https://doi.org/10.1016/j.buildenv.2018.05.026.
+results; however, there are still some issues to be resolved. First, the                        [16] I. Goodfellow, J. Pouget-Abadie, M. Mirza, B. Xu, D. Warde-Farley, S. Ozair,
+image-to-image translation should be improved to reduce the differ­                                  Y. Bengio, Generative adversarial nets, in: Proceedings of the 27th International
+                                                                                                     Conference on Neural Information Processing Systems, 2014, pp. 2672–2680,
+ences between photographs and BIM images. This issue is expected to be                               https://doi.org/10.5555/2969033.2969125.
+addressed through the introduction of advanced GAN models. Second, a                            [17] A. Radford, L. Metz, S. Chintala, Unsupervised Representation Learning With Deep
+fully automated method should be developed for the annotation of                                     Convolutional Generative Adversarial Networks, arXiv preprint, arXiv:1511
+                                                                                                     .06434, 2015.
+infrastructure images. Complete automation of the labeling task would                           [18] P. Isola, J.Y. Zhu, T. Zhou, A.A. Efros, Image-to-image translation with conditional
+increase the economic value of the proposed method. With these up­                                   adversarial networks, in: Proceedings of the IEEE Conference on Computer Vision
+grades, the proposed method is expected to aid in the acceleration of the                            and Pattern Recognition, 2017, pp. 1125–1134, https://doi.org/10.1109/
+                                                                                                     CVPR.2017.632.
+digitalization of infrastructure monitoring.                                                    [19] J.Y. Zhu, T. Park, P. Isola, A.A. Efros, Unpaired image-to-image translation using
+                                                                                                     cycle-consistent adversarial networks, in: Proceedings of the IEEE International
+                                                                                                     Conference on Computer Vision, 2017, pp. 2223–2232, https://doi.org/10.1109/
+Declaration of Competing Interest                                                                    ICCV.2017.244.
+                                                                                                [20] K. He, G. Gkioxari, P. Dollár, R. Girshick, Mask r-cnn, in: Proceedings of the IEEE
+                                                                                                     International Conference on Computer Vision, 2017, pp. 2961–2969, https://doi.
+    The authors declare that they have no known competing financial                                  org/10.1109/ICCV.2017.322.
+interests or personal relationships that could have appeared to influence                       [21] Y. Gao, K. Li, K. Mosalam, S. Gunay, Deep residual network with transfer learning
+                                                                                                     for imagebased structural damage recognition, in: Eleventh US National
+the work reported in this paper.                                                                     Conference on Earthquake Engineering, Integrating Science, Engineering & Policy,
+                                                                                                     2018, June, https://doi.org/10.13140/RG.2.2.22764.26241 (dataset).
+                                                                                                [22] Y. Gao, K.M. Mosalam, Deep transfer learning for image-based structural damage
+Acknowledgements
+                                                                                                     recognition, Comp. Aid. Civil Infrastruct. Eng. 33 (9) (2018) 748–768, https://doi.
+                                                                                                     org/10.1111/mice.12363 (dataset).
+   This research was conducted with the support of the “National R&D                            [23] M. Al Qurishee, W. Wu, B. Atolagbe, J. Owino, I. Fomunung, M. Onyango, Creating
+Project for Smart Construction Technology (No.21SMIP-A158708-02)”                                    a dataset to boost civil engineering deep learning research and application,
+                                                                                                     Engineering 12 (03) (2020) 151, https://doi.org/10.4236/eng.2020.123013
+funded by the Korea Agency for Infrastructure Technology Advance­                                    (dataset).
+ment under the Ministry of Land, Infrastructure and Transport, and                              [24] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn
+managed by the Korea Expressway Corporation.                                                         by construction personnel: a deep learning approach and benchmark dataset,
+                                                                                                     Autom. Constr. 106 (2019) 102894, https://doi.org/10.1016/j.
+                                                                                                     autcon.2019.102894 (dataset).
+References                                                                                      [25] H. Kim, H. Kim, Y.W. Hong, H. Byun, Detecting construction equipment using a
+                                                                                                     region-based fully convolutional network and transfer learning, J. Comput. Civ.
+                                                                                                     Eng. 32 (2) (2018), 04017082, https://doi.org/10.1061/(ASCE)CP.1943-
+ [1] B.F. Spencer Jr., V. Hoskere, Y. Narazaki, Advances in computer vision-based civil
+                                                                                                     5487.0000731 (dataset).
+     infrastructure inspection and monitoring, Engineering 5 (2) (2019) 199–222,
+                                                                                                [26] J. Deng, W. Dong, R. Socher, L.J. Li, K. Li, L. Fei-Fei, Imagenet: a large-scale
+     https://doi.org/10.1016/j.eng.2018.11.030.
+                                                                                                     hierarchical image database, in: Proceedings of the IEEE Conference on Computer
+ [2] W. Fang, B. Zhong, N. Zhao, P.E. Love, H. Luo, J. Xue, S. Xu, A deep learning-based
+     approach for mitigating falls from height with computer vision: convolutional
+
+
+                                                                                           15
+Y. Hong et al.                                                                                                                               Automation in Construction 130 (2021) 103871
+
+     Vision and Pattern Recognition, 2009, June, pp. 248–255, https://doi.org/                   [40] T. Zhou, P. Krahenbuhl, M. Aubry, Q. Huang, A.A. Efros, Learning dense
+     10.1109/CVPR.2009.5206848 (dataset).                                                             correspondence via 3d-guided cycle consistency, in: Proceedings of the IEEE
+[27] M.M. Soltani, Z. Zhu, A. Hammad, Automated annotation for visual recognition of                  Conference on Computer Vision and Pattern Recognition, 2016, pp. 117–126,
+     construction resources using synthetic images, Autom. Constr. 62 (2016) 14–23,                   https://doi.org/10.1109/CVPR.2016.20.
+     https://doi.org/10.1016/j.autcon.2015.10.002.                                               [41] R. Girshick, J. Donahue, T. Darrell, J. Malik, Rich feature hierarchies for accurate
+[28] H. Kim, H. Kim, 3D reconstruction of a concrete mixer truck for training object                  object detection and semantic segmentation, in: Proceedings of the IEEE
+     detectors, Autom. Constr. 88 (2018) 23–30, https://doi.org/10.1016/j.                            Conference on Computer Vision and Pattern Recognition, 2014, pp. 580–587,
+     autcon.2017.12.034.                                                                              https://doi.org/10.1109/CVPR.2014.81.
+[29] D. Acharya, K. Khoshelham, S. Winter, BIM-PoseNet: indoor camera localisation               [42] R. Girshick, Fast r-cnn, in: Proceedings of the IEEE International Conference on
+     using a 3D indoor model and deep learning from synthetic images, ISPRS J.                        Computer Vision, 2015, pp. 1440–1448, https://doi.org/10.1109/ICCV.2015.169.
+     Photogramm. Remote Sens. 150 (2019) 245–258, https://doi.org/10.1016/j.                     [43] S. Ren, K. He, R. Girshick, J. Sun, Faster r-cnn: towards real-time object detection
+     isprsjprs.2019.02.020.                                                                           with region proposal networks, in: Proceedings of the Advances in Neural
+[30] D. Acharya, S. Singha Roy, K. Khoshelham, S. Winter, A recurrent deep network for                Information Processing Systems, 2015, pp. 91–99, url: https://proceedings.neur
+     estimating the pose of real indoor images from synthetic image sequences, Sensors                ips.cc/paper/2015/file/14bfa6bb14875e45bba028a21ed38046-Paper.pdf.
+     20 (19) (2020) 5492, https://doi.org/10.3390/s20195492.                                     [44] X. Du, T.Y. Lin, P. Jin, G. Ghiasi, M. Tan, Y. Cui, X. Song, SpineNet: learning scale-
+[31] J.W. Ma, T. Czerniawski, F. Leite, Semantic segmentation of point clouds of                      permuted backbone for recognition and localization, in: Proceedings of the IEEE/
+     building interiors with deep learning: augmenting training datasets with synthetic               CVF Conference on Computer Vision and Pattern Recognition, 2020,
+     BIM-based point clouds, Autom. Constr. 113 (2020) 103144, https://doi.org/                       pp. 11592–11601, https://doi.org/10.1109/CVPR42600.2020.01161.
+     10.1016/j.autcon.2020.103144.                                                               [45] Papers with code [Website] (Last access: 2020, September 13). Retrieved from, htt
+[32] L.A. Gatys, A.S. Ecker, M. Bethge, Image style transfer using convolutional neural               ps://paperswithcode.com/sota/instance-segmentation-on-coco.
+     networks, in: Proceedings of the IEEE Conference on Computer Vision and Pattern             [46] F. Chollet, Keras github repository [Website] (Last access: 2021, January 5).
+     Recognition, 2016, pp. 2414–2423, https://doi.org/10.1109/CVPR.2016.265.                         Retrieved from, https://github.com/fchollet/keras, 2015.
+[33] J. Johnson, A. Alahi, L. Fei-Fei, Perceptual losses for real-time style transfer and        [47] M. Abadi, P. Barham, J. Chen, Z. Chen, A. Davis, J. Dean, M. Kudlur, Tensorflow: a
+     super-resolution, in: European Conference on Computer Vision, Springer, Cham,                    system for large-scale machine learning, in: Proceedings of the 12th USENIX
+     2016, pp. 694–711, https://doi.org/10.1007/978-3-319-46475-6_43.                                 Symposium on Operating Systems Design and Implementation (OSDI 16), 2016,
+[34] S. Bang, F. Baek, S. Park, W. Kim, H. Kim, Image augmentation to improve                         pp. 265–283. https://dblp.org/rec/conf/osdi/AbadiBCCDDDGIIK16.
+     construction resource detection using generative adversarial networks, cut-and-             [48] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, in:
+     paste, and image transformation techniques, Autom. Constr. 115 (2020) 103198,                    Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+     https://doi.org/10.1016/j.autcon.2020.103198.                                                    2016, pp. 770–778, https://doi.org/10.1109/CVPR.2016.90.
+[35] Y. Gao, B. Kong, K.M. Mosalam, Deep leaf-bootstrapping generative adversarial               [49] Autodesk Revit [Website] (Last access: 2020, December 31). Retrieved from, htt
+     network for structural image data augmentation, Comp. Aid. Civil Infrastruct. Eng.               ps://www.autodesk.co.kr/products/revit/overview.
+     34 (9) (2019) 755–773, https://doi.org/10.1111/mice.12458.                                  [50] A. Dutta, A. Zisserman, The VIA annotation software for images, audio and video,
+[36] F. Baek, S. Park, H. Kim, Data Augmentation Using Adversarial Training for                       in: Proceedings of the 27th ACM International Conference on Multimedia, 2019,
+     Construction-equipment Classification, arXiv preprint, arXiv:1911.11916, 2019.                   pp. 2276–2279, https://doi.org/10.1145/3343031.3350535.
+[37] Y. Hong, S. Park, H. Kim, Synthetic data generation for indoor scene understanding          [51] M. Everingham, J. Winn, The PASCAL Visual Object Classes Challenge 2010
+     using BIM, in: Proceedings of the 37th International Symposium on Automation                     (VOC2010) Development Kit [Website] (Last access: 2021, January 5). Retrieved
+     and Robotics in Construction, 2020, pp. 334–338, https://doi.org/10.22260/                       from, http://host.robots.ox.ac.uk/pascal/VOC/voc2010/htmldoc/devkit_doc.html
+     ISARC2020/0048.                                                                                  , 2010.
+[38] M. Wang, W. Deng, Deep visual domain adaptation: a survey, Neurocomputing 312               [52] COCO [Website] (Last access: 2020, December 31). Retrieved from, https://coc
+     (2018) 135–153, https://doi.org/10.1016/j.neucom.2018.05.083.                                    odataset.org/#detection-eval.
+[39] Y. Ganin, E. Ustinova, H. Ajakan, P. Germain, H. Larochelle, F. Laviolette,
+     V. Lempitsky, Domain-adversarial training of neural networks, J. Machine Learn.
+     Res. 17 (1) (2016) 2096–2130, https://doi.org/10.5555/2946645.2946704.
+
+
+
+
+                                                                                            16
+

@@ -1,0 +1,1041 @@
+                                                                  Automation in Construction 157 (2024) 105162
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                               Automation in Construction
+                                                           journal homepage: www.elsevier.com/locate/autcon
+
+
+Review
+
+Vision-based excavator pose estimation for automatic control
+Guangxu Liu a, *, Qingfeng Wang a, Tao Wang b, *, Bingcheng Li a, Xiangshuo Xi a
+a
+    The State Key Laboratory of Fluid Power and Mechatronic Systems, Zhejiang University, 310027 Hangzhou, China
+b
+    Ocean College, Zhejiang University, 316000, Zhoushan, China
+
+
+
+
+A R T I C L E I N F O                                      A B S T R A C T
+
+Keywords:                                                  Hydraulic excavators, widely employed in harsh environments, have garnered increased attention in recent years
+Hydraulic excavator                                        from manufacturers and researchers for automatic operation, particularly through vision-based manipulator pose
+Computer vision                                            measurement. This paper utilized a mixed review method to explore the vision-based measurements as well as
+Manipulator pose estimation
+                                                           other applications. A quantitative analysis of computer vision (CV) applications on excavators was performed
+Automatic control
+                                                           through a literature search, leading to the classification of these applications into three categories based on
+                                                           keywords. Subsequently, a comprehensive literature review identified four key requirements and challenges for
+                                                           vision-based measurement in the context of automatic control, followed by a discussion on the future prospects
+                                                           of marker-based and deep learning-based manipulator pose measurement for automatic control. This paper offers
+                                                           an in-depth examination of CV applications in excavators, emphasizing the pertinent challenges and forthcoming
+                                                           trends in vision-based manipulator pose measurement for automatic control.
+
+
+
+
+1. Introduction                                                                                 types [9,10]. However, there are some limitations to contact sensors. For
+                                                                                                instance, noise and vibration are evident in the harsh working envi­
+    Hydraulic excavators are widely utilized in many fields, including                          ronment, which can damage these contact sensors. Moreover, the
+mining, forestry, and construction, due to their efficient, versatile, and                      installation and maintenance are costly, time-consuming, and laborious.
+robust performance [1]. In addition to digging soils for creating trenches                      Due to the advantages of low cost, convenient installation, and non-
+or holes, these machines can also be employed for leveling operations,                          contact measurement, vision sensors are increasingly being employed
+heavy lifting, and transportation [2,3]. However, construction sites                            in engineering equipment [11]. Therefore, computer vision (CV) based
+present numerous harsh and hazardous working environments that may                              measurement of excavator manipulator pose is a potential method.
+lead to severe injuries to workers and property loss in case of accidents                           In recent years, the applications of CV in industrial fields are
+[4]. As a result, the interest for automatic excavators has increased                           increasing to improve the level of automation. CV is an interdisciplinary
+observably among manufacturers and researchers of earth-moving ma­                              technology that deals with how computers analyze digital images and
+chines over the past two decades [5]. The utilization of automatic ex­                          videos, aiming to achieve a high-level understanding of the objects
+cavators in such hazardous environments offers improvements in                                  presented in the images [12]. Over the past decade, CV for excavator
+productivity and safety.                                                                        automation has been attracting increasing attention from researchers.
+    In the field of automatic excavators, precise control for the operation                     The purpose of CV applications is to monitor various aspects of working
+trajectory is a fundamental technology. The operation trajectory refers                         environments, including the detection and tracking of the objects to be
+to time-dependent positions and orientations of the end effector relative                       excavated [13], the recognition and positioning of trucks [14] and other
+to its base, which are determined by the real-time status of all links in the                   excavators [15], and the detection of workers [16] and other devices
+manipulator (manipulator pose). Therefore, real-time measurement of                             [17] on construction sites. It can also be employed to perceive the state
+manipulator pose is a prerequisite for automatic control of operation                           of excavators, such as excavator action recognition [18–20], parts
+trajectory. The traditional approaches are contact-sensor-based                                 detection [21] and manipulator pose estimation [22,23]. Among these
+methods, which employ sensors installed on the manipulators to mea­                             applications, manipulator pose estimation is crucial for the automatic
+sure their pose. These contact sensors include the inertial measurement                         control of operation trajectory. However, most existing vision-based
+unit (IMU) [6,7], cylinder displacement sensor [8], and other sensor                            measurement methods are primarily used for safety monitoring, which
+
+
+    * Corresponding authors.
+      E-mail addresses: 12125011@zju.edu.cn (G. Liu), twang001@zju.edu.cn (T. Wang).
+
+https://doi.org/10.1016/j.autcon.2023.105162
+Received 12 February 2023; Received in revised form 26 October 2023; Accepted 30 October 2023
+Available online 4 November 2023
+0926-5805/© 2023 Elsevier B.V. All rights reserved.
+G. Liu et al.                                                                                                           Automation in Construction 157 (2024) 105162
+
+
+cannot be directly used as a feedback step for automatic control. To the           analysis and systematic review). The objective of employing the mixed
+best of the authors' knowledge, there is no relevant systematic literature         method is to utilize the strengths and minimize the weaknesses of both
+review available currently. Therefore, a comprehensive review is                   qualitative and quantitative methods [27]. Bibliometric analysis is a
+necessary to address these knowledge gaps and provide insights into the            statistical method used to visualize the structural and dynamic charac­
+current research status of vision-based manipulator pose measurement,              teristics of scientific research [28]. A systematic review is conducted to
+as well as the challenges associated with feedback control. This paper             offer a comprehensive overview of existing research for the purpose of
+aims to propose research ideas for the development of vision-based                 identifying gaps in the body of knowledge and anticipating future
+manipulator pose measurement methods, thereby enabling vision-                     research directions. Prior to using the mixed review method, the purpose
+based automatic operations. The research encompasses the following                 and conceptual boundaries of this paper are analyzed. The complete
+aspects. (1) A comprehensive exploration of vision-based methods                   research method used in this paper is presented in Fig. 1 and consists of
+employed on excavators is presented, covering not only manipulator                 five consecutive steps as follows.
+pose estimation but also other CV applications. This paper provides both               step1:Identify the purpose of the paper (Section 2.1).
+quantitative and qualitative analysis of these methods. (2) The chal­                  step2:Identify the conceptual boundaries of the paper (Section 2.2).
+lenges and future developments of vision-based manipulator pose                        step3:Data collection (Section 2.3).
+measurement methods are discussed from the perspective of automatic                    step4:Bibliographic analysis (Section 2.4).
+control of operation trajectory.                                                       step5:Systematic review (Section 3 and Section 4).
+    This paper is organized as follows. Section 2 introduces the mixed
+review method employed in this paper and presents a detailed account               2.1. Identify purpose of the paper
+of the literature search conducted to identify CV applications on exca­
+vators. It also provides a quantitative analysis of the results obtained. In           CV has introduced new working modes in excavator operations,
+Section 3, a comprehensive review of the identified literature is pre­             while also presented new challenges and issues for its specific applica­
+sented. Section 4 focuses on discussing the requirements and challenges            tions. Currently, CV technology has been employed for excavator
+for vision-based pose measurement methods from the perspective of                  detection, operation action analysis, manipulator pose estimation, and
+automatic control of manipulator operation trajectory. The future de­              monitoring operational environments. These applications mainly focus
+velopments in this field are also discussed. The structure of this paper is        on safety monitoring and production management for semi-automated
+illustrated in Fig. 1.                                                             or remote operation. However, there are only a few instances where
+                                                                                   CV is employed for operation trajectory automatic control, despite its
+2. Mixed review method                                                             potential in this area. This paper aims to provide valuable research ideas
+                                                                                   for the development of vision-based measurement methods for exca­
+   Many researchers [4,24–26] have employed a mixed review method                  vator manipulator pose, ultimately enabling the realization of vision-
+consisting of quantitative and qualitative analysis (i.e., bibliographic           based automatic operations.
+
+
+
+
+                                                      Fig. 1. Chapter structure and research structure.
+
+                                                                               2
+G. Liu et al.                                                                                                           Automation in Construction 157 (2024) 105162
+
+
+2.2. Identify conceptual boundaries of the paper                                  Table 1
+                                                                                  Search properties and their values about literature search.
+    (1) It is important to note that while heavy-duty hydraulic excavator          Properties                           Values
+manipulators share similarities with conventional industrial robot arms
+                                                                                   Database                             Web of science
+[29], there are differences in the application of CV between them, which           Keywords                             (excavator OR excavators) AND
+will be explained in Section 4.1. Therefore, this paper focuses on hy­                                                  ((computer vision) OR (machine vision) OR
+draulic excavators, excluding industrial robots. (2) Excavators can be                                                  vision OR (image process) OR visual)
+equipped with various working tools, including buckets, hydraulic                  Search scope                         Article title, abstract, keywords
+                                                                                   Published year                       From 2000 – present (2023)
+breaking hammers [30], hydraulic shears, hydraulic rippers, breaking               Source                               Journal articles / conference articles
+hammers, and other tools. Among these tools, the bucket stands out as                Language                           English
+the most commonly used and extensively studied. This observation is
+supported by the research results. For instance, a search using the
+keyword “excavator” in the Web of Science core dataset retrieves 3213             detailed review of the titles, keywords, and abstracts of all 178 papers
+English-language journal articles and conference papers. The majority of          was conducted. Papers unrelated to excavator CV applications, such as
+these publications primarily focus on the use of the buckets as the main          excavator operating environment detection, teleoperation of excavators,
+working tools. A search for “hydraulic hammer” OR “hydraulic breaker”             and image segmentation of the target to be excavated were excluded. As
+OR “hydraulic breaking hammer” (including quotation marks) yields only            a result, 96 papers were retained. Subsequently, a thorough screening of
+90 papers, while a search for “hydraulic shear” results in 165 papers.            the introductions, conclusions, discussions, charts, tables, and other key
+However, there is scarce literature related to CV among these sources.            information in these 96 papers was performed. Finally, 68 papers were
+Therefore, this paper primarily concentrates on excavators that employ            selected for bibliometric and systematic review in the subsequent
+buckets as their primary working tool. Unless explicitly stated otherwise         sections.
+throughout the subsequent chapters, the term “excavator” in this paper
+refers specifically to excavators equipped with buckets. (3) This paper           2.4. Quantitative analysis
+emphasizes the applications of CV in monitoring excavators themselves,
+such as excavator detection and estimation of their operating pose.                   This section presents a quantitative analysis of 68 papers. Firstly, we
+Environmental detection, such as identifying rocks, soil, or other                conducted a statistical analysis of the publication years to examine the
+equipment at the construction sites, is not within the scope of this paper.       trends and factors driving the development of CV in the field of exca­
+                                                                                  vators. Next, we discussed the sources and affiliations of these papers.
+2.3. Data collection                                                              Finally, we summarized the main areas based on the occurrence fre­
+                                                                                  quency of keywords in order to gain insights into the current research
+    Firstly, a commonly used academic database covering multiple                  status.
+comprehensive fields was selected, and search keywords were deter­
+mined to delimit the research area. Subsequently, a preliminary                   2.4.1. Year of publications
+screening of the literature was conducted based on the keywords, titles,              The first paper on CV applied to excavators was published in Journal
+and abstracts. After that, a secondary screening was performed,                   of Computing in Civil Engineering in 2007 [32]. In the reference [32], the
+involving a thorough review of the introductions, conclusions, discus­            image captured from a remote camera was processed by a computer
+sions, charts, tables, and full-text contents to select papers for further        using the Hue, Saturation, Value (HSV) color space to distinguish the
+study.                                                                            excavator from the background. The excavator was detected at intervals
+                                                                                  of 10 s to determine its operational status and estimate the idle time. As
+2.3.1. Literature database                                                        shown in Fig. 2, prior to 2012, there was limited research on the
+   Considering its comprehensive coverage of a wide range of journal              application of CV in excavators, possibly due to the early stage of
+publications and knowledge fields, Web of Science [31] was chosen as              development of image processing algorithms, cameras, high-speed
+the database for literature search in this paper, as opposed to other             computers, and other technologies. From 2013 onwards, researchers
+databases.                                                                        gradually started applying CV to construction equipment. Moreover,
+                                                                                  there has been further advancement closely associated with the ad­
+2.3.2. Data collection                                                            vancements in artificial intelligence [33], image processing technology
+    To ensure high-quality and reliable research data, careful selection of       [34], and deep learning technology [35] since 2018. It is worth noting
+references is necessary. Therefore, the preliminary data collection in this       that the literature analysis for this paper was conducted in January
+paper was constrained by the following criteria. (1) Theme constraint:            2023, resulting in a smaller number of papers from 2023 compared to
+The main keywords were “excavator OR excavators” and “machine vision              the entirety of 2022. In conclusion, the research interest trend is evident,
+OR computer vision OR vision OR visual OR image process” to focus on              indicating that CV-based excavator automation will continue to be a
+excavator-related research while exclude other aspects. These two sets            prominent research area in the coming years.
+of keywords were connected by the logical operator “AND”. (2) Publi­
+cation year constraint: The analysis included papers published from               2.4.2. Sources
+2000 to the present (2023) to explore recent advancements in the field.               Most of the papers were published in the fields of construction and
+(3) Language constraint: Only English literature was analyzed to facili­          civil engineering. Out of these 68 papers, 22 were from Automation in
+tate reading and analysis. (4) Quality constraint: Peer-reviewed articles         Construction, and 10 were from Journal of Computing in Civil Engineering,
+from journals and international conferences were selected to ensure a             accounting for 32.35% and 14.71% of the total papers, respectively.
+quantitative and objective review. The search properties and their cor­           Additionally, there were 18 papers presented at 18 different interna­
+responding values are presented in Table 1.                                       tional conferences, and the remaining 18 papers were published in 15
+                                                                                  different journals, including Multimedia Tools and Applications, Advances
+2.3.3. Screening                                                                  in Civil Engineering, IEEE Access, Sensors, and Advanced Engineering
+   According to the search criteria outlined in Table 1, a total of 178           Informatics. As depicted in Fig. 3, Automation in Construction and Journal
+papers related to CV in excavators were obtained from Web of Science              of Computing in Civil Engineering are the two most popular journals in this
+Core collection. It was found that many of these papers only briefly              field, collectively comprising nearly half (47.06%). Moreover, Automa­
+mentioned the topic of “excavator computer vision”. Therefore, a                  tion in Construction has received more than 770 citations, while Journal
+
+                                                                              3
+G. Liu et al.                                                                                                              Automation in Construction 157 (2024) 105162
+
+
+
+
+                                                                Fig. 2. Publication years of literature.
+
+
+                                                                                       from nine other countries and regions accounted for the remaining
+                                                                                       14.71%.
+
+                                                                                       2.4.4. Keywords
+                                                                                           Keywords play a crucial role in understanding the research content
+                                                                                       and trends of relevant papers. In this section, we employed VOSviewer
+                                                                                       [36] to analyze the occurrence of keywords in the aforementioned 68
+                                                                                       papers. The statistical analysis reveals a total of 259 unique keywords,
+                                                                                       with 67 occurring more than twice, 36 appearing more than three times,
+                                                                                       and 26 appearing more than four times. Fig. 5 displays these 26 key­
+                                                                                       words, while an additional 10 keywords, appearing three times each,
+                                                                                       include construction workers, context, cycle time, simulation, activity
+                                                                                       analysis, construction management, automation, object recognition, hy­
+                                                                                       draulic excavator, and image processing. We analyzed these keywords
+                                                                                       from three aspects. Firstly, when examining these keywords from an
+                                                                                       application perspective, the top-ranked ones include tracking, action
+                           Fig. 3. Sources of literature.                              recognition, identification, pose estimation, and recognition. After
+                                                                                       conducting an in-depth literature review, we classified the papers into
+of Computing in Civil Engineering has amassed over 370 citations. This                 three categories: (1) excavator detection, identification, and tracking,
+highlights the influential role of these two journals in the application of            (2) excavator action recognition, and (3) pose estimation. Secondly, the
+CV in excavators.                                                                      analysis of these keywords from the perspective of usage methods in­
+                                                                                       dicates that the most prominent terms are features and deep learning.
+2.4.3. Publications distributed by country/region                                      Based on a comprehensive literature review, we categorized them into
+   The selected papers were analyzed based on the affiliation of au­                   three types: marker less-based, marker-based, and deep learning-based.
+thors. As depicted in Fig. 4, Chinese authors were accounted for 26.47%                Thirdly, from the standpoint of application purposes, an analysis of
+(18 papers) of the total 68 papers, followed by authors from the United                these keywords reveals significant terms such as productivity, safety,
+States (23.53%), South Korea (22.06%), and Canada (13.24%). Authors                    construction management, and automation. Furthermore, this paper
+                                                                                       classified these purposes into three aspects: safety management,
+                                                                                       improving productivity, and automation control. Consequently, the
+                                                                                       subsequent sections will undertake a qualitative analysis from these
+                                                                                       specific perspectives.
+
+                                                                                       3. Literature review
+
+                                                                                          According to the quantitative analysis in Section 2, a literature re­
+                                                                                       view was conducted on the applications, image features, and purposes of
+                                                                                       CV.
+
+
+                                                                                       3.1. Computer vision applications
+
+                                                                                           Due to the limited availability of literature on vision-based excavator
+                                                                                       manipulator pose estimation, particularly when applied to automatic
+                                                                                       control, this section not only reviews the literature related to manipu­
+                Fig. 4. Publications distributed by country/region.                    lator pose estimation but also conducts literature reviews on “Excavator
+
+                                                                                   4
+G. Liu et al.                                                                                                       Automation in Construction 157 (2024) 105162
+
+
+
+
+                                                          Fig. 5. Occurrence times of keywords
+
+
+Detection, Identification, and Tracking” and “Action Recognition.” The           excavator. This approach distinguished the excavator from the back­
+purpose of this approach is to analyze the diversity of CV methods in the        ground based on color differences and focused on determining whether
+field of excavators and explore the implications for pose estimation.            the excavator was in motion. Similar to CV applications in excavator
+                                                                                 detection, early applications of action recognition focused on sophisti­
+3.1.1. Excavator detection, identification, and tracking                         cated feature-based methods such as the Histogram of Oriented Gradi­
+    Target identification and target recognition are distinct concepts in        ents (HOG) and machine learning techniques like Support Vector
+the field of CV [37]. In this section, we have not strictly categorized          Machines (SVM) [52]. More recently, deep learning methods have been
+these terminologies due to their shared objective of acquiring excavators        employed for action recognition, including CNN [18], Simplified Tem­
+in images or videos. Excavator detection refers to the process of iden­          poral Convolutional Network (STCN) [53], Multistage Temporal Con­
+tifying and localizing excavators in images or videos by determining             volutional Network (MS-TCN) [54], and YOLO [20,55]. Table 3 provides
+their positions using bounding boxes. Excavator tracking aims to                 a summary of these papers.
+establish correspondence between the same excavator in consecutive
+video frames, enabling the analysis of its dynamic motion. Given the             3.1.3. Excavator manipulator pose estimation
+dynamic nature of construction sites, where workers and construction                 Manipulator pose serves several purposes, including safety accident
+equipment often move irregularly, the detection, identification, and             prevention, tele-operator guidance, and operation trajectory control.
+tracking of excavators, as well as other relevant entities such as trucks,       Table 4 presents a summary of papers on pose estimation. Before 2014,
+workers, and construction materials, are essential for ensuring safety           studies used distinct self-made markers with specific shapes and colors
+and preventing collisions between excavators and workers. Further­               attached to buckets or manipulators for feature recognition, indirectly
+more, accurate detection of excavators in complex work environments is           determining the manipulator pose. For instance, F. Wang [57] used
+a prerequisite for subsequently monitoring excavator actions and esti­           stripes to represent the bucket's position, while a red marker indicated
+mating poses. Early research predominantly focused on sophisticated              its orientation. H. Wang [22] employed saddle points for acquiring
+feature-based detection methods, such as the histogram of oriented               world coordinates. Despite performing well in specific scenarios, the
+gradients (HOG) [38–40], and utilized support vector machines (SVM)              simplicity of markers often led to reduced robustness in complex envi­
+for excavator and background classification. Some studies also explored          ronments. AprilTag markers were introduced in 2011 and have since
+excavator position detection by analyzing the excavator's shape, such as         been successfully applied in robot navigation, object recognition, and
+the “V” shape of the arm [21] or other contour features. Additionally,           augmented reality. Subsequently, from 2015 to 2018, they gradually
+researchers have employed easily recognizable markers like AprilTag,             gained popularity in excavator pose estimation [58,65,68]. AprilTags
+attached to excavators, and utilized the shape features of these markers         are standardized black and white matrix markers, known for their
+for excavator detection [41]. With advancements in deep learning                 robustness and accurate recognition across various scenarios. Addi­
+frameworks, an increasing number of studies have adopted deep                    tionally, researchers explored methods based on excavator contours
+learning techniques. Recent research has employed various versions of            [23,67,69,70]. Due to the markers' relatively small size, issues like oc­
+convolutional neural networks (CNN), including the region-based fully            clusion and damage occurred during excavator operations. In contrast,
+convolutional network (RFCN) [17], fast region convolutional neural              approaches focusing on excavator contour features exhibited higher
+network (FastRCNN) [42], improved Faster Regions with Convolutional              robustness. Both contour and marker-based methods rely on image
+Neural Network Features (IFaster R-CNN) [43], Aff-SSD [9], YOLO [44],            features manually specified by humans, as opposed to self-learning. In
+among others. However, deep learning-based methods require extensive             recent years, CNN-based deep learning models gained traction due to
+training datasets, prompting scholars to investigate data collection and         advancements in hardware, larger annotated datasets, and improved
+annotation methods [45–47]. For more information, refer to Table 2 for           algorithms. Deep learning's ability to automatically learn excavator
+a summary of these papers.                                                       features has become a research hotspot. Consequently, its application in
+                                                                                 excavator pose estimation, such as [59–63], was published from 2018 to
+3.1.2. Excavator action recognition                                              2022. Notably, the mentioned papers mainly aimed to prevent safety
+    Excavator action recognition involves analyzing the behaviors and            accidents and improve operational efficiency, with only a few utilized as
+action types of excavators through images, such as digging, dumping,             feedback signals for automatic control systems [22,64,66,71].
+hauling, or swinging. This analysis can enhance operational safety and               In the field of preventing safety accidents and improving operational
+prevent collisions with trucks and workers. Furthermore, it enables the          efficiency, deep learning methods hold significant potential. Given suf­
+assessment of normal excavator operation and productivity by utilizing           ficient training data, deep learning approaches can effectively learn and
+activity data, facilitating effective construction site management. In the       adapt to various factors affecting pose estimation, such as excavator
+early stages, J. Zou [32] utilized CV to analyze the idle time of an             operating environments, occlusions, lighting variations, smoke, dust,
+
+
+                                                                             5
+G. Liu et al.                                                                                                                         Automation in Construction 157 (2024) 105162
+
+
+Table 2                                                                                     Table 2 (continued )
+Literature summary of excavator detection, identification, and tracking.                     Paper    Title                 Purpose                Method                  Year
+  Paper         Title                 Purpose              Method                Year
+                                                                                                      Engineering
+  [38]          Part based model      Recognizing          HOG, SVM，and          2012                 Informatics
+                and spatial-          hydraulic            spatial–temporal                  [42]     Towards database-     Achieved               Faster R-CNN,SSD,       2020
+                temporal              excavators in        reasoning                                  free vision-based     database- free         YOLO
+                reasoning to          construction                                                    monitoring on         (DB-free) vision-
+                recognize             images and videos                                               construction sites:   based monitoring
+                hydraulic                                                                             A deep active         on construction
+                excavators in                                                                         learning approach     sites
+                construction                                                                 [50]     Multi-camera          Excavator              Tracking-Learning-      2020
+                images and videos                                                                     vision-based          detection to           Detection (TLD)
+  [39]          Automated 2D          Automated 2D         HOG + Color+          2013                 productivity          monitor the
+                detection of          detection of         binary SVM                                 monitoring of         operational
+                construction          construction                                                    earthmoving           efficiency and
+                equipment and         equipment and                                                   operations            productivity
+                workers from site     workers from site                                      [15]     Dense                 Accurate               Orientation-aware       2020
+                video streams         video streams to                                                construction          identification of      feature fusion single
+                using histograms      ensure safe                                                     vehicle detection     dense multiple         stage detection
+                of oriented           operation                                                       based on              vehicles for           (OAFF-SSD)
+                gradients and                                                                         orientation-aware     ensuring the
+                colors                                                                                feature fusion        safety of
+  [46]          Image dataset         Proposed a           Developed by          2014                 convolutional         construction sites
+                development for       standard dataset     Felzenszwalb et al.                        neural network
+                measuring             of construction      [48] and Torralba                 [44]     Vision-Based          Tracking               YOLOv3                  2021
+                construction          site images for      et al. [49]                                Method                construction
+                equipment             construction                                                    Integrating Deep      machines in
+                recognition           equipment                                                       Learning              videos for
+                performance           recognition                                                     Detection for         automated
+  [21]          Hydraulic             Describing an        Contour features      2014                 Tracking Multiple     surveillance of
+                Excavators            hydraulic                                                       Construction          construction
+                Recognition Based     excavator                                                       Machines              productivity,
+                on Inverse “V”        detection system                                                                      safety, and
+                Feature of            based on inverse                                                                      project progress.
+                Mechanical Arm        “V” feature of                                         [51]     Temporal image        Excavator              Faster Region-          2021
+                                      mechanical arm                                                  analytics for         identification and     proposal
+                                      for monitoring                                                  abnormal              tracking for           Convolutional
+                                      illegal                                                         construction          productivity and       Neural Network
+                                      construction                                                    activity              safety                 (Faster R-CNN) for
+                                      activities                                                      identification                               detection and Simple
+  [40]          Towards Part-         Parts are detected   HOG                   2016                                                              Online and Real time
+                Based                 to improve                                                                                                   Tracking (SORT) for
+                Construction          production                                                                                                   tracking
+                Equipment Pose        efficiency and                                         [45]     Development of        Development of         Faster R-CNN            2022
+                Estimation Using      safety                                                          training image        training image
+                Synthetic Images                                                                      database using        database using
+  [41]          Construction          Excavator            HOG, Linear SVM,      2016                 web crawling for      web crawling
+                Equipment             identification       and AprilTag                               vision-based site
+                Identification        using marker-                                                   monitoring
+                Using Marker-         based recognition
+                Based Recognition     for improving the
+                and an Active         productivity                                          etc. In contrast, methods based on markers or excavator contour are
+                Zoom Camera                                                                 often heavily influenced by these factors, leading to reduced robustness.
+  [47]          Automated             The recognition of   HOG                   2016
+                                                                                            Therefore, relevant image processing algorithms are required to address
+                annotation for        construction
+                visual recognition    equipment for                                         these influencing factors. The literature review in Section 3 indicates
+                of construction       monitoring the                                        that deep learning algorithms show promise in achieving the goal of
+                resources using       progress and the                                      improving operational safety. Besides challenges related to computer
+                synthetic images      safety                                                hardware and network models, deep learning faces the task of collecting
+  [17]          Detecting             Excavator            R-FCN                 2018
+                Construction          detection for
+                                                                                            datasets that encompass various influencing factors. Fortunately, ad­
+                Equipment Using a     producing                                             vancements in data sharing and dataset synthesis techniques further
+                Region-Based          managerial                                            facilitate the application of deep learning methods. Overall, deep
+                Fully                 information such                                      learning holds potential in addressing the challenges of manipulator
+                Convolutional         as progress,
+                                                                                            pose estimation for safety operation and improving operational effi­
+                Network and           productivity, and
+                Transfer Learning     safety                                                ciency, provided that sufficient and diverse datasets can be obtained.
+  [43]          Automated             Excavator            IFaster R-CNN         2018           Considering the challenges and future development directions of
+                detection of          detection for                                         these methods in automatic control, we thoroughly discuss these aspects
+                workers and heavy     improve safety                                        in Section 4.
+                equipment on          and productivity
+                construction sites:
+                A convolutional                                                             3.2. Computer vision image features
+                neural network
+                approach,
+                Advanced
+                                                                                                From the perspective of image features, this section categorizes CV
+                                                                                            methods for excavators into two main aspects: deterministic feature-
+                                                                                            based methods and deep learning-based methods. The term “determin­
+                                                                                            istic feature-based methods” refers to the use of conventional image
+
+                                                                                        6
+G. Liu et al.                                                                                                                                  Automation in Construction 157 (2024) 105162
+
+
+Table 3
+Literature summary of excavator action recognition.
+  Paper         Title                                                 Action type                          Purpose                                 Method                          Year
+
+  [32]          Using hue, saturation, and value color space for      Moving or not moving                 Improve production efficiency           Color-based                     2007
+                hydraulic excavator idle time analysis
+  [52]          Vision-based action recognition of earthmoving        Digging, dumping, hauling,           Improve operational efficiency          HOG+SVM                         2013
+                equipment using spatio-temporal features and          swing
+                support vector machine classifiers
+  [18]          Action recognition of earthmoving excavators          Digging, hauling dumping,            Productivity analysis                   CNN and Double layer Long       2019
+                based on sequential pattern analysis of visual        swinging, moving, and                                                        Short Term Memory
+                features and operation cycles                         stopping
+  [53]          A Deep Learning-Based Approach to Enable Action       Digging, dumping, swing              Improve productivity                    Simplified temporal             2020
+                Recognition for Construction Equipment                                                                                             convolutional network
+  [55]          Working stage identification of hydraulic excavator   Walking, digging, lifting and        Energy saving                           Parts detection by Yolo and     2021
+                                                                      swing, unloading, returning                                                  combined with the pump
+                                                                      and adjusting                                                                pressure
+  [54]          Synthesizing Pose Sequences from 3D Assets for        Idle, swing bucket, Load             Dataset synthesis                       Multistage Temporal             2021
+                Vision-Based Activity Analysis                        bucket, dump, move                                                           Convolutional Network (MS-
+                                                                                                                                                   TCN)
+  [20]          Automatic Identification of Idling Reasons in         Estimated idle time                  Control the work efficiency and         YOLOv3                          2021
+                Excavation Operations Based on Excavator-Truck                                             productivity
+                Relationships
+  [56]          Vision-Based Activity Classification of Excavators    Dumping, hauling, excavation,        Improved the safety, continuous         CNN-BiLSTM                      2023
+                by Bidirectional LSTM                                 and return                           monitoring, productivity, and cost of
+                                                                                                           the earthwork site
+
+
+
+processing techniques rather than deep learning methods. Section 4 will                               detection and action recognition. However, in recent years, deep
+provide a more detailed exploration of these topics.                                                  learning-based methods have gained widespread popularity. It can be
+                                                                                                      attributed to the maturity of deep learning methods and network
+3.2.1. Deterministic feature                                                                          models. The availability of open-source datasets, as well as specialized
+    Deterministic features in CV on excavators refer to predefined image                              techniques for dataset synthesis and annotation, has enriched the in­
+features in the design of the vision scheme. These features can be clas­                              formation of training sets. These datasets now encompass excavator
+sified into marker-less-based (self-feature-based) and marker-based                                   models, scales, camera perspectives, poses, backgrounds, lighting con­
+methods. Marker-less-based methods use inherent characteristics of                                    ditions, and more. For excavator manipulator pose estimation, although
+excavators, such as edge and texture-related Histogram of Oriented                                    deep learning methods have made progress and found applications in
+Gradients (HOG) features [38,40,52], color features [32], contour fea­                                recent years, their representation of the excavator pose as pixel co­
+tures, or combinations of multiple features [39] extracted from the                                   ordinates of junction points [61,62,72,73], similar to human pose esti­
+excavator manipulator [11,21,67,69]. Therefore, they are also referred                                mation, does not typically serve as the required feedback variable for
+to as self-features. These features are combined with machine learning                                automatic control of excavator operations. As a result, the marker-based
+algorithms, such as support vector machines, or template matching                                     method remains popular for pose estimation at present.
+methods, to create detectors for excavators and their parts. Marker-
+based methods involve the design of specific markers with distinctive
+features. These marker features typically include special geometric                                   3.3. Purpose of computer vision on excavators
+shapes or contours, such as dedicated AprilTags [41,58,65,68], Aruco
+markers [74], custom-made saddle point markers [22], specific colors                                      The applications of CV on excavators can be classified into three
+[32,66], or markers that combine multiple features [57,64]. Image                                     main purposes. Firstly, it ensures operational safety. Secondly, it enables
+processing algorithms, such as corner detection, edge detection, and                                  equipment management, improves work efficiency, and promotes en­
+color threshold, are employed to extract the marker feature points.                                   ergy conservation. Lastly, it generates feedback data for automatic
+                                                                                                      control. Excavator detection, identification, and tracking typically
+3.2.2. Deep learning feature                                                                          involve automatically recognizing excavators in images and working in
+    Deep learning-based CV eliminates the design of image features.                                   conjunction with other detectors, such as human and truck detectors, to
+These algorithms automatically learn target features and establish the                                estimate potential collisions or offer warning signals and avoid haz­
+mapping relationship between images and the desired quantities. In CV,                                ardous operational behaviors. Excavator detection can also serve as a
+deep learning algorithms are typically based on CNN, and numerous                                     prerequisite for action recognition. Excavator action recognition pro­
+network models have been developed and refined. Examples include the                                  vides valuable insights into the types of movements, allowing for
+widely used two-stage object detection algorithm, R-CNN [75], as well                                 monitoring, analysis, and detection of potential issues or errors. It also
+as one-stage object detection algorithms like YOLO and SSD [76], along                                enables real-time feedback on work status, reliance reduction on manual
+with their modified architectures. Additionally, algorithms such as the                               operators and improvement of operational efficiency and safety.
+Stacked Hourglass Network are utilized for pose estimation. The                                       Furthermore, excavator action recognition helps assess the quality of the
+detailed algorithms are listed in Tables 2 to 4. Deep learning algorithms                             operations during different work stages. For example, it can evaluate the
+for excavators eliminate the need for manually designed features by                                   depth and accuracy of excavation or assess the efficiency of unloading,
+leveraging the network's autonomous ability to learn features. Conse­                                 leading to improved operational techniques and work quality. It is also
+quently, a substantial amount of training data is usually required to                                 worth mentioning that recognizing operational movements can serve as
+enhance the network's learning capabilities. Therefore, data annotation                               a reference for energy-saving technologies in excavators. Different
+and synthesis [45,46] have emerged as important topics in the field of                                operational movements have varying demands on the power and hy­
+CV for excavators.                                                                                    draulic systems, and adjusting them accordingly can optimize energy
+    Observing the “Year” and “Method” columns in Tables 2 to 4, it is                                 usage. Excavator pose estimation plays a crucial role in ensuring oper­
+evident that deterministic features were initially employed for excavator                             ational safety, improving work efficiency, and facilitating vision-based
+                                                                                                      automatic control by providing essential data on the excavator
+
+                                                                                               7
+G. Liu et al.                                                                                                                                    Automation in Construction 157 (2024) 105162
+
+
+Table 4
+Literature summary of excavator manipulator pose estimation.
+  Paper         Purpose                            Method                   Experimental                   Results                                         Year    Camera information
+                                                                            environment
+
+  [57]          Autonomous mining                  Stripe color block and   /                              /                                               2011    One color CCD camera
+                                                   the red mark                                                                                                    placed on the ground
+                                                                                                                                                                   facing the bucket
+  [67]          For construction monitoring        Contour feature and      Excavator model                /                                               2014    One surveillance camera
+                and safety management              template matching                                                                                               placed outside the
+                                                                                                                                                                   excavator
+  [22]          Automation operation               Label saddle point       Real excavator                 The joint Angle error is very small             2014    One gray industrial
+                                                   (corner point)           experiment                                                                             camera with an infrared
+                                                                                                                                                                   filter placed on excavator
+                                                                                                                                                                   cab
+  [58]          Teleoperation for guiding          AprilTag                 Indoor simulation              Static error is about 0.5◦ , dynamic error is   2015    One regular digital
+                human operations                                            experiment                     close to 1◦ .                                           camera placed on the
+                                                                                                                                                                   ground facing the bucket
+  [68]          Auxiliary operation                AprilTag                 Real excavator                 The position error of bucket tip in all         2016    Three gray optical
+                                                                            experiment                     three directions is within 3 cm.                        cameras placed on
+                                                                                                                                                                   excavator cab
+  [69]          Enhancing workplace safety in      Template matching        Real excavator                 70% of the errors in the z-axis are within      2017    Two high-definition
+                the construction industry          and contour detection    experiment                     the range of (− 1.0 m, 1.0 m). 95% of the               camcorders (SONY HDR-
+                                                                                                           errors in the x-axis and y-axis are within              CX760V) placed on the
+                                                                                                           the range of (− 0.5 m, 0.5 m).                          cab
+  [23]          Improving safety and               Part detectors and       Synthetic data set             The estimated errors of the two joint           2017    Data set
+                productivity of construction       pose estimation based                                   angles are less than 4◦ and 8◦ , with a
+                processes                          on contour                                              maximum of 18◦ .
+  [70]          Improving the productivity of      Based on contour.        Real excavator                 2.9◦ and 4.2◦ are the average errors of the     2018    Four color surveillance
+                operations and safety on job                                experiment                     estimated angles.                                       cameras
+                sites
+  [65]          Improving both safety and          AprilTag                 Real excavator                 The accuracy of the vertical orientation of     2018    Two color industrial
+                productivity in many                                        experiment                     the bucket tooth tip is 2.54 cm                         cameras placed on the
+                construction tasks                                                                                                                                 cab
+  [71]          Automation operation               Neural network           Simulation experiment          Error for the boom cylinder                     2019    One color webcam
+                                                                                                           displacements from − 0.263 cm to 0.281                  placed outside the
+                                                                                                           cm, arm from − 1.230 cm to 0.780 cm,                    excavator facing the
+                                                                                                           and bucket from − 1.878 cm to 1.387 cm                  excavator
+  [59]          For safety on construction sites   Stacked hourglass        Real manipulator               The mean Euler distance error of the            2019    Outside excavator (Data
+                                                   network                  experiment                     Boom-Stick node is 63.81 mm. Stick-                     set)
+                                                                                                           Bucket is 37.01 mm. Bucket is 52.16 mm
+  [60]          For safety on construction sites   Stacked hourglass        Real manipulator               Precision 144.65 mm                             2019    Outside excavator (Data
+                                                   network                  experiment                                                                             set)
+  [64]          Automation operation               Color marker             Real excavator                 The world coordinate error of the static        2020    One color industrial
+                                                                            experiment                     marker within 30 mm                                     camera placed on the
+                                                                                                                                                                   ground facing the
+                                                                                                                                                                   excavator
+  [61]          Real-time safety monitoring on     Stacked hourglass        Image dataset                  HG and CPN can achieve a PCK                    2020    Outside excavator (Data
+                construction sites                 network, Cascaded                                       (percentage of correct key-points) value                set)
+                                                   pyramid network                                         of 91.19% and 91.78%.
+  [72]          Creating a safer and more          HRnet                    Image dataset                  Synthetic data set NE = 0.0498. Real data       2022    Outside excavator (Data
+                productive work environment.                                                               set NE = 0.0478                                         set)
+  [62]          Safety monitoring                  YOLOv5-FastPose          Alberta construction           Average normalization error (NE) of             2022    Outside excavator (Data
+                                                   (YFP)                    image dataset and              0.01294                                                 set)
+                                                                            construction equipment
+                                                                            poses dataset
+  [63]          For increasing awareness about     CNN                      Real excavator                 The average pose error is 9.63 degrees          2021    One smartphone placed
+                jobsite hazards and operational                             experiment                                                                             on the ground
+                performance in earthwork
+                operations
+  [73]          For edge device deployment         Lightweight fully        Real excavator                 The maximum average precision is 0.927          2022    One surveillance camera
+                                                   convolutional            experiment video
+                                                   network (FCN)
+  [66]          Automation operation               Color Marker             Real excavator                 The maximum joint angle error is − 1 to         2022    One Color camera fixed
+                                                                            experiment                     +1 degree                                               on the cab
+  [74]          Improve operational safety         Aruco marker             Real excavator                 Average RMSEs 119.85 mm                         2023    Two smartphones placed
+                                                                            experiment                                                                             in the cab
+
+
+
+manipulator's position relative to its base.                                                         acknowledge that excavators are not merely objects of study. The
+                                                                                                     measurement of excavator poses using vision-based methods is influ­
+4. In-depth discussion                                                                               enced not only by these technologies but also by the structures and
+                                                                                                     operational characteristics of excavators. Consequently, vision-based
+4.1. Content of in-depth discussion                                                                  pose measurement methods encounter numerous challenges and diffi­
+                                                                                                     culties when applied to automatic excavator operations. Additionally,
+   Considering that most papers on vision-based excavator detection                                  the literature review in Section 3.1.3 highlights that the pose measure­
+and action recognition primarily focus on the application of new tech­                               ments are used for ensuring safe operation and productivity assessment,
+nologies, such as deep learning or image processing, it is important to                              as well as for automatic control. Unlike the former, the latter imposes
+
+                                                                                                 8
+G. Liu et al.                                                                                                       Automation in Construction 157 (2024) 105162
+
+
+stringent requirements on measurement accuracy and speed. Therefore,                 Next, the concept of feedback control is introduced. Feedback con­
+the objective of this section is to provide a comprehensive discussion of        trol involves providing the computer with real-time manipulator pose as
+vision-based pose measurement methods for excavator manipulators,                feedback data (ETB), which is used to calculate the deviation from the
+with a specific emphasis on the perspective of automatically controlling         target signal. Based on this feedback, control algorithms are employed to
+operation trajectories.                                                          correct the deviation and track the desired quantity. Therefore, at this
+    Firstly, the definition of vision-based manipulator pose estimation          stage, the manipulator pose is obtained through visual measurement
+for heavy-duty hydraulic excavators is introduced, highlighting its dis­         methods, rather than relying on commonly used contact sensors. In this
+tinctions from conventional industrial robots. The specific differences          paper, the term “MPVF” is adopted to represent the Manipulator Pose of
+are as follows. (1) Camera positioning: Due to the working specialties of        a Vision-based method for Feedback control.
+heavy-duty hydraulic excavators, cameras are typically installed outside             After providing a clear explanation of the relevant concepts, this
+the manipulators (eye-to-hand). Common mounting locations include                section will undertake a comprehensive discussion, addressing the
+fixed brackets on the ground [59], building walls [70], or on the exca­          following aspects: analyzing the requirements for MPVF measurement,
+vator cabs [68] to ensure the cameras remain undamaged. The exca­                evaluating the existing limitations of CV methods in relation to MPVF,
+vator cabs are optimal positions since they can move or rotate along with        and proposing future trends for the implementation of MPVF
+the walking and swing mechanisms, as demonstrated in Fig. 6. In                  measurement.
+contrast, conventional industrial robots usually operate in static work­
+ing sites where cameras are fixed at the end of manipulators (eye-in-
+hand) or in locations with consistent pose relationships relative to their       4.2. Requirement analysis and literature evaluation
+base. (2) Applications of pose estimation. As illustrated in Fig. 6, {E},
+{B}, {C}, and {O} represent the coordinate systems of the manipulator                The vision-based manipulator pose plays a crucial role in the auto­
+end, base, camera, and object, respectively. The coordinate trans­               matic control of the operation trajectory, replacing the function of
+formations between {E} and {B} are denoted as ETB, and between {E}               contact sensors. Consequently, vision-based measurement methods are
+and {O} as ETO. In the field of excavators, our focus is on the vision-          required to meet several requirements. Firstly, rapidity. The data update
+based measurement of ETB, which can be represented by the bucket                 frequency should be high enough to provide real-time poses. Secondly,
+end coordinates and bucket orientation relative to the base, the dis­            accuracy. The vision-based pose estimation should exhibit minimal error
+placements of the three actuator cylinders, and the relative joint angles        compared to traditional contact sensors. Thirdly, reliability. The poses
+between the links. There is a unique conversion relationship between             should remain consistent and not diverge during control. Lastly, less
+these representations. While contact-sensor-based measurement                    cost. Economic factors, calibration, maintenance, and time or labor costs
+methods for ETB involve contact sensors, Section 1 mentions the po­              must be considered, ensuring the method's feasibility. This section
+tential of vision-based measurements as a novel approach. For industrial         provides a deep analysis and discussion of these four aspects. Further­
+robots, pose estimation typically involves estimating the pose between           more, the literature mentioned in Section 3.1.3 is evaluated and sum­
+the camera and the object (CTO). For eye-to hand configurations, CTB             marized in Table 5. Due to the limited availability of literature
+can be obtained through hand-eye calibration, while ETB is primarily             specifically focused on trajectory automatic control, all the papers
+measured using sensors such as motor encoders and angle sensors.                 mentioned in Section 3.1.3 are evaluated to analyze the diversity of
+Finally, ETO is commonly achieved, allowing the end effector of the              methods. It is important to note that the four requirements mentioned
+industrial robot to approach and grasp the object. (3) Degrees of                earlier are proposed in the field of automatic control. However, the
+freedom of manipulators. In excavators equipped with buckets, vibra­             papers mentioned in Section 3.1.3 primarily focus on safety monitoring
+tory compactors, breaking shears, and similar attachments, the manip­            and productivity detection, rather than trajectory automatic control.
+ulators typically operate within a single plane, which means the rotation        Therefore, the evaluation of these papers in Table 5 from the perspective
+axes of the manipulators are parallel. In contrast, industrial robots            of automatic control does not negate or diminish the research findings
+usually have non-parallel rotation axes. This unique mechanical struc­           presented in those studies.
+ture makes hand-eye calibration methods used for industrial robots
+unsuitable for excavators [66]. Furthermore, there are additional dif­           4.2.1. Rapidity
+ferences in terms of working environments, tasks, and application pur­               Automatic control places a strong emphasis on the real-time per­
+poses. Consequently, this paper will not delve into detailed discussions         formance of measurements [77]. This implies that the measurement
+of pose estimation technology related to industrial robots.                      frequency should be rapid and without significant delays. If the real-
+                                                                                 time performance is inadequate, the current pose information fed back
+
+
+
+
+                                                   Fig. 6. Structure of heavy-duty hydraulic excavator.
+
+                                                                             9
+G. Liu et al.                                                                                                                            Automation in Construction 157 (2024) 105162
+
+
+Table 5
+Qualitative evaluation of visual-based excavator pose measurement papers for automatic control application (o and x represent strong and weak respectively).
+  Paper         Title                                                                       Method                            Year   Rapidity    Accuracy     Reliability   Time-
+                                                                                                                                                                            cost
+
+  [57]          The Recognition of Target and Attitude of Bucket for Excavator Robot        Stripe color block and the red    2011   o           o            x             o
+                Based on Color Mark Tracking                                                mark
+  [67]          Key Nodes Modeling for Object Detection and Location on Construction site   Contour feature and template      2014   x           x            o             x
+                using Color-Depth Cameras                                                   matching
+  [22]          A Novel Approach to Detect the Posture of Excavator's Manipulator           Label saddle point (corner        2014   o           o            x             o
+                                                                                            point)
+  [58]          Feasibility of In-plane Articulation Monitoring of Excavator Arm Using      AprilTag                          2015   o           o            x             o
+                Planar Marker Tracking
+  [68]          Optical Marker-based End Effector Pose Estimation for Articulated           AprilTag                          2016   o           o            x             x
+                Excavators
+  [69]          Vision-Based Excavator Detection and Tracking Using Hybrid Kinematic        Template matching and contour     2017   x           x            o             x
+                Shapes and Key Nodes                                                        detection
+  [11]          Skeleton Estimation of Excavator by Detecting Its Parts                     Based on skeleton                 2017   x           x            x             o
+  [70]          Framework for Location Data Fusion and Pose Estimation of Excavators        Based on contour                  2018   x           x            x             o
+                Using Stereo Vision
+  [65]          Camera Marker Networks for Articulated Machine Pose Estimation              AprilTag                          2018   o           o            x             x
+  [71]          Vision-based Estimation of Excavator Manipulator Pose for Automated         Neural network                    2019   o           o            x             x
+                Grading Control
+  [59]          Fast Dataset Collection Approach for Articulated Equipment Pose             Stacked hourglass network         2019   o           x            o             x
+                Estimation
+  [60]          A Vision-based Marker-less Pose Estimation System for Articulated           Stacked hourglass network         2019   o           x            o             x
+                Construction Robots
+  [64]          The Position Measurement of Excavator Working Device                        Color marker                      2020   o           x            x             o
+  [61]          Full Body Pose Estimation of Construction Equipment Using Computer          Stacked hourglass network,        2020   x           x            o             x
+                Vision and Deep Learning Techniques                                         Cascaded pyramid network
+  [63]          Implementation Experiments on Convolutional Neural Network Training         CNN                               2021   x           x            o             x
+                Using Synthetic Images for 3D Pose Estimation of an Excavator on Real
+                Images
+  [72]          Vision-based Excavator Pose Estimation Using Synthetically Generated        HRnet                             2022   x           x            o             x
+                Datasets with Domain Randomization
+  [62]          Pose Estimation Method for Construction Machine Based on Improved           YOLOv5-FastPose(YFP)              2022   x           o            o             x
+                AlphaPose Model
+  [73]          Excavator Joint Node-based Pose Estimation Using Lightweight Fully          Lightweight fully convolutional   2022   o           o            o             x
+                Convolutional Network                                                       network (FCN)
+  [66]          A New Measurement Method of Real-time Pose Estimation for an                Color Marker                      2022   o           o            x             o
+                Automatic Hydraulic Excavator
+  [74]          Full-body Pose Estimation for Excavators Based on Data Fusion of Multiple   Aruco marker                      2023   x           x            o             o
+                Onboard Sensors
+
+
+
+to the controller may not reflect the true current status. For instance, M.                                pooling, ranging from dozens to hundreds, or even more, which
+Soltani [11] took approximately 3–4 s to process a frame image                                             significantly increases the data processing load for each image.
+completely, while contact sensors typically operate at frequencies                                     (2) For marker-based and self-feature-based measurement methods,
+ranging from several hundred to several thousand hertz. Similarly, [70]                                    the complexity of image features can necessitate complex image
+exhibited an image processing speed of about 2 s per frame, and [65]                                       processing, which in turn leads to a time-consuming process per
+demonstrated varying processing speeds depending on the image size,                                        frame. As a consequence, the frequency of pose estimation is
+with 640*480 resolution at 20 Hz and 1280*1960 resolution at 5 Hz.                                         reduced. In summary, under the same hardware situation,
+Significant changes in the manipulator pose may occur during these                                         compared with deep-learning-based methods, marker-based and
+delays. Consequently, achieving accurate manipulation becomes chal­                                        self-feature-based methods may offer greater ease in ensuring
+lenging when controlling the current pose with the delayed data. The                                       rapidity due to their inherent characteristics.
+low measurement frequency is influenced by both the camera's sampling
+speed and the computational speed of the image processing unit, and it                            4.2.2. Accuracy
+can also be influenced by the measurement algorithms. Due to the                                      To achieve high-precision trajectory control, it is crucial to ensure
+limited computational performance of hardware systems in practical                                the data accuracy provided to the controller. As contact sensor mea­
+applications, image processing algorithms should also have minimal                                surement technology is well-established, the accuracy of vision-based
+time consumption. Based on the literature review in Section 3.2, current                          measurements can be evaluated by comparing them with the data ob­
+vision-based pose measurement methods on excavators can be catego­                                tained from contact sensors.
+rized as marker-based, self-feature-based, and deep-learning-based.                                   In the case of deep learning-based measurement methods, it is
+Therefore, the factors influencing rapidity will be discussed from these                          important to ensure good generalization performance of the detector.
+perspectives, as explored in the following sections.                                              This means that the trained deep learning network should not only
+                                                                                                  perform well on the training dataset but also accurately estimate poses
+   (1) The measurement delay based on deep learning primarily arises                              for new datasets. The accuracy of the method is influenced by several
+       from the complexity of the algorithm framework. A construction                             factors, including the structural framework of deep learning, training
+       site image, as depicted in [73], consists of a large number of                             parameters, diversity of training sets, and the generalization ability of
+       pixels, such as 384*2546*3 pixels. Moreover, deep learning                                 the trained network. For example, in [63], the CNN method showed an
+       frameworks typically involve convolution, pooling, and fully                               average prediction error of 9.63◦ for joint angles. While this level of
+       connected layers applied to each frame image [78]. Deep learning                           accuracy may be sufficient for detecting movements of excavators and
+       models often comprise numerous layers of convolution and                                   ensuring safety, it falls short for precise automatic control. One of the
+
+
+                                                                                             10
+G. Liu et al.                                                                                                          Automation in Construction 157 (2024) 105162
+
+
+main reasons for this discrepancy is that the training set in [63] is               view and address potential occlusion or corruption issues associated
+artificially generated, rather than derived from real on-site data.                 with marker-based and self-feature-based methods.
+Furthermore, for automatic control purposes, it is typically necessary to
+obtain a specific form of pose data, such as joint angles and cylinder              4.2.4. Less time investment
+displacement. However, most deep learning methods [59,60,62] only                       In addition to considering economic costs, the vision-based mea­
+provide coordinates of the hinge point in the image, which cannot be                surement approach should also prioritize time efficiency. Excavators
+directly utilized for control. Additionally, the evaluation of these                consist of a swing mechanism and a walking mechanism, as shown in
+methods is limited to discrete images from the training set, lacking real-          Fig. 6. Unlike conventional industrial robots, excavators operate in
+time validation during actual excavator operations.                                 various locations, which poses challenges for some existing measure­
+    In marker-based and self-feature-based methods, inappropriate                   ment methods. These methods position cameras or markers on the
+image processing may result in inadequate adaptation of marker feature              ground [57,58,64,65,68,69]. For instance, [57,58] require the camera
+identification to variations in lighting conditions, dust interference,             to be positioned as perpendicular as possible to the excavator's working
+short-term obstructions, and other issues. For example, although the                plane or within a certain angle range. Consequently, when the excavator
+data presented in papers [22,58,64,66,68] demonstrate precision, they               changes its working site or undergoes rotation, the feature points may
+did not consider the impact of environmental changes. Furthermore, the              fall outside the camera's field of view. Under such circumstances, these
+accuracy of the mapping relationship between the image and pose in­                 methods become inapplicable unless the marker and camera network
+formation [79] is a crucial factor affecting the overall accuracy. This             undergo recalibration. However, recalibration can be even more time-
+mapping model typically comprises a homogeneous coordinate trans­                   consuming than the manipulation tasks themselves. Moreover, pose
+formation model [80] and a perspective projection model [81]. How­                  estimation methods based on deep learning typically rely on large
+ever, there are several factors that can introduce errors in the mapping            datasets [46] to cover various conditions, such as excavator postures,
+model. (1) The mapping model is an approximation that disregards or                 lighting conditions, and background dust and smoke, in order to achieve
+approximates numerous details, such as lens distortion [82] or the                  high accuracy. The estimation of manipulator pose is influenced by
+keyhole imaging model. These simplifications can introduce modeling                 factors such as the excavator model, camera model, and camera instal­
+errors. (2) Errors can occur in the calibration of model parameters.                lation position. Therefore, it is essential to collect images that encom­
+Traditional calibration methods, such as the Zhang method [83], typi­               pass diverse environments and manipulator postures for each type of
+cally provide relatively accurate calibration parameters. However, er­              camera, camera parameter, installation position, and excavator model.
+rors may arise when the calibration plate is far away from the operating            This process involves creating an extensive training dataset that contains
+space, particularly for large-sized excavators. Offline calibration may             a significantly large number of image samples. Additionally, manual
+not fully cover the entire range of the bucket operating space, making it           annotation is sometimes necessary, making the data collection and
+difficult to adapt the obtained parameters to all operating trajectories.           processing procedures time-consuming and laborious. Furthermore, the
+(3) Pose estimation for excavators usually involves estimating the world            training process of deep learning models, in general, is complex and
+coordinates of feature points and performing indirect calculations, as              time-consuming.
+observed in various literature sources [22,64,66]. However, the esti­
+mation of world coordinates is highly sensitive to model parameters.                4.3. Future development
+Consequently, errors in these pose measurement methods propagate to
+the estimated pose, posing challenges in meeting accuracy re­                           This section discusses future developments in the pose measurement
+quirements. Moreover, marker features in images may appear blurred                  of excavators, focusing on marker-based methods, deep learning-based
+due to the relatively fast operation speed of the manipulator. These                methods, and the four requirements proposed in Section 4.2.
+influencing factors need to be considered to enhance the overall accu­
+racy of pose measurement methods.                                                   4.3.1. Marker-based method
+
+4.2.3. Reliability                                                                    (1) Feature point occlusion problem: Given the focus of this paper on
+    Reliability refers to the stability of measurements, ensuring that                    vision-based measurement methods, non-occlusion is a funda­
+there is no long-term loss of measurement data. Continuous and unin­                      mental requirement. Therefore, the measurement schemes should
+terrupted feedback data is crucial because if the controller fails to ac­                 aim to minimize the influence of marker occlusion by considering
+quire the latest pose, the operation trajectory cannot be accurately                      factors such as camera installation positions, camera angles of
+controlled. This can result in incorrect operation and pose a safety risk to              view, and marker placement. Furthermore, it is necessary to
+workers. Several factors can contribute to the unreliability of pose                      develop fault-tolerant algorithms capable of handling transient
+estimation. In some deep learning-based methods, the camera's field of                    occlusion of image features. These algorithms should accurately,
+view may not fully cover the entire range of the excavator's operation                    continuously, and completely track feature points, ensuring their
+trajectory, causing certain manipulator poses to fall outside the camera's                preservation. Predictive algorithms like the Kalman filter [84]
+field of view. Additionally, in marker-based and self-feature-based                       and particle filter [85] can be employed when a marker is
+methods, occlusion of marker features, particularly due to corruption                     temporarily blocked to estimate the manipulator pose. If markers
+or damage, can introduce unreliability. For instance, H. Ma [64]                          need to be placed on the bucket, it will inevitably affect the
+attached a marker to the bucket's end, while H. Wang [22] affixed saddle                  operation. Once the excavator digs the ground, the bucket can
+points on the bucket linkage. Although these markers have minimal                         become buried, leading to potential damage or obstruction of the
+impact during level operations, they may become blocked by soil or                        markers by mud. This situation is not conducive to subsequent
+sustain damage during digging, rendering vision-based pose measure­                       work. In such cases, special marker materials that prevent mud
+ment methods unusable in such situations. Furthermore, although fixing                    adhesion might be a good method. While for hydraulic rippers
+the camera on the cab [22,64] ensures method usability even when the                      and breaking hammers, their upper parts are typically positioned
+excavator's operating location changes or the rotating mechanism                          above the ground during operation, reducing the likelihood of
+moves, it is important to consider the limited perspective of ordinary                    marker burying issues. However, hydraulic shears and timber
+industrial cameras. If the manipulator and markers exceed the camera's                    grabs, which can rotate similarly to wrists, may encounter diffi­
+field of view, the method may fail, restricting the spatial working range                 culties with marker visibility in the camera view. To ensure
+of the actuator. To enhance reliability, it is crucial to ensure complete                 marker visibility during operation, the use of multiple markers on
+coverage of the manipulator's trajectory within the camera's field of                     these specific excavator attachments may be crucial. Moreover,
+
+                                                                               11
+G. Liu et al.                                                                                                          Automation in Construction 157 (2024) 105162
+
+
+       to enhance the spatial operating range of the actuator as observed           requires the establishment of precise mapping models as well as accu­
+       by the camera, one potential approach is to install multiple                 rate calibration of camera intrinsic and extrinsic parameters. This
+       cameras in the cab with different perspectives. This approach                method is sensitive to errors when predicting a limited number of key
+       aims to comprehensively cover the entire range of the actuator's             points. Therefore, in cases where the excavator CAD model is available,
+       movements. However, this approach presents challenges in terms               rendering the CAD model to obtain synthetic datasets becomes a viable
+       of pose calibration among multiple cameras and matching the                  option. For each rendered image, we can annotate the 3D coordinates
+       same marker feature point from various camera perspectives.                  corresponding to individual pixels. Subsequently, after deep learning,
+       Alternatively, considering the use of a wide-angle camera can                the 3D coordinates of each pixel can be used to calculate joint angles.
+       address the aforementioned issues. Nevertheless, establishing an             This approach can enhance measurement accuracy through multi-point
+       accurate distortion model and calibrating precise distortion pa­             pose estimation.
+       rameters may cause significant challenges.                                       From the perspective of deep network architecture: It is possible to
+   (2) Marker features: The features of markers play a crucial role in              introduce a detector based on the Swin Transformer [87], which can
+       distinguishing objects from the background. Geometric features,              better fuse information between various features through a global
+       color features, and texture features can be utilized as the basis for        attention mechanism. Additionally, refinement techniques can be bor­
+       marker recognition, with a focus on developing markers with                  rowed, such as using Recurrent Neural Networks (RNN) or some
+       enhanced recognition capabilities. By fusing multiple features,              manually designed detection metrics for further optimization or vali­
+       the robustness of feature point recognition can be improved,                 dation of prediction results. Furthermore, methods from temporal net­
+       particularly in challenging environmental conditions such as by              works can be employed to enhance the accuracy of estimation by fusing
+       lighting variations, smoke, and dust particles.                              and filtering information from multiple frames of video sequences.
+   (3) Mapping relationship: As discussed in Section 4.2.2, the impact of               From other perspectives: (1) For regression problems of excavator
+       the mapping model on pose measurements primarily stems from                  manipulator pose estimation, the use of deep learning methods relies on
+       model errors and parameter calibration errors. Therefore, in                 ensuring the quality and quantity of the dataset. Excavator operations
+       future research, offline calibration techniques that are indepen­            take place in diverse and often challenging outdoor conditions. Col­
+       dent of modeling, such as neural networks [65], could be                     lecting training sets comprising images and labels may be a challenging
+       considered. These techniques employ nonlinear fitting to adapt to            task. In the future, data augmentation techniques can be employed to
+       inaccurate models and parameter variations resulting from                    simulate datasets encompassing complex backgrounds, varying lighting
+       changes in the operating location. Furthermore, it is worthwhile             conditions, occlusions, dust, smoke, and more, thus emulating various
+       to explore more precise modeling techniques for mapping                      working environments. However, it is crucial to ensure the authenticity
+       models, such as small hole imaging models and distortion models.             and diversity balance of the augmented data. (2) Because deep learning
+       In such cases, achieving precise optimization of model parame­               models often require significant computational power due to their depth
+       ters becomes crucial, although the complexity of the model also              and complexity, hardware acceleration techniques like Graphics Pro­
+       presents challenges for nonlinear optimization algorithms.                   cessing Unit (GPU) or Tensor Processing Unit (TPU), as well as distrib­
+       Intelligent optimization algorithms may offer a viable solution to           uted computing resources or cloud computing platforms, can be
+       address these challenges.                                                    leveraged to expedite model training.
+
+4.3.2. Deep learning-based method                                                   5. Conclusions
+    Deep learning-based methods hold potential for monitoring purposes
+to prevent hazards, manage workers, and enhance production efficiency.                  This paper presents a comprehensive review of applications, chal­
+In the field of manipulator pose measurement for feedback control,                  lenges, and developments in vision-based excavator pose estimation for
+methods based on deep learning demonstrate significant potential. For               automatic control purposes. Initially, 174 papers were acquired from the
+instance, deep learning network architectures founded on CNN and                    Web of Science database, and after a secondary screening process, 68
+Vision Transformers [86] relying on a global attention mechanism                    papers were selected for further analysis. Quantitative analysis was then
+showcase substantial promise. The progress in computational hardware                conducted on the publication years, journal sources, and countries of
+further facilitates the real-time application of deep learning in mea­              these selected papers. The findings revealed Automation in Construction
+surement tasks. Deep learning methods eliminate the need for humans to              and Journal of Computing in Civil Engineering as leading journals in the
+specify image features such as color, geometric shapes, and textures.               field of computer vision applications for excavators. Based on keyword
+Instead, these methods rely on the learning abilities of deep networks to           analysis and content evaluation, CV applications for excavators were
+automatically learn image features. The discussion below explores the               categorized into three main aspects: (1) excavator detection, identifi­
+future prospects of vision-based measurement methods using deep                     cation, and tracking, (2) excavator action recognition, and (3) excavator
+learning for excavator manipulator pose measurement from three                      pose estimation. Each of these categories underwent a detailed literature
+different aspects.                                                                  review to discuss the trends in these methods. Furthermore, this work
+    From a methodological perspective: (1) The one-step measurement                 provides a literature review that identifies the requirements and chal­
+method, which employs deep learning techniques to learn the mapping                 lenges of vision-based measurement methods for automatic control of
+between images and corresponding manipulator poses (joint angles),                  operation trajectory. These requirements include rapidity, accuracy,
+eliminates the need for establishing homogeneous transformation                     reliability, and less time investment. The literature on vision-based pose
+models and calibrating the camera's intrinsic and extrinsic parameters.             measurement discussed in Section 3.1.3 was evaluated based on these
+However, the one-step method incorporates information about the                     requirements. Marker-based and deep learning-based methods were
+camera's pose (extrinsic parameters) within the deep neural network.                analyzed, highlighting their advantages and disadvantages. Marker-
+Consequently, if there is a change in the camera's pose, the original               based methods offer simplicity as they do not require extensive data­
+dataset becomes unusable. (2) The two-step measurement method,                      set preparation, and the image processing algorithms involved are
+which involves first learning key points from images and then mapping               straightforward. However, these methods have certain limitations.
+these key points to pose angles. For instance, learning pixel coordinates           Markers are prone to occlusion, and in specific poses, especially when
+of key points from images and then mapping these pixel coordinates to               the camera is far from the marker, the features may not be clearly
+joint angles using homogeneous transformation models. Current                       visible. The development of marker-based methods also faces challenges
+research [61] primarily focuses on predicting pixel coordinates of key              in the conversion model and parameter solving for transforming image
+points, while mapping these coordinates accurately to joint angles                  information into manipulator pose. Deep learning-based methods rely
+
+                                                                               12
+G. Liu et al.                                                                                                                Automation in Construction 157 (2024) 105162
+
+
+on large datasets, and inadequate samples can lead to inaccurate results.         Groups of the National Natural Science Foundation of China
+The CNN network structures employed in these methods tend to be                   (51821093).
+complex, and computation speed is often slower. Nevertheless, the
+advantage of deep learning-based methods lies in their ability to elim­           References
+inate the need for modeling, feature extraction, and conversion steps. By
+training a model, the relationship between images and manipulator                  [1] J. Kim, D. Lee, J. Seo, Task planning strategy and path similarity analysis for an
+                                                                                       autonomous excavator, Autom. Constr. 112 (2020), 103108, https://doi.org/
+poses can be mapped. Finally, the paper concludes by discussing future                 10.1016/j.autcon.2020.103108.
+developments in marker-based and deep learning-based visual pose                   [2] M. Ito, C. Raima, S. Saiki, Y. Yamazaki, Y. Kurita, Effects of machine instability
+measurement. This paper aims to propose research ideas for the devel­                  feedback on safety during digging operation in Teleoperated excavators, IEEE
+                                                                                       Access 9 (2021) 28987–28998, https://doi.org/10.1109/ACCESS.2021.3059710.
+opment of vision-based manipulator pose measurement methods,                       [3] H. Nagano, H. Takenouchi, N. Cao, M. Konyo, S. Tadokoro, Tactile feedback system
+thereby enabling vision-based automatic operations.                                    of high-frequency vibration signals for supporting delicate teleoperation of
+    For marker-based methods, future research directions include: (1)                  construction robots, Aavanced, Robotics 34 (2020) 730–743, https://doi.org/
+                                                                                       10.1080/01691864.2020.1769725.
+Developing multi-feature markers based on color, texture, geometric                [4] J.S. Lee, Y. Ham, H. Park, J. Kim, Challenges, tasks, and opportunities in
+shapes, etc., and fusing multiple features to enhance the robustness of                teleoperation of excavator toward human-in-the-loop construction automation,
+feature point recognition, especially in challenging environmental                     Autom. Constr. 135 (2022), 104119, https://doi.org/10.1016/j.
+                                                                                       autcon.2021.104119.
+conditions such as lighting variations, smoke, and dust particles. (2)
+                                                                                   [5] O.M.U. Eraliev, K.H. Lee, D.Y. Shin, C.H. Lee, Sensing, perception, decision,
+Accurate modeling of the mapping between feature points and manip­                     planning and action of autonomous excavators, Autom. Constr. 141 (2022)
+ulator poses, as well as precise calibration of model parameters, are                  104428, https://doi.org/10.1016/j.autcon.2022.104428.
+critical factors for successful application of marker-based methods in             [6] F.A. Bender, S. Goltz, T. Braunl, O. Sawodny, Modeling and offset-free model
+                                                                                       predictive control of a hydraulic mini excavator, IEEE Trans. Autom. Sci. Eng. 14
+automatic control systems. Nonlinear fitting techniques, represented by                (2017) 1682–1694, https://doi.org/10.1109/TASE.2017.2700407.
+neural network technologies, may adapt to inaccuracies in modeling and             [7] S. Lee, M. Kang, D. Shin, C. Han, Estimation with Applications to Dynamic Status of
+changes in model parameters caused by variations in operational posi­                  an Excavator without Renovation, 29th International Symposium of Automation
+                                                                                       and Robotics in Construction (ISARC 2012), 2012, https://doi.org/10.22260/
+tions. (3) Developing feature point fault-tolerant algorithms to ensure                ISARC2012/0093.
+the effectiveness of the measurement algorithm during transient occlu­             [8] Y. Li, Q.F. Wang, Adaptive neural finite-time trajectory tracking control of
+sions of markers. (4) To expand the working range of the visual system,                hydraulic excavators, Proc. Instit. Mech. Eng. I J. Syst. Control Eng. 232 (2018)
+                                                                                       909–925, https://doi.org/10.1177/0959651818767770.
+the use of camera networks consisting of multiple cameras or wide-angle            [9] F. Ghassemi, S. Tafazoli, P. Lawrence, K. Hashtrudi-Zaad, An accelerometer-based
+cameras can be explored to increase the camera field of view, enabling                 joint angle sensor for heavy-duty manipulators, in: 2002 IEEE International
+excavators to operate in all directions.                                               Conference on Robotics and Automation, 2022, pp. 1771–1776, https://doi.org/
+                                                                                       10.1109/robot.2002.1014798.
+    Regarding deep learning-based methods, future research directions             [10] P. Cheng, B. Oelmann, Joint-angle measurement using accelerometers and
+include: (1) The one-step measurement method, which employs deep                       gyroscopes-a survey, IEEE Trans. Instrum. Meas. 59 (2010) 404–414, https://doi.
+learning techniques to learn the mapping between images and corre­                     org/10.1109/TIM.2009.2024367.
+                                                                                  [11] M.M. Soltani, Z.H. Zhu, A. Hammad, Skeleton estimation of excavator by detecting
+sponding manipulator poses (joint angles). (2) The two-step measure­
+                                                                                       its parts, Autom. Constr. 82 (2017) 1–15, https://doi.org/10.1016/j.
+ment method, which involves first learning key points from images and                  autcon.2017.06.023.
+then mapping these key points to pose angles; here, mapping these co­             [12] B.H.W. Guo, Y. Zou, Y.H. Fang, Y.M. Goh, P.X.W. Zou, Computer vision
+ordinates accurately to joint angles requires the establishment of precise             technologies for safety science and management in construction: a critical review
+                                                                                       and future research directions, Saf. Sci. 135 (2021) 105130, https://doi.org/
+mapping models as well as accurate calibration of camera intrinsic and                 10.1016/j.ssci.2020.105130.
+extrinsic parameters. (3) It is possible to introduce a detector based on         [13] R. Mascaro, L. Teixeira, M. Chli, Volumetric instance-level semantic mapping via
+the Swin Transformer, which can better fuse information between                        multi-view 2D-to-3D label diffusion, IEEE Robot. Automa. Lett. 7 (2022)
+                                                                                       3531–3538, https://doi.org/10.1109/LRA.2022.3146502.
+various features through a global attention mechanism. (4) Refinement             [14] D. Roberts, M. Golparvar-Fare, End-to-end vision-based detection, tracking and
+techniques can be borrowed, such as using RNN or some manually                         activity analysis of earthmoving equipment filmed at ground level, Autom. Constr.
+designed detection metrics for further optimization or validation of                   105 (2019), 102811, https://doi.org/10.1016/j.autcon.2019.04.006.
+                                                                                  [15] Y.P. Guo, Y. Xu, S.L. Li, Dense construction vehicle detection based on orientation-
+prediction results. (5) Methods from temporal networks can be                          aware feature fusion convolutional neural network, Autom. Constr. 112 (2020),
+employed to enhance the accuracy of estimation by fusing and filtering                 103124, https://doi.org/10.1016/j.autcon.2020.103124.
+information from multiple frames of video sequences. (6) For regression           [16] D. Roberts, W.T. Calderon, S. Tang, M. Golparvar-Fard, Vision-based construction
+                                                                                       worker activity analysis informed by body posture, J. Comput. Civ. Eng. 34 (2020)
+problems of excavator manipulator pose estimation, the use of deep                     04020017, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000898.
+learning methods relies on ensuring the quality and quantity of the               [17] H. Kim, H. Kim, Y.W. Yong, H. Byun, Detecting construction equipment using a
+dataset. Data augmentation techniques can be employed to simulate                      region-based fully convolutional network and transfer learning, J. Comput. Civ.
+                                                                                       Eng. 32 (2018) 04017082, https://doi.org/10.1061/(ASCE)CP.1943-
+datasets encompassing complex backgrounds, varying lighting condi­
+                                                                                       5487.0000731.
+tions, occlusions, dust, smoke, and more. (7) Hardware acceleration               [18] J. Kim, S. Chi, Action recognition of earthmoving excavators based on sequential
+techniques like GPU or TPU, as well as distributed computing resources                 pattern analysis of visual features and operation cycles, Autom. Constr. 104 (2019)
+or cloud computing platforms, can be leveraged to expedite model                       255–264, https://doi.org/10.1016/j.autcon.2019.03.025.
+                                                                                  [19] M. Sopic, M. Vukomanovic, D. Car-Pusic, I. Zavrski, Estimation of the excavator
+training.                                                                              actual productivity at the construction site using video analysis, Organiz. Technol.
+                                                                                       Manag. Constr. 13 (2021) 2341–2352, https://doi.org/10.2478/otmcj-2021-0003.
+Declaration of Competing Interest                                                 [20] C. Chen, Z.H. Zhu, A. Hammad, M. Akbarzadeh, Automatic identification of idling
+                                                                                       reasons in excavation operations based on excavator-truck relationships,
+                                                                                       J. Comput. Civ. Eng. 35 (2021) 04021015, https://doi.org/10.1061/(ASCE)
+    The authors declare that they have no known competing financial                    CP.1943-5487.0000981.
+interests or personal relationships that could have appeared to influence         [21] W.M. Yang, D.D. Li, D.R. Sun, Q.M. Liao, Hydraulic excavators recognition based
+                                                                                       on inverse “V” feature of mechanical arm, in: 6th Chinese Conference on Pattern
+the work reported in this paper.                                                       Recognition (CCPR), 2014, pp. 536–544. https://link.springer.com/book/10.100
+                                                                                       7/978-3-662-45643-9.
+Data availability                                                                 [22] H.B. Wang, H.L. Zou, R.Z. Zhang, A novel approach to detect the posture of
+                                                                                       excavator’s manipulator, in: 3rd Asian Pacific Conference on Mechanical
+                                                                                       Components and Control Engineering (ICMCCE), 2014, pp. 891–898, doi:10.4028/
+    No data was used for the research described in the article.                        www.scientific.net/AMM.668-669.891.
+                                                                                  [23] H. Nakamura, Y. Tsukada, T. Tamaki, B. Raytchev, K. Kaneda, Pose Estimation of
+                                                                                       Excavators, International Workshop on Advanced Imaging Technology (IWAIT),
+Acknowledgements                                                                       2020, https://doi.org/10.1117/12.2566436, 115152J.
+
+    The research is supported by the Foundation for Innovative Research
+
+                                                                             13
+G. Liu et al.                                                                                                                              Automation in Construction 157 (2024) 105162
+
+[24] B. Xiao, C. Chen, X.F. Yin, Recent advancements of robotics in construction,                [51] Z.H. Lim, A.L.Y. Chen, S.H. Hsieh, Temporal image analytics for abnormal
+     Autom. Constr. 144 (2022), 104591, https://doi.org/10.1016/j.                                    construction activity identification, Autom. Constr. 124 (2021) 103572, https://
+     autcon.2022.104591.                                                                              doi.org/10.1016/j.autcon.2021.103572.
+[25] X.F. Yin, H.X. Liu, Y. Chen, M. Al-Hussein, Building information modelling for off-         [52] M. Golparvar-Fard, A. Heydarian, J.C. Niebles, Vision-based action recognition of
+     site construction: review and future directions, Autom. Constr. 101 (2019) 72–91,                earthmoving equipment using spatio-temporal features and support vector
+     https://doi.org/10.1016/j.autcon.2019.01.010.                                                    machine classifiers, Adv. Eng. Inform. 27 (2014) 652–663, https://doi.org/
+[26] R.Y. Jin, P.X.W. Zou, P. Piroozfar, H. Wood, Y. Yang, L.B. Yan, Y. Han, A science                10.1016/j.aei.2013.09.001.
+     mapping approach based review of construction safety research, Saf. Sci. 113                [53] J.Y. Zhang, L.J. Zi, Y.X. Hou, M.G. Wang, W.T. Jiang, D. Deng, A deep learning-
+     (2019) 285–297, https://doi.org/10.1016/j.ssci.2018.12.006.                                      based approach to enable action recognition for construction equipment, Adv. Civ.
+[27] W.N. Nunu, L. Makhado, J.T. Mabunda, R.T. Lebese, Strategies to facilitate safe                  Eng. 2020 (2020) 8812928, https://doi.org/10.1155/2020/8812928.
+     sexual practices in adolescents through integrated health systems in selected               [54] W.T. Calderon, D. Roberts, M. Golparvar-Fard, Synthesizing pose sequences from
+     districts of Zimbabwe: a mixed method study protocol, Reprod. Health 17 (2020)                   3D assets for vision-based activity analysis, J. Comput. Civ. Eng. 35 (2021)
+     20, https://doi.org/10.1186/s12978-020-0862-y.                                                   04020052, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000937.
+[28] M.J. Cobo, A.G. Lopez-Herrera, E. Herrara-Viedma, F. Herrera, Science mapping               [55] J.M. Zhang, H.Y. Sun, N.A.N. Luo, M.J. Wang, Working stage identification of
+     software tools: review, analysis, and cooperative study among tools, J. Am. Soc.                 hydraulic excavator, in: International Conference on Sensors and Instruments
+     Inf. Sci. Technol. 67 (2011) 1382–1402, https://doi.org/10.1002/asi.21525.                       (ICSI), 2022, p. 1188714, https://doi.org/10.1117/12.2602988.
+[29] Y. Taobao, J.Q. Zheng, Y.C. Lin, T.M. Wang, H.G. Xiong, G.T. He, D. xu, Fuzzy PID           [56] I.S. Kim, K. Latif, J. Kim, A. Sharafat, D.E. Lee, J. Seo, Vision-based activity
+     control method of deburring industrial robots, J. Intell. Fuzzy Syst. 29 (2015)                  classification of excavators by bidirectional LSTM, Appl. Sci. Basel 272 (2023),
+     2447–2455, https://doi.org/10.3233/IFS-151945.                                                   https://doi.org/10.3390/app13010272.
+[30] B.S. Kim, M.G. Kim, S.H. Lee, M.G. Lee, Design of a vibration-isolated cushion to           [57] F.B. Wang, J. Liu, C.W. Jiao, Z.K. Chen, The recognition of target and attitude of
+     reduce the noise and vibration of a hydraulic breaker, Proc. Instit. Mech. Eng. I J.             bucket for excavator robot based on color mark tracking, Int. Conf. Adv. Eng.
+     Syst. Control Eng. 224 (2010) 1–9, https://doi.org/10.1243/09596518JSCE771.                      Mater. Technol. AEMT2011 (2011) 291–294, https://doi.org/10.4028/www.
+[31] X.W. Wang, Z.C. Fang, X.L. Sun, Usage patterns of scholarly articles on web of                   scientific.net/AMR.291-294.2929.
+     science: a study on web of science usage count, Scientometrics 109 (2016)                   [58] E.R. Azar, C. Feng, V.R. Kamat, Feasibility of in-plane articulation monitoring of
+     917–926, https://doi.org/10.1007/s11192-016-2093-0.                                              excavator arm using planar marker tracking, J. Inf. Technol. Constr. 20 (2015)
+[32] J.H. Zou, H. Kim, Using hue, saturation, and value color space for hydraulic                     213–229. https://itcon.org/papers/2015_15.content.07997.pdf.
+     excavator idle time analysis, J. Comput. Civ. Eng. 21 (2007) 238–246, https://doi.          [59] C.J. Liang, K.M. Lundeen, W. McGee, C.C. Menassa, S. Lee, V.R. Kamat, Fast dataset
+     org/10.1061/(ASCE)0887-3801(2007)21:4(238).                                                      collection approach for articulated equipment pose estimation, in: ASCE
+[33] Z.M. Yaseen, A. El-Shafie, O. Jaafar, H.A. Afan, M.N. Sayl, Artificial intelligence              International Conference on Computing in Civil Engineering (i3CE), 2019,
+     based models for stream-flow forecasting: 2000-2015, J. Hydrol. 530 (2015)                       pp. 149–152, https://doi.org/10.1061/9780784482438.019.
+     829–844, https://doi.org/10.1016/j.jhydrol.2015.10.038.                                     [60] C.J. Liang, K.M. Lundeen, W. McGee, C.C. Menassa, S. Lee, V.R. Kamat, A vision-
+[34] T. Chen, S. Yu, The review of food safety inspection system based on artificial                  based marker-less pose estimation system for articulated construction robots,
+     intelligence, image processing, and robotic, Food Sci. Technol. 42 (2022), e35421,               Autom. Constr. 104 (2019) 80–94, https://doi.org/10.1016/j.autcon.2019.04.004.
+     https://doi.org/10.1590/fst.35421.                                                          [61] H. Luo, M.Z. Wang, P.K.Y. Wong, J.P.C. Cheng, Full body pose estimation of
+[35] T.T. Nguyen, N.D. Nguyen, S. Nahavandi, Deep reinforcement learning for                          construction equipment using computer vision and deep learning techniques,
+     multiagent systems: a review of challenges, solutions, and applications, IEEE Trans.             Autom. Constr. 110 (2020) 103016, https://doi.org/10.1016/j.
+     Cybernet. 50 (2020) 3826–3839, https://doi.org/10.1109/TCYB.2020.2977374.                        autcon.2019.103016.
+[36] J. Paul, R. Bhukya, Forty-five years of international journal of consumer studies: a        [62] J.Y. Zhao, Y.Z. Cao, Y.Z. Xiang, Pose estimation method for construction machine
+     bibliometric review and directions for future research, Int. J. Consum. Stud. 45                 based on improved AlphaPose model, Eng. Constr. Archit. Manag. (2022), https://
+     (2021) 937–963, https://doi.org/10.1111/ijcs.12727.                                              doi.org/10.1108/ECAM-05-2022-0476.
+[37] R. Ptucha, A. Bhat, A. Kuppusamy, S.E. Lyshevski, Object recognition,                       [63] B. Mahmood, S. Han, J. Seo, Implementation experiments on convolutional neural
+     identification and classification for intelligent surveillance and reconnaissance                network training using synthetic images for 3D pose estimation of an excavator on
+     platforms, in: Conference on Signal Processing, Sensor/Information Fusion, and                   real images, Autom. Constr. 133 (2021), 103996, https://doi.org/10.1016/j.
+     Target Recognition XXVIII, 2019, https://doi.org/10.1117/12.2519300.                             autcon.2021.103996.
+[38] E. Azar, B. McCabe, Part based model and spatial-temporal reasoning to recognize            [64] S.L. Ma, W. Ma, J.J. Bi, C.B. Yin, D.H. Cao, H.F. Yu, The position measurement of
+     hydraulic excavators in construction images and videos, Autom. Constr. 24 (2012)                 excavator working device, in: 5th International Conference on Mechanical, Control
+     194–202, https://doi.org/10.1016/j.autcon.2012.03.003.                                           and Computer Engineering (ICMCCE), 2020, pp. 282–288, https://doi.org/
+[39] M. Memarzadeh, M. Golparvar-Fard, J.C. Niebles, Automated 2D detection of                        10.1109/ICMCCE51767.2020.00071.
+     construction equipment and workers from site video streams using histograms of              [65] C. Feng, V.R. Kamat, H.B. Cai, Camera marker networks for articulated machine
+     oriented gradients and colors, Autom. Constr. 32 (2013) 24–37, https://doi.org/                  pose estimation, Autom. Constr. 96 (2018) 148–160, https://doi.org/10.1016/j.
+     10.1016/j.autcon.2012.12.002.                                                                    autcon.2018.09.004.
+[40] M.M. Soltani, Z.H. Zhu, A. Hammad, Towards part-based construction equipment                [66] G.X. Liu, Q.F. Wang, T. Wang, A new measurement method of real-time pose
+     pose estimation using synthetic images, Constr. Res. Congress (2016) 980–989,                    estimation for an automatic hydraulic excavator, in: IEEE/ASME International
+     https://doi.org/10.1061/9780784479827.099.                                                       Conference on Advanced Intelligent Mechatronics (AIM), 2022, pp. 308–313,
+[41] E.R. Azar, Construction equipment identification using marker-based recognition                  https://doi.org/10.1109/AIM52237.2022.9863349.
+     and an active zoom camera, J. Comput. Civ. Eng. 30 (2016) 04015033, https://doi.            [67] C. Yuan, H. Cai, Key nodes modeling for object detection and location on
+     org/10.1061/(ASCE)CP.1943-5487.0000507.                                                          construction site using color-depth cameras, Int. Conf. Comp. Civ. Build. Eng. 2014
+[42] J. Kim, J. Hwang, S. Chi, J. Seo, Towards database-free vision-based monitoring on               (2014) 729–736, https://doi.org/10.1061/9780784413616.091.
+     construction sites: a deep active learning approach, Autom. Constr. 120 (2020),             [68] K.M. Lundeen, S.Y. Dong, N. Fredricks, M. Akula, J. Seo, V.R. Kamat, Optical
+     103376, https://doi.org/10.1016/j.autcon.2020.103376.                                            marker-based end effector pose estimation for articulated excavators, Autom.
+[43] W.L. Fang, L.Y. Ding, B.T. Zhong, P.E.D. Love, H.B. Luo, Automated detection of                  Constr. 65 (2016) 51–64, https://doi.org/10.1016/j.autcon.2016.02.003.
+     workers and heavy equipment on construction sites: a convolutional neural                   [69] C.X. Yuan, S. Li, H.B. Cai, Vision-based excavator detection and tracking using
+     network approach, Adv. Eng. Inform. 37 (2018) 139–149, https://doi.org/                          hybrid kinematic shapes and key nodes, J. Comput. Civ. Eng. 31 (2017) 04016038,
+     10.1016/j.aei.2018.05.003.                                                                       https://doi.org/10.1061/(ASCE)CP.1943-5487.0000656.
+[44] B. Xiao, S.C. Kang, Vision-based method integrating deep learning detection for             [70] M.M. Soltani, Z.H.A. Hammad, Zhu, Framework for location data fusion and pose
+     tracking multiple construction machines, J. Comput. Civ. Eng. 35 (2021)                          estimation of excavators using stereo vision, J. Comput. Civ. Eng. 32 (2018)
+     04020071, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000957.                                    04018045, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000783.
+[45] J. Hwang, J. Kim, S. Chi, J. Seo, Development of training image database using web          [71] J.Q. Xu, H.S. Yoon, Vision-based estimation of excavator manipulator pose for
+     crawling for vision-based site monitoring, Autom. Constr. 135 (2022), 104141,                    automated grading control, Autom. Constr. 98 (2019) 122–131, https://doi.org/
+     https://doi.org/10.1016/j.autcon.2022.104141.                                                    10.1016/j.autcon.2018.11.022.
+[46] H. Tajeen, Z.H. Zhu, Image dataset development for measuring construction                   [72] A. Assadzadeh, M. Arashpour, I. Brilakis, T. Ngo, E. Konstantinou, Vision-based
+     equipment recognition performance, Autom. Constr. 48 (2014) 1–10, https://doi.                   excavator pose estimation using synthetically generated datasets with domain
+     org/10.1016/j.autcon.2014.07.006.                                                                randomization, Autom. Constr. 134 (2022), 104089, https://doi.org/10.1016/j.
+[47] M.M. Soltani, Z.H. Zhu, A. Hammad, Automated annotation for visual recognition                   autcon.2021.104089.
+     of construction resources using synthetic images, Autom. Constr. 62 (2016) 14–23,           [73] Y.P. Guo, H.T. Cui, S.L. Li, Excavator joint node-based pose estimation using
+     https://doi.org/10.1016/j.autcon.2015.10.002.                                                    lightweight fully convolutional network, Autom. Constr. 141 (2022), 104435,
+[48] A. Torralba, K.P. Murphy, W.T. Freeman, Sharing features: efficient boosting                     https://doi.org/10.1016/j.autcon.2022.104435.
+     procedures for multiclass object detection, in: IEEE Conference on Computer Vision          [74] J.Y. Tang, M.Z. Wang, H. Luo, P.K.Y. Wong, X. Zhang, W.W. Chen, J.C.P. Cheng,
+     and Pattern Recognition, 2004, pp. 762–769, https://doi.org/10.1109/                             Full-body pose estimation for excavators based on data fusion of multiple onboard
+     cvpr.2004.1315241.                                                                               sensors, Autom. Constr. 147 (2023), https://doi.org/10.1016/j.
+[49] D. Forsyth, Object detection with discriminatively trained part-based models,                    autcon.2022.104694.
+     Computer 47 (2014) 6–7, https://doi.org/10.1109/MC.2014.42.                                 [75] J.P. Zhang, J.M. Zhang, S. Yu, Hot anchors: a heuristic anchors sampling method in
+[50] J. Kim, S. Chi, Multi-camera vision-based productivity monitoring of earthmoving                 RCNN-based object detection, Sensors 18 (2018) 3415, https://doi.org/10.3390/
+     operations, Autom. Constr. 112 (2020), 103121, https://doi.org/10.1016/j.                        s18103415.
+     autcon.2020.103121.
+
+
+
+
+                                                                                            14
+G. Liu et al.                                                                                                                              Automation in Construction 157 (2024) 105162
+
+[76] S.X. Wu, C.C. Guo, J.F. Yang, Using PCAand one-stage detectors for real-time forest              transformation, Appl. Sci. Basel 12 (2022) 4415, https://doi.org/10.3390/
+     fire detection, in: 3rd Asian Conference on Artificial Intelligence Technology                   app12094415.
+     (ACAIT), 2020, pp. 383–387, https://doi.org/10.1049/joe.2019.1145.                          [82] Y. Motai, A. Kosaka, Hand-eye calibration applied to viewpoint selection for
+[77] E. Artemciukas, R. Plestys, A. Andziulis, K. Gerasimov, E. Zulkas, L. Pasviestis,                robotic vision, IEEE Trans. Ind. Electron. 55 (2008) 3731–3741, https://doi.org/
+     A. Krauze, Real-time control system for various applications using sensor fusion                 10.1109/TIE.2008.921255.
+     algorithm, Elektronika Ir Elektrotechnika 18 (2012) 61–64, https://doi.org/                 [83] Z.Y. Zhang, A flexible new technique for camera calibration, IEEE Trans. Pattern
+     10.5755/j01.eee.18.10.3064.                                                                      Anal. Mach. Intell. 22 (2000) 1330–1334, https://doi.org/10.1109/34.888718.
+[78] M. Frei, F.E. Kruis, FibeR-CNN: expanding mask R-CNN to improve image-based                 [84] S.Y. Chen, Kalman filter for robot vision: a survey, IEEE Trans. Ind. Electron. 59
+     fiber analysis, Power Technol. 377 (2021) 974–991, https://doi.org/10.1016/j.                    (2012) 4409–4420, https://doi.org/10.1109/TIE.2011.2162714.
+     powtec.2020.08.034.                                                                         [85] T. Matsubara, M. Kubo, Y. Murachi, Particle filter for collaborative multi-robot
+[79] Z.J. Zhao, Y. Weng, A flexible method combining camera calibration and hand-eye                  localization tolerant to recognition error, Adv. Robot. 24 (2010) 2043–2058,
+     calibration, Robotica 31 (2013) 747–756, https://doi.org/10.1017/                                https://doi.org/10.1163/016918610X534259.
+     S0263574713000040.                                                                          [86] L. Zou, Z. Huang, N. Gu, G. Wang, 6D-ViT: category-level 6D object pose estimation
+[80] Z.Q. Zhang, L. Zhang, G.Z. Yang, A computationally efficient method for hand-eye                 via transformer-based instance representation learning, IEEE Trans. Image Process.
+     calibration, Int. J. Comput. Assist. Radiol. Surg. 12 (2017) 1775–1787, https://doi.             31 (2022) 6907–6921, https://doi.org/10.1109/TIP.2022.3216980.
+     org/10.1007/s11548-017-1646-x.                                                              [87] X. Xiao, W. Guo, R. Chen, Y. Hui, J. Wang, H. Zhao, A Swin transformer-based
+[81] S.H. Su, S. Gao, D.Y. Zhang, W.Q. Wang, Research on the hand-eye calibration                     encoding booster integrated in U-shaped network for building extraction, Remote
+     method of variable height and analysis of experimental results based on rigid                    Sens. 14 (2022), https://doi.org/10.3390/rs14112611.
+
+
+
+
+                                                                                            15
+

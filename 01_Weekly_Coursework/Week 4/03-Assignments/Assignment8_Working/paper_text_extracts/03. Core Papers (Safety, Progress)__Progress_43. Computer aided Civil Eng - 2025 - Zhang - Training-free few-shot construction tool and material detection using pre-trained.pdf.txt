@@ -1,0 +1,1097 @@
+Received: 17 July 2025    Accepted: 27 October 2025
+
+DOI: 10.1111/mice.70129
+
+
+RESEARCH ARTICLE
+
+
+
+
+Training-free few-shot construction tool and material
+detection using pre-trained vision-language model
+
+Zhaoxin Zhang1                       Yantao Yu1,2                 Zaolin Pan1                   Maxwell Fordjour Antwi-Afari3
+
+1 Department of Civil and Environmental
+
+Engineering, The Hong Kong University                 Abstract
+of Science and Technology, Hong Kong,                 Direct visual understanding of construction entities, such as tools and mate-
+China
+                                                      rials (T&M), underpin construction management and resource scheduling.
+2 HKUST Shenzhen-Hong Kong
+
+Collaborative Innovation Research
+                                                      Traditional supervised learning methods suffer from high annotation cost,
+Institute, Shenzhen, China                            severe computational demands, and limited datasets. In contrast, training-free
+3 Department of Civil Engineering, College
+                                                      approaches offer an effective alternative well-suited for construction scenar-
+of Engineering and Physical Sciences,
+                                                      ios constrained by data scarcity and limited resources. Besides, vision-language
+Aston University, Birmingham, UK
+                                                      models (VLMs) can directly learn image semantics through natural language
+Correspondence                                        supervision and also demonstrate strong zero-shot detection capabilities with-
+Yantao Yu, Department of Civil and
+                                                      out requiring retraining. Existing methods often exhibit limited image–text
+Environmental Engineering, The Hong
+Kong University of Science and                        semantic alignment in construction scenarios, which restricts their effectiveness
+Technology, Hong Kong 999077, China.                  in construction tasks. Therefore, there is an urgent need for approaches that
+Email: ceyantao@ust.hk
+                                                      can enhance cross-modal understanding in such domain-specific contexts. To
+Funding information                                   address this challenge, this paper proposes a training-free, knowledge-enhanced
+National Natural Science Foundation of                VLM to recognize T&M in construction tasks. The proposed approach leverages
+China, Grant/Award Number: 72201226;
+Research Grants Council, Grant/Award                  image matching and image–text knowledge alignment strategies, thereby utiliz-
+Numbers: 26208323, C6044-23GF                         ing the training-free nature of existing VLMs while benefiting from enhanced
+                                                      performance brought by knowledge integration. This method offers a novel
+                                                      solution for construction management and robotic collaboration tasks that are
+                                                      traditionally constrained by data and computational resource dependencies.
+
+
+
+1         INTRODUCTION                                                              project life-cycle stages, including resource scheduling,
+                                                                                    task allocation, and progress control, real-time monitoring
+On dynamic and complex construction sites, various enti-                            and precise assessment of entity states are indispensable
+ties such as tools, materials, and equipment constitute the                         (Fei et al., 2024). Therefore, enhancing the perception and
+fundamental units supporting construction activities (K.                            semantic understanding capabilities of visual systems for
+Chen et al., 2025; Wu et al., 2025). Accurate recognition                           construction entities is of great significance to achieve
+and understanding of these entities are not only critical for                       efficient, safe, and sustainable automated construction.
+enabling digital perception of construction sites but also                             Current deep learning technologies provide pow-
+essential for facilitating intelligent construction manage-                         erful tools for object detection in construction,
+ment (Bavelos et al., 2025; Jiang et al., 2024). In subsequent                      autonomously extracting image features to advance visual
+
+
+This is an open access article under the terms of the Creative Commons Attribution-NonCommercial-NoDerivs License, which permits use and distribution in any medium,
+provided the original work is properly cited, the use is non-commercial and no modifications or adaptations are made.
+© 2025 The Author(s). Computer-Aided Civil and Infrastructure Engineering published by Wiley Periodicals LLC on behalf of Editor.
+
+
+6004       wileyonlinelibrary.com/journal/mice                                                                             Comput Aided Civ Inf. 2025;40:6004–6023.
+                                                                                                                                 14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                              6005
+
+
+TA B L E 1     Typical construction tasks.                       zero-shot personal protective equipment (PPE) monitor-
+ Construction task              Tools and materials              ing (Gil & Lee, 2024) and excavator activity recognition
+ Scaffolding erection (Pan &    Steel pipes, planks, fasteners   methods (C. Chen et al., 2023).
+ Yu, 2024)                                                          Despite significant progress made by large-scale pre-
+ Structural assembly (Cai       Hammers, wooden boards,          trained multimodal models in visual-language recognition
+ et al., 2024)                  wrenches                         (Fan et al., 2025), their semantic alignment between image
+ Mechanical construction        Concrete formwork, mixer,        and text remains insufficient in construction scenarios,
+ (Jeoung et al., 2025)          transport vehicles               leading to poor performance in direct applications such as
+                                                                 object localization and recognition (Gil & Lee, 2024). To
+                                                                 enhance model adaptability to construction tasks, previous
+understanding (Mitterberger et al., 2022; M. Sun & Gao,          studies have focused on fine-tuning models with few-shot
+2022). For example, visual perception methods can enable         data, such as construction report generation (Yoonhwa
+construction robots to analyze and safely navigate the           Jung et al., 2024) and automatic hazard identification
+environments (T. Ren & Jebelli, 2025), perform col-              (Yong et al., 2023). However, fine-tuning approaches pose
+laborative assembly (Xi Wang et al., 2023) and object            significant challenges for construction scenarios that lack
+handover (Yu et al., 2023). However, several limitations         large-scale data and computational resources. To address
+remain. First, by relying on numerical labels instead            these limitations, researchers have explored training-free
+of semantic text, traditional visual methods may fail to         detection methods to reduce the computational burden of
+effectively capture construction-specific objects (Radford       adapting models to construction tasks (Liang et al., 2024).
+et al., 2021). Second, the dynamic nature of construction        Although such methods perform well in classification
+sites causes frequent changes in spatial and temporal            tasks, effective application of object detection in construc-
+contexts (Jeoung et al., 2025). Most public datasets focus       tion scenarios is still lacking, as the problem of localizing
+on common objects like machinery and workers, lacking            targets in a training-free manner remains unexplored.
+essential tools such as couplers and footboards for scaffold        Existing vision-language models (VLMs) show promis-
+assembly, or tape measures for distance evaluation under         ing zero-shot detection ability in general domains, but
+uncertain conditions. Third, existing models not only            their application to construction remains limited. Their
+require large annotated datasets, but also manual labeling       reliance on Internet-based data often leads to semantic
+is considered time-consuming, costly, and labor-intensive        mismatches in construction contexts, and their predictions
+(Kim & Chi, 2017; Yanyu Wang et al., 2019). The wide             may be ambiguous. Moreover, available datasets suffer
+variety of tools and materials (T&M) across construction         from imbalance and weak textual annotations, while fine-
+project life-cycle phases further complicates dataset            tuning large-scale models with limited domain data are
+creation (Kim, 2020; K. Liu & Golparvar-Fard, 2015). The         unstable and costly.
+typical construction tasks are listed in Table 1. Therefore,        To address these gaps, this study contributes a training-
+developing vision algorithms that require fewer samples          free framework for construction object recognition. It aims
+and a shorter training time is crucial for object detection      to achieve training-free object localization and recognition
+in construction.                                                 in construction scenarios by integrating domain-specific
+   As vision and language typically convey complemen-            image and text knowledge, resulting in a multimodal
+tary information, multimodal learning has proven highly          detection approach referred to as training-free knowledge-
+effective across various construction tasks (Yong et al.,        enhanced automatic detection. Specifically, it proposes
+2023), such as visual question answering (Areerob et al.,        a training-free method based on a knowledge-enhanced
+2025; Kunlamai et al., 2024), image captioning (Chun             VLM for the localization and recognition of construc-
+et al., 2022), and image classification (Yong et al., 2023)      tion T&M. This study has two primary contributions.
+for construction images. Unlike prior approaches, which          First, it introduces construction T&M localization method
+independently trained visual and linguistic features on          based on template matching. By leveraging on its powerful
+separate construction datasets, recent vision-language           feature extraction and similarity computation capabili-
+multimodal methods, such as contrastive language-image           ties of existing self-supervised vision models, the method
+pre-training (CLIP; Radford et al., 2021), acquire gen-          matches reference images of construction objects with
+eralized visual representations guided by natural lan-           real-world scene images to localize objects. This process
+guage supervision, enabling impressive zero-shot detec-          not only requires no retraining of network parameters but
+tion capabilities (Cheng et al., 2024). Encoded visual           also relies solely on pre-trained vision foundation mod-
+features, through language-vision interaction, facilitate        els. Second, this study proposes a classification method for
+open-vocabulary recognition without the need for addi-           construction objects that enhances the alignment between
+tional training (C. Chen et al., 2023), as demonstrated by       visual and textual semantics by constructing a similarity
+                                                                                                                                  14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6006                                                                                                               ZHANG et al.
+
+
+distribution matrix enriched with domain knowledge. This        (Deng et al., 2020; Pour Rahimian et al., 2020). In resource
+facilitates the alignment of image–text representations for     management, some studies have explored counting and
+construction equipment. The results could demonstrate           dimensioning construction materials for on-site images
+the potential of training-free VLMs for object recogni-         (Li & Chen, 2022; Shen et al., 2019). While these studies
+tion on construction sites. The proposed approach offers a      have demonstrated the potential of computer vision in con-
+promising solution to recognize construction objects using      struction automation, challenges remain due to the limited
+only open-source textual prompts, without incurring the         training samples in traditional data-driven algorithms (J.
+computational cost of additional training.                      Chen et al., 2024; Liang et al., 2024). Table 2 presents
+   The remainder of this paper is structured as follows.        the dataset scale required for applying deep learning algo-
+Section 2 discusses current methodologies for identifying       rithms in construction scenarios. To enhance detection
+and classifying objects in construction applications, as well   effectiveness, existing algorithms rely on extensive anno-
+as vision-language foundation models while identifying          tated data for training. However, object annotation in
+research gaps and objectives. Section 3 details the proposed    construction site images is a demanding, labor-intensive,
+method. Section 4 presents a comprehensive experimental         and time-consuming task. Consequently, limited training
+evaluation on both a self-constructed construction T&M          images can significantly constrain the performance of deep
+dataset and a publicly available construction machinery         learning-based computer vision algorithms.
+dataset. Section 5 discusses the benefits of the proposed
+approach and presents the visualization results. Section 6
+outlines the limitations, while Section 7 concludes this        2.2    Vision foundation models in
+study.                                                          construction
+
+                                                                In recent years, large-scale VLMs, represented by CLIP,
+2      LITERATURE REVIEW                                        have garnered widespread attention due to their out-
+                                                                standing zero-shot performance in image classification
+The development of multimodal models has transformed            tasks. Pre-training on large datasets, followed by fine-
+traditional approaches of pure visual methods to under-         tuning for downstream tasks, has further stimulated
+stand construction site images and pure textual methods to      researchers’ exploration of their applications in computer
+interpret construction text data. Here, this research delves    vision, such as image recognition (Liang et al., 2024) and
+into the following three areas.                                 image captioning (Yoonhwa Jung et al., 2024). Table 2
+                                                                presents applications of VLMs for detection and man-
+                                                                agement in construction scenarios. Existing algorithms
+2.1    Detection and classification of                          enhance detection performance by fine-tuning the mod-
+objects in construction                                         els. However, the extensive parameter updates required
+                                                                substantially limit their direct applicability in construction
+In dynamic and complex construction environments,               contexts.
+enhancing safety, improving progress monitoring, and               In the area of image recognition, existing studies have
+optimizing resource management are essential, making            leveraged the zero-shot capabilities of multimodal VLMs to
+the application of deep learning-based visual object detec-     significantly reduce reliance on labeled datasets. For exam-
+tion on construction sites a rapidly growing research           ple, detection-based methods have enabled automated PPE
+area. Numerous studies have focused on safety detec-            safety monitoring on construction sites (Xiyu Wang & El-
+tion, particularly PPE compliance (Y. Zhang et al., 2025)       Gohary, 2024), and CLIP-based models have been applied
+and automatic worker trajectory detection (Cai et al.,          for temporary object classification in construction sce-
+2020). Some studies have also used drone imagery to             narios (Liang et al., 2024). In construction site caption
+extend the sensing range and detect hazardous areas from        generation, current methods have mainly focused on iden-
+an aerial perspective (Bang et al., 2021). In the area of       tifying and describing construction safety hazards (Yiheng
+progress monitoring, research has been demonstrated on          Wang et al., 2024) and automatically generating textual
+detecting construction components or materials and cor-         reports such as construction progress (Jeoung et al., 2025)
+relating their locations with planned schedules (Karim          and work logs (Yoonhwa Jung et al., 2024). Although
+& Adeli, 1999a, 1999b) or building information model-           multimodal models have exhibited strong transferability
+ing (BIM) data (Z. Wang et al., 2021). Practical pipelines      and fine-tuning performance in general vision tasks, they
+have been developed for component detection, BIM reg-           still face limitations in construction scenarios. Specifically,
+istration, and progress quantification, with some systems       construction sites feature numerous domain-specific enti-
+enabling repeated measurements for temporal tracking            ties and semantic concepts, such as specific tool types,
+                                                                                                                                           14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                                        6007
+
+
+TA B L E 2     Summary of the current applications across different domains of the construction industry.
+                                                                      Use of vision-language                                 Training
+ Problem statement                     Dataset scale                  model                            Few-/zero-shot        required
+ Personal protective equipment         6 categories, 14,500           No                               No                    Yes
+ detection (Kumar et al., 2022)        images
+ Construction equipment                2920 images                    No                               Few-shot              Yes
+ recognition (Kim & Chi, 2021)
+ Worker and equipment                  100 images                     Yes                              Zero-shot             No
+ detection (Gil & Lee, 2024)
+ Construction site safety              1,500 images                   Yes                              No                    Yes
+ monitoring (Chan et al., 2025)
+ Temporary construction object         22 categories, 90 images       Yes                              Few-shot              No
+ recognition (Liang et al., 2024)
+
+
+
+structural components, and vehicles, which are underrep-
+resented in general pre-training corpora, making it difficult
+for models to accurately recognize and understand them
+(Jeoung et al., 2025). As a result, the cross-modal align-
+ment between image and text has become a key bottleneck
+limiting its performance in multimodal tasks.
+
+
+                                                                        FIGURE 1         Summary of the literature review.
+2.3       Few-shot learning in construction
+
+To address the issue of limited training samples, few-shot
+learning has been introduced in construction scenarios.                 provides an overview of existing methodological advances
+For example, in tasks such as building defect detection                 in construction research.
+(Zhao & Jebelli, 2025) and structural damage recogni-                      In recent years, with the development of vision-
+tion (H. Sun et al., 2025), few-shot methods effectively                language foundation models, researchers have proposed
+alleviate the challenges of sample collection. In response              a novel few-shot learning paradigm based on the “pre-
+to emerging needs for equipment recognition on con-                     train adapter” model, enhancing few-shot performance
+struction sites, some studies have introduced few-shot                  by incorporating domain-specific knowledge. For exam-
+construction equipment detection methods (Kim & Chi,                    ple, Tip-Adapter can combine CLIP’s zero-shot predictions
+2021). Similarly, in construction worker safety manage-                 with visual caching to improve the adaptability of few-shot
+ment, few-shot learning has been used for the rapid                     classification (R. Zhang et al., 2022). Also, Tip-X introduces
+identification of object attributes on construction sites               a framework for aligning image and text representations
+(Xiyu Wang & El-Gohary, 2024). However, early research                  across both general and domain-specific datasets to further
+in few-shot object detection primarily has relied on extract-           enhance few-shot recognition performance (Udandarao
+ing meta-knowledge from foundational datasets, a strategy               et al., 2023). Moreover, Adaptive Prior rEfinement can use
+that faces significant challenges in construction scenar-               a prior refinement module to selectively optimize criti-
+ios. Since existing studies often use construction-domain               cal feature channels for better few-shot prediction (Zhu
+images as meta-knowledge for training, large annotated                  et al., 2023). Building on these approaches, recent research
+public datasets are rarely employed for meta-knowledge                  has introduced training-free image classification methods,
+extraction (Kim & Chi, 2021). On the one hand, this                     achieving a preliminary visual understanding of on-site
+raises the issue of cross-domain meta-learning, and there               temporary items (Liang et al., 2024). However, current
+is currently a lack of systematic understanding of how to               research mainly focuses on the pattern of similarity mea-
+construct datasets best suited for construction tasks (Liang            sures between overall construction image–text label pairs,
+et al., 2024). On the other hand, the collection and annota-            with a lack of effective modeling methods to match local
+tion of construction foundational datasets are costly and               feature regions and textual knowledge in construction
+often fail to comprehensively cover the complexity and                  scenarios. This limitation restricts the higher-precision
+diversity of construction sites, limiting the effectiveness of          detection and recognition capabilities of few-shot learning
+few-shot methods in real-world detection tasks. Figure 1                methods in construction contexts.
+                                                                                                                                  14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6008                                                                                                               ZHANG et al.
+
+
+
+2.4       Research gaps and objectives                           plate images and construction images to be detected. By
+                                                                 calculating the feature similarity of the object regions
+By reviewing the extant literature, this study has identified    between the two images, the model performs feature
+the following research gaps and research objectives.             matching between images, thus identifying the optimal
+                                                                 regions in the object image for detection. (2) Construc-
+                                                                 tion object recognition through a training-free image–text
+2.4.1      Research gaps                                         similarity method to avoid model overfitting. To achieve
+                                                                 this objective, the study leverages category-specific tex-
+In the construction domain, research on training-free            tual information from construction scenes and computes
+construction object recognition based on multimodal mod-         a similarity matrix between image and text features. This
+els remains limited. Automated cross-modal alignment             non-parametric, training-free approach enables effective
+between construction objects and construction semantics          alignment of multimodal features between construction
+still faces the following challenges.                            object images and domain-specific textual knowledge.
+   Challenge 1: Construction sites involve several spe-
+cialized terminologies while existing VLMs are primarily
+trained on general Internet-based text and images. This          3      METHODOLOGY
+may limit their ability to understand text semantics in
+construction contexts, leading to semantic discrepancies         Training-free construction object detection faces two pri-
+when interpreting construction-related images and text.          mary challenges. First, the large search space between
+Although multimodal object detection models can demon-           local features in construction images and actual objects
+strate impressive zero-shot class-agnostic detection perfor-     makes accurate localization difficult. Second, the lim-
+mance across various tasks, they tend to predict multiple        ited cross-modal alignment knowledge results in sig-
+ambiguous outputs, making it difficult to select the most        nificant semantic ambiguity between images and text,
+appropriate detection result as an outcome. This raises a        thereby affecting detection accuracy. To address these chal-
+critical issue: How can a more effective knowledge alignment     lenges, this paper proposes a novel training-free construc-
+mechanism between the construction domain and general            tion object detection framework that leverages similarity
+domains be established to improve detection accuracy in          algorithms to reduce semantic ambiguity between con-
+construction environments?                                       struction images and text. First, Section 3.1 provides a
+   Challenge 2: Existing datasets in construction scenarios      brief overview of the overall methodology. Then, Sec-
+often suffer from imbalanced data distributions, ambigu-         tion 3.2 introduces a local feature localization strategy
+ous category definitions, and a lack of semantic textual         for construction objects to effectively narrow the search
+knowledge, all of which hinder the generalization capa-          space. Finally, Section 3.3 details a cross-modal alignment
+bility of models and limit their robustness in complex and       method between construction images and construction-
+dynamic environments. In practical applications, domain          related text to mitigate semantic ambiguity and improve
+adaptation is often unavoidable. However, fine-tuning            detection accuracy.
+large-scale pre-trained models using only a small amount
+of domain-specific data tends to be unstable, prone to over-
+fitting, and computationally expensive. Thus, an identified      3.1    Training-free knowledge-enhanced
+research question was: how can the best for both worlds be       algorithm overview
+achieved, by leveraging the training-free property of VLMs for
+object detection, while also utilizing construction text-image   The training-free detection framework follows a two-stage
+alignment knowledge to ensure the strong performance of          object detection paradigm (S. Ren et al., 2017). As illus-
+few-shot training methods?                                       trated in Figure 2, the first stage, object localization, aims
+                                                                 to identify and delineate foreground objects (construc-
+                                                                 tion tools and materials) within the image. The second
+2.4.2       Research objectives                                  stage, object classification, assigns semantic labels to the
+                                                                 localized objects based on textual category information.
+Based on the identified research gaps, this study has            In the localization stage, the proposed method narrows
+two main objectives: (1) Detection of unseen construction        the search space of potential targets across the image,
+images using self-supervised models and image matching           thereby reducing redundant information and facilitating
+algorithms. To achieve this objective, this study utilizes       zero-shot object recognition. In the classification stage, the
+a self-supervised model to encode domain-specific tem-           method computes cross-modal distributional features to
+                                                                                                                                     14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                                  6009
+
+
+
+
+FIGURE 2         Training-free knowledge-enhanced object detection method.
+
+
+enhance semantic alignment between construction images               resulting in feature maps 𝑓𝑟 and 𝑓𝑡 for the template and
+and textual descriptions.                                            input images, respectively, where 𝑓𝑟 , 𝑓𝑡 ∈ ℝ𝐻×𝑊×𝐶 . In the
+                                                                     approach, foreground and background regions in template
+                                                                     images are delineated manually. For each template, the
+3.2  Construction T&M localization                                   foreground is annotated to include only the target objects,
+method                                                               whereas the background comprises all pixels outside the
+                                                                     targets. As illustrated in Figure 3a, the method extracts
+This method first identifies the object locations of con-            feature maps from the input image at this stage. With
+struction objects within the input image. To achieve this,           DINOv2, the input image size is 518 × 518 and each patch
+this study employs a feature matching strategy that local-           measures 14 × 14, resulting in a feature map of 37 × 37.
+izes objects based on correspondences between template
+images and the input image. The approach consists of
+two components, namely, feature extraction and feature               3.2.2      Feature matching
+matching.
+                                                                     In this section, the study first locates candidate foreground
+                                                                     objects through feature matching. As shown in Figure 3a,
+3.2.1          Feature extraction                                    the feature map is flattened, and a similarity matrix is
+                                                                     computed between the reference image and the candidate
+Self-supervised feature extraction could reduce depen-               image features. The similarity matrix was computed as
+dence on labeled data and offer a potential approach
+                                                                                                             𝑇
+for identifying features of similar objects (Huang et al.,                             𝑆𝐼𝑀 = 𝐹 (𝑥𝑟 ) ⋅ 𝐹(𝑥𝑡 )                  (1)
+2024). To determine the object locations within the input
+image, this study first provides a template image and                where 𝑆𝐼𝑀 represents the feature similarity matrix
+a candidate construction T&M image, where the object                 between the template image and the detection
+and background regions in the template image are pre-                image. 𝐹 denotes the pre-trained image encoder.
+defined. In this study, DINOv2 (Oquab et al., 2024) was              𝐹(𝑥𝑟 ) = 𝑓𝑟 , 𝐹 (𝑥𝑡 ) = 𝑓𝑡 .
+employed to extract visual features from the template                   As shown in Figure 3a, based on the mask features
+image 𝑥𝑟 and the input image 𝑥𝑡 . There are two main rea-            of the reference image, the foreground similarity matrix
+sons: (1) DINOv2 is a purely vision-based self-supervised            𝑆𝐼𝑀𝑟𝑒𝑡𝑎𝑖𝑛 is preserved. To match the features between the
+learning model trained on large-scale image datasets; and            template and candidate images, the Hungarian algorithm
+(2) DINOv2 learns features by decomposing images into                (Dong et al., 2024), a mathematical method for solving the
+patches, enabling precise patch-level matching across dif-           linear assignment problem aimed at minimizing the total
+ferent images. The image encoder, parameterized by the               assignment cost, was employed and has widely been used
+self-supervised network, computes the output features,               in feature matching tasks (Atik et al., 2025; Y. Liu et al.,
+                                                                                                                                         14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6010                                                                                                                      ZHANG et al.
+
+
+
+
+FIGURE 3       An illustration of the proposed training-free localization and classification method.
+
+
+2023). This study formulates the similarity matrix as the               porating point annotations and overlap constraints. For
+cost matrix for the Hungarian algorithm, with the objec-                each bounding box 𝑏 = (𝑥min , 𝑦min , 𝑥max , 𝑦max ) obtained
+tive of identifying the optimal correspondence between the              from YOLO-World, the method selects the set of points
+template and candidate images.                                          located inside it:
+   This study defines 𝑓𝑟𝑖 as the 𝑖th feature point of the tem-
+plate image and 𝑓𝑡𝑖 as the ith feature point of the candidate           𝑏 = {(𝑝𝑥 , 𝑝𝑦 ) ∈ |𝑥min ≤ 𝑝𝑥 ≤ 𝑥max , 𝑦min ≤ 𝑝𝑦 ≤ 𝑦max }
+image. The output is the set of position coordinates  =                                                                       (2)
+         𝑦
+{(𝑝𝑖𝑥 , 𝑝𝑖 )}𝑁
+             𝑖=1
+                 corresponding to the matched feature points            where  denotes the set of all annotated points.
+within the object region of the candidate image, where                    The procedure consists of three steps:
+𝑁 is the number of feature points associated with the
+object.                                                                 1. If the number of inside points does not satisfy: |𝑏 | ≥ 8.
+                                                                           Then the bounding box 𝑏 is discarded. Here, the method
+                                                                           sets the number of inside points to 8. Since the min-
+3.2.3       Object location                                                imum image resolution is preset to 224 × 224 and the
+                                                                           patch size in DINOv2 is 14 × 14, the maximum num-
+After obtaining the foreground feature points from                         ber of inside points is 16 × 16. The method defines the
+DINOv2 matching, we first compute their spatial distribu-                  threshold as half of the minimum number of points
+tion and count the number of matched points falling inside                 along one side, that is, half of 16.
+each bounding box predicted by YOLO-World. Specifically,                2. If no bounding box remains after the previous step but
+the final target location information is determined by a                   there exist points (𝑝𝑥 , 𝑝𝑦 ) ∈ , the method generates a
+post-processing strategy to filter bounding boxes by incor-                new bounding box that tightly encloses all points.
+                                                                                                                                 14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                              6011
+
+
+3. Finally, if two or more bounding boxes overlap with an            Finally, the logits under zero-shot conditions and the
+   𝐼𝑜𝑈 > 0.9, only the one with the largest area is retained      computed similarity matrix 𝐴 are jointly applied to the
+   to avoid redundant localization.                               final mixed logits as follows:
+
+                                                                                𝐿𝑇𝐼𝑃−𝐴𝑑𝑎𝑝𝑡𝑒𝑟 = 𝛼1 𝐴𝐿 + 𝑓𝑊 𝑇                (9)
+3.3        T&M category classification
+                                                                  where 𝐿 ∈ ℝ𝐶𝐾×𝐶 is the one-hot vector for each few-shot
+After the construction of T&M region localization in Sec-         class label.
+tion 3.2, this study aligns the semantic knowledge of
+images and texts using a multimodal image classification
+model. This study first provides a brief review of the CLIP       3.3.3      TIP-X
+multimodal model and its improvements and discusses the
+limitations of existing methods.                                  TIP-X considers the modality gap between the image and
+                                                                  text spaces of CLIP, calculating the relationship between
+                                                                  the test image features 𝑓 ∈ ℝ𝑡×𝑑 and the few-shot image
+3.3.1          Training-free zero-shot CLIP                       features with the text space features as follows:
+                                                                                          (    )
+                                                                              𝑆 = sof tmax 𝐹𝑊 𝑇 , 𝑆 ∈ ℝ𝐶𝐾×𝐶               (10)
+CLIP uses contrastive learning to learn joint visual and
+textual representations, encouraging high cosine similarity                                 (    )
+between matched pairs. For C-class image classification,                        𝑠 = sof tmax 𝑓𝑊 𝑇 , 𝑆 ∈ ℝ𝑡×𝐶              (11)
+training-free CLIP transforms each class name into a
+                                                                    Then, TIP-X constructs an affinity matrix 𝑀𝐾𝐿 ∈ ℝ𝑡×𝐶𝐾 ,
+descriptive text prompt and encodes it through its text
+                                                                  and uses the Kullback–Leibler (KL) divergence to compute
+encoder for comparison with image features. The prompt
+                                                                  the affinity matrix, as follows:
+embeddings form the classifier weight matrix 𝑊 ∈ ℝ𝐶×𝑑 ,
+where 𝑑 represents the dimensionality of the text embed-                            (      )
+                                                                          𝑀𝑖,𝑗 = 𝐷𝐾𝐿 𝑠𝑖 ‖𝑆𝑗 , 𝑖 ∈ [1, 𝑡] , 𝑗 ∈ [1, 𝐶𝐾]    (12)
+dings. Given a test set 𝑇 = {𝑦1 , 𝑦2 , … , 𝑦𝑡 } with 𝑡 images,
+CLIP generates its visual feature representations via its           The final mixed logits calculation method is as follows:
+image encoder:
+                                                                           𝐿𝑇𝐼𝑃−𝑋 = 𝑓𝑊 𝑇 + 𝛼1 𝐴𝐿 + 𝛼2 (−𝑀𝐾𝐿 ) 𝐿           (13)
+         𝑓𝑖 = 𝐼𝑚𝑎𝑔𝑒𝐸𝑛𝑐𝑜𝑑𝑒𝑟 (𝑦𝑖 ) , 𝑖 ∈ [1, 𝑡] , 𝑓𝑖   ∈ ℝ𝑑   (3)
+
+
+            𝑓 = 𝐶𝑜𝑛𝑐𝑎𝑡 ([𝑓1 , 𝑓2 , … , 𝑓𝑡 ]) , 𝑓 ∈ ℝ𝑡×𝑑     (4)   3.3.4   Knowledge-enhanced multimodal
+                                                                  knowledge alignment
+                        Logits𝑧𝑠 = 𝑓𝑊 𝑇                     (5)
+                                                                  Both visual and textual inputs are projected by CLIP into
+                                                                  a unified embedding space. For this study, the text prompt
+                                                                  “A photo of a [object]” was employed, replacing “[object]”
+3.3.2          TIP-adapter
+                                                                  with construction-related class labels. CLIP demonstrates
+                                                                  excellent zero-shot recognition performance on a variety of
+Given a dataset 𝐷 = {𝑥1 , 𝑥2 , … , 𝑥𝐶𝐾 } of size 𝐶𝐾, the TIP-
+                                                                  public datasets. However, the construction scene is highly
+Adapter method utilizes a pre-trained CLIP encoder to
+                                                                  specialized and often confidential, which results in poor
+encode the given dataset 𝐷 as follows:
+                                                                  zero-shot performance for CLIP, as it cannot directly access
+                                                                  construction scene images.
+        𝐹𝑖 = 𝐼𝑚𝑎𝑔𝑒𝐸𝑛𝑐𝑜𝑑𝑒𝑟 (𝑥𝑖 ) , 𝑖 ∈ [1, 𝐶𝐾] , 𝐹𝑖 ∈ ℝ𝑑     (6)
+                                                                     In this section, a support set of images for image clas-
+                                                                  sification was built, where their image embeddings and
+         𝐹 = 𝐶𝑜𝑛𝑐𝑎𝑡 ([𝐹1 , 𝐹2 , … , 𝐹𝐶𝐾 ]) , 𝑓 ∈ ℝ𝐶𝐾×𝑑      (7)   class labels are stored as “key-value” pairs, as shown in
+                                                                  Figure 3b. CLIP optimizes the cosine similarity between
+  Then, TIP-Adapter constructs an affinity matrix to
+                                                                  modalities through contrastive training. In this study, the
+obtain the similarity matrix between 𝐹 and 𝑓 as follows:
+                                                                  authors draw inspiration from the TIP-X method, which
+                                                                  introduces an image–text similarity cache based on object
+                          ( (          ))
+                   𝐴 = exp −𝛽 1 − 𝑓𝐹 𝑇                      (8)   dataset text labels.
+                                                                     TIP-X has limitations when applied to recognize con-
+where 𝛽 is a tunable hyperparameter.                              struction domain objects. The TIP-X method calculates
+                                                                                                                                   14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6012                                                                                                                ZHANG et al.
+
+
+the distance between the image distribution and the text          Section 4.5 reports the results of comparative experiments,
+distribution using the KL divergence. However, KL diver-          and Section 4.6 presents the feature visualizations. All
+gence is primarily used to measure the difference between         experiments were conducted on a local machine equipped
+fixed distributions and neglects the characteristic of sparse     with an AMD EPYC 9654 CPU and an NVIDIA GeForce
+data samples in complex construction scenes. It does not          RTX 4060 Ti GPU with 16 GB of VRAM. Notably, since
+dynamically update the sample distribution of construc-           the proposed method does not require backpropagation
+tion scenes, which can lead to incorrect estimation of the        or parameter training, it can be effectively deployed on-
+scene’s sample distribution. To address the limitations of        site, including edge devices or mobile construction robots
+the TIP-X method, this research puts forward to dynami-           equipped with similar-level GPUs.
+cally update the prior distribution of samples using Bayes’
+theorem before calculating the distance between the image
+distribution and the text distribution (Yoon et al., 2018).       4.1       Datasets and experiment
+This study uses a Dirichlet prior to compute the prior
+distribution, and the calculation process is as follows:          4.1.1   Self-constructed construction T&M
+                                                                  dataset
+               𝐵𝑎𝑦𝑒𝑠 (     )
+       𝑀𝑖,𝑗 = 𝐷𝐾𝐿    𝑠𝑖 ‖𝑆𝑗 , 𝑖 ∈ [1, 𝑡] , 𝑗 ∈ [1, 𝐶𝐾]    (14)
+                                                                  To validate the proposed method, this study develops a cus-
+                 𝐵𝑎𝑦𝑒𝑠
+                                   ∑          𝑃
+                𝐷𝐾𝐿 (𝑃‖𝑄) =             𝑃𝑖 log 𝑖           (15)   tom small-scale dataset tailored for evaluation purposes as
+                                    𝑖
+                                              𝑄𝑖                  shown in Figure 4a. The dataset was collected based on
+                                𝑃𝑖 + 𝛼 3                          the T&M that workers frequently access during construc-
+                    𝑃̂ 𝑖 = ∑𝑡                              (16)   tion activities, aiming to support effective worker–robot
+                            𝑖=1 (𝑃𝑖 + 𝛼3 )                        collaboration. Specifically, we selected objects used in scaf-
+where 𝑠𝑖 represents the 𝑖th test signature for the 𝑡 test sam-    folding assembly, which is considered one of the most
+ples, and 𝑆𝑗 represents the 𝑗th few-shot signature. 𝛼3 is the     representative temporary structural processes in construc-
+hyperparameter for Bayesian estimation. In the implemen-          tion (Younghan Jung et al., 2019). During such temporary
+tation, the value of 𝛼3 was determined from a predefined          structure assembly, training-free vision-language methods
+candidate set ranging from 0 to 1 with a step size of 0.1, that   can provide rapid and practical solutions for worker–robot
+is, 𝛼3 ∈ {0.1, 0.2, 0.3, … , 1.0}.                                collaboration, where fast recognition and manipulation
+   The final mixed logits calculation is as follows:              are required on-site. Accordingly, we included scaffold-
+                                                                  ing couplers, scaffolding footboards, steel tape measures,
+                                      (       )
+    Logits = Logits𝑧𝑠 + 𝛼1 × 𝐴𝐿 + 𝛼2 × −𝑀𝐵𝑎𝑦𝑒𝑠 𝐿           (17)   and scaffolding steel tubes as core materials that robots
+                                                                  can assist in transporting or handling. In addition, cate-
+where 𝑀𝐵𝑎𝑦𝑒𝑠 is the affinity matrix computed using the            gories such as hammers and wrenches were not chosen
+Bayesian prior in this study. All three hyperparameters 𝛼1 ,      for their generality but because they are integral compo-
+𝛼2 , and 𝛼3 were jointly optimized through a nested loop          nents of scaffolding installation and structural assembly
+search procedure, that is, iterating over all possible com-       tasks, where workers frequently handle them alongside
+binations of 𝛼1 , 𝛼2 , and 𝛼3 and selecting the combination       other construction-specific tools (e.g., couplers and foot-
+that achieved the best performance.                               boards). Although these tools are commonly seen in
+                                                                  other domains, recognizing them accurately in complex
+                                                                  construction scenes is critical for ensuring safety and coor-
+4        EXPERIMENTS AND RESULTS                                  dination. Therefore, they were also incorporated into the
+                                                                  dataset to realistically represent few-shot challenges in
+To evaluate the performance of the proposed knowledge-            construction-related perception tasks.
+enhanced object detection method for construction T&M                The dataset was collected from real-world images of con-
+detection, experiments on a newly developed construction          struction tools and materials sourced from the Internet,
+T&M dataset were conducted, and a public construction             and it is representative of visual recognition tasks relevant
+machinery object detection dataset (Xiao & Kang, 2021)            to robotic grasping in construction scenarios. The method
+was used. Section 4.1 details the self-constructed and pub-       collected 200 original images and expanded the dataset
+lic datasets. Section 4.2 presents a comparison between our       through data augmentation, generating a total of 1000
+method and existing zero-shot multimodal approaches. To           images that include conditions such as rain, snow, fog, and
+further demonstrate the effectiveness of our method, Sec-         motion blur. It includes seven different object categories,
+tion 4.3 provides a comparison with other training-free           with a total of 1000 images and 1115 labeled category anno-
+methods. Section 4.4 reports the results of ablation studies.     tations. Detailed information about the object categories
+                                                                                                                                            14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                                         6013
+
+
+
+
+FIGURE 4        An illustration of the self-constructed construction T&M dataset and the recognition results.
+
+
+TA B L E 3     Number of labels for each category sample in self-constructed construction tools and materials (T&M) dataset.
+                                     Scaffolding            Scaffolding            Scaffolding            Steel tape
+ Hammer              Pliers          coupler                footboard              steel tube             measure              Wrench
+ 100                 155             140                    155                    130                    125                  310
+
+
+
+can be found in Table 3. Compared to other construc-                    was employed to generate prompts for the text-to-image
+tion object detection datasets, this dataset provides fewer             model. This study inputs the object category textual labels
+images; however, it represents categories that are rarely               required for image generation into ChatGPT with the fol-
+collected and annotated in construction scenes and are                  lowing prompt: “Help me generate a prompt to generate
+essential auxiliary T&M for worker–robot collaboration                  a [object],” where [object] represents the object category
+during scaffold installation. This dataset is primarily used            textual label. In the localization stage, this study employs
+for validating the construction T&M recognition method.                 text-generated synthetic images as visual knowledge. In
+   In construction scenarios, image collection and annota-              the classification stage, text–image pairs composed of
+tion require professional expertise, whereas textual knowl-             textual descriptions and generated images are used as
+edge is comparatively easier to obtain. In this study, the              image–text knowledge. Table 4 presents the generated cat-
+only knowledge available was the categories of textual                  egory prompts. The image generation results from the
+information. Construction domain images are required                    Stable Diffusion model are shown in Figure 4a. In the
+as prior knowledge for construction T&M recognition.                    object localization stage, the method selected images with
+Therefore, this study utilizes images generated by a text-              minimal occlusion and clear views of the target objects to
+to-image model (Rombach et al., 2022) as the domain                     ensure reliable feature extraction. For each tool or material
+knowledge for construction images. The intention was                    category, one representative template image was chosen as
+not to rely on large-scale synthetic data to replace the                the reference for matching.
+training-free nature of the framework but rather to use syn-
+thetic images as auxiliary references in scenarios where
+real template images are insufficient or unavailable. For               4.1.2   Alberta Construction Image Data
+this reason, the collected and labeled dataset was exclu-               (ACID) dataset
+sively used for model validation and was not involved in
+the construction of domain image knowledge. To better                   The ACID construction machinery detection dataset (Xiao
+utilize Stable Diffusion for image generation, Chat Gener-              & Kang, 2021) was employed in this study to rigorously
+ative Pre-trained Transformer (ChatGPT) (OpenAI, 2023)                  evaluate the effectiveness of the proposed method. The
+                                                                                                                                              14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6014                                                                                                                           ZHANG et al.
+
+
+TA B L E 4    Examples of generated prompts.
+                                                                                                                  Steel
+                                                        Scaffolding        Scaffolding         Scaffolding        tape
+ Class                     Hammer           Pliers      coupler            footboard           steel tube         measure         Wrench
+ The prompts for           High-resolution realistic photo of [Class], placed on a clean background, sharp details, professional product
+ stable diffusion model    photo, natural lighting, and minimal shadows
+
+
+
+T A B L E 5 Label count for each category in the Alberta               TA B L E 6      Computation time for different methods.
+Construction Image Data (ACID) dataset.                                                  T&M dataset               ACID dataset
+ Cement                                                 Wheel                            YOLO-World Ours           YOLO-World Ours
+ truck        Compactor       Dozer      Excavator      loader           Computation     17.86 fps       2.60 fps 18.65 fps        2.58 fps
+ 606          735             751        1844           1336             efficiency
+
+
+
+original ACID dataset contains 10,000 images of construc-              the most commonly utilized metrics in vision-based object
+tion machinery, covering 10 different types of machinery               detection tasks.
+categories. Considering the input requirement of the CLIP                 Although Table 6 shows that YOLO-World achieves
+image encoder, which is 224 × 224 pixels, images smaller               faster zero-shot detection than our method, there remains
+than this threshold were excluded during the preprocess-               an urgent need to improve detection accuracy in con-
+ing of the dataset to ensure proper input to the model.                struction site scenarios. As shown in Table 7, our method
+Additionally, due to computational resource limitations,               shows a significant improvement in the accuracy of
+only five categories from the dataset were selected for                object detection, compared to zero-shot detection meth-
+model validation. These preprocessing steps resulted in a              ods. YOLO-World’s zero-shot detection performance was
+customized version of the ACID dataset for object detec-               limited, with an overall mAP of only 20.38%. The pro-
+tion. As shown in Table 5, the dataset consists of 3981                posed method achieved an overall mAP of 59.45%. For
+images and 5272 category labels, with the following dis-               example, the Scaffolding Coupler, an essential T&M for
+tribution: 606 cement trucks, 735 compactors, 751 dozers,              workers during scaffolding installation, is effectively rec-
+1844 excavators, and 1336 wheel loaders.                               ognized by the proposed method. In contrast, existing
+                                                                       zero-shot methods struggled to recognize this tool, as cur-
+                                                                       rent vision-language multimodal methods are unable to
+4.2    Comparison with multimodal object                               handle domains with high domain-specific knowledge.
+detection methods                                                      As illustrated in Figure 5d,g, the positional correspon-
+                                                                       dence between the reference and test images in Figure 5d
+YOLO-World (Cheng et al., 2024) vision-language mul-                   determines the object’s location within the field of view,
+timodal object detection is a method that heavily relies               while the image–text similarity comparison shown in
+on pre-trained weights for object recognition. In contrast             Figure 5g enables semantic classification of the detected
+to the zero-shot knowledge-enhanced approach, existing                 object. This highlights the serious challenges existing mul-
+multimodal detection methods lack any prior knowl-                     timodal methods face when processing T&M images from
+edge specific to the construction domain (Romera-Paredes               construction scenarios.
+& Torr, 2015), making them zero-shot object detection                     Directly applying zero-shot multimodal models to object
+methods.                                                               detection in construction scenarios often fails to recog-
+                                                                       nize uncommon components such as scaffold couplers
+                                                                       as illustrated in Figure 5a. This is primarily due to the
+4.2.1        Performance on T&M dataset                                semantic misalignment between visual content and textual
+                                                                       knowledge (Jeoung et al., 2025). In contrast, the method
+Using the dataset provided in this study, this study com-              proposed in this paper successfully identifies such compo-
+pared the performance of the proposed method in a                      nents, demonstrating their ability to enhance cross-modal
+4-shot scenario with YOLO-World. YOLO-World identifies                 alignment under a training-free paradigm. This capability
+objects based on text prompts, where the text prompts are              can significantly improve the efficiency of worker–robot
+the category labels shown in Table 3. The model’s perfor-              collaboration in construction environments.
+mance was measured using the mean average precision                       As illustrated in Figure 4b, subfigure (a) shows the origi-
+(mAP) metric (Everingham et al., 2010), which is among                 nal input image, while subfigure (b) presents the output of
+                                                                                                                                      14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                                   6015
+
+
+TA B L E 7     Mean average precision (mAP) in self-constructed construction T&M dataset.
+                                                    Scaffolding   Scaffolding     Steel tape   Scaffolding
+                           Hammer        Pliers     coupler       footboard       measure      steel tube    Wrench    All mAP
+ YOLO-World                10.09         15.86      1.00          65.44           25.40        6.20          18.67     20.38
+ 3.2+CLIP (contrastive     41.56         30.38      34.04         71.55           68.15        74.55         31.96     50.31
+ language-image
+ pre-training)
+ 3.2+TIP-Adapter           42.56         47.25      50.24         63.60           71.77        79.30         55.83     58.65
+ 3.2+TIP-X                 37.58         48.74      52.12         66.92           65.54        80.89         42.60     56.34
+ Ours                      44.56         43.58      54.35         72.14           67.34        80.92         53.25     59.45
+
+
+
+
+FIGURE 5        An illustration of the recognition results.
+
+
+a zero-shot object detection model. The pre-trained mul-              present (such as the pliers in the figure) may appear erro-
+timodal model detects two categories, namely, scaffold                neously. This false positive is primarily attributed to the
+planks (correct) and pliers (incorrect). If using localiza-           lack of domain-specific knowledge related to construc-
+tion with only YOLO-World, objects that should not be                 tion sites in the pre-trained model. After applying the
+                                                                                                                                 14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6016                                                                                                              ZHANG et al.
+
+
+TA B L E 8    mAP in the ACID dataset.
+                          Cement                                                                  Wheel
+                          truck            Compactor           Dozer          Excavator           loader           All mAP
+ YOLO-World               66.29            15.51               0.26           47.59               25.87            31.11
+ 3.2+CLIP                 82.29            0.97                35.23          69.07               55.20            48.55
+ 3.2+TIP-Adapter          81.86            3.31                56.95          69.14               53.41            52.93
+ 3.2+TIP-X                74.16            16.99               61.95          64.25               59.72            55.41
+ Ours                     78.19            59.29               45.08          67.59               34.44            56.92
+
+
+proposed training-free method, as shown in subfigure (c),      application of such methods in future construction scenar-
+the model effectively eliminates the incorrect detection of    ios.
+pliers via an image matching mechanism. This not only             The visualization results are shown in Figure 5a. Due to
+reduces computational cost and prevents overfitting of net-    YOLO-World’s biased understanding of the image and text
+work parameters but also removes the need for manual           features of construction machinery, significant misidenti-
+data annotation. These results demonstrate that the pro-       fications and redundant object detections were observed
+posed method significantly improves semantic alignment         (e.g., the “Compactor” category in the upper-right image).
+between visual and textual modalities and offers a practical   By applying the domain knowledge enhancement and
+solution for deploying multimodal models in construc-          image–text knowledge alignment methods proposed in
+tion safety management and worker–robot collaborative          this paper, the model can confidently and accurately
+grasping tasks.                                                recognize construction machinery objects.
+   Experimental results suggested that general-purpose
+multimodal foundation models with zero-shot capabilities
+struggle in domains requiring specialized knowledge, such      4.3    Comparison with other
+as the construction industry. The proposed training-free       training-free methods
+object detection framework requires neither labeled train-
+ing samples nor network parameter updates. It thus avoids      The method proposed in this paper consists of two stages.
+overfitting risks and high computational demands com-          The first stage (Section 3.2) is based on image matching for
+monly associated with deep learning under limited data.        object localization, while the second stage (Section 3.3) is
+With these advantages, the method is well-suited for real-     based on knowledge alignment for object semantic recog-
+world construction environments where both familiar and        nition. To fully evaluate the effectiveness of the proposed
+novel objects may coexist.                                     method, this section uses three training-free methods
+                                                               (Radford et al., 2021; Udandarao et al., 2023; R. Zhang et al.,
+                                                               2022) as the baseline models for the second stage, which
+4.2.2        Performance on ACID dataset                       facilitates a comprehensive assessment of the proposed
+                                                               approach.
+Based on the ACID dataset, this study compared the detec-         The experimental results, as shown in Tables 7 and 8,
+tion results of our method in a 16-shot scenario with          reveal that CLIP’s zero-shot classification performance is
+those of YOLO-World. YOLO-World performs object recog-         limited. The mAP across all categories in the construc-
+nition based on textual prompts, which are the category        tion T&M detection dataset is 50.31%, and the mAP across
+labels shown in Table 5. From Table 8, it was evident that     all categories in the ACID dataset is 48.55%. Although
+YOLO-World’s zero-shot object detection performance was        the overall recognition accuracy of the CLIP method is
+limited, with the mAP of only 31.11% across all categories.    relatively low, it maintains higher accuracy for certain cat-
+In contrast, the mAP of the proposed method across all         egories. For instance, in the construction T&M detection
+categories was 56.92%. For example, the detection perfor-      dataset, the categories “Steel tape measure” and “Scaf-
+mance for the “Dozer” category was limited with existing       folding steel tube” exhibit relatively high accuracy. In the
+multimodal methods, possibly due to feature discrepancies      ACID dataset, the “Cement truck” category also has higher
+between the images and textual information of the “Dozer”      recognition accuracy. This phenomenon is likely due to
+category. Overall, the detection results objectively high-     the higher similarity in image–text distribution for these
+lighted the imbalance in inter-class modal distributions       categories in the pre-trained CLIP model.
+within the YOLO-World multimodal method, leading to               It is worth noting that the results of Section 3.2 + CLIP
+significant variations in detection performance across cat-    zero-shot classification show a significant improvement
+egories. This imbalance is unfavorable for the widespread      over the YOLO-World zero-shot detection method in terms
+                                                                                                                                  14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                               6017
+
+
+T A B L E 9 Optimal hyperparameter settings for different shots    the 1-shot scenario was higher than in other shot scenar-
+in self-constructed construction T&M dataset.                      ios. This phenomenon could be attributed to the marginal
+                   𝜷            𝜶𝟏           𝜶𝟐           𝜶𝟑       effects caused by the modality gap between images and
+ Search scale      [0, 50]      [0, 50]      [0, 30]      [0, 1]   text, where the increase in samples did not have a positive
+ 1-shot            3.695        15.07        12.06        0.1      impact on the images of this category.
+ 2-shot            1.0          22.555       12.06        0.2         To highlight the effectiveness of the second-stage clas-
+ 4-shot            3.45         7.585        7.874        0.9      sification, the method conducted experiments on two
+                                                                   datasets, comparing the method with a classification-only
+                                                                   baseline (with labeled object locations) using the mAP
+of detection accuracy. This indicates that multimodal              metric. Specifically, we employed different localization
+object detection presents greater research challenges com-         methods to analyze their impact on the final detec-
+pared to multimodal image classification in the context            tion accuracy, including the proposed localization using
+of foundational model research, highlighting the necessity         DINOv2 and feature matching (DINOv2+cls), localiza-
+and urgency of the approach proposed in Sec. 3.2. Last,            tion using only YOLO-World (Y-W-loc+cls), and localiza-
+while Tip-Adapter and TIP-X show significant improve-              tion using ground-truth bounding boxes (Gt-loc+cls). As
+ments over CLIP zero-shot, the algorithm presented in this         shown in Tables 10 and 12, different localization strategies
+paper outperforms all the comparative methods.                     lead to varying detection performances, and the experi-
+                                                                   mental results further confirm the improvement effect of
+                                                                   fusing YOLO-World on localization accuracy. The results
+4.4       Ablation study                                           confirm that the proposed training-free two-stage frame-
+                                                                   work is influenced by both localization and classification,
+The proposed construction T&M classification method                suggesting that future studies should investigate strategies
+involves three hyperparameters, namely, 𝛽 in Equation (8),         to improve each stage independently.
+𝛼1 and 𝛼2 in Equation (13), and 𝛼3 in Equation (16). Table 9
+summarizes the hyperparameter values that yielded the
+highest accuracy during grid search on the validation              4.5   Comparative evaluation with
+dataset.                                                           few-shot fine-tuning method
+   Table 10 summarizes the experimental results across var-
+ious few-shot detection settings (k = 1, 2, and 4). Notably,       To further highlight the advantages of the proposed
+the model attained a mAP of 59.45% and successfully                method, the method additionally benchmarked our
+identified all construction T&M in the 4-shot scenario.            training-free framework against the few-shot fine-tuning
+Additionally, as the number of images increased, the mAP           based object detection method Few-Shot object detection
+also improved. Although the results are promising, some            via Contrastive proposals Encoding (FSCE) (B. Sun et al.,
+counterintuitive outcomes were also observed. For exam-            2021). The implementation of FSCE was reproduced using
+ple, the recognition accuracy for the “Steel tape measure”         the mmfewshot module from OpenMMLab under the
+category in the 4-shot scenario was lower than that in the         same experimental settings.
+1-shot scenario. In the few-shot setting, sample templates            The results, summarized in Tables 13 and 14, show
+contribute unevenly. Multiple samples from the same cat-           that the method consistently outperforms the fine-tuning-
+egory may vary in representativeness due to occlusion or           based FSCE across different shot settings. Notably, while
+background clutter, which can amplify noise and reduce             fine-tuning approaches require additional training time
+class discriminability, ultimately leading to performance          and are prone to overfitting due to the limited availability
+degradation, where increasing the number of samples does           of construction-domain data, our training-free approach
+not yield a positive impact on model performance.                  leverages domain-specific visual-textual alignment with-
+   Through grid search on the validation set, the hyper-           out retraining, thereby achieving higher accuracy with
+parameter configuration yielding maximum accuracy is               improved efficiency.
+listed in Table 11. Table 12 details the experimental out-
+comes for few-shot detection with k values of 1, 2, 4, and
+16. Under the 16-shot condition, the model detected all            4.6       Visualization of features
+construction machinery, reaching a mAP of 56.92%. Addi-
+tionally, as the number of images increased, the mAP also          To make the intermediate steps of our method more
+increased. Although the results are promising, some coun-          transparent, the method provides visualizations for both
+terintuitive outcomes were observed. For example, the              localization and classification. Figure 5c,d illustrates the
+recognition accuracy for the “Cement truck” category in            feature matching process: after encoding with DINOv2,
+                                                                                                                                                               14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6018                                                                                                                                          ZHANG et al.
+
+
+TA B L E 1 0       Ablation experimental results of the proposed method in self-constructed construction T&M dataset.
+                                                                  Scaffolding      Scaffolding   Steel tape     Scaffolding
+                                 Hammer            Pliers         coupler          footboard     measure        steel tube        Wrench       All mAP
+    1-shot     Y-W-loc+cls       21.38             18.06          43.02            39.13         25.98          27.65             16.90        27.45
+               DINO v2+cls       46.39             37.19          51.98            61.33         69.36          80.08             44.79        55.87
+               Gt-loc+cls        54.56             47.25          70.28            70.61         91.94          91.86             40.60        66.73
+    2-shot     Y-W-loc+cls       22.46             21.64          33.48            42.92         24.40          27.68             17.97        27.22
+               DINO v2+cls       51.91             39.66          41.60            77.30         67.81          79.92             45.88        57.73
+               Gt-loc+cls        52.39             48.33          54.43            81.03         89.66          94.52             53.19        67.65
+    4-shot     Y-W-loc+cls       19.40             27.10          39.34            40.27         22.41          28.34             14.61        27.35
+               DINO v2+cls       44.56             43.58          54.35            72.14         67.34          80.92             53.25        59.45
+               Gt-loc+cls        41.21             66.05          69.81            70.60         88.67          94.30             47.63        68.33
+Note: “Y-W-loc+cls” denotes the detection performance based on YOLO-World localization method; “DINOv2+cls” denotes the detection performance based on
+the proposed localization method; and “Gt-loc+cls” denotes the detection performance under ground-truth localization, where only bounding boxes are provided
+without class labels.
+
+
+T A B L E 1 1 Optimal hyperparameter settings for different shots                      guish the categorical attributes of construction T&M after
+in the ACID dataset.                                                                   being provided with some image and textual knowledge.
+                       𝜷                 𝜶𝟏                𝜶𝟐             𝜶𝟑           The detection outcomes of the developed model are
+    Search scale       [0, 50]           [0, 50]           [0, 30]        [0, 1]       presented in Figure 4c,d. These results demonstrate the
+    1-shot             0.1               5.41              5.48           0.9          model’s strong performance even when construction T&M
+    2-shot             16.68             2.595             27.6           0.4          vary in shape and color. Figure 4c shows that the method
+    4-shot             12.27             10.08             29.402         0.4          maintains robust tool detection across varying viewpoints
+    16-shot            6.145             7.58              17.442         0.4
+                                                                                       and rotations. These findings suggest that the proposed
+                                                                                       method effectively utilizes pre-trained foundation models
+                                                                                       and domain-specific knowledge to represent construction
+similarity matrices are computed and refined via Hungar-                               scenes, without requiring the training or optimization
+ian matching. To clearly highlight correspondences, the                                of learnable parameters. To further enhance localization
+matrix is displayed in grayscale with red dots marking                                 precision, particularly in complex construction envi-
+the matched feature pairs, which correspond to high-                                   ronments, the paper plans to integrate SAM (segment
+similarity regions and can be projected back to the original                           anything model) for subsequent processing. SAM’s ability
+image to locate features.                                                              to generate precise object masks based on prompt points
+   Figure 5e–g compares image–text similarity matrices                                 will enable us to easily extract foreground object masks
+in the classification stage. With CLIP encoding, gener-                                for the regions around the prompt points, offering a more
+ated images and text (Figure 5e) as well as real images                                robust approach for improving localization accuracy. This
+and text (Figure 5f) show nearly indistinguishable cat-                                method will significantly reduce partial localization errors
+egory scores, often leading to errors. In contrast, our                                and increase the overall robustness of the detection model.
+training-free method (Figure 5g) produces sharper align-                                  These findings have significant implications for both
+ment between images and corresponding text, resulting in                               academia and industry. The framework offers a solution
+higher classification accuracy.                                                        for adapting VLM-based systems to specialized domains
+                                                                                       with limited data availability, while providing a practi-
+                                                                                       cal pathway for detecting construction tools and materials
+5            DISCUSSION                                                                in real-world deployments. Compared with conventional
+                                                                                       deep learning approaches, the method facilitates easier
+The study found that the training-free knowledge-                                      application in construction scenarios by leveraging natu-
+enhanced method for construction T&M detection can                                     ral language rather than machine language, enabling more
+leverage multimodal foundation models for few-shot                                     effective on-site deployment. Unlike existing VLM fine-
+learning in the construction domain. First, the method                                 tuning methods, it does not require extensive data, labor,
+allows learning the feature knowledge of construction                                  or complex system design. Moreover, the framework can be
+T&M images using template images from specific classes,                                readily used by both site managers and field operators for
+which aids in accurately localizing construction T&M                                   construction site monitoring without requiring in-depth
+within images. Second, the method can effectively distin-                              knowledge of data or models.
+                                                                                                                                                               14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                                                           6019
+
+
+TA B L E 1 2      Ablation experimental results of the proposed method in the ACID dataset.
+                                             Cement                                                                         Wheel
+                                             truck               Compactor            Dozer           Excavator             loader             All mAP
+ 1-shot            Y-W-loc+cls               28.99               0.49                 13.42           29.74                 15.15              17.56
+                   DINO v2+cls               82.25               0.80                 30.36           71.66                 54.08              47.83
+                   Gt-loc+cls                93.59               1.14                 37.49           89.03                 60.70              56.39
+ 2-shot            Y-W-loc+cls               25.94               0.40                 8.92            18.64                 21.99              15.18
+                   DINO v2+cls               84.51               10.87                36.76           68.41                 57.42              51.59
+                   Gt-loc+cls                97.28               14.34                41.42           83.60                 63.00              59.93
+ 4-shot            Y-W-loc+cls               24.89               1.92                 23.43           25.06                 12.62              17.58
+                   DINO v2+cls               80.70               17.27                51.46           68.49                 58.00              55.18
+                   Gt-loc+cls                91.77               21.82                52.41           82.65                 62.12              62.15
+ 16-shot           Y-W-loc+cls               21.84               2.98                 13.03           24.61                 18.23              16.14
+                   DINO v2+cls               78.19               59.29                45.08           67.59                 34.44              56.92
+                   Gt-loc+cls                94.62               63.51                41.96           79.96                 35.69              63.15
+Note: “Y-W-loc+cls” denotes the detection performance based on YOLO-World localization method; “DINOv2+cls” denotes the detection performance based on
+the proposed localization method; and “Gt-loc+cls” denotes the detection performance under ground-truth localization, where only bounding boxes are provided
+without class labels.
+
+
+TA B L E 1 3      Comparative evaluation with few-shot fine-tuning method in self-constructed construction T&M dataset.
+                                                      Scaffolding        Scaffolding          Steel tape      Scaffolding
+                          Hammer         Pliers       coupler            footboard            measure         steel tube            Wrench     All mAP
+ 1-shot        Ours       46.39          37.19        51.98              61.33                69.36           80.08                 44.79      55.87
+               FSCE       2.10           14.20        12.90              14.40                24.40           2.50                  12.50      11.86
+ 2-shot        Ours       51.91          39.66        41.60              77.30                67.81           79.92                 45.88      57.73
+               FSCE       15.60          12.70        29.70              14.50                34.10           10.40                 14.00      18.71
+ 4-shot        Ours       44.56          43.58        54.35              72.14                67.34           80.92                 53.25      59.45
+               FSCE       33.50          27.60        60.40              42.10                51.90           18.60                 33.80      38.27
+
+
+
+
+TA B L E 14       Comparative evaluation with few-shot fine-tuning method in the ACID dataset.
+                                     Cement                                                                                 Wheel
+                                     truck                    Compactor             Dozer             Excavator             loader             All mAP
+ 1-shot               Ours           82.25                    0.80                  30.36             71.66                 54.08              47.83
+                      FSCE           12.20                    17.20                 15.00             21.10                 22.10              17.52
+ 2-shot               Ours           84.51                    10.87                 36.76             68.41                 57.42              51.59
+                      FSCE           21.90                    26.60                 28.20             26.40                 16.60              23.94
+ 4-shot               Ours           80.70                    17.27                 51.46             68.49                 58.00              55.18
+                      FSCE           51.90                    49.00                 37.90             43.20                 38.30              44.06
+
+
+
+
+6         LIMITATIONS                                                            anism, which may lead to the misidentification of local
+                                                                                 features as complete objects, as shown in Figure 5b(b).
+This study has some limitations. First, while it can pre-                        To address this issue, an effective solution would be to
+dict the types of construction objects present in an image                       integrate the (Kirillov et al., 2023) model to enable full-
+(e.g., the pliers category), the proposed image encod-                           pixel segmentation of the detected objects. Moreover, the
+ing feature extraction is relatively discrete and not fully                      performance of the model could be further impacted by
+pixel-based, which often results in only partial localiza-                       the diversity and quality of the available domain knowl-
+tion of the object, as illustrated in Figure 5b(a). As a                         edge. Despite showing promising results in the construc-
+training-free approach, the method lacks a learning mech-                        tion domain, the generalization of the model to other
+                                                                                                                              14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6020                                                                                                           ZHANG et al.
+
+
+domains with limited prior knowledge still needs to be         grating domain-specific visual and textual knowledge.
+explored.                                                      These findings confirm that the proposed method can
+   Second, although the proposed method achieves               provide reliable recognition performance while avoiding
+promising results in object detection tasks within con-        costly data annotation and retraining. The proposed frame-
+struction scenarios, it has not yet been evaluated on          work contributes to knowledge-enhanced deployment
+large-scale multi-class detection tasks (e.g., detecting       of intelligent visual systems in construction, enhancing
+100 distinct object categories simultaneously). Future         their adaptability to dynamic environments and support-
+work should explore the impact of category diversity on        ing worker–robot collaboration. Beyond tool and mate-
+VLMs to improve their generalizability and scalability.        rial recognition, this approach also holds potential for
+The method requires workers or professionals to per-           broader applications such as construction safety mon-
+form a small amount of foreground object annotation            itoring and automated resource management. Future
+for synthetic image generation. While synthetic images         work will focus on improving robustness under complex
+help enrich domain knowledge and improve visual-text           field conditions and exploring complementary supervised
+alignment, they may introduce minor biases that slightly       learning approaches, such as neural dynamic classifica-
+affect localization precision in cluttered backgrounds. For    tion (Rafiei & Adeli, 2017), dynamic ensemble learning
+example, different workers may have varying definitions        (Alam et al., 2020), and the finite element machine (Pereira
+of construction tools, and fine-grained distinctions among     et al., 2020), to further enhance recognition accuracy and
+tools and materials could lead to errors in the image          generalization.
+generation process by the generative model, which in
+turn affects subsequent image feature matching. In future
+research, exploring domain adaptation and fine-grained         NOTATION
+feature alignment techniques will be a key direction to
+further mitigate the impact of modality gaps.                        VLM       Vision-language model
+   Third, while the training-free detection framework                T&M       Tools and materials data
+demonstrates reliable performance on two different                   ACID      Alberta Construction Image Data
+datasets, it also has certain limitations. For instance, the       DINOv2      A self-supervised image pre-training
+robustness of the system may be constrained in small-                          model
+object detection. More fine-grained feature extraction,                CLIP    Contrastive language-image pre-training
+such as increasing the input image resolution of the DINO                      model
+model and enlarging the number of patches, can improve         TIP-Adapter     Training-free vision-language image clas-
+detection accuracy in visual information processing.                           sification model
+Moreover, the current approach has not been tested on                 TIP-X    Training-free vision-language image clas-
+real construction robots. Future research should integrate                     sification model
+the proposed method with robotic grasping strategies                    KL     Kullback–Leibler divergence
+to enable real-time deployment in actual construction                  mAP     Mean average precision, evaluation metric
+environments. In addition, while this is slower than fully                     for detection accuracy
+optimized detection networks such as YOLO-World (17.86         YOLO-World      Zero-shot detection model used for base-
+FPS), the proposed training-free framework emphasizes                          line comparison
+flexibility and data efficiency rather than real-time per-             𝑆𝐼𝑀     Represents the feature similarity matrix
+formance. Future work will focus on CUDA acceleration                          between the template image and the detec-
+and lightweight optimization to improve deployment                             tion image.
+efficiency.                                                         Logits𝑧𝑠   The logits under zero-shot CLIP conditions
+                                                               𝐿𝑇𝐼𝑃−𝐴𝑑𝑎𝑝𝑡𝑒𝑟    The final mixed logits of TIP-Adapter
+                                                                               method
+7      CONCLUSION                                                    𝐿𝑇𝐼𝑃−𝑋    The final mixed logits of TIP-X method
+
+This paper presents a training-free, knowledge-enhanced
+T&M recognition method using VLM in construction.              AC K N OW L E D G M E N T S
+Experimental results demonstrated the effectiveness of the     This work was supported by the National Natural Sci-
+approach. In the 4-shot scenario, the method achieved          ence Foundation of China [grant number 72201226]; the
+a recognition accuracy of 59.45%, compared to 20.38% in        Research Grants Council (Hong Kong) [grant number
+the zero-shot setting, highlighting the benefits of inte-      26208323, C6044-23GF].
+                                                                                                                                                   14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                                               6021
+
+
+REFERENCES                                                                  sive explanations of bridge damage. Computer-Aided Civil and
+Alam, K. M. D. R., Siddique, N., & Adeli, H. (2020). A dynamic              Infrastructure Engineering, 37(11), 1387–1401. https://doi.org/10.
+   ensemble learning algorithm for neural networks. Neural Comput-          1111/mice.12793
+   ing and Applications, 32(12), 8675–8690. https://doi.org/10.1007/     Deng, H., Hong, H., Luo, D., Deng, Y., & Su, C. (2020). Auto-
+   s00521-019-04359-7                                                       matic indoor construction process monitoring for tiles based on
+Areerob, K., Nguyen, V., Li, X., Inadomi, S., Shimada, T., Kanasaki,        BIM and computer vision. Journal of Construction Engineering
+   H., Wang, Z., Suganuma, M., Nagatani, K., Chun, P., & Okatani,           and Management, 146(1), 0001744. https://doi.org/10.1061/(asce)
+   T. (2025). Multimodal artificial intelligence approaches using           co.1943-7862.0001744
+   large language models for expert-level landslide image analy-         Dong, W., Wu, X. J., Xu, T., Feng, Z., Ahmed, S. A. A., Awais, M., &
+   sis. Computer-Aided Civil and Infrastructure Engineering, 40(19),        Kittler, J. (2024). View-shuffled clustering via the modified Hun-
+   2900–2921. https://doi.org/10.1111/mice.13482                            garian algorithm. Neural Networks, 179, 106602. https://doi.org/10.
+Atik, A., Li, K., Hajibabai, L., & Hajbabaie, A. (2025). Integrated         1016/J.NEUNET.2024.106602
+   column generation for volunteer-based delivery assignment and         Everingham, M., Van Gool, L., Williams, C. K. I., Winn, J., &
+   route optimization. Computer-Aided Civil and Infrastructure Engi-        Zisserman, A. (2010). The PASCAL visual object classes (VOC)
+   neering, 40(15), 2227–2243. https://doi.org/10.1111/mice.13439           challenge. International Journal of Computer Vision, 88, 303–338.
+Bang, S., Hong, Y., & Kim, H. (2021). Proactive proximity monitor-          https://doi.org/10.1007/s11263-009-0275-4
+   ing with instance segmentation and unmanned aerial vehicle-           Fan, J., Yin, Y., Wang, T., Dong, W., Zheng, P., & Wang, L.
+   acquired video-frame prediction. Computer-Aided Civil and Infras-        (2025). Vision-language model-based human-robot collaboration
+   tructure Engineering, 36(6), 800–816. https://doi.org/10.1111/mice.      for smart manufacturing: A state-of-the-art survey. Frontiers of
+   12672                                                                    Engineering Management, 12(1), 177–200. https://doi.org/10.1007/
+Bavelos, A. C., Anastasiou, E., Dimitropoulos, N., Michalos, G., &          s42524-025-4136-9
+   Makris, S. (2025). Virtual reality-based dynamic scene recreation     Fei, Y., Liao, W., Lu, X., & Guan, H. (2024). Knowledge-enhanced
+   and robot teleoperation for hazardous environments. Computer-            graph neural networks for construction material quantity estima-
+  Aided Civil and Infrastructure Engineering, 40(3), 392–408. https://      tion of reinforced concrete buildings. Computer-Aided Civil and
+   doi.org/10.1111/mice.13337                                               Infrastructure Engineering, 39(4), 518–538. https://doi.org/10.1111/
+Cai, J., Gao, Z., Guo, Y., Wibranek, B., & Li, S. (2024). FedHIP:           mice.13094
+   Federated learning for privacy-preserving human intention pre-        Gil, D., & Lee, G. (2024). Zero-shot monitoring of construction work-
+   diction in human-robot collaborative assembly tasks. Advanced            ers’ personal protective equipment based on image captioning.
+   Engineering Informatics, 60, 102411. https://doi.org/10.1016/j.aei.      Automation in Construction, 164, 105470. https://doi.org/10.1016/
+   2024.102411                                                              J.AUTCON.2024.105470
+Cai, J., Zhang, Y., Yang, L., Cai, H., & Li, S. (2020). A context-       Huang, J., Yang, X., Zhou, F., Li, X., Zhou, B., Lu, S., Ivashov,
+   augmented deep learning approach for worker trajectory predic-           S., Giannakis, I., Kong, F., & Slob, E. (2024). A deep learn-
+   tion on unstructured and dynamic construction sites. Advanced            ing framework based on improved self-supervised learning for
+   Engineering Informatics, 46, 102411. https://doi.org/10.1016/j.aei.      ground-penetrating radar tunnel lining inspection. Computer-
+   2020.101173                                                              Aided Civil and Infrastructure Engineering, 39(6), 814–833. https://
+Chan, C.-F., Wong, P. K.-Y., Guo, X., Cheng, J. C. P., Chan, J. P.-         doi.org/10.1111/mice.13042
+   C., Leung, P.-H., & Tao, X. (2025). Context-aware vision-language     Jeoung, J., Jung, S., & Hong, T. (2025). Zero-shot framework for con-
+   model agent enriched with domain-specific ontology for con-              struction equipment task monitoring. Computer-Aided Civil and
+   struction site safety monitoring. Automation in Construction, 177,       Infrastructure Engineering, 40(21), 3218–3238. https://doi.org/10.
+   106305. https://doi.org/10.1016/j.autcon.2025.106305                     1111/mice.13506
+Chen, C., Xiao, B., Zhang, Y., & Zhu, Z. (2023). Automatic vision-       Jiang, T., Frøseth, G. T., Rønnquist, A., Kong, X., & Deng, L. (2024).
+   based calculation of excavator earthmoving productivity using            A visual inspection and diagnosis system for bridge rivets based
+   zero-shot learning activity recognition. Automation in Construc-         on a convolutional neural network. Computer-Aided Civil and
+   tion, 146, 104702. https://doi.org/10.1016/j.autcon.2022.104702          Infrastructure Engineering, 39(24), 3786–3804. https://doi.org/10.
+Chen, J., Huang, Q., Chen, W., Li, Y., & Chen, Y. (2024). Automated         1111/mice.13274
+   counting of steel construction materials: Model, methodology, and     Jung, Y., Cho, I., Hsu, S. H., & Golparvar-Fard, M. (2024). VisualSite-
+   online deployment. Buildings, 14(6), 1661. https://doi.org/10.3390/      Diary: A detector-free Vision-Language Transformer model for
+   buildings14061661                                                        captioning photologs for daily construction reporting and image
+Chen, K., Zhou, X., Bao, Z., Skibniewski, M. J., & Fang, W. (2025).         retrievals. Automation in Construction, 165, 105483. https://doi.
+   Artificial intelligence in infrastructure construction: A critical       org/10.1016/J.AUTCON.2024.105483
+   review. Frontiers of Engineering Management, 12(1), 24–38. https://   Jung, Y., Oh, H., & Jeong, M. M. (2019). An approach to automated
+   doi.org/10.1007/s42524-024-3128-5                                        detection of structural failure using chronological image anal-
+Cheng, T., Song, L., Ge, Y., Liu, W., Wang, X., & Shan, Y.                  ysis in temporary structures. International Journal of Construc-
+   (2024). YOLO-World: Real-time open-vocabulary object detec-              tion Management, 19(2), 178–185. https://doi.org/10.1080/15623599.
+   tion. Proceedings of the IEEE/CVF Conference on Computer Vision          2017.1411457
+   and Pattern Recognition (CVPR), Providence, RI (pp. 16901–            Karim, A., & Adeli, H. (1999a). CONSCOM: An OO construction
+   16911).                                                                  scheduling and change management system. Journal of Construc-
+Chun, P., Yamane, T., & Maemura, Y. (2022). A deep learning-based           tion Engineering and Management, 125(5), 368–376. https://doi.
+   image captioning method to automatically generate comprehen-             org/10.1061/(ASCE)0733-9364(1999)125:5(368)
+                                                                                                                                                          14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+6022                                                                                                                                    ZHANG et al.
+
+
+Karim, A., & Adeli, H. (1999b). OO information model for construc-          DINOv2: Learning Robust Visual Features without Supervision.
+   tion project management. Journal of Construction Engineering             Transactions on Machine Learning Research. https://openreview.
+   and Management, 125(5), 361–367. https://doi.org/10.1061/(ASCE)          net/forum?id=a68SUt6zFt
+   0733-9364(1999)125:5(361)                                              Pan, Z., & Yu, Y. (2024). Learning multi-granular worker intentions
+Kim, J. (2020). Visual analytics for operation-level construction mon-      from incomplete visual observations for worker-robot collabo-
+   itoring and documentation: State-of-the-art technologies, research       ration in construction. Automation in Construction, 158, 105184.
+   challenges, and future directions. Frontiers in Built Environment,       https://doi.org/10.1016/j.autcon.2023.105184
+   6, 575738. https://doi.org/10.3389/fbuil.2020.575738                   Pereira, D. R., Piteri, M. A., Souza, A. N., Papa, J. P., & Adeli, H. (2020).
+Kim, J., & Chi, S. (2017). Adaptive detector and tracker on construc-       FEMa: A finite element machine for fast learning. Neural Comput-
+   tion sites using functional integration and online learning. Journal     ing and Applications, 32(10), 6393–6404. https://doi.org/10.1007/
+   of Computing in Civil Engineering, 31(5), 0000677. https://doi.org/      s00521-019-04146-4
+   10.1061/(asce)cp.1943-5487.0000677                                     Pour Rahimian, F., Seyedzadeh, S., Oliver, S., Rodriguez, S.,
+Kim, J., & Chi, S. (2021). A few-shot learning approach for database-       & Dawood, N. (2020). On-demand monitoring of construc-
+   free vision-based monitoring on construction sites. Automation           tion projects through a game-like hybrid application of BIM
+   in Construction, 124, 103566. https://doi.org/10.1016/j.autcon.2021.     and machine learning. Automation in Construction, 110, 103012.
+   103566                                                                   https://doi.org/10.1016/j.autcon.2019.103012
+Kirillov, A., Mintun, E., Ravi, N., Mao, H., Rolland, C., Gustafson,      Radford, A., Kim, J. W., Hallacy, C., Ramesh, A., Goh, G., Agarwal,
+   L., Xiao, T., Whitehead, S., Berg, A. C., Lo, W. Y., Dollár, P.,         S., Sastry, G., Askell, A., Mishkin, P., Clark, J., Krueger, G., &
+   & Girshick, R. (2023). Segment anything. Proceedings of the              Sutskever, I. (2021). Learning transferable visual models from
+   IEEE International Conference on Computer Vision, Paris, France.         natural language supervision. Proceedings of Machine Learning
+   https://doi.org/10.1109/ICCV51070.2023.00371                             Research, Virtual.
+Kumar, S., Gupta, H., Yadav, D., Ansari, I. A., & Verma, O. P. (2022).    Rafiei, M. H., & Adeli, H. (2017). A new neural dynamic classification
+   YOLOv4 algorithm for the real-time detection of fire and personal        algorithm. IEEE Transactions on Neural Networks and Learning
+   protective equipments at construction sites. Multimedia Tools and        Systems, 28(12), 3074–3083. https://doi.org/10.1109/TNNLS.2017.
+   Applications, 81(16), 22163–22183. https://doi.org/10.1007/s11042-       2682102
+   021-11280-6                                                            Ren, S., He, K., Girshick, R., & Sun, J. (2017). Faster R-CNN:
+Kunlamai, T., Yamane, T., Suganuma, M., Chun, P., & Okatani, T.             Towards real-time object detection with region proposal net-
+   (2024). Improving visual question answering for bridge inspection        works. IEEE Transactions on Pattern Analysis and Machine
+   by pre-training with external data of image–text pairs. Computer-        Intelligence, 39(6), 1137–1149. https://doi.org/10.1109/TPAMI.2016.
+   Aided Civil and Infrastructure Engineering, 39(3), 345–361. https://     2577031
+   doi.org/10.1111/mice.13086                                             Ren, T., & Jebelli, H. (2025). Efficient 3D robotic mapping and navi-
+Li, Y., & Chen, J. (2022). Computer vision–based counting model             gation method in complex construction environments. Computer-
+   for dense steel pipe on construction sites. Journal of Construction      Aided Civil and Infrastructure Engineering, 40(12), 1580–1605.
+   Engineering and Management, 148(1), 0002217. https://doi.org/10.         https://doi.org/10.1111/mice.13353
+   1061/(ASCE)CO.1943-7862.0002217                                        Rombach, R., Blattmann, A., Lorenz, D., Esser, P., & Ommer, B.
+Liang, Y., Vadakkepat, P., Chua, D. K. H., Wang, S., Li, Z., &              (2022). High-resolution image synthesis with latent diffusion
+   Zhang, S. (2024). Recognizing temporary construction site objects        models. Proceedings of the IEEE Computer Society Conference on
+   using CLIP-based few-shot learning and multi-modal prototypes.           Computer Vision and Pattern Recognition, 2022, New Orleans, LA.
+   Automation in Construction, 165, 105542. https://doi.org/10.1016/j.      https://doi.org/10.1109/CVPR52688.2022.01042
+   autcon.2024.105542                                                     Romera-Paredes, B., & Torr, P. H. S. (2015). An embarrassingly sim-
+Liu, K., & Golparvar-Fard, M. (2015). Crowdsourcing construction            ple approach to zero-shot learning. In R. Feris, C. Lampert, & D.
+   activity analysis from jobsite video streams. Journal of Construc-       Parikh (Eds.), 32nd International Conference on Machine Learning,
+   tion Engineering and Management, 141(11), 0001010. https://doi.          ICML 2015 (Vol. 3, pp. 11–30). Springer. https://doi.org/10.1007/
+   org/10.1061/(asce)co.1943-7862.0001010                                   978-3-319-50077-5_2
+Liu, Y., Zhu, M., Li, H., Chen, H., Wang, X., & Shen, C. (2023).          Shen, J., Xiong, X., Xue, Z., & Bian, Y. (2019). A convolutional neural-
+   Matcher: Segment anything with one shot using all-purpose fea-           network-based pedestrian counting model for various crowded
+   ture matching. The Twelfth International Conference on Learning          scenes. Computer-Aided Civil and Infrastructure Engineering,
+   Representations, Vienna, Austria.                                        34(10), 12454. https://doi.org/10.1111/mice.12454
+Mitterberger, D., Atanasova, L., Dörfler, K., Gramazio, F., & Kohler,     Sun, B., Li, B., Cai, S., Yuan, Y., & Zhang, C. (2021). FSCE: Few-shot
+   M. (2022). Tie a knot: Human–robot cooperative workflow                  object detection via contrastive proposal encoding. 2021 IEEE/CVF
+   for assembling wooden structures using rope joints. Construc-            Conference on Computer Vision and Pattern Recognition (CVPR),
+   tion Robotics, 6(3-4), 277–292. https://doi.org/10.1007/s41693-022-      Virtual (pp. 7348–7358). https://doi.org/10.1109/CVPR46437.2021.
+   00083-2                                                                  00727
+OpenAI. (2023). Introducing ChatGPT. https://openai.com/blog/             Sun, H., Song, L., & Yu, Z. (2025). Bridge damage identification using
+   chatgpt/                                                                 a small amount of damage labeling data. Computer-Aided Civil
+Oquab, M., Darcet, T., Moutakanni, T., Vo, H. V., Szafraniec, M.,           and Infrastructure Engineering, 40(18), 2729–2750. https://doi.org/
+   Khalidov, V., Fernandez, P., HAZIZA, D., Massa, F., El-Nouby, A.,        10.1111/mice.13470
+   Assran, M., Ballas, N., Galuba, W., Howes, R., Huang, P.-Y., Li, S.-   Sun, M., & Gao, Y. (2022). GATER: Learning grasp-action-target
+   W., Misra, I., Rabbat, M., Sharma, V., . . . Bojanowski, P. (2024).      embeddings and relations for task-specific grasping. IEEE Robotics
+                                                                                                                                                    14678667, 2025, 30, Downloaded from https://onlinelibrary.wiley.com/doi/10.1111/mice.70129, Wiley Online Library on [18/02/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+ZHANG et al.                                                                                                                                6023
+
+
+  and Automation Letters, 7(1), 3131378. https://doi.org/10.1109/LRA.      Infrastructure Engineering, 38(11), 1536–1554. https://doi.org/10.
+  2021.3131378                                                             1111/mice.12954
+Udandarao, V., Gupta, A., & Albanie, S. (2023). SuS-X: Training-free     Yoon, J., Kim, T., Dia, O., Kim, S., Bengio, Y., & Ahn, S. (2018).
+  name-only transfer of vision-language models. Proceedings of the         Bayesian model-agnostic meta-learning. Advances in Neural Infor-
+  IEEE International Conference on Computer Vision, Paris, France.         mation Processing Systems, 2018, Montréal, Canada.
+  https://doi.org/10.1109/ICCV51070.2023.00257                           Yu, H., Kamat, V. R., Menassa, C. C., McGee, W., Guo, Y., & Lee,
+Wang, X., & El-Gohary, N. (2024). Few-shot object detection and            H. (2023). Mutual physical state-aware object handover in full-
+  attribute recognition from construction site images for improved         contact collaborative human-robot construction work. Automa-
+  field compliance. Automation in Construction, 167, 105539. https://      tion in Construction, 150, 104829. https://doi.org/10.1016/j.autcon.
+  doi.org/10.1016/j.autcon.2024.105539                                     2023.104829
+Wang, X., Wang, S., Menassa, C. C., Kamat, V. R., & McGee,               Zhang, R., Zhang, W., Fang, R., Gao, P., Li, K., Dai, J., Qiao, Y.,
+  W. (2023). Automatic high-level motion sequencing methods                & Li, H. (2022). Tip-Adapter: Training-free adaption of CLIP for
+  for enabling multi-tasking construction robots. Automation in            few-shot classification. In S. Avidan, G. Brostow, M. Cissé, G. M.
+  Construction, 155, 105071. https://doi.org/10.1016/j.autcon.2023.        Farinella, & T. Hassner (Eds.), Lecture notes in computer science
+  105071                                                                   (including subseries lecture notes in artificial intelligence and lec-
+Wang, Y., Liao, P. C., Zhang, C., Ren, Y., Sun, X., & Tang, P. (2019).     ture notes in bioinformatics), 13695 LNCS (pp. 493–510). Springer.
+  Crowdsourced reliable labeling of safety-rule violations on images       https://doi.org/10.1007/978-3-031-19833-5_29
+  of complex construction scenes for advanced vision-based work-         Zhang, Y., Huang, S., Qin, J., Li, X., Zhang, Z., Fan, Q., & Tan, Q.
+  place safety. Advanced Engineering Informatics, 42, 101001. https://     (2025). Detection of helmet use among construction workers via
+  doi.org/10.1016/j.aei.2019.101001                                        helmet-head region matching and state tracking. Automation in
+Wang, Y., Xiao, B., Bouferguene, A., & Al-Hussein, M. (2024).              Construction, 171, 105987. https://doi.org/10.1016/J.AUTCON.2025.
+  Proactive safety hazard identification using visual–text seman-          105987
+  tic similarity for construction safety management. Automation          Zhao, X., & Jebelli, H. (2025). A computational method for real-time
+  in Construction, 166, 105602. https://doi.org/10.1016/J.AUTCON.          roof defect segmentation in robotic inspection. Computer-Aided
+  2024.105602                                                              Civil and Infrastructure Engineering, 40(23), 3596–3623. https://
+Wang, Z., Zhang, Q., Yang, B., Wu, T., Lei, K., Zhang, B., &               doi.org/10.1111/mice.13471
+  Fang, T. (2021). Vision-based framework for automatic progress         Zhu, X., Zhang, R., He, B., Zhou, A., Wang, D., Zhao, B., & Gao,
+  monitoring of precast walls by using surveillance videos dur-            P. (2023). Not all features matter: Enhancing few-shot CLIP with
+  ing the construction phase. Journal of Computing in Civil                adaptive prior refinement. Proceedings of the IEEE International
+  Engineering, 35(1). https://doi.org/10.1061/(asce)cp.1943-5487.          Conference on Computer Vision, Paris, France. https://doi.org/10.
+  0000933                                                                  1109/ICCV51070.2023.00246
+Wu, Z., Pei, T., Bao, Z., Ng, S. T., Lu, G., & Chen, K. (2025). Uti-
+  lizing intelligent technologies in construction and demolition
+  waste management: From a systematic review to an implementa-
+  tion framework. Frontiers of Engineering Management, 12(1), 1–23.         How to cite this article: Zhang, Z., Yu, Y., Pan,
+  https://doi.org/10.1007/s42524-024-0144-4                                 Z., & Antwi-Afari, M. F. (2025). Training-free
+Xiao, B., & Kang, S.-C. (2021). Development of an image data set of
+                                                                            few-shot construction tool and material detection
+  construction machines for deep learning object detection. Jour-
+  nal of Computing in Civil Engineering, 35(2), 05020005. https://doi.
+                                                                            using pre-trained vision-language model.
+  org/10.1061/(asce)cp.1943-5487.0000945                                    Computer-Aided Civil and Infrastructure
+Yong, G., Jeon, K., Gil, D., & Lee, G. (2023). Prompt engineering for       Engineering, 40, 6004–6023.
+  zero-shot and few-shot defect detection and classification using          https://doi.org/10.1111/mice.70129
+  a visual-language pretrained model. Computer-Aided Civil and
+

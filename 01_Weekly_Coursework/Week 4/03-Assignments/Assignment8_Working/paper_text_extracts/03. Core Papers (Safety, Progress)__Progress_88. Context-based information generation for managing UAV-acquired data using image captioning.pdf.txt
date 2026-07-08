@@ -1,0 +1,536 @@
+                                                                   Automation in Construction 112 (2020) 103116
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                                 Automation in Construction
+                                                        journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Context-based information generation for managing UAV-acquired data                                                                                             T
+using image captioning
+Seongdeok Bang, Hyoungkwan Kim
+                                                             ⁎
+
+School of Civil and Environmental Engineering, Yonsei University, Republic of Korea
+
+
+
+
+ARTICLE INFO                                                ABSTRACT
+
+Keywords:                                                   Unmanned aerial vehicles (UAVs) can efficiently collect image data representing various situations at con-
+Image captioning                                            struction sites, however, it requires a lot of time and cost to analyze it manually to retrieve useful information for
+Text generation                                             on-site management. The paper proposes a methodology to generate time-spatial and visual context-based in-
+On-site management                                          formation from UAV-acquired data. This methodology generates textual information on the position, status,
+UAV
+                                                            movement, color, and quantity of construction resources from site images using image captioning. Then, con-
+                                                            struction site images, text generated from them, and UAV flight data containing the latitude, longitude, date, and
+                                                            time of day, are systemized into a database. For evaluating the proposed methodology, data obtained by UAV at
+                                                            actual construction sites was used. Our methodology could predict textual information with a mean average
+                                                            precision of 43.52%, which is superior to those of existing methods.
+
+
+
+
+1. Introduction                                                                               analyze a large number of construction site images manually. When a
+                                                                                              construction site is large and the data-recording period becomes longer,
+    The development of data-collection and storage technologies allows                        this work becomes more difficult. Advancements in computer-vision
+us to collect enormous amounts of data and manage them with a                                 technology make it possible to obtain useful information from images
+computerized system. In this context, data generated during the life                          automatically. In particular, image captioning, a computer vision-based
+cycle of a construction project, such as planning, design, construction,                      technology, is gaining traction in this field [15–17]. This technology
+and operation, is traditionally stored in the form of documents, images,                      understands the characteristics of objects, their activities, and re-
+web pages, and Building Information Modeling (BIM) [1–3]. As tech-                            lationships and expresses them in the natural language. The use of
+nologies such as sensor networks and the Internet of Things (IoT) are                         image captioning may enable efficient management of a large number
+being commercialized, the amount of data available in the construction                        of construction site images acquired per day by enabling the adminis-
+industry is expected to increase even more. Based on the “big data”                           trator to search the image they want to check in a short time.
+accumulated in the construction industry, many attempts have been                                 Previously, image captioning studies have been conducted on da-
+made to extract useful knowledge to support construction project                              tasets consisting of everyday images, such as the PASCAL Sentence
+management. To develop an effective project management system, it is                          dataset [18], Flickr 30K [19], Microsoft COCO dataset [20], and Visual
+necessary to consider the surrounding environmental, temporal, and                            Genome [21]. However, site managers need more high-level manage-
+spatial context when extracting information from the available data.                          rial information than these techniques can provide. This information
+    The introduction of unmanned aerial vehicles (UAVs) has enabled                           includes knowledge created based on the contextual interpretation of
+image data collection to represent various situations in a wide range of                      objects and situational awareness from images, such as the quantity of
+construction sites. UAVs can generate a large number of construction                          materials, installation status of specific structures, and the movement of
+site images in a short time owing to their excellent maneuverability.                         workers or construction equipment. Based on image captioning tech-
+UAV-acquired construction site images provide managers with visual                            nology, studies should be conducted to extract such information from
+information, such as the presence of construction resources and pro-                          construction site images. However, because image captioning only ex-
+gress of construction work. From these images, managers can recognize                         tracts information from images, other information that is difficult to
+construction resources and understand the construction process occur-                         obtain from images should be acquired separately. At construction sites,
+ring on a site. However, considerable time and effort are required to                         similar images may be obtained even if they were taken at different
+
+
+
+  ⁎
+      Corresponding author.
+      E-mail addresses: bangdeok@yonsei.ac.kr (S. Bang), hyoungkwan@yonsei.ac.kr (H. Kim).
+
+https://doi.org/10.1016/j.autcon.2020.103116
+Received 10 July 2019; Received in revised form 24 January 2020; Accepted 1 February 2020
+Available online 07 February 2020
+0926-5805/ © 2020 Elsevier B.V. All rights reserved.
+S. Bang and H. Kim                                                                                                  Automation in Construction 112 (2020) 103116
+
+
+times and locations because of the repetition of certain tasks in some           a vision-based video-interpretation model to generate productivity in-
+processes. Thus, time and location information should accompany the              formation with a case study on the concrete column pour process. Kim
+captured image. The textual information extracted from images, such as           et al. [31] presented an algorithm for analyzing earthmoving pro-
+location, color, states, movements and quantities of key construction            ductivity to automatically generate site-access documentation based on
+resources, can generate new information by combining with time and               the detection of license plates of construction vehicles. Bügler et al.
+space data. For example, this information can be used as evidence of             [32] suggested a productivity-estimation method for soil removal by
+litigation between project stockholders or schedule management of                quantifying the volume of excavated soil via photogrammetry and
+construction processes by comparison with as-planned data. It can also           video analysis. Kim et al. [33] analyzed the productivity of a tunnel
+help make daily logs, which periodically record as-built data of con-            earthmoving process based on WebCYCLONE simulation and detection
+struction sites.                                                                 of excavators and dump trucks. Kim and Chi [34] proposed a frame-
+     UAVs can replace manual monitoring at a large-scale construction            work for recognizing the movement of excavators to compute their
+sites by obtaining visual data efficiently. To effectively manage the            earthmoving cycle time.
+large amount of data acquired from UAVs, we propose a methodology                    All the studies cited above employed construction resource re-
+to generate context-based information from construction site images              cognition for contextual reasoning in images. For example, in safety
+using UAV-acquired data and image captioning. The proposed metho-                assessment studies, hazardous situations were defined using statistical
+dology predicts sentences to describe images using dense captioning,             information, such as the distance between a worker and equipment,
+which is a subset of the image captioning technology. The produced               based on the detected resources. To obtain contextual information, they
+sentences provide information on the position, status, movement, color,          combined computer vision technologies with inference methods such as
+and quantity of construction resources. Then, unstructured data, in-             fuzzy logic, rule-based expert systems, and appearance-based ap-
+cluding construction site images, text generated by the first technique,         proaches. These inference methods should be integrated with com-
+and flight data, including the time and location corresponding to each           puter-vision technology to develop more automatic and meaningful
+image are systemized, thus resulting in the creation of database. This           generation of contextual information from images.
+database provides spatiotemporal information with textual description
+to site managers. Experimental results demonstrate that the proposed             2.2. Image captioning technology
+methodology can effectively generate context-based information from
+UAV-acquired data.                                                                    Image captioning is a technology that automatically generates tex-
+                                                                                 tual descriptions from images for semantic indexing and retrieval from
+2. Related studies                                                               large image databases or extracting information or insights. This tech-
+                                                                                 nology performs object recognition from an image, infers the relation-
+2.1. Information retrieval from construction site images                         ship between the recognized object to understand the event in the
+                                                                                 image, and generates an analysis in the natural language. To this end,
+    Images taken at construction sites have been widely used to retrieve         image captioning was initially studied to obtain image features such as
+on-site information for construction management. Some studies have               its color, texture, and descriptor and to match them with a set of words
+tried to address the safety problem by determining individual workers'           using a training dataset with a given set of annotation words for each
+safety level or identifying whether workers are wearing safety equip-            image [35–38].
+ment. Kim et al. [4] suggested a proximity-measurement method in                      Deep learning-based image captioning methods extract feature
+construction resources using 2D images collected from a UAV and                  vectors from images and translate them into the natural language using
+YOLO-v3 model. Kim et al. [22] proposed a vision-based hazard-                   both natural language-processing (NLP) and computer-vision technol-
+avoidance system to augment the hazard information of each con-                  ogies. Recently, a deep neural network, composed of a convolutional
+struction worker on a wearable device using fuzzy-based reasoning of             neural network (CNN) followed by a recurrent neural network (RNN)
+the safety level. Kolar et al. [23] developed a detection model for safety       language model to implement NLP and computer vision in one model,
+guardrails to prevent workers from falling from heights using transfer           has been designed [16,39,40]. In this design, two approaches, top-down
+learning and the VGG-16 model. Fang et al. [24] developed Faster R-              and bottom-up, were employed. The top-down approach obtains image
+CNN and deep CNN models to detect workers and their harnesses for                features, such as color, texture, and descriptor, and translates them into
+proactively identifying unsafe behavior and mitigating the likelihood of         sentences using a set of words [35,39]. This approach finds it difficult to
+falls from heights. Mneymneh et al. [25] proposed a vision-based                 deliver detailed descriptions of an image as it uses feature vectors ex-
+monitoring framework for hardhat wearing by developing motion-                   tracted from the entire image. This disadvantage becomes more pro-
+based human detection and color-based hardhat detection.                         nounced in the analysis of construction site images because they have
+    Meanwhile, some researchers focused on automatically monitoring              more complex backgrounds and more objects than the images of such
+the progress of construction work. Bang et al. [9] suggested the auto-           dataset used in the computer-vision field. In contrast, the bottom-up
+matic generation of high-resolution maps to easily identify the status of        approach derives words from specific regions of an image and combines
+a construction site using UAV-acquired images and image stitching.               them for predicting sentences. To emulate the way in which humans
+Han and Golparvar-Fard [26] presented an appearance-based material               perceive an image, it is necessary to focus on the important parts of the
+recognition method using 4D BIM and 3D point cloud models for de-                image rather than uniformly analyzing the entire image. However, the
+tecting operation-level progress. Kropp et al. [27] suggested an indoor          bottom-up approach simply combines keywords extracted from an
+progress-monitoring method to compare the current state of construc-             image to produce misleading results that do not make sense.
+tion activities from as-built video with as-planned 4D BIM information.               Dense captioning [15] was proposed to generate dense and rich
+Hamledari et al. [28] identified the components of an interior partition         annotations by image captioning in several regions of an image using
+and classified them into five states (framing, insulation, installed dry-        both top-down and bottom-up approaches. Dense captioning localizes
+wall, plastered drywall, and painted partition) for tracking progress.           regions of interest and describes each of them in the natural language
+Turkan et al. [29] proposed a tracking system for temporary and sec-             by performing object-detection, soft spatial-attention, and image cap-
+ondary components, such as formwork, scaffolding, shoring, and rebar,            tioning tasks simultaneously in one model. The process of dense cap-
+to estimate construction progress using photogrammetry and 3D ter-               tioning is as follows. First, object candidate regions are produced by
+restrial laser scanning.                                                         applying soft spatial attention to the region proposal network (RPN) of
+    Other studies analyzed construction site images for evaluating               the faster region-based convolutional neural network (R-CNN) [41].
+productivity in a construction process. Gong and Caldas [30] proposed            Soft spatial attention enables the smooth extraction of a fixed-size
+
+                                                                             2
+S. Bang and H. Kim                                                                                                    Automation in Construction 112 (2020) 103116
+
+
+vector from regions of different sizes and orientations because it can           proactively preventing accidents by assessing the safety level of con-
+process arbitrary affine transformed regions. Later, the fixed-size vector       struction workers, analyzing the productivity of earthworks by re-
+extracted from an image is input to a RNN language model, which is               cognizing the amount of soil in dump trucks and movement of ex-
+trained to predict the next word based on a vector extracted from the            cavators, and monitoring work progress by identifying the number of
+image and a sequence of previously used words. Word prediction is                key materials and installed temporary structures. To automatically ex-
+repeated until RNN determines that all words have been predicted from            tract such information, the textual description technique makes use of
+the vector, and the sequence of predicted words constitutes a sentence           dense captioning. Fig. 2 shows a brief schema of the dense captioning
+as the output of the RNN model for each image region.                            used in this technique. The input image is first processed by Faster R-
+    Unlike other image captioning methods, dense captioning is useful            CNN to output object-candidate region vectors. Region vectors are
+for analyzing construction site images with many objects and multiple            produced using the soft attention mechanism implemented in a locali-
+relationships; it focuses attention on image regions containing objects.         zation layer. Region vectors are then entered into the long-short term
+However, it is difficult to provide the managerial information required          memory model (LSTM) to produce their own sentences. The LSTM, a
+by construction managers using expressions produced by the existing              type of RNN, recognizes patterns in sequence-type data; it was devel-
+methods (e.g. “skateboard with red wheels” or “a cat riding a skate-             oped to solve the problem of long-term dependence in which previous
+board”). To address this problem, it is necessary to define textual de-          information is not sufficiently transmitted when the time-step of the
+scriptions useful for on-site management and to create them. Thus, this          RNN increases. The LSTM employs a forget gate to improve the accu-
+study aims to develop a construction information generation method to            racy of sentence predictions by applying a low weight to non-critical
+express detailed events occurring on construction sites in a text format.        information and a high weight to critical information. When the LSTM
+                                                                                 determines the end of a sentence, it stops the prediction process and
+3. Methodology                                                                   outputs the sequence of words predicted to that point as a sentence.
+                                                                                      In this study, five types of information, including position, status,
+    The methodology for context-based construction information builds            movement, color, and quantity, were defined for generating the man-
+a database considering time-spatial context and situational awareness            agerial information required by construction managers. Firstly, position
+at a construction site from UAV-acquired data consisting of images and           provides the background information on construction resources.
+flight data. First, construction resources are detected from an image and        Depending on site characteristics, construction resources can be located
+sentences are generated describing their position, status, movement,             on natural substances, such as soil, rocks, and grass, or on structures
+color, and quantity using the dense captioning technology. Next, the             built during the construction process, such as concrete, steel plates, and
+latitude, longitude, and date and time of day corresponding to the               scaffolds. The position information is the basis for identifying and
+image are imported from UAV flight data. Finally, data with location,            tracking the location of key material or equipment. Secondly, status
+time, and generated textual descriptions for each construction site              provides information on the state of construction resources. For ex-
+image is structured into a database. Thus, time-spatial and visual con-          ample, information on whether structures are installed or not, whether
+text-based information is retrieved from UAV-acquired data. In this              materials are covered by soil or other resources, and whether a con-
+study, the context-based information can be generated based on auto-             struction equipment is loaded with something or is empty is included in
+matic situational awareness with considering the surrounding en-                 the status information. The status of construction resources is under-
+vironment by using analysis results of data collected from sensors at-           stood in relation to the surrounding environment. Movement describes
+tached to UAVs. This information can visually represent specific                 the behavior of portable construction resources. The information spe-
+construction sections at a given time with textual descriptions of con-          cifies the operation type of resources to identify various construction
+struction resources. Fig. 1 shows the framework of the proposed                  works. For example, the operation types of the excavator can be iden-
+methodology.                                                                     tified by swing, digging, or hauling. Meanwhile, color provides the
+    UAV-acquired construction site images provide information on the             appearance information for accurate identification of construction re-
+actions of construction resources, their state, identification, quantity,        sources. When similar construction resources performing different tasks
+and relationship with other objects or the background. This information          are on a site, they can be better classified with the color information for
+can be used as a basis for on-site management practices, such as                 clear situational awareness. Finally, quantity recognizes the number or
+
+
+
+
+                                        Fig. 1. Framework for generation of context-based construction information.
+
+
+
+                                                                             3
+S. Bang and H. Kim                                                                                                        Automation in Construction 112 (2020) 103116
+
+
+
+
+                                                       Fig. 2. Brief schema of the dense captioning model.
+
+
+Table 1                                                                              second moments of 0.900 and 0.999, respectively. The number of
+Example sentences created based on the five types of information.                    iterations and dropout probability in the training process were set to
+ Information type        Examples of sentences
+                                                                                     100,000 and 0.5, respectively.
+
+ Position                A pile of rebar is located on soil
+                         A concrete pillar is installed on concrete
+                                                                                     4.2. Pre-processing on the dataset
+ Status                  A pile of mold is installed on a temporary building
+                         A silver dump truck is loaded with soil                         Five pre-processing techniques were applied to the dataset for im-
+ Movement                An orange excavator is putting soil into a dump truck       proving the performance of text prediction from construction site
+                         An orange excavator is digging soil
+                                                                                     images. Two pre-processing techniques were applied to bounding boxes
+ Color                   A blue dump truck is located on soil
+                         An orange excavator is located on soil                      indicating the object regions of images and the other three pre-pro-
+ Quantity                Three piles of rebar are located on concrete                cessing techniques were applied to captions describing these object
+                         Twelve concrete pipes are located on soil                   regions. The first pre-processing merged two bounding boxes with
+                                                                                     overlapping areas of more than 80% into one box with multiple cap-
+A bold font indicates the information type that examples of sentences want to
+                                                                                     tions. The two overlapping boxes were merged by taking the average
+provide.
+                                                                                     values of each position information (x- and y-coordinates of the centre
+                                                                                     point, width, and length). This technique prevents confusion in the
+amount of construction resources. Stacked materials that are difficult to
+                                                                                     object recognition process by integrating the position information of
+count accurately in an image are quantified in a pile unit. This in-
+                                                                                     different bounding boxes representing the same object into one. The
+formation can be used to compare between as-planned and as-built.
+                                                                                     second pre-processing removed a bounding box whose area was less
+Table 1 shows example sentences generated using the five types of in-
+                                                                                     than 2500 pixels. Because our datasets consist of images taken by UAVs
+formation described above. The dense captioning model was trained to
+                                                                                     at high altitudes, they include many small objects. These small objects
+predict sentences in the manner described in Table 1 from the input
+                                                                                     do not have sufficient evidence (i.e. visual features in the images) for
+image. As the output of this technique, textual descriptions are gener-
+                                                                                     the model to extract their information. Thus, we excluded areas and
+ated from construction site images using the dense captioning model.
+                                                                                     captions of images for small objects from the training and testing pro-
+                                                                                     cess.
+4. Experimental studies                                                                  Natural language data typically includes a character string that
+                                                                                     prevents data from being interpreted, such as misspelled words or
+4.1. Experimental environment and the dataset                                        special characters. To learn a meaningful pattern from text data, a pre-
+                                                                                     processing technique is essential to eliminate these strings and simplify
+    The proposed methodology was implemented on an Ubuntu 16.04                      the predictive scope of the language model, which should predict the
+operating system with an Intel Core i7-7700 processor and GTX 1080 Ti                probability of a word sequence. To this end, the three pre-processing
+GPU, using Python and Lua programming languages. Torch, a machine-                   techniques, which were applied to captions of the dataset, aim to re-
+learning library, was used to train and test the dense captioning model.             duce the dimension of the dictionary. A dictionary is a set of words used
+Microsoft Excel was used to systemize UAV-acquired data on a                         to predict sentences, which works by encoding all words in the training
+spreadsheet. A Phantom 3 Professional UAV (DJI Corporation) was used                 data into numbers that the language model can identify. A high di-
+to collect construction site images. The dataset consisted of 1431                   mension in the dictionary, i.e. a large number of words used to predict
+images obtained from six different construction sites including 8428                 sentences, not only reduces sentence-prediction accuracy in the lan-
+captions generated using the textual description technique; each cap-                guage model but also increases the calculation time.
+tion corresponded to a region in a given image. As shown in Fig. 3, the                  The first pre-processing for captions replaced all uppercase letters in
+images and captions in the dataset were manually annotated using VGG                 the dataset with lowercase letters. In the dataset, the first letter of a
+image annotator [42]. The resolution of the original image was                       sentence usually begins with an uppercase letter. Sometimes, words
+3840 × 2160; however, for computational efficiency, it was adjusted to               that should be expressed in lowercase letters may be misrepresented
+960 × 540 after preserving the aspect ratio of the image. The dense                  with uppercase letters. This pre-processing is necessary because the
+captioning model was trained with a learning rate of 0.000001. An                    dimension of the dictionary is increased by recognizing upper and
+Adam optimizer was used with exponential decay rates for the first and               lowercase letters separately in the programming language. The second
+
+                                                                                 4
+S. Bang and H. Kim                                                                                                      Automation in Construction 112 (2020) 103116
+
+
+
+
+                             Fig. 3. Example of manual labelling using the VGG image annotator with image regions and captions.
+
+
+
+
+Table 2                                                                            pre-processing was to perform Lemmatization, which converts words
+Types of words with a frequency of five or less in the dataset and their ex-       into a root word. For example, the words “changing” and “changes” are
+amples.                                                                            converted into the word “change.” Lemmatization was performed using
+ Type                         Words                                                the WordNetLemmatizer function of natural language toolkit (NLTK),
+                                                                                   one of Python's packages. The last pre-processing was to remove words
+ Unusual quantity             Fifteen, eleven, sixteen, nineteen, twentyone,       with a frequency of five or less from the dataset. Table 2 shows the
+     information              thirtytwo, twentytwo, twentythree, twentyseven
+                                                                                   types of removed words from the dictionary and their examples. Words
+ Unusual color information    Brown
+ Typing error                 Loaced, plie, exca, builing, os, soi                 with a low frequency in the dataset include misspellings and incorrect
+ Spacing error                Installedtwenty, locatedon, soila                    spacings, which occur during the manual process of creating captions.
+                                                                                   These words must be removed because they prevent the language
+                                                                                   model from undergoing correct training. In addition, low-frequency
+
+
+
+
+                                            Fig. 4. Application of the five pre-processing techniques to our dataset.
+
+
+
+                                                                               5
+S. Bang and H. Kim                                                                                                          Automation in Construction 112 (2020) 103116
+
+
+
+
+Fig. 5. Comparison between (a) ground-truth and (b) predictive result. (For interpretation of the references to color in this figure, the reader is referred to the web
+version of this article.)
+
+
+
+words represent unusual quantities and color information in the da-                    Then, Directory is partly represented by using a cell address with an
+taset. Image areas and captions with low-frequency words were ex-                      index number equal to an image file name (e.g., “C:\images\“&A2&
+cluded from the experiment because they were determined to be                          ”.jpg”). With the autofill function of the spreadsheet, the images are
+lacking in training data. Fig. 4 schematizes the results of the application            automatically inserted into the seventh column of Fig. 6. Finally, the
+of the five described pre-processing techniques on our dataset. As a                   proposed methodology imports flight data corresponding to the image.
+result of pre-processing, the number of images, number of captions, and                Phantom 3, which is the UAV employed for collecting data, recorded 32
+dimensions of the dictionary were reduced from 1431 to 1365, 8428 to                   types of flight information, including latitude, longitude, and altitude
+6904, and 160 to 81, respectively.                                                     every 0.1 s from the time of taking off until landing. Among these flight
+                                                                                       information data, there is a binary value called isPhoto; it records a
+4.3. Results                                                                           value of 1 when the UAV takes an image. The methodology takes the
+                                                                                       information (latitude, longitude, date, and time of day) with an isPhoto
+    Fig. 5 shows an example of comparing the ground-truths to the re-                  value of 1 from UAV flight data and inputs them into a spreadsheet file
+sults produced by using the textual generation technique. Fig. 5(a)                    as shown in Fig. 6.
+shows the ground-truth for image regions and captions of an image
+chosen from 365 test images and Fig. 5(b) shows the prediction results                 4.4. Evaluation and discussion
+of region detection and region-specific captioning. All seven objects in
+Fig. 5(b) were detected by 10 bounding boxes, but the proposed                             To demonstrate the proposed methodology, the dense captioning
+methodology fails to predict all ground-truth sentences in Fig. 5(a). The              model was trained using the dataset with the five pre-processing tech-
+bounding box marked in blue in Fig. 5(a) shows that the truck has                      niques. Of the 1365 images in the dataset after pre-processing, 1000
+ground-truth information on the position, status, quantity and color.                  images were used to train the dense captioning model and the re-
+However, Fig. 5(b) shows that the proposed methodology fails to gen-                   maining 365 images were used to test the model (Fig. 7). The dataset
+erate status information, which is “a white truck is empty.” Although                  was randomly and exclusively divided into training and test dataset.
+errors in object recognition or sentence prediction occur as shown in                  Some of the training and testing images may be obtained from the same
+Fig. 5(b), the proposed methodology succeeds in producing six out of                   construction site, however, they are acquired at different times and are
+eight information.                                                                     not visually identical. The predicted results were measured in terms of
+    Fig. 6 shows an example in which data with latitude, longitude,                    the mean Average Precision (mAP), which have been used in previous
+date, time of day, construction site images, and generated text in-                    dense captioning studies to evaluate localization and language simi-
+formation are organized into a spreadsheet format. Image files stored in               larity simultaneously [15,17]. Localization accuracy was determined by
+a computer were entered into the cells of the spreadsheet using the                    intersection of union (IoU), Fig. 6. Formation of a spreadsheet by the
+image and table tag of the HTML program (Eq. (1)).                                     data-organization technique which represents the quality of match
+                                                                                       between the prediction bounding box and the reference. Meanwhile,
+img src = “Directory”width = W height = H table                              (1)
+                                                                                       language prediction accuracy was determined using Metric for Eva-
+    Here, Directory indicates the path of the image file including the file            luation of Translation with Explicit ORdering (METEOR), which yields
+name in a computer, and W and H denote the width and height, re-                       the harmonic mean of precision and recall. METEOR was used in this
+spectively, based on which the image will be inserted into the cell of the             study as it had been considered the most relevant indicator in image
+spreadsheet file. The process to build a database using a spreadsheet file             description evaluation [43]. Mean Average Precision was calculated by
+is as follows. First, to import the image files in numerical order, their              averaging at different IoU thresholds of 0.3, 0.4, 0.5, 0.6, and 0.7 and
+names are set to the index numbers shown in the first column of Fig. 6.                METEOR thresholds of 0, 0.05, 0.1, 0.15, 0.2, and 0.25. These
+
+                                                                                   6
+S. Bang and H. Kim                                                                   Automation in Construction 112 (2020) 103116
+
+
+
+
+                                 Fig. 6. Formation of a spreadsheet.
+
+
+
+
+                     Fig. 7. Examples of (a) training image and (b) testing image.
+
+
+
+
+                                                  7
+S. Bang and H. Kim                                                                                                        Automation in Construction 112 (2020) 103116
+
+
+
+
+                          Fig. 8. Comparison between prediction results: (a) image with pre-processing and (b) image without pre-processing.
+
+
+thresholds were the criteria for determining the predictive success of                  Table 4
+localization and language prediction. For example, if the METEOR be-                    Mean average precision (mAP) of text generation by information type and
+tween the predictive sentence and the ground-truth was greater than or                  number of captions in the test dataset.
+equal to the threshold, the language prediction was considered to be                     Information type               mAP                      Number of captions
+successful. To compare the performance of the proposed methodology
+with the existing dense captioning studies [15,17], the thresholds for                   Position                       43.50                    1873
+                                                                                         Status                         41.27                     653
+IoU and METEOR used in this study were applied in the same way as
+                                                                                         Movement                        2.73                     143
+the previous studies. The experimental results confirmed that it is fea-                 Color                          47.72                     592
+sible to generate textual descriptions from construction site images                     Quantity                       26.18                     592
+using the dense captioning model using the five types of information on                  Total                          43.52                    2103
+construction resources. Although we experimented with a dataset dif-
+ferent from that used for existing studies, Johnson et al. [15] and Yang
+et al. [17] showed the mAP of 5.39% and 9.31% for the visual genome
+V1.0 dataset, respectively.                                                             experimental results demonstrated that the proposed pre-processing
+    Table 3 shows the differences in the performance of the models                      techniques were effective in improving the performance of the model
+according to whether the pre-processing was performed or not. Our                       by increasing the mAP by 5.89%. Referring to Fig. 8(b), the model
+                                                                                        without pre-processing misjudged six small-size image regions as the
+                                                                                        existence of construction workers and predicted sentences based on the
+Table 3                                                                                 misidentified construction resources. However, referring to Fig. 8(a),
+Comparison of image-description performance (mAP) of the proposed metho-                the model with pre-processing could generate more accurate text in-
+dology with and without pre-processing.                                                 formation because it resulted in relatively few object detection errors.
+ Model                           mAP           Number of training and test images       The predictive sentences in Fig. 8(a) did not start with a capital letter
+                                                                                        and included a subject-verb agreement error (e.g. “eleven beam are”
+ Without pre-processing          37.63%        Training 1066, Test 365                  not “eleven beams are”) due to the pre-processing, but these errors do
+ With pre-processing             43.52%        Training 1000, Test 365
+                                                                                        not matter in information delivery.
+                                                                                            Table 4 shows the accuracy of text generation by information type
+
+                                                                                    8
+S. Bang and H. Kim                                                                                                         Automation in Construction 112 (2020) 103116
+
+
+and the number of captions in the test dataset. The accuracy corre-             managerial information. Using the generated context-based informa-
+sponding to information type (position, status, and color) was similar to       tion, the managers can identify the amount and exact location of spe-
+the average mAP. However, the accuracy corresponding to quantity and            cific construction resources, and the installation status of the temporary
+movement information was significantly lower than the average mAP.              structure in the particular construction section at a given time using the
+In particular, the mAP corresponding to movement was 2.73%, showing             database generated by the proposed methodology. Furthermore, based
+that the proposed method rarely yields information that can describe            on the context-based information, if the construction progress for a
+the movement of construction resources in the image. These results              particular section is later than the planned schedule, the managers may
+highlight the limitations of the proposed methodology. This metho-              make decisions such as increasing the amount of resources input into
+dology finds it difficult to clearly understand physical movements be-          the section or changing the order of the construction process. Our ex-
+cause it extracts information from a single static image. Furthermore,          perimental results showed the feasibility of deep learning-based image
+quantity information cannot be generated correctly unless the model             captioning in the construction industry. Second, a dataset consisting of
+accurately detects all the construction resources in the image.                 construction site images and captions was created. Existing image da-
+    Here, we present two suggestions to improve the proposed metho-             tasets in the construction industry include the identification and posi-
+dology. First, video data should be analyzed to understand the move-            tion information of construction resources for classification, detection,
+ment of construction resources. Physical measurements of objects, such          and segmentation. In contrast, our dataset contains five types of text
+as their acceleration, speed, and direction, can be understood using            information on construction resources, as well as their identification
+object tracking algorithms based on video analysis. This analysis can           and position information. The dataset can continue to be used as a
+provide site managers with details of the actions of portable construc-         benchmark for textual information generation from construction site
+tion resources in the form of textual description. For example, it is           images.
+possible to measure the safety level of an individual worker or equip-              The purpose of this study is to develop a methodology for effectively
+ment performance such as idle time and work efficiency, and deliver             managing the enormous amount of construction site data obtained by
+them in text format. Secondly, new models and training data, which can          UAV. The results of this study are expected to increase the usability of
+improve the accuracy of object detection, should be developed. Deep             UAV-acquired data by generating context-based construction informa-
+learning-based object detection studies have been conducted in the field        tion and further contribute to the automation of construction. However,
+of construction; however, their generalization performance is not yet           future research is required to apply this methodology to real con-
+high enough for a variety of actual construction sites. The development         struction sites. The difficulty in creating movement information using a
+of new object detection algorithms, customized to suit the character-           static image and the low performance with respect to construction-re-
+istics of construction sites with considerations for domain knowledge,          source recognition would suggest the direction of future research ef-
+can improve the performance of this methodology. Such improvements              forts.
+can be strengthened when new algorithms are trained with large
+amounts of image data reflecting various situations at construction             Acknowledgements
+sites.
+                                                                                    This work was supported by the Graduate School of YONSEI
+5. Conclusion                                                                   University Research Scholarship Grants in 2019 and a National
+                                                                                Research Foundation of Korea (NRF) grant funded by the Ministry of
+    This study proposes a methodology for generating context-based              Science and ICT (No. 2018R1A2B2008600) and the Ministry of
+information from UAV-acquired data. The methodology provides in-                Education (No. 2018R1A6A1A08025348).
+formation on the position, status, movement, color, and quantity of
+construction resources from UAV-acquired construction site images.              References
+Deep learning-based dense captioning creates textual descriptions from
+the regions of an image based on object detection. Then, the metho-              [1] A.H. Alavi, A.H. Gandomi, Big data in civil engineering, Autom. Constr. 79 (2017)
+dology constructs a database in the form of a spreadsheet, which con-                1–2, https://doi.org/10.1016/j.autcon.2016.12.008.
+                                                                                 [2] M. Bilal, L.O. Oyedele, J. Qadir, K. Munir, S.O. Ajayi, O.O. Akinade, H.A. Owolabi,
+sists of construction site images, time and location from UAV flight                 H.A. Alaka, M. Pasha, Big data in the construction industry: a review of present
+data, and text information generated by the textual description tech-                status, opportunities, and future trends, Adv. Eng. Inform. 30 (3) (2016) 500–521,
+nique. To validate the proposed methodology, a dataset consisting of                 https://doi.org/10.1016/j.aei.2016.07.001.
+                                                                                 [3] K.K. Han, M. Golparvar-Fard, Potential of big visual data and building information
+1431 images captured by a UAV at six different construction sites and                modeling for construction performance analytics: an exploratory study, Autom.
+8601 captions describing the regions of the images was utilized. Of                  Constr. 73 (2017) 184–198, https://doi.org/10.1016/j.autcon.2016.11.004.
+1365 images processed by the five pre-processing techniques, 1000                [4] D. Kim, M. Liu, S. Lee, V.R. Kamat, Remote proximity monitoring between mobile
+                                                                                     construction resources using camera-mounted UAVs, Autom. Constr. 99 (2019)
+images were used to train the dense captioning model and the re-
+                                                                                     168–182, https://doi.org/10.1016/j.autcon.2018.12.014.
+maining 365 images were used to test the model. The dense captioning             [9] S. Bang, H. Kim, H. Kim, UAV-based automatic generation of high-resolution pa-
+model predicted sentences from the test images describing the con-                   norama at a construction site with a focus on preprocessing for image stitching,
+                                                                                     Autom. Constr. 84 (2017) 70–80, https://doi.org/10.1016/j.autcon.2017.08.031.
+struction site with a mAP of 43.52%, which showed a higher perfor-
+                                                                                 [15] J. Johnson, A. Karpathy, L. Fei-Fei, Densecap: fully convolutional localization
+mance than those of existing dense captioning studies. The predicted                  networks for dense captioning, Proceedings of the 2016 IEEE Conference on
+sentences were used to extract context-based information from UAV-                    Computer Vision and Pattern Recognition (CVPR 2016), Las Vegas, NV, pp.
+acquired construction site images along with time and location in-                    4565–4574. doi:https://doi.org/10.1109/CVPR.2016.494.
+                                                                                 [16] A. Karpathy, L. Fei-Fei, Deep visual-semantic alignments for generating image
+formation to build a database. The experimental results demonstrated                  descriptions, Proceedings of the 2015 IEEE Conference on Computer Vision and
+that the proposed methodology can effectively generate context-based                  Pattern Recognition (CVPR 2015), Boston, MA, pp. 3128–3137, doi:https://doi.
+information from UAV-acquired data.                                                   org/10.1109/CVPR.2015.7298932.
+                                                                                 [17] L. Yang, K. Tang, J. Yang, L.-J. Li, Dense Captioning With Joint Inference and
+    The contribution of this study to the construction industry is two-               Visual Context, arXiv preprint arXiv:1611.06949, (2016).
+fold. First, our study presents an image captioning-based methodology            [18] M. Everingham, S.A. Eslami, L. Van Gool, C.K. Williams, J. Winn, A. Zisserman,
+to generate time-spatial and visual context-based information from                    The pascal visual object classes challenge: a retrospective, Int. J. Comput. Vis. 111
+                                                                                      (1) (2015) 98–136, https://doi.org/10.1007/s11263-009-0275-4.
+UAV-acquired construction site images. To effectively manage the en-            [19] B.A. Plummer, L. Wang, C.M. Cervantes, J.C. Caicedo, J. Hockenmaier, S. Lazebnik,
+ormous amount of UAV-acquired data at construction sites, the pro-                   Flickr30k entities: collecting region-to-phrase correspondences for richer image-to-
+posed methodology systemized the database with attributes such as                    sentence models, Proceedings of the 2016 IEEE Conference on Computer Vision and
+                                                                                     Pattern Recognition (CVPR 2016), Las Vegas, NV, pp. 2641–2649, doi:https://doi.
+construction site image, text-based image description, and location and              org/10.1109/ICCV.2015.303.
+time of construction site, in order to provide site managers with
+
+                                                                            9
+S. Bang and H. Kim                                                                                                                           Automation in Construction 112 (2020) 103116
+
+
+[20] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollár,                       photogrammetry and video analysis for productivity assessment of earthwork
+     C.L. Zitnick, Microsoft Coco: Common Objects in Context, arXiv preprint                            processes, Comput. Aided Civ. Inf. Eng. 32 (2) (2017) 107–123, https://doi.org/10.
+     arXiv:1405.0312 (2014).                                                                            1111/mice.12235.
+[21] R. Krishna, Y. Zhu, O. Groth, J. Johnson, K. Hata, J. Kravitz, S. Chen, Y. Kalantidis,        [33] H. Kim, S. Bang, H. Jeong, Y. Ham, H. Kim, Analyzing context and productivity of
+     L.-J. Li, D.A. Shamma, Visual genome: connecting language and vision using                         tunnel earthmoving processes using imaging and simulation, Autom. Constr. 92
+     crowdsourced dense image annotations, Int. J. Comput. Vis. 123 (1) (2017) 32–73,                   (2018) 188–198, https://doi.org/10.1016/j.autcon.2018.04.002.
+     https://doi.org/10.1007/s11263-016-0981-7.                                                    [34] J. Kim, S. Chi, Action recognition of earthmoving excavators based on sequential
+[22] K. Kim, H. Kim, H. Kim, Image-based construction hazard avoidance system using                     pattern analysis of visual features and operation cycles, Autom. Constr. 104 (2019)
+     augmented reality in wearable device, Autom. Constr. 83 (2017) 390–403, https://                   255–264, https://doi.org/10.1016/j.autcon.2019.03.025.
+     doi.org/10.1016/j.autcon.2017.06.014.                                                         [35] K. Barnard, P. Duygulu, D. Forsyth, N.D. Freitas, D.M. Blei, M.I. Jordan, Matching
+[23] Z. Kolar, H. Chen, X. Luo, Transfer learning and deep convolutional neural networks                words and pictures, J. Mach. Learn. Res. 3 (2003) 1107–1135, https://doi.org/10.
+     for safety guardrail detection in 2D images, Autom. Constr. 89 (2018) 58–70,                       1109/83.826781.
+     https://doi.org/10.1016/j.autcon.2018.01.003.                                                 [36] E. Chang, K. Goh, G. Sychay, G. Wu, CBSA: content-based soft annotation for
+[24] W. Fang, L. Ding, B. Zhong, P.E. Love, H. Luo, Automated detection of workers and                  multimodal image retrieval using Bayes point machines, IEEE Trans. Circuits Syst.
+     heavy equipment on construction sites: a convolutional neural network approach,                    Video Technol. 13 (1) (2003) 26–38, https://doi.org/10.1109/TCSVT.2002.
+     Adv. Eng. Inform. 37 (2018) 139–149, https://doi.org/10.1016/j.aei.2018.05.003.                    808079.
+[25] B.E. Mneymneh, M. Abbas, H. Khoury, Vision-based framework for intelligent                    [37] S. Feng, R. Manmatha, V. Lavrenko, Multiple Bernoulli relevance models for image
+     monitoring of hardhat wearing on construction sites, J. Comput. Civ. Eng. 33 (2)                   and video annotation, Proceedings of the 2004 IEEE Computer Society Conference
+     (2018) 04018066, , https://doi.org/10.1061/(ASCE)CP.1943-5487.0000813.                             on Computer Vision and Pattern Recognition (CVPR 2004), Washington, DC, vol. 2,
+[26] K.K. Han, M. Golparvar-Fard, Appearance-based material classification for mon-                     pp. II-II, DOI., doi:https://doi.org/10.1109/CVPR.2004.1315274.
+     itoring of operation-level construction progress using 4D BIM and site photologs,             [38] J. Li, J.Z. Wang, Automatic linguistic indexing of pictures by a statistical modeling
+     Autom. Constr. 53 (2015) 44–57, https://doi.org/10.1016/j.autcon.2015.02.007.                      approach, IEEE Trans. Pattern Anal. Mach. Intell. 25 (9) (2003) 1075–1088,
+[27] C. Kropp, C. Koch, M. König, Interior construction state recognition with 4D BIM                   https://doi.org/10.1109/TPAMI.2003.1227984.
+     registered image sequences, Autom. Constr. 86 (2018) 11–32, https://doi.org/10.               [39] J. Mao, W. Xu, Y. Yang, J. Wang, A.L. Yuille, Explain Images with Multimodal
+     1016/j.autcon.2017.10.027.                                                                         Recurrent Neural Networks, arXiv preprint arXiv:1410.1090, (2014).
+[28] H. Hamledari, B. McCabe, S. Davari, Automated computer vision-based detection of              [40] J.-Y. Pan, H.-J. Yang, P. Duygulu, C. Faloutsos, Automatic image captioning,
+     components of under-construction indoor partitions, Autom. Constr. 74 (2017)                       Proceedings of the 2004 IEEE International Conference on Multimedia and Expo
+     78–94, https://doi.org/10.1016/j.autcon.2016.11.009.                                               (ICME 2004), Taipei, Taiwan, vol. 3, pp. 1987–1990, doi:https://doi.org/10.1109/
+[29] Y. Turkan, F. Bosché, C. T. Haas, R. Haas, Tracking of secondary and temporary                     ICME.2004.1394652.
+     objects in structural concrete work, Constr. Innov. 14 (2) (2014) 145–167, https://           [41] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: Towards Real-time Object
+     doi.org/10.1108/CI-12-2012-0063.                                                                   Detection With Region Proposal Networks, arXiv preprint arXiv:1506.01497
+[30] J. Gong, C.H. Caldas, Computer vision-based video interpretation model for auto-                   (2015).
+     mated productivity analysis of construction operations, J. Comput. Civ. Eng. 24 (3)           [42] A. Dutta, A. Zisserman, The VGG Image Annotator (VIA), arXiv preprint
+     (2009) 252–263, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000027.                                arXiv:1904.10699, (2019).
+[31] H. Kim, Y. Ham, W. Kim, S. Park, H. Kim, Vision-based nonintrusive context doc-               [43] R. Vedantam, C. Lawrence Zitnick, D. Parikh, CIDEr: consensus-based image de-
+     umentation for earthmoving productivity simulation, Autom. Constr. 102 (2019)                      scription evaluation, Proceedings of the 2015 IEEE conference on computer vision
+     135–147, https://doi.org/10.1016/j.autcon.2019.02.006.                                             and pattern recognition (CVPR 2015), Boston, MA, pp. 4566–4575, doi:https://doi.
+[32] M. Bügler, A. Borrmann, G. Ogunmakin, P.A. Vela, J. Teizer, Fusion of                              org/10.1109/CVPR.2015.7299087.
+
+
+
+
+                                                                                              10
+

@@ -1,0 +1,866 @@
+International Journal of Data Science and Analytics (2025) 20:5157–5170
+https://doi.org/10.1007/s41060-025-00807-x
+
+    REVIEW
+
+
+
+A Review on Privacy-Preserving Techniques for Spatiotemporal Data
+Shadwa AbuElHassan1 · Alshaimaa Abo Alian1 · Tamer AbdelKader1,2 · Nagwa Badr1
+
+Received: 14 December 2024 / Accepted: 5 May 2025 / Published online: 26 May 2025
+© The Author(s) 2025
+
+
+Abstract
+The rapid proliferation of spatiotemporal data—originating from GPS-enabled devices, sensor networks, IoT ecosystems, and
+social media platforms—has raised critical privacy concerns. Protecting sensitive information while preserving data utility is
+increasingly becoming a central research challenge. Although existing surveys have addressed privacy-preserving methods,
+many lack systematic methodological frameworks, rigorous quantitative comparisons, or in-depth analysis of emerging tech-
+niques tailored to spatiotemporal contexts. This survey bridges these gaps by offering a comprehensive and structured review
+of privacy-preserving techniques specific to spatiotemporal data. Our contributions include: (i) a systematic methodology
+for selecting and evaluating relevant literature from reputable sources, (ii) a novel theoretical classification of techniques
+including data anonymization, differential privacy, cryptographic methods, federated learning, and geospatial watermarking,
+(iii) a quantitative comparison based on standardized performance metrics, and (iv) a critical analysis of hybrid approaches
+that integrate differential privacy, cryptography, and machine learning. Furthermore, the paper highlights current limitations,
+practical challenges, and key areas for future research, serving as a roadmap for researchers and practitioners. The insights
+provided aim to foster the development of robust, scalable, and privacy-aware solutions for spatiotemporal data analysis.
+
+Keywords Privacy-preserving techniques · Spatiotemporal data · Differential privacy · Homomorphic encryption · Federated
+learning
+
+
+List of Abbreviations                                                          ARS     Area of Responsibility
+      GPS        Global Positioning System                                       CA    Classification Accuracy
+       IoT       Internet of Things                                   KL-Divergence    Kullback–Leibler Divergence
+      IIoT       Industrial Internet of Things                                  IER    Inference Error Rate
+     SMC         Secure Multiparty Computation                                SFRR     Statistical Feature Retention Rate
+   M-IoT         Mobile Internet of Things                                  WGAN       Wasserstein Generative Adversarial Net-
+     MCS         Mobile Crowdsensing                                                   work
+     POIs        Points of Interest                                          pCDBN     Probabilistic Conditional Deep Belief Net-
+                                                                                       work
+International Journal of Data Science and Analytics.                          STDM     Spatiotemporal Data Mining
+                                                                               HyInc   Hybrid Incentive Mechanism
+B Shadwa AbuElHassan                                                      TPP-DABD     Trajectory Data Publishing by Dynamic
+     shadwa2016170215@cis.asu.edu.eg
+                                                                                       Anonymization with Bounded Distortion
+     Alshaimaa Abo Alian                                                       SN      Social Network
+     a_alian@cis.asu.edu.eg
+                                                                            DPDCM      Differentially Private Data Collection Mech-
+     Tamer AbdelKader                                                                  anism
+     tamer.abdelkader@gu.edu.eg; tammabde@cis.asu.edu.eg
+                                                                           RAPPOR      Randomized Aggregatable Privacy-Preserving
+     Nagwa Badr                                                                        Ordinal Response
+     nagwabadr@cis.asu.edu.eg
+                                                                          ORAPPOR      Optimized Randomized Aggregatable Privacy-
+1    Information Systems Department, Faculty of Computer and                           Preserving Ordinal Response
+     Information Sciences, Ain Shams University, Cairo, Egypt                  S2M     Single to Randomized Multiple Dummies
+2    Faculty of Computer Science and Engineering, Galala                       MDN     Multidimensional Negative Surveys
+     University, Galala Plateau, Egypt
+
+
+                                                                                                                     123
+5158                                                                International Journal of Data Science and Analytics (2025) 20:5157–5170
+
+
+       PDE         Perturbing Data with Sensing Errors              such as “spatiotemporal data privacy”, “privacy-preserving
+       ETE         Estimating True Distribution Considering         techniques”, and “location and time-based privacy”. Each
+                   Sensing Errors                                   candidate study was then screened against predefined criteria
+  DPCP             Data Privacy and Confidentiality Policy          to ensure relevance, methodological rigor, and clear applica-
+ STMPS             Secure and Trusted Mobile Payment Sys-           bility to spatiotemporal contexts. This methodology allowed
+                   tem                                              us to pinpoint both classical and emerging privacy-preserving
+                                                                    methods, as well as identify trends in how researchers eval-
+                                                                    uate these methods’ performance.
+1 Introduction                                                      Contributions and Novelty. The key contributions of this
+                                                                    paper include:
+Spatiotemporal data, which integrates both spatial and tem-
+poral dimensions, have become a cornerstone for numerous             • Systematic Review Methodology: We adopt established
+critical applications such as transportation systems, urban            guidelines for literature selection and quality assessment
+planning, healthcare monitoring, and social network analysis           [8], enhancing the transparency and reproducibility of
+[1, 2]. The proliferation of GPS-enabled devices, IoT sensors,         our findings.
+and social media platforms continuously generates massive            • Comprehensive Classification: We propose a nuanced
+amounts of spatiotemporal data [3]. Harnessing these rich              taxonomy of privacy-preserving techniques—encompassing
+datasets enables stakeholders to derive actionable insights,           data anonymization, differential privacy, cryptographic
+optimize resource allocation, forecast mobility patterns, and          methods, federated learning, and geospatial watermarking—
+enhance service delivery. However, this growing reliance on            showcasing how each is tailored or extended for spa-
+spatiotemporal data has also intensified privacy concerns              tiotemporal scenarios [9, 10].
+involving unauthorized re-identification, sensitive location         • In-Depth Comparative Analysis: We conduct a quan-
+inference, and behavioral profiling [4, 5].                            titative comparison across standardized metrics (e.g.,
+   Traditional privacy-preserving methods, such as simple              privacy leakage, data utility, computational overhead)
+anonymization or encryption, are often insufficient for the            to elucidate the privacy-utility trade-offs unique to spa-
+dynamic and highly granular nature of spatiotemporal data              tiotemporal data [7].
+[6, 7]. In addition, many existing survey studies in this            • Hybrid Approach Insights: We delve into integrated
+domain offer only partial coverage of emerging techniques              methods (e.g., differential privacy combined with fed-
+or lack systematic evaluation frameworks that can account              erated learning) that leverage multiple paradigms for
+for issues like scalability, computational overhead, and the           stronger or more scalable privacy guarantees [10].
+intricate privacy-utility trade-off [3]. These gaps limit practi-    • Roadmap for Future Work: We pinpoint unresolved
+tioners’ ability to select, tailor, or combine the most suitable       issues—such as adaptive adversaries, heterogeneous
+privacy-preserving strategies for their specific spatiotempo-          deployment constraints, and the need for unified benchmarking—
+ral use cases.                                                         and provide targeted recommendations to guide ongoing
+   In response, this survey provides a rigorous and structured         research.
+review of privacy-preserving techniques explicitly designed
+for spatiotemporal data. We aim to consolidate the growing
+body of research, critically evaluate existing methods, and             By offering a detailed critique of existing approaches and
+identify open challenges that the community must address.           mapping them to real-world demands, our survey delivers
+Specifically, our investigation is driven by the following          a consolidated resource for practitioners, researchers, and
+research questions:                                                 policy-makers interested in preserving the privacy of spa-
+                                                                    tiotemporal data. Furthermore, we highlight key directions
+ • RQ1: What privacy-preserving techniques are specifi-             for innovation—ranging from advanced cryptographic prim-
+   cally applied to protect spatiotemporal data?                    itives to context-aware differential privacy schemes—aimed
+ • RQ2: What performance metrics and benchmarking                   at bridging the gap between strong theoretical guarantees and
+   approaches are used to evaluate these techniques?                practical, scalable solutions.
+ • RQ3: What challenges, risks, and research opportunities          Paper Organization. The remainder of this paper is struc-
+   are identified in the current body of literature?                tured as follows:
+
+   To answer these questions comprehensively, we carried             • Section 2 outlines our literature selection methodology
+out a systematic search and selection process (Section 2). We          and filtering criteria.
+searched leading academic databases for articles published           • Section 3 elaborates on various privacy-preserving tech-
+between 2007 and 2023, using carefully chosen keywords                 niques and their applications in spatiotemporal contexts.
+
+
+123
+International Journal of Data Science and Analytics (2025) 20:5157–5170                                                             5159
+
+
+ • Section 4 discusses critical threats, challenges, and adver-               • Duplicate Entries: Duplicates found in multiple databases
+   sarial models that compromise spatiotemporal privacy.                        were removed.
+ • Section 5 presents a comparative evaluation and high-                      • Short/Non-Archival Papers: Abstracts, posters, or
+   lights notable research gaps.                                                extended summaries without sufficient methodolog-
+ • Section 6 concludes the paper, summarizing key take-                         ical details were not considered.
+   aways and sketching a roadmap for future work in
+                                                                          5. Screening Process:
+   privacy-preserving spatiotemporal data analytics.
+                                                                              • Title and Abstract Screening: Two independent review-
+                                                                                ers inspected the titles and abstracts of retrieved
+                                                                                articles to remove obviously irrelevant items (e.g.,
+2 Methodology                                                                   studies outside the domain of spatiotemporal privacy).
+                                                                              • Full-Text Review: Articles that passed the initial
+To ensure comprehensive coverage and mitigate bias, this                        screening underwent a full-text assessment to verify
+review followed a systematic approach to identifying and                        that they addressed privacy challenges in spatiotempo-
+selecting relevant studies, guided by established guidelines                    ral data, included rigorous methodology, and provided
+for literature reviews [8]. The filtering criteria and method-                  results or insights applicable to this domain.
+ology are summarized below:                                                   • Consensus Resolution: Any disputes regarding an
+                                                                                article’s inclusion were discussed and resolved via
+                                                                                consensus. When necessary, a third reviewer made
+1. Search Databases: We searched major academic databases,
+                                                                                the final decision.
+   including IEEE Xplore, ACM Digital Library, Springer-
+   Link, ScienceDirect, and Google Scholar. These databases               6. Final Corpus: Following the filtering stages, a total of [4]
+   were chosen due to their extensive coverage of computer                   articles were selected as the final corpus for this review.
+   science, data science, and information security publica-                  These spanned journal articles, conference proceedings,
+   tions.                                                                    and technical reports, collectively reflecting the breadth
+2. Search Terms and Scope: Our queries combined domain-                      of recent developments in privacy-preserving spatiotem-
+   specific and privacy-related keywords, such as “spa-                      poral data management.
+   tiotemporal data,” “trajectory data,” “location privacy,”
+   “privacy-preserving,” “differential privacy,” “homomor-
+   phic encryption,” and “federated learning.” Search strings                This structured selection process ensured a robust and
+   were constructed using Boolean operators (AND, OR) to                  unbiased set of studies, forming the foundation for the sub-
+   broaden or refine results appropriately. The initial time              sequent in-depth review of privacy-preserving techniques,
+   scope covered 2007-2023, aligning with the era of major                comparative evaluations, and identified research gaps.
+   breakthroughs in location-based services and advanced
+   privacy-preserving methodologies.
+3. Inclusion Criteria:
+                                                                          3 Privacy-Preserving Techniques for
+     • Relevance: Studies had to explicitly focus on tech-                  Spatiotemporal Data
+       niques for privacy preservation in spatiotemporal or
+       location-based data scenarios.                                     Privacy-preserving techniques play a pivotal role in protect-
+     • Peer Review: Only articles published in peer-reviewed              ing sensitive spatiotemporal information while maintaining
+       journals, conferences, or workshops were included.                 data utility. As shown in Figure 1, these techniques are
+     • Methodological Rigor: Preference was given to works                categorized into six major classes: Anonymization, Differen-
+       proposing or empirically evaluating privacy-preserving             tial Privacy, Cryptographic Techniques, Privacy-Preserving
+       algorithms, frameworks, or architectures.                          Data Mining and Machine Learning, Location Privacy, and
+     • Data Availability: Studies providing details on datasets,          Geospatial Watermarking. Each class comprises specific
+       evaluation metrics, or use-case validations were pri-              methods designed to mitigate privacy risks inherent in spa-
+       oritized.                                                          tiotemporal data.
+                                                                             These techniques have been applied across various domains
+4. Exclusion Criteria:
+                                                                          including transportation systems, mobility analytics, health-
+     • Irrelevant Focus: Studies focusing solely on general               care monitoring, and smart cities [1–3]. The subsections
+       privacy (e.g., cryptography without spatiotemporal                 below provide an in-depth analysis of each category, high-
+       applicability) or purely theoretical papers with no con-           lighting their methodologies, use cases, and practical limita-
+       nection to location or trajectory data were excluded.              tions.
+
+
+                                                                                                                              123
+5160                                                               International Journal of Data Science and Analytics (2025) 20:5157–5170
+
+Fig. 1 Taxonomy of
+Privacy-Preserving Techniques
+for Spatiotemporal Data
+
+
+
+
+3.1 Anonymization                                                   • Gaussian Mechanism: Adds Gaussian noise, typically
+                                                                      applied in high-dimensional data scenarios and (, δ)-DP
+Anonymization is a foundational technique that transforms             frameworks.
+datasets in a way that individual identities cannot be dis-
+tinguished, thus preventing re-identification. Key methods            DP enables the release of aggregate statistics while pre-
+include:                                                           serving user privacy. However, excessive noise can impair
+                                                                   spatiotemporal analytics where fine-grained temporal or spa-
+ • k-Anonymity: Groups records so that each individual is          tial patterns are needed [7].
+   indistinguishable from at least k − 1 others. In spatiotem-
+   poral datasets, this typically means forming clusters           3.3 Cryptographic Techniques
+   based on location and time features [11].
+ • l-Diversity: Enhances k-Anonymity by ensuring a mini-           Cryptographic approaches enable secure computation with-
+   mum of l distinct sensitive values within each group [12].      out revealing the underlying data. Two major paradigms
+ • t-Closeness: Extends privacy protection by ensuring the         include:
+   distribution of sensitive attributes in each group is close
+   to the global distribution [13].                                 • Homomorphic Encryption (HE): Allows computations
+ • Generalized Perturbation: Adds controlled noise or                 to be performed on encrypted data. Fully Homomorphic
+   distortion to reduce the risk of re-identification while pre-      Encryption (FHE) supports arbitrary operations but at a
+   serving utility.                                                   high computational cost, while Partially Homomorphic
+                                                                      Encryption (PHE) provides a compromise between func-
+                                                                      tionality and efficiency [9].
+   These techniques are particularly useful in scenarios
+                                                                    • Secure Multiparty Computation (SMC): Multiple par-
+involving mobility traces or trajectory publishing. However,
+                                                                      ties compute a function jointly without revealing individ-
+they often trade off data granularity for privacy, leading to
+                                                                      ual inputs. This is critical for collaborative spatiotempo-
+utility loss [14].
+                                                                      ral analytics across organizations [10].
+
+3.2 Differential Privacy (DP)                                        These techniques are ideal for use cases like encrypted
+                                                                   mobility analysis or secure location-based services.
+Differential Privacy (DP) provides formal, mathematical
+guarantees of privacy by introducing calibrated noise to data      3.4 Privacy-Preserving Data Mining and Machine
+queries or outputs. Its adaptability has made it a dominant            Learning
+privacy paradigm for spatiotemporal data [15, 16].
+   Common DP Mechanisms:                                           Machine learning models often require large amounts of
+                                                                   personal data. Privacy-preserving ML ensures meaningful
+ • Laplace Mechanism: Adds Laplacian noise based on the            insights can be extracted without compromising privacy.
+   sensitivity of a function.
+ • Exponential Mechanism: Useful for non-numeric queries            • Federated Learning (FL): Enables decentralized train-
+   by choosing outputs probabilistically.                             ing on local devices, transmitting only model updates.
+
+
+123
+International Journal of Data Science and Analytics (2025) 20:5157–5170                                                              5161
+
+
+   This reduces privacy leakage and has proven effective                  issues identified across the literature, emphasizing the need to
+   in spatiotemporal contexts like traffic prediction and                 strike a balance between privacy protection and maintaining
+   location-based health monitoring [10].                                 data utility.
+ • DP-FL Integration: Combines federated learning with
+   differential privacy by adding noise to model gradients                4.1 Vulnerability to Re-identification
+   or updates, ensuring both local data privacy and global
+   model robustness [10].                                                 Even after applying robust anonymization or obfuscation
+                                                                          methods, spatiotemporal datasets remain susceptible to re-
+  FL faces practical challenges like communication over-                  identification attacks [11, 12]. This is largely due to the
+head, model inconsistency, and device heterogeneity, which                high dimensionality and uniqueness of individual mobility
+must be addressed in real-world deployments [17].                         patterns. Linkage attacks, where adversaries use external
+                                                                          data sources (e.g., geotagged social media posts or public
+3.5 Location Privacy Techniques                                           transit logs), can compromise anonymized datasets. Tradi-
+                                                                          tional techniques like k-Anonymity may fail when spatial and
+Location privacy methods focus on concealing exact user                   temporal quasi-identifiers create uniquely identifiable trajec-
+positions and trajectories, a particularly sensitive dimension            tories within a small geographic or temporal window [13].
+in spatiotemporal datasets.
+                                                                          4.2 Temporal Privacy Concerns
+ • Geometric Cloaking: Generalizes location coordinates
+   into broader areas (e.g., bounding rectangles), hiding                 While many techniques emphasize spatial privacy, fewer
+   exact user locations [4].                                              directly address temporal dimensions, despite their critical
+ • Obfuscation: Introduces noise or shuffling in location                 role in user behavior profiling [14, 19]. Repeated observa-
+   data to prevent tracking while preserving analytical utility           tions over time enable adversaries to reconstruct individual
+   [5].                                                                   routines, identify sensitive visits (e.g., hospitals, religious
+                                                                          sites), or infer behavioral trends. Techniques that apply
+   Although effective, such methods may reduce spatial                    temporal generalization or introduce temporal noise often
+resolution and affect fine-grained analysis, especially in high-          struggle to maintain analytical precision needed for tasks
+precision tasks.                                                          like real-time monitoring or behavior prediction [18].
+
+3.6 Geospatial Watermarking                                               4.3 Privacy-Utility Trade-offs
+
+Geospatial watermarking embeds digital signatures or pat-                 A fundamental challenge in spatiotemporal privacy is balanc-
+terns within spatial datasets to verify authenticity and own-             ing protection with data usability. Strong privacy guarantees—
+ership without exposing sensitive content [18].                           such as Differential Privacy with low  values—often lead
+                                                                          to significant degradation in data quality [15, 16]. Simi-
+ • Robust Watermarks: Resistant to transformations like                   larly, overly coarse spatial cloaking or excessive perturbation
+   scaling or compression.                                                can reduce interpretability and hinder applications such as
+ • Fragile Watermarks: Detect even small alterations in                   traffic optimization, anomaly detection, or epidemiological
+   datasets, ensuring data integrity.                                     tracking [7]. Achieving optimal noise calibration or applying
+                                                                          adaptive privacy models remains an open research problem.
+   While watermarking is not a privacy-preserving mecha-
+nism in the traditional sense, it plays a crucial role in data            4.4 Computational Overhead and Real-Time
+provenance and secure sharing [18].                                           Constraints
+
+                                                                          Cryptographic methods such as Fully Homomorphic Encryp-
+4 Threats and Challenges                                                  tion (FHE) and Secure Multiparty Computation (SMC) offer
+                                                                          robust protection, but often incur substantial computational
+Despite ongoing advancements, privacy-preserving tech-                    and communication overhead [9, 10]. Their implementa-
+niques for spatiotemporal data still face a broad spectrum                tion in time-critical or resource-constrained environments
+of technical and practical challenges [12, 18]. These chal-               like mobile or IoT systems remains challenging. Even feder-
+lenges arise from the complex structure of spatiotemporal                 ated learning—while decentralized and privacy-conscious—
+datasets, real-world deployment scenarios, and the evolving               faces practical scalability issues when synchronizing updates
+nature of adversarial threats. This section synthesizes critical          across thousands of edge devices [10, 17]. Real-time appli-
+
+
+                                                                                                                               123
+5162                                                            International Journal of Data Science and Analytics (2025) 20:5157–5170
+
+
+cations demand lightweight, yet secure alternatives that         • Federated Learning often suffers from aggregation
+maintain privacy without compromising responsiveness.              bottlenecks and privacy leakage via gradient inversion
+                                                                   attacks [17].
+4.5 Heterogeneous Deployment Environments                        • Location privacy methods like obfuscation and cloak-
+                                                                   ing reduce spatial fidelity and may fail against strong
+As spatiotemporal data collection expands across IoT, vehic-       inference models [5].
+ular networks, and mobile edge systems, deploying uniform        • Geospatial watermarking is vulnerable to removal or
+privacy mechanisms becomes more difficult [3]. These               tampering attacks if not designed with robustness con-
+systems vary in processing power, bandwidth, energy avail-         straints [18].
+ability, and data formats. Lightweight cryptographic and
+obfuscation techniques are essential, yet must remain resis-
+tant to attacks. Advanced privacy-preserving mechanisms         4.9 Future Directions
+like machine learning-based anonymization or DP often
+require significant computational resources, posing chal-       To address these challenges, future research should empha-
+lenges in embedded or low-power environments [19].              size:
+
+4.6 Inconsistent Evaluation Frameworks
+                                                                 • Development of adaptive privacy mechanisms that dynam-
+One of the key barriers to standardization is the lack of          ically adjust privacy levels based on context and data
+uniform benchmarking protocols. Studies utilize different          sensitivity.
+datasets (e.g., GeoLife, Gowalla, Actitracker) and inconsis-     • Integration of multi-layered hybrid approaches (e.g.,
+tent metrics such as privacy leakage, utility loss, F1-score,      DP+Crypto+ML) tailored to spatiotemporal data com-
+Mean Relative Error (MRE), or entropy [10, 13]. More-              plexity.
+over, variations in simulation environments, hardware con-       • Deployment-friendly frameworks combining low-complexity
+figurations, and threat models hinder reproducibility and          encryption with scalable aggregation protocols.
+cross-study comparability. A community-agreed evaluation         • Standardization of evaluation metrics and adoption of
+framework is essential for consistent performance assess-          open benchmark datasets.
+ment and fair comparison of privacy-preserving solutions.        • Modeling of realistic attacker capabilities to future-proof
+                                                                   privacy solutions.
+4.7 Evolving Threat Models and Adaptive
+    Adversaries
+                                                                   Overall, these challenges highlight the ongoing need for
+As privacy techniques evolve, so do the strategies of adver-    scalable, context-aware, and interoperable privacy-preserving
+saries. New attacks now incorporate machine learning to         solutions designed specifically for the intricacies of spa-
+exploit residual correlations in anonymized or perturbed        tiotemporal data. Section 5 delves into how various studies
+data [7]. Inference attacks, trajectory reconstruction, and     have evaluated these issues quantitatively, shedding light on
+deep learning-based linkage attacks can breach traditional      key trade-offs and comparative performance insights across
+privacy barriers, particularly when adversaries possess par-    the literature.
+tial background knowledge [18, 19]. Therefore, defensive
+mechanisms must anticipate adaptive threats and consider
+worst-case scenarios under varied attacker capabilities.
+                                                                5 Discussion: Quantitative Insights,
+4.8 Limitations in Specific Techniques                            Comparative Evaluation, and Challenges
+
+Each privacy-preserving category faces inherent limitations:    While each privacy-preserving technique for spatiotempo-
+                                                                ral data demonstrates unique strengths, they also come with
+ • Anonymization techniques may result in high informa-         critical limitations and trade-offs that must be addressed for
+   tion loss, limiting spatiotemporal resolution [12].          real-world deployment. This section presents an in-depth
+ • Differential privacy introduces statistical noise, which     comparative analysis of these techniques using standardized
+   can impair small-sample analyses or rare event detection     evaluation metrics, empirical evidence from the literature,
+   [16].                                                        and case-based examples. The aim is to consolidate quan-
+ • Cryptographic methods increase latency and hardware          titative insights and highlight key gaps and opportunities in
+   complexity [9].                                              the field.
+
+
+123
+International Journal of Data Science and Analytics (2025) 20:5157–5170                                                                5163
+
+
+Table 1 Comparative Analysis of Privacy-Preserving Techniques
+Technique                               Privacy Strength (PS)             Utility                  Computational            Scalability (SC)
+                                                                           Preservation             Overhead (CO)
+                                                                           (UP)
+
+Anonymization                           Medium                            Medium                   Low–Medium               Medium
+ (k-Anonymity,
+ l-Diversity, t-Closeness)
+Differential Privacy                    High                              Low–Medium               Medium                   Medium
+ (Laplace, Gaussian,                                                       (varies with )
+ Exponential)
+Homomorphic Encryption /                Very High                         High                     High                     Low–Medium
+ SMC
+Federated Learning (with                Medium–High                       High                     Medium (Comm.            High
+ DP)                                                                                                overhead)
+Location Privacy (cloaking,             Medium                            Low–Medium               Low                      High
+ obfuscation)
+Geospatial Watermarking                 Low–Medium                        High                     Low                      High
+
+
+
+5.1 Strengths and Limitations of Techniques                                  disclosure risks. However, these approaches degrade spa-
+                                                                             tial resolution, impacting downstream analysis and affecting
+Anonymization techniques, including k-Anonymity, l-                          navigation, traffic prediction, and service delivery [4, 5].
+Diversity, and t-Closeness, provide identity protection by                      Geospatial Watermarking techniques enhance data prove-
+generalizing or suppressing quasi-identifiers. However, these                nance and ownership integrity but offer limited direct privacy
+methods face challenges such as vulnerability to background                  guarantees and are vulnerable to removal attacks. Integration
+knowledge attacks and potential loss of data utility. The pri-               with other privacy-preserving techniques is often necessary
+vacy guarantee improves with larger values of k, but this often              for robust protection [18].
+results in high generalization and reduced utility, especially
+for high-dimensional spatiotemporal datasets [11–13].                        5.2 Comparative Evaluation: Multi-Criteria Analysis
+   Differential Privacy (DP) offers rigorous privacy guar-
+antees and remains robust against various types of inference                 A structured multidimensional evaluation framework is
+attacks. However, the performance of DP is highly sensitive                  applied across four axes: Privacy Strength (PS), Utility
+to the privacy budget . Smaller values of  improve privacy                 Preservation (UP), Computational Overhead (CO), and Scal-
+but introduce excessive noise, degrading the analytical qual-                ability (SC). Table 1 presents a synthesized comparison based
+ity of the data [7, 15, 16]. Gaussian and Laplace mechanisms                 on findings reported in the literature.
+remain most commonly used, with Gaussian DP better suited
+for high-dimensional spatiotemporal settings [18].
+                                                                             5.3 Technique-Specific Challenges and Dataset
+   Cryptographic techniques, particularly Homomorphic
+                                                                                 Usage
+Encryption (HE) and Secure Multiparty Computation (SMC),
+ensure strong privacy even during computation. However,
+                                                                             To complement our multi-criteria analysis, Table 2 provides
+FHE introduces substantial computational overhead, limit-
+                                                                             a technique-level summary of common flaws and the datasets
+ing real-time analytics capabilities. Partially Homomorphic
+                                                                             used in corresponding evaluations. This table highlights
+Encryption (PHE) balances utility and performance but
+                                                                             how specific challenges are reflected in experimental setups
+restricts supported operations [9, 10].
+                                                                             across various studies and underscores dataset selection pat-
+   Federated Learning (FL) provides decentralized privacy
+                                                                             terns that may influence the generalizability of findings.
+protection by training models locally on edge devices. It pre-
+serves data utility and avoids centralized breaches but suffers
+from high communication overhead and the risk of gradient                    5.4 Mapping Selected Studies to the Proposed
+leakage. DP-FL combinations mitigate these risks but add                         Taxonomy
+additional computational complexity and affect convergence
+rates [10, 17].                                                              Table 3 illustrates how key studies in our final corpus align
+   Location Privacy techniques, such as geometric cloak-                     with the four major categories that were actually used among
+ing and obfuscation, reduce location precision to mitigate                   them: (Anonymization, DP, Privacy-Preserving Machine
+                                                                             Learning (PP-ML), and Location Privacy). We also present
+
+
+                                                                                                                                123
+5164                                                                    International Journal of Data Science and Analytics (2025) 20:5157–5170
+
+
+Table 2 Overview of Privacy-Preserving Techniques, Challenges, and Common Evaluation Datasets
+Privacy-Preserving Technique                      Flaws and Limitations                                   Common Datasets Used
+
+Anonymization (K-Anonymity,                       Vulnerable to re-identification;                        GeoLife GPS Trajectories,
+ L-Diversity, T-Closeness)                         utility loss due to                                     Gowalla Dataset
+                                                   over-generalization; limited
+                                                   scalability in high dimensions
+Differential Privacy (Laplace,                    Accuracy degradation due to noise;                      GeoLife, Twitter Geo-Tagged
+ Gaussian, Exponential)                            balancing privacy-utility                               Dataset, Actitracker
+                                                   trade-offs; hard to tune 
+Cryptographic Techniques (HE,                     High computational cost; limited                        Typically synthetic or
+ SMC)                                              real-time application feasibility;                      institution-specific datasets; often
+                                                   complex key management                                  not publicly shared
+Privacy-Preserving Data Mining                    Communication bottlenecks in                            GeoLife, CRAWDAD, Foursquare,
+ and Machine Learning                              federated learning; model drift;                        Actitracker
+                                                   need for robust aggregation
+Location Privacy (Geometric                       Data granularity loss; reduced                          Foursquare/Swarm, Gowalla,
+ Cloaking, Obfuscation)                            accuracy in services;                                   Twitter Location Check-ins
+                                                   privacy-utility balance difficult
+Geospatial Watermarking                           Vulnerable to watermark removal;                        Geospatial Imagery Datasets,
+                                                   less effective alone; limited                           remote sensing and spatial map
+                                                   contribution to anonymity                               datasets
+
+
+Table 3 Study-to-Taxonomy Mapping of Selected Works
+Ref.        Datasets Used                   Technique Categories Actually Used                                    Key Metrics
+                                            Anonym.        DP          PP-ML            LocPriv
+
+[1]         Industrial applications                                                                              Privacy risk, data utility,
+              (unspecified)                                                                                        privacy leakage
+[2]         Synthetic data (Laplace                                                                              Statistical queries,
+             noise)                                                                                                 privacy-accuracy trade-off
+[4]         Adult Database, Lands End                                                                            Generalization height,
+             Database                                                                                              group size,
+                                                                                                                   KL-Divergence
+[7]         Real trajectory data                                                                                Inference Error Rate,
+             (Fuzhou)                                                                                               Statistical Feature
+                                                                                                                    Retention
+[13]        Gowalla, Foursquare, Yelp,                                                                          Privacy-preserving data
+             T-Drive, 311, CRAWDAD                                                                                 publication
+[15]        Not specified                                                                                        Data utility, performance
+                                                                                                                   overhead
+[24]        Actitracker dataset                                                                                  Accuracy, precision, recall,
+                                                                                                                   F1 Score
+[26]        Trajectories of schools in                                                                          Precision, recall (map
+             Pune                                                                                                  anonymization)
+
+
+
+the primary dataset(s) each work employs and the key eval-               Although our taxonomy originally included Cryptographic
+uation metrics they report.                                           Methods and Geospatial Watermarking, none of the final
+   As Table 3 shows, Anonymization and Differential Pri-              selected studies implemented or evaluated them in a spa-
+vacy approaches dominate many of the selected studies,                tiotemporal setting; hence, those columns have been removed
+often targeting identity protection and formal privacy guaran-        here. Nonetheless, both methods remain important in broader
+tees, respectively. Location privacy (cloaking, obfuscation)          privacy literature and may be adopted in future work.
+remains a common strategy for trajectory-based scenarios.
+Meanwhile, privacy-preserving machine learning (PP-
+ML) techniques appear in contexts where data utility must
+be preserved at scale (e.g., sensor data analysis).
+
+
+123
+International Journal of Data Science and Analytics (2025) 20:5157–5170                                                                     5165
+
+
+Table 4 Dataset Summary Table
+Dataset Name                Number of Samples           Number of Features        Features                        Application
+
+GeoLife                     24,876,978                  5                         USER ID, TIMESTAMP,             Outdoor Activities Tracking
+                                                                                   LATITUDE,                       in Beijing, China
+                                                                                   LONGITUDE,
+                                                                                   ALTITUDE
+Gowalla                     6,442,890                   5                         USER ID, TIMESTAMP,             Social Network Check-ins
+                                                                                   LATITUDE,
+                                                                                   LONGITUDE,
+                                                                                   LOCATION ID
+Actitracker                 1,764                       4                         PARTICIPANT ID,                 Human Activity
+                                                                                   ACTIVITY ID,                    Recognition
+                                                                                   ACCELERATION X,
+                                                                                   ACCELERATION Y,
+                                                                                   ACCELERATION Z
+STL-10                      113,000                     5000                      IMAGES                          Image Recognition
+NUS-WIDE                    269,648                     81                        IMAGES                          Image Classification
+PEMS                        48                          963                       TRAFFIC FLOW DATA               Traffic Flow Prediction
+DLEMP                       21,209                      1,009                     WEB USAGE DATA                  Web Usage Behavior
+                                                                                                                   Analysis
+311 Dataset                 16,137,635                  13                        SERVICE REQUEST                 Urban Service Request
+                                                                                   DATA                            Analysis
+Crawdad                     Varies                      Varies                    WIRELESS NETWORK                Wireless Network Research
+                                                                                   DATA
+Lands End Database          4,591,581                   8                         ZIPCODE, ORDER DATE,            Point-of-Sale Information
+                                                                                   GENDER, STYLE,
+                                                                                   PRICE, QUANTITY,
+                                                                                   SHIPMENT, COST
+Adult Database              45,222                      9                         AGE, GENDER, RACE,              Evaluation of L-Diversity
+                                                                                   MARITAL STATUS,
+                                                                                   EDUCATION, NATIVE
+                                                                                   COUNTRY, WORK
+                                                                                   CLASS, SALARY
+                                                                                   CLASS, OCCUPATION
+MNIST                       60,000                      784                       IMAGES                          Image Classification
+YesIWell                    1,100                       15                        WELLNESS DATA                   Wellness Data Analysis
+COVID-19 Dataset            427,036                     23                        AGE, SEX,                       Used to Analyze Attributes
+                                                                                   ADMINISTRATIVE                  Related to the 2019
+                                                                                   DIVISION, DATE OF               Coronavirus Disease
+                                                                                   CONFIRMATION, AND               (COVID-19)
+                                                                                   CHRONIC DISEASE
+                                                                                   STATUS
+
+
+
+6 Conclusion and Future Directions                                               This survey has provided a systematic, detailed, and quan-
+                                                                             titative review of privacy-preserving techniques specifically
+In the era of escalating spatiotemporal data stemming from                   tailored for spatiotemporal data. Building on a rigorous
+GPS devices, IoT sensors, and social media platforms, safe-                  methodological framework, we identified six major cate-
+guarding individual privacy has emerged as a fundamental                     gories of techniques—Anonymization, Differential Privacy,
+challenge. The ever-increasing availability of high-resolution               Cryptographic Methods, Privacy-Preserving Data Mining
+spatiotemporal data has significant implications for advanc-                 and Federated Learning, Location Privacy, and Geospatial
+ing sectors such as transportation, urban planning, and                      Watermarking. Unlike prior surveys that merely enumerated
+healthcare. However, it also intensifies the risks of privacy                techniques, our review critically evaluated their strengths,
+violations, including location tracking, behavioral profiling,               limitations, and practical trade-offs using standardized met-
+and re-identification attacks.                                               rics and a multi-criteria comparative analysis.
+                                                                             Key findings from our analysis reveal:
+
+
+
+                                                                                                                                   123
+5166                                                                International Journal of Data Science and Analytics (2025) 20:5157–5170
+
+
+Table 5 Privacy and Utility Evaluation Metrics Table
+Evaluation Metric                                      Definition
+
+Privacy Risk                                           Measure of the potential risk of privacy breaches or violations associated with a
+                                                        particular data release or processing activity.
+Data Utility                                           Measure of the usefulness or quality of data after applying privacy-preserving
+                                                        techniques.
+Privacy Leakage                                        Measure of the amount or extent of sensitive information that is unintentionally
+                                                        disclosed or leaked through data processing or release.
+Statistical Queries                                    Queries that retrieve aggregated or statistical information from a dataset, often
+                                                        used in the context of differential privacy.
+Privacy and Accuracy                                   Trade-off between preserving privacy and maintaining the accuracy of data or
+                                                        results.
+Generalization Height                                  Level of granularity or detail to which data is generalized or anonymized, often
+                                                        used in k-anonymity and l-diversity techniques.
+Average Group Size                                     Average number of individuals or records within a group or cluster in an
+                                                        anonymized dataset.
+Discernibility                                         Measure of how easily an individual record can be distinguished or re-identified
+                                                        from an anonymized dataset.
+KL-Divergence                                          Measure of how one probability distribution diverges from a second, expected
+                                                        distribution, often used in privacy-preserving data analysis.
+Inference Error Rate (IER)                             Rate at which an adversary can accurately infer sensitive information from an
+                                                        anonymized dataset, used in trajectory data privacy evaluation.
+Statistical Feature Retention Rate                     Rate at which important statistical features are retained in an anonymized dataset,
+  (SFRR)                                                used in trajectory data privacy evaluation.
+Trust Establishment Time                               Time taken to establish trust relationships or levels between entities in a trust
+                                                        management system, used in M-IoT applications.
+Communication Overhead                                 Additional communication resources or bandwidth required to implement a trust
+                                                        management system, used in M-IoT applications.
+Scalability                                            Measure of a system’s ability to handle increasing amounts of work or its
+                                                        potential to accommodate growth, often used in evaluating trust management
+                                                        systems.
+Resilience to Attacks                                  Ability of a system to resist or recover from attacks or failures, often used in
+                                                        evaluating the robustness of trust management approaches.
+Correlation of Selected Subsets of                     Measure of the correlation between subsets of observations selected over time,
+ Observations                                           used in mobile crowdsensing privacy evaluation.
+Clustering Strategy Performance                        Measure of the effectiveness or efficiency of a clustering strategy in selecting
+                                                        measurements, used in mobile crowdsensing privacy evaluation.
+Precision                                              Measure of the correctness of true positive predictions, often used in binary
+                                                        classification tasks.
+Recall                                                 Measure of the completeness of true positive predictions, often used in binary
+                                                        classification tasks.
+F1 Score                                               Harmonic mean of precision and recall, used as a single metric to evaluate the
+                                                        balance between precision and recall in binary classification tasks.
+
+
+
+ • Differential Privacy (DP) offers strong theoretical pri-         • Federated Learning (FL) represents a promising paradigm
+   vacy guarantees, yet its effectiveness hinges on carefully         for decentralized learning without raw data sharing.
+   tuning the privacy budget , which significantly impacts           However, challenges such as communication overhead,
+   data utility.                                                      model convergence delays, and vulnerability to inference
+ • Cryptographic Techniques, such as Homomorphic                      attacks require further optimization.
+   Encryption and Secure Multiparty Computation, ensure             • Location Privacy and Watermarking methods are
+   high levels of confidentiality but remain computationally          effective against specific threats—such as fine-grained
+   intensive and may not scale efficiently in real-time or            location disclosure and data tampering—but they offer
+   large-scale deployments.                                           limited protection against broader privacy risks like re-
+                                                                      identification and attribute inference.
+
+
+123
+International Journal of Data Science and Analytics (2025) 20:5157–5170                                                               5167
+
+
+Table 6 Summary of Privacy-preserving Techniques and Evaluations
+          Privacy Technique               Dataset Details                       Evaluation Metrics             Contributions/Key Findings
+
+[1]       Differential Privacy            Industrial applications datasets      Privacy risk, data utility,    Evaluation of DP
+                                                                                 privacy leakage                mechanisms in industrial
+                                                                                                                applications
+[2]       Differential Privacy            Synthetic datasets, Laplace noise     Statistical queries, privacy   Evaluation of DP
+                                                                                  and accuracy                  algorithms using Laplace
+                                                                                                                noise
+[3]       Not specified                   Smart grid multidimensional data      Security, efficiency           Proposed
+                                                                                                                privacy-preserving data
+                                                                                                                aggregation scheme
+[4]       K-Anonymity,                    Adult Database, Lands End             Generalization height,         Evaluation of l-diversity
+           l-Diversity                     Database                              average group size,            method using Incognito
+                                                                                 discernibility,
+                                                                                 KL-divergence
+[7]       Anonymization                   Real-world trajectory datasets        Inference Error Rate (IER),    Evaluation of trajectory
+                                                                                  Statistical Feature           data privacy protection
+                                                                                  Retention Rate (SFRR)         approach
+[8]       Trust Management                Not specified                         Trust establishment time,      Evaluation of trust
+                                                                                 communication overhead,        management approaches
+                                                                                 scalability, resilience to     for M-IoT
+                                                                                 attacks
+[6]       Various                         Not specified                         Not specified                  Provided a comprehensive
+           privacy-preserving                                                                                   survey of privacy
+           techniques                                                                                           techniques
+[7]       Spatial–temporal                Real-world trajectory dataset         Not specified                  Proposed secure and
+           cloaking                        obtained from a volunteer’s                                          efficient
+                                           one-day journey in Fuzhou                                            privacy-preserving
+                                                                                                                mechanism
+[8]       Diverse privacy                 Not specified                         Not specified                  Proposed diverse privacy
+           mechanisms                                                                                           mechanisms
+[9]       Distributed                     Not specified                         Not specified                  Proposed distributed
+           privacy-preserving                                                                                   privacy-preserving
+           aggregation                                                                                          aggregation
+[10]      Diverse                         Not specified                         Not specified                  Proposed diverse
+           privacy-preserving                                                                                   privacy-preserving
+           methods                                                                                              methods
+[11]      Privacy-preserving data         Not specified                         Not specified                  Proposed mechanisms for
+           analysis                                                                                             secure privacy-preserving
+                                                                                                                analysis
+[12]      Mobile crowd sensing            Not specified                         Not specified                  Proposed
+                                                                                                                privacy-preserving data
+                                                                                                                collection mechanism
+[13]      Anonymization and               Synthetic datasets and real-world     Not specified                  Proposed mechanisms for
+           Obfuscation                     open datasets, including check-in                                    privacy-preserving
+           techniques                      data from Gowalla, Foursquare,                                       publication
+                                           Yelp, trajectory data from
+                                           T-drive, Beijing taxis trajectory,
+                                           311 dataset, CRAWDAD, and
+                                           SensorScope Data
+[14]      Anonymization                   Not specified                         Privacy Preservation, Data     Proposed l-diversity
+                                                                                 Utility, Performance           technique
+                                                                                 Overhead
+[15]      Differential Privacy            Not specified                         Data Utility, Performance      Proposed t-closeness
+                                                                                 Overhead                       technique
+
+
+
+
+                                                                                                                               123
+5168                                                                 International Journal of Data Science and Analytics (2025) 20:5157–5170
+
+
+Table 6 continued
+         Privacy Technique         Dataset Details                         Evaluation Metrics                  Contributions/Key Findings
+
+[16]     Privacy-preserving data   Not specified                           Anonymity Level, Data               Conducted survey of
+          mining techniques                                                 Utility, Spatial–Temporal           differential privacy
+                                                                            Accuracy, Performance               techniques
+                                                                            Overhead
+[18]     Spatiotemporal data       GeoLife, Gowalla datasets               Haversine distance,                 Evaluation of
+          publishing                                                        compression ratios                  privacy-preserving
+                                                                                                                framework for
+                                                                                                                spatiotemporal data
+[19]     Spatiotemporal data       GeoLife, Gowalla datasets               Utility, file size, spatial         Evaluation of
+          privacy                                                           compression ratios                  privacy-preserving
+                                                                                                                framework for
+                                                                                                                spatiotemporal data
+[20]     Mobile Crowdsensing       Synthetic datasets, real-world          Correlation of selected             Evaluation of
+                                    datasets (e.g., 311 dataset,            subsets of observations,            privacy-preserving
+                                    CRAWDAD)                                clustering strategy                 framework for
+                                                                            performance                         spatiotemporal data
+[21]     ML and DL methods         Various datasets (STL-10,               Prediction accuracy,                Evaluates ML and DL
+                                    NUS-WIDE, PeMS, DLeMP,                  resource consumption                methods for network
+                                    etc.)                                                                       security, focusing on
+                                                                                                                prediction accuracy and
+                                                                                                                resource consumption
+                                                                                                                using various datasets
+[22]     Differential Privacy      GeoLife version 1.3, Gowalla            Haversine distance, file size       Comparison of baseline
+                                                                            compression ratio, spatial          Laplace mechanism with
+                                                                            compression ratio                   temporal hierarchy
+                                                                                                                framework for differential
+                                                                                                                privacy in spatiotemporal
+                                                                                                                data
+[23]     Differential Privacy      Not provided                            MRE, Pearson Correlation            Evaluation of a
+                                                                                                                spatiotemporal density
+                                                                                                                release framework with
+                                                                                                                differential privacy,
+                                                                                                                demonstrating practical
+                                                                                                                utility with strong privacy
+                                                                                                                guarantees
+[24]     Federated Learning        Actitracker dataset                     Accuracy, Precision, Recall,        Evaluation of CROWDFL, a
+                                                                            F1 Score                            privacy-preserving mobile
+                                                                                                                crowdsensing system,
+                                                                                                                using the Actitracker
+                                                                                                                dataset for human activity
+                                                                                                                recognition,
+                                                                                                                demonstrating
+                                                                                                                effectiveness and
+                                                                                                                efficiency through
+                                                                                                                theoretical analysis and
+                                                                                                                experimental testing
+[26]     Anonymization             Trajectories of schools in Pune         Precision, Recall                   Experimental evaluation of
+                                                                                                                a privacy-preserving
+                                                                                                                technique for static data
+                                                                                                                release using map
+                                                                                                                anonymization,
+                                                                                                                demonstrating
+                                                                                                                effectiveness through
+                                                                                                                precision and recall
+                                                                                                                metrics on real map data
+
+
+
+
+123
+International Journal of Data Science and Analytics (2025) 20:5157–5170                                                                         5169
+
+
+Future Research Directions:                                                 Ethical Approval and Consent to Participate The study was conducted
+                                                                            in accordance with ethical standards, and consent was obtained from
+                                                                            all participants.
+1. Standardized Benchmarks and Evaluation Protocols:
+   There is a pressing need for common publicly avail-                      Consent for Publication Consent for publication has been obtained
+   able spatiotemporal datasets, unified evaluation metrics,                from all co-authors and from the responsible authorities at the insti-
+                                                                            tute/organization where the work has been carried out.
+   and reproducible benchmarking protocols to facilitate fair
+   comparison and accelerate innovation.                                    Open Access This article is licensed under a Creative Commons
+2. Context-Aware Differential Privacy Mechanisms: Future                    Attribution 4.0 International License, which permits use, sharing, adap-
+   work should explore adaptive DP models that dynamically                  tation, distribution and reproduction in any medium or format, as
+                                                                            long as you give appropriate credit to the original author(s) and the
+   adjust noise addition based on data sensitivity, query con-
+                                                                            source, provide a link to the Creative Commons licence, and indi-
+   text, or temporal–spatial granularity, thereby minimizing                cate if changes were made. The images or other third party material
+   unnecessary utility loss.                                                in this article are included in the article’s Creative Commons licence,
+3. Scalable Cryptographic Frameworks: Developing                            unless indicated otherwise in a credit line to the material. If material
+                                                                            is not included in the article’s Creative Commons licence and your
+   lightweight or hybrid encryption models—such as par-
+                                                                            intended use is not permitted by statutory regulation or exceeds the
+   tially homomorphic or approximate encryption—could                       permitted use, you will need to obtain permission directly from the copy-
+   enable secure analytics with reduced latency and com-                    right holder. To view a copy of this licence, visit http://creativecomm
+   putational burden, especially for IoT and edge computing                 ons.org/licenses/by/4.0/.
+   environments.
+4. Integrated Privacy-Preserving Architectures: Com-
+   bining FL, DP, cryptographic methods, and anonymiza-
+   tion in a cohesive and interoperable framework could mit-                References
+   igate limitations of individual approaches. This requires
+   the development of efficient coordination protocols and                   1. Zheng, Y.: Trajectory data mining: An overview. ACM Transac-
+   rigorous security proofs.                                                    tions on Intelligent Systems and Technology (TIST) 6(3), 1–41
+5. Explainable Privacy and Usability Tools: Future sys-                         (2015)
+                                                                             2. Solanas, A., et al.: Smart health: A context-aware health paradigm
+   tems must provide interpretability and user control-                         within smart cities. IEEE Communications Magazine 52(8), 74–81
+   enabling stakeholders to understand the implications of                      (2014)
+   privacy settings (e.g.,  values, anonymization thresholds)               3. Abomhara, M., Køien, G.M.: Security and privacy in the internet
+   on data accuracy and utility. User-centric dashboards and                    of things: Current status and open issues. Computer networks 76,
+                                                                                1–26 (2015)
+   explainable privacy interfaces could play a vital role in                 4. Gambs, S., Killijian, M.-O., Cortez, M.N.d.P.: “Show me how you
+   bridging the technical gap.                                                  move and i will tell you who you are,” Transactions on Data Privacy,
+                                                                                4(2), 103–126 (2010)
+                                                                             5. Krumm, J.: “Inference attacks on location tracks,” in International
+As spatiotemporal data continue to proliferate, future research                 Conference on Pervasive Computing. Springer, pp. 127–143 (2007)
+must prioritize adaptable, scalable, and user-aligned pri-                   6. Shokri, R., et al.: “Protecting location privacy: Optimal strategy
+vacy solutions. The insights and comparative evaluations                        against localization attacks,” in Proceedings of the 2011 ACM con-
+                                                                                ference on Computer and communications security, pp. 215–226
+presented in this survey offer a structured roadmap for                         (2011)
+researchers and practitioners striving to develop more secure,               7. Chatzikokolakis, K., Palamidessi, C., Stronati, M.: “A predictive
+efficient, and ethically responsible approaches to spatiotem-                   differentially-private mechanism for mobility traces,” in Privacy
+poral data privacy.                                                             Enhancing Technologies Symposium, (2017)
+                                                                             8. Kitchenham, B., Charters, S.: Guidelines for performing system-
+Author Contributions The authors declare that they have no competing            atic literature reviews in software engineering. Tech. Rep, EBSE
+interests as defined by Springer, or other interests that might be per-         Technical Report (2007)
+ceived to influence the results and/or discussion reported in this paper.    9. Acar, A., Aksu, H., Uluagac, S., Conti, M.: A survey on homo-
+                                                                                morphic encryption schemes: Theory and implementation. ACM
+Funding Open access funding provided by The Science, Technology &               Computing Surveys (CSUR) 51(4), 1–35 (2018)
+Innovation Funding Authority (STDF) in cooperation with The Egyp-           10. Geyer, R.C., Klein, T., Nabi, M.: “Differentially private federated
+tian Knowledge Bank (EKB). This research received no specific grant             learning: A client level perspective,” in NIPS Workshop on Private
+from any funding agency in the public, commercial, or not-for-profit            Multi-Party Machine Learning, (2017)
+sectors.                                                                    11. Machanavajjhala, A., Gehrke, J., Kifer, D., Venkitasubramaniam,
+                                                                                M.: “l-diversity: Privacy beyond k-anonymity,” ACM Transactions
+Data Availability No/Not applicable (this manuscript does not report            on Knowledge Discovery from Data (TKDD), (2007)
+data generation or analysis).                                               12. Majeed, A., Lee, S.: “Anonymization techniques for privacy pre-
+                                                                                serving data publishing: A comprehensive survey,” IEEE, (2020)
+                                                                            13. Li, N., Li, T., Venkatasubramanian, S.: “t-closeness: Privacy
+Declarations                                                                    beyond k-anonymity and l-diversity,” in IEEE 23rd International
+                                                                                Conference on Data Engineering (ICDE), (2007)
+
+
+                                                                                                                                        123
+5170                                                                          International Journal of Data Science and Analytics (2025) 20:5157–5170
+
+
+14. Huang, Y., Chen, D., Li, F., Chen, Q.: “Privacy-preserving spa-          25. Vasa, J., Thakkar, A.: “Deep learning: Differential privacy preser-
+    tiotemporal data aggregation for smart cities,” IEEE Access, (2019)          vation in the era of big data,” Journal of Computer Information
+15. Dwork, C.: “Differential privacy: A survey of results,” in Inter-            Systems, (2023)
+    national Conference on Theory and Applications of Models of              26. Pramod, D.: “Privacy-preserving techniques in recommender sys-
+    Computation. Springer, Berlin, Heidelberg, (2008)                            tems: state-of-the-art review and future research agenda,” Data
+16. Jiang, B., Li, J., Yue, G., Song, H.: “Differential privacy for indus-       Technologies and Applications, (2023)
+    trial internet of things: Opportunities, applications and challenges,”   27. Xin, Y., Kong, L., Liu, Z., Chen, Y., Li, Y., Zhu, H., Gao, M., Hou,
+    IEEE, (2020)                                                                 H., Wang, C.: “Machine learning and deep learning methods for
+17. Kim, J.W., Edemacu, K., Jang, B.: “Privacy-preserving mecha-                 cybersecurity,” IEEE, (2018)
+    nisms for location privacy in mobile crowdsensing: A survey,”            28. Olawoyin, A., Leung, C., Choudhury, R.: “Privacy-preserving
+    Journal of Network and Computer Applications, (2022)                         spatio-temporal patient data publishing,” in Lecture Notes in Com-
+18. Montori, F., Bedogni, L.: “Privacy preservation for spatio-temporal          puter Science, vol. 12392 (2021)
+    data in mobile crowdsensing scenarios,” Pervasive and Mobile             29. Acs, G., Biczok, G., Castelluccia, C.: “Privacy-preserving release
+    Computing, (2023)                                                            of spatio-temporal density,” in Handbook of Mobile Data Privacy,
+19. Sei, Y., Onesimu, J., Okumura, H., Ohsuga, A.: “Privacy-preserving           (2018)
+    collaborative data collection and analysis with many missing val-        30. Zhao, B., Liu, X., Chen, W.-N., Deng, R.: “Crowdfl: Privacy-
+    ues,” IEEE Transactions on Dependable and Secure Computing,                  preserving mobile crowdsensing system via federated learning,”
+    (2023)                                                                       IEEE Transactions on Mobile Computing, (2023)
+20. Ye, A., Zhang, Q., Diao, Y., Zhang, J., Deng, H., Cheng, B.: “A          31. Wang, S., Cao, J., Yu, P.: “Deep learning for spatio-temporal data
+    semantic-based approach for privacy-preserving in trajectory pub-            mining: A survey,” IEEE Transactions on Knowledge and Data
+    lishing,” National Natural Science Foundation of China, (2020)               Engineering, (2022)
+21. Andersson, K., Palmieri, F.: Security, privacy and trust for smart       32. Avaghade, S., Patil, S.: “Privacy preserving for spatio-temporal
+    mobile-internet of things (m-iot): A survey. Soonchunhyang Uni-              data publishing ensuring location diversity using k-anonymity
+    versity, Lulea University of Technology, Universita degli Studi di           technique,” in IEEE International Conference on Computer, Com-
+    Salerno (2019)                                                               munication and Control (IC4), (2015)
+22. Wang, H., Gong, Y., Ding, Y., Tang, S., Wang, Y.: “Privacy-
+    preserving data aggregation with dynamic billing in fog-based
+    smart grid,” Applied Sciences, (2023)
+                                                                             Publisher’s Note Springer Nature remains neutral with regard to juris-
+23. Liu, Y., Peng, J., Yu, J., Wu, Y.: “Ppgan: Privacy-preserving gen-
+                                                                             dictional claims in published maps and institutional affiliations.
+    erative adversarial network,” in IEEE ICPADS 2019 Workshop,
+    (2019)
+24. Li, S., Tian, H., Shen, H., Sang, Y.: “Privacy-preserving trajectory
+    data publishing by dynamic anonymization with bounded distor-
+    tion,” ISPRS International Journal of Geo-Information, (2021)
+
+
+
+
+123
+

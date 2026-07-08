@@ -1,0 +1,1010 @@
+                                                                 Automation in Construction 167 (2024) 105539
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Few-shot object detection and attribute recognition from construction site
+images for improved field compliance
+Xiyu Wang , Nora El-Gohary *
+Department of Civil and Environmental Engineering, University of Illinois at Urbana-Champaign, 205 N. Mathews Ave., Urbana, IL 61801, United States
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Computer vision techniques can be used to detect site objects for identifying noncompliances that could lead to
+Object detection                                          safety incidents. However, existing methods are limited in covering diverse hazard scenarios, detecting site
+Attribute recognition                                     objects with imbalanced distributions, and recognizing their intricate attributes to describe their conditions and
+Deep learning
+                                                          functionality. To address these gaps, this paper proposes a deep learning-based method for identifying multiple
+Few-shot learning
+Field compliance checking
+                                                          fall-related objects and their associated attributes. The proposed method consists of three submethods: (1) a
+Fall protection                                           method for developing relevant datasets by retrieving images from open resources; (2) a method for few-shot
+Construction safety                                       object detection, which deals with imbalanced distributions; and (3) a method for attribute recognition to add
+                                                          semantic descriptions to the detected objects. The proposed method achieved an average precision and recall of
+                                                          88.2% and 79.5% for few-shot object detection and 94.8% and 95.7% for attribute recognition, respectively,
+                                                          which indicates good performance.
+
+
+
+
+1. Introduction                                                                                violations. Such manual and exhaustive process is time consuming,
+                                                                                               resource intensive, and expensive [3], given the large number of site
+    Improving safety on construction sites has been a longstanding major                       objects to be checked and thus the quantity of inspection work needed.
+challenge. Fatalities and injuries not only cause damage to workers’                           On the other hand, and as a result, current practices rely mainly on
+health, but also result in large economic losses. Although not every                           workers’ own judgement, often subject to their education levels, expe-
+noncompliance leads to an accident, a large portion of those fatalities or                     riences, interpretations, awareness, safety culture, tiredness, and atti-
+injuries, including those caused by fall, can be attributed to field non-                      tudes [4,5], which cannot guarantee that compliance is met consistently
+compliances with safety regulations, which can be divided into two                             over time. For example, workers could be blind to violations due to the
+categories: noncompliant behaviors and environmental factors. For                              repeated nature of their work. Also, under production pressure, they
+example, studies have identified that the most frequent noncompliant                           tend to change work patterns, take more shortcuts, or use inappropriate
+behaviors included failure of using personal protective equipment (PPE)                        tools or equipment [6]. Therefore, frequent safety inspection or moni-
+and failure to follow safety procedures [1], while the most frequent                           toring needs to be carried out, without relying on pure manpower, to
+noncompliant environmental factors included no available PPEs and                              produce prompt and consistent compliance checking results.
+inoperative or inappropriate equipment [2]. Construction safety regu-                              New solutions, therefore, have been proposed towards this end by a
+lations, on the other hand, provide detailed requirements on the exis-                         number of research efforts, among which computer vision techniques
+tence and properties of fall protection with respect to different scenarios                    have received high attention [7]. Object detection, in particular, pro-
+involving equipment, facilities, and operations. Therefore, ensuring                           vides an opportunity to automatically detect various objects involved
+field compliance with relevant safety regulations has been attracting an                       onsite for understanding site scenes. Therefore, a growing number of
+increasing amount of research attention recently.                                              research efforts in the construction safety domain have proposed
+    However, it is difficult for workers to maintain compliance consis-                        different deep learning-based object detection methods and frameworks.
+tently for two reasons. On one hand, existing safety inspections are                           For example, various convolutional neural network (CNN)-based models
+limited in their efficiency. This is because current site practices require a                  have been developed for detecting different protective equipment [3,8].
+“competent person” to manually monitor workers to identify possible                            Existing research efforts have also incorporated different features or
+
+
+
+ * Corresponding author.
+   E-mail addresses: xiyuw2@illinois.edu (X. Wang), gohary@illinois.edu (N. El-Gohary).
+
+https://doi.org/10.1016/j.autcon.2024.105539
+Received 8 October 2023; Received in revised form 24 April 2024; Accepted 7 June 2024
+Available online 22 August 2024
+0926-5805/© 2024 Elsevier B.V. All rights are reserved, including those for text and data mining, AI training, and similar technologies.
+X. Wang and N. El-Gohary                                                                                                Automation in Construction 167 (2024) 105539
+
+
+techniques into their detection pipeline to further enhance the perfor-             benchmarks such as ImageNet [13]. The detection transformer (DETR)
+mance of their deep learning-based detection methods. For example, (1)              proposed by Carion et al. [14] has shown good improvement in
+transfer learning techniques were used to leverage features extracted               detecting objects without a set of hand-crafted components in the
+from images for other general applications [9]; and (2) data augmen-                detection pipeline such as anchor generation and non-maximum
+tation techniques were frequently used to overcome the problem of                   suppression.
+lacking data diversity in small training datasets [10].                                 Few-shot learning is an emerging branch of deep learning-based
+    However, despite the importance of these efforts, three main limi-              methods that aims to achieve good performance for classes that
+tations still exist, which could negatively impact the practicality of              contain only a few training samples (known as novel classes), using the
+continuously detecting and monitoring personnel, materials, equipment,              knowledge learned from classes that are more frequent (known as base
+and facilities onsite, through the use of computer vision techniques.               classes) [15]. Compared with regular deep learning approaches that rely
+First, existing research efforts are limited in the coverage of hazard              on large amounts of training data, few-shot learning-based approaches
+scenarios and detection of granular objects, which limits the generaliz-            can better capture the underlying patterns and grasp the essential con-
+ability, scope, and effectiveness of these methods in field compliance              nections between new concepts and the existing knowledge, thus can
+checking. Second, existing detection methods often assume a balanced                generalize to new tasks that usually contain only a few labeled samples
+distribution of objects, which may not necessarily hold in real applica-            [sometimes even one sample (known as 1-shot learning) or zero samples
+tions. In fact, some site objects can appear less frequently than others,           (known as 0-shot learning)] [16]. The idea of few-shot learning was
+depending on the specific activities, construction phases, or types of              borrowed from the fact that even toddlers can easily learn a new concept
+construction projects. Third, existing methods are often limited in                 with limited information given to them. Such learning and generaliz-
+recognizing the attributes of the detected objects. Safety regulations              ability is especially useful for applications in the construction safety
+typically not only require the existence of certain protections, but also           domain, because of the difficulty in collecting and annotating a large
+have requirements on their conditions and connections. So, detecting                number of site images, as well as the highly imbalanced distribution of
+the attributes that are needed for field compliance checking is essential.          site objects. There are two main types of few-shot learning methods:
+For example, to check the compliance of ladders with the following                  meta and metric. Meta learning-based methods adapt to the task of
+Occupational Safety and Health Administration (OSHA) clause                         predicting novel classes with the help of task-level meta knowledge such
+[1926.1053(b)(6)], more advanced image analytics are needed to                      as the structure and variability of the dataset. Metric learning-based
+recognize attributes such as “stable” or “not_stable”: “ladders shall be            methods, on the other hand, learn to compare data samples to the sup-
+used only on stable and level surfaces”.                                            port samples (a subset of the images with K examples for each object
+    To address these limitations, this study proposes a deep learning-              class) in terms of their similarity to distinguish object classes. Few-shot
+based method to detect fall-related site objects and their associated at-           object detection has been attracting an increasing amount of research
+tributes to better capture site conditions for supporting field compliance          attention. For example, a number of research efforts in the healthcare
+checking. The proposed method consists of three submethods: (1) a                   domain have also developed few-shot object detection methods to
+dataset development method to retrieve and annotate a dataset that                  improve the identification of rare diseases (e.g., [17]), where such cases
+covers fall-related site objects in different scenarios; (2) a deep learning-       occur less frequently and a ground truth is difficult to obtain.
+based few-shot object detection method to address the imbalanced dis-
+tribution of the objects; and (3) a deep learning-based attribute recog-            2.2. Attribute recognition
+nition method to add the semantic descriptions (to the detected objects)
+that are needed to check compliance with construction safety regula-                    Attribute recognition aims to identify a group of attributes for each
+tions. The proposed few-shot object detection method and attribute                  object as semantic descriptors. It is an emerging field for various sur-
+recognition method were tested and evaluated using the dataset devel-               veillance applications such as face verification and pedestrian intention
+oped using submethod 1, which consists of 1,098 images with 39 object               prediction. For example, research efforts in the computer vision domain
+classes and 21 attribute classes.                                                   have predefined attributes either focused on physical appearance of
+                                                                                    people such as gender, age, hair length, and clothing [18], or human
+2. Background                                                                       actions and motions such as talking and pushing [19]. The identified
+                                                                                    attributes could provide fine-grained information in terms people’s
+2.1. Object detection                                                               current behavior (e.g., talking on the phone) with respect to gender and
+                                                                                    race, which could be used in subsequent pedestrian intention analysis (e.
+    Object detection aims to recognize and localize instances of semantic           g., predicting if the pedestrian is going to cross the road or not) [20–23].
+objects from images or videos. It has been widely adopted in applica-               In the construction safety context, current conditions of workers,
+tions such as face recognition, autonomous driving, video surveillance,             equipment, machines, and their environment, in terms of functionality,
+and anomaly detection. Depending on the process to produce pre-                     occupancy, motion, and shape, can be continuously changing, which
+dictions, deep learning-based object detection methods can be divided               need to be frequently checked to ensure compliance over time. There-
+into two main categories: two- and one-stage detectors. Two-stage de-               fore, more detailed attributes as required by applicable construction
+tectors usually produce a large number of candidate boxes as proposed               safety regulations need to be recognized from site images to describe
+objects first, then classify these proposals. One-stage detectors, on the           those conditions, which can provide more fine-grained semantic de-
+other hand, use one model to perform both bounding box prediction and               scriptions for the detected site objects and support subsequent compli-
+classification at the same time. Since less processing is needed for one-           ance analysis.
+stage detectors, they typically require less computational resources                    Existing attribute recognition methods can be divided into three
+and produce faster detection results compared to two-stage detectors,               categories: relation-, attention-, and part-based methods. Relation-based
+but their performance can be slightly compromised. In recent years, the             methods utilize interdependency and correlations among attributes to
+transformer [11], which uses an encoder block and a decoder block with              aid the attribute recognition process [24]. However, such methods
+self-attention mechanisms to capture dependencies and relations be-                 usually require predefined attribute relations that are obtained through
+tween features, has become a dominant deep learning model structure in              external linguistic knowledge bases, which do not exist in the con-
+the natural language processing domain. In the computer vision domain,              struction domain and are thus not practical or scalable. Attention-based
+the vision transformer (ViT) proposed by Dosovitskiy et al. [12] has                methods utilize visual attention mechanisms to learn the distinctive
+demonstrated better performance and less demand for computational                   features of each attribute [25,26]. Improved accuracy can be obtained
+resources than CNN-based models on large-size image classification                  for such methods, compared to the relation-based ones. Part-based
+
+                                                                                2
+X. Wang and N. El-Gohary                                                                                                Automation in Construction 167 (2024) 105539
+
+
+methods learn to decompose an image into a set of patches, extract                 those methods could be negatively affected. Only recently, a number of
+salient patterns from localized patches, and fuse these patterns for a             research efforts in the construction domain have taken on a few-shot
+distributed representation [27]. This type of methods is more promising            learning approach to adapt to novel classes. For example, Kim and Chi
+due to its ability to learn not only the distinctive features of each attri-       [38] proposed a meta learning-based few-shot learning method to detect
+bute, but also the regions where each attribute should be located. In the          five construction heavy machines such as excavators and loaders, which
+construction safety domain, this type of methods can provide a robust              showed better results in detecting classes that contain only 30 images
+solution to recognize attributes of site objects, despite that the location        than regular supervised learning methods. Tran-Anh et al. [39] proposed
+of their features indicating attributes are constantly moving or changing          a cross-feature and attentive-squeeze network to conduct few-shot
+due to the dynamic nature of construction sites.                                   detection of landslides from satellite images, when such disasters do
+                                                                                   not occur on every part of a road. Khoshboresh-Masouleh and Shah-
+3. State of the art and knowledge gaps                                             Hosseini [40] proposed a CNN-based few-shot method to detect build-
+                                                                                   ing changes from remote sensing images because the cost to obtain high
+    Computer vision techniques have been investigated for various ap-              quality images from different countries/regions can vary significantly,
+plications in the construction safety domain, which pave a solid foun-             which showed high robustness and better coverage when detecting
+dation for detecting fall-protection noncompliances due to unsafe                  changes from areas with small training data. However, in terms of fea-
+behaviors and hazardous work conditions. For example, Cheng et al.                 tures, the aforementioned efforts did not take relative location infor-
+[28] and Yan et al. [29] focused on detecting and tracking labor and               mation of different site objects into account, especially the position of an
+equipment such as barricades, ladders, and PPEs. Tang and Golparvar-               object in the image or connections between one equipment and its
+Fard [30] and Tang et al. [31] focused on estimating and monitoring                components, thus were limited in efficiently utilizing the hidden fea-
+workers’ behaviors such as poses, actions, and motions. Focusing on fall           tures from site images. In terms of model architecture, those few-shot
+protection specifically, a body of literature proposed different object            learning methods were mainly developed based on CNN models rather
+detection methods. For example, Khan et al. [32] detected PPEs for                 than transformers, which show better representation ability of objects
+workers on scaffolds, with the help of Internet-of-Things (IoT) technol-           through the use of embedding components [41]. In terms of machine
+ogies. Wang et al. [33] focused on detecting PPEs such as safety vests             learning approaches, most of those efforts are mainly fully supervised
+when working at heights for measuring safety compliance. Fang et al.               methods. There is a lack of efforts using unsupervised or semi-supervised
+[34] detected harnesses of workers at heights to proactively identify              backbone models, which could further reduce the amount of annotated
+unsafe behaviors.                                                                  data. Therefore, this paper seeks to develop a transformer-based few-
+    Despite the large number of efforts in the construction safety domain,         shot detection method that considers the relative location information of
+there still exist three main challenges in detecting site objects and un-          the objects, with a certain level of unsupervision, for detecting objects
+derstanding their conditions for improved construction safety. First,              with varying occurrences using limited amount of data.
+existing research efforts usually lack in the coverage of hazard scenarios             Third, existing research efforts mainly focused on detecting the ex-
+that can involve multiple site objects, object components, object ap-              istence of certain protections, without extracting visual information that
+pearances, and site scenes, which can limit the generalizability, scope,           describe their functionality, occupancy, and deflection, which are
+and thus the effectiveness of these methods in field compliance check-             essential information that must be captured and checked to ensure field
+ing. Existing efforts are also limited in detecting granular objects from          compliance. For example, to check compliance with the OSHA clause
+site images. They (e.g., [35]) typically detect high-level objects (e.g.,          1926.451(b)(1), which requires “scaffolds shall be fully planked”, it is
+scaffolds), but do not detect granular objects such as equipment com-              important to extract information on whether the scaffold is fully planked
+ponents (e.g., toeboard, guardrail, etc.). Detecting equipment and                 or not fully planked. Existing efforts are limited in extracting such an
+equipment components (and associating them) is important for sup-                  attribute that describes the condition of the scaffold in the same way (in
+porting safety compliance checking, which is in many cases related to              terms of meaning and terminology) as described in the OSHA regula-
+the conditions and use of the equipment and their components. There-               tions. Attributes studied in previous efforts were mainly limited to
+fore, this paper seeks to develop enhanced image retrieval and data                elemental attributes such as color, geometry, and auxiliary information.
+preprocessing techniques to leverage online resources to cover diverse             For example, Fang et al. [42] and Fang et al. [43] considered attributes
+hazard scenarios (as covered in the relevant safety requirements) in the           such as class, distance, color, height, speed, and coordinates. Chen et al.
+collected images.                                                                  [44] considered a set of attributes such as “hasName”, “hasDescription”,
+    Second, existing detection methods typically assume a balanced                 and “hasRequirementType” to integrate linguistic and visual informa-
+distribution of all object classes, which does not necessarily hold in real        tion for on-site hazard identification. However, such attributes are not
+practice. In fact, some object classes (e.g., holes) can appear less               sufficient in describing the detailed and constantly changing conditions
+frequently but can have such a high impact on compliance that if                   of site objects to ensure consistent compliance over time. This is because
+neglected, severe accidents can happen. Therefore, it is necessary to              construction safety regulations provide requirements not only related to
+develop a method that can address the imbalanced distribution of all               the existence, types, sizes, or distances of certain protections (as could be
+object classes and still achieve good performance in identifying object            indicated by class, color, and coordinates for example), but also with
+classes even when scarce. Existing research efforts have adopted                   regard to intricate attributes such as service, functionality, occupancy,
+different techniques such as data augmentation and upsampling and/or               impairment, quality, and capacity of the protective measure (e.g.,
+downsampling to address this problem on a dataset level. For example,              “Unstable objects shall not be used to support scaffolds or platform
+Bang et al. [36] proposed a data augmentation method to address class-             units.”), which could be equally, if not more, important to recognize for
+distribution imbalance and diversify the patterns in the dataset of con-           two reasons. First, intricate attributes often serve as the main criteria for
+struction resources using techniques such as removing-and-inpainting,              both selecting applicable protections and checking their compliance.
+cut-and-paste, and image transformation. Chen et al. [10] proposed a               Second, those intricate attributes about the conditions of the objects
+context-guided data augmentation-based method that utilizes location               could be changing over time due to the dynamic nature of construction
+information of construction resources as priors to generate artificial             sites, while color and geometry information are more likely to be fixed.
+samples with occlusions, which compensates for the lack of occluded                However, recognizing intricate attributes can be technically chal-
+images for collision prevention. However, those methods usually require            lenging. First, recognizing such attributes accurately from site images
+a set of hand-crafted rules as guidance to conduct transformation or               often requires interpretation and/or inference (e.g., infer the potential
+generate new features, which were typically defined by a domain expert             motion of an object to describe it as “not_stable”), which requires
+and could be specific to the dataset [37]. Thus, the generalizability of           identifying high-level semantic information, implicit correlation, and
+
+                                                                               3
+X. Wang and N. El-Gohary                                                                                            Automation in Construction 167 (2024) 105539
+
+
+causal relation. Second, intricate attributes can vary in their scales and       from more frequent object classes. A transformer-based method with a
+detail levels, which could require extracting feature maps at multiple           semi-supervised region proposal generator was developed, which can
+levels and allocating different amounts of attention accordingly. For            better capture the dependencies and relations between visual features
+example, whether a scaffold is fixed to a wall is a finer attribute than         with fewer annotated examples. A total of 39 fall protection-related
+whether the scaffold is level or not, which can require more visual de-          object classes (see Fig. 2) were considered, based on fall-related topics
+tails and thus higher attention. Third, it is necessary to develop methods       from OSHA and entity names extracted in [45], to ensure that the same
+that can learn to relate attributes to some discriminative regions because       semantics are maintained across both safety requirements and the
+attributes can often occur in some particular regions. However, it is            detected information for supporting subsequent automated reasoning.
+difficult to develop such a method without relying on a set of predefined        Attribute recognition aims to add semantic descriptions to the detected
+rules or additional region annotations, which requires a large amount of         objects, in terms of their conditions, to provide supporting information
+manual work and is thus expensive and time consuming. Therefore, this            for subsequent compliance comparisons. A part-based method with
+paper seeks to develop an attention-based attribute detection method to          spatial attention localization modules was developed, which can locate
+recognize multiple attributes of the detected objects by associating at-         attributes to specific regions and allocate higher attention to more fine-
+tributes to particular regions, without additional rules or annotations.         grained attributes. A total of 21 attribute classes were considered, based
+                                                                                 on the property and attribute names, which were extracted from OSHA
+4. Proposed method                                                               regulations in [45]. The attributes, along with examples of OSHA clauses
+                                                                                 that refer to these attributes, are shown in Table 1. For example, OSHA
+    This study proposes a deep learning-based method to detect fall-             clause 1926.451(f)(4) states “any part of a scaffold damaged or weak-
+related site objects and their associated intricate attributes, for              ened shall be immediately repaired or replaced”. Hence the attribute
+capturing essential site condition information to check compliance with          “damaged” was extracted. For more details on how the objects and at-
+relevant safety regulations, particularly OSHA. The proposed method              tributes were extracted from OSHA, the readers are referred to Wang
+consists of three main submethods, as per Fig. 1: (1) a dataset devel-           and El-Gohary [45,46]. Fig. 3 shows an example that illustrates the final
+opment method to retrieve and annotate fall-related site images, (2) a           output of the proposed method (i.e., detected objects and attributes),
+few-shot object detection method to address the imbalanced distribution          examples of the applicable OSHA clauses in this scenario, and how the
+of the objects, and (3) an attribute recognition method to add semantic          detected site condition information can be aligned with safety regula-
+descriptions (to the detected objects) that are needed to check compli-          tions for subsequent compliance checking.
+ance with construction safety regulations.
+    The dataset development method aims to retrieve, annotate, and               4.1. Dataset development
+augment fall-related site images. A query-based method with augmen-
+tation techniques was used to retrieve and develop site images of                4.1.1. Image retrieval
+different fall-hazard scenarios. The dataset development method con-                 Image retrieval in this study aims to collect a number of site images
+sists of three steps: image retrieval, annotation development, and data          from multiple online open image resources. Two main online sources
+augmentation. Image retrieval aims to query and crawl real-life con-             were selected for retrieving images: Flickr and Google Images. Flickr is
+struction site images from multiple open image resources. Annotation             an image management and sharing application or community that
+development aims to add labels to the objects in the collected images.           contains more than 5 billion images, each with detailed tags such as
+Data augmentation helps add richness and variations in features to the           people and buildings to indicate its content. The Flickr application
+dataset by adding slightly modified copies of the existing images. Few-          programming interface (API) was used to retrieve images from Flickr’s
+shot object detection aims to identify various fall-related site objects,        construction-related image groups. The Flickr API allows users to access
+especially less frequent object classes, by using the knowledge learned          Flickr’s image collection from its website, through constructing an
+
+
+
+
+                                                             Fig. 1. Research methodology.
+
+                                                                             4
+X. Wang and N. El-Gohary                                                                                                 Automation in Construction 167 (2024) 105539
+
+
+                                                                                Table 1
+                                                                                Attribute Classes.
+                                                                                 Attribute class     Examples                              Example applicable
+                                                                                                                                           OSHA clauses
+
+                                                                                 Damaged             If the scaffold boards are damaged    1926.451(f)(4),
+                                                                                 Undamaged           or undamaged                          1926.502(c)(5)
+                                                                                 Vertical            If the walking/working surface is     1926.502(d)(9),
+                                                                                 Horizontal          vertical or horizontal                1926.502(d)(6)(iv)
+                                                                                 Steep               If the roof is steep or low-sloped    1926.501(b)(11),
+                                                                                 Low_sloped                                                1926.501(b)(10)
+                                                                                 Level               If the ground for supporting          1926.451(c)(2)(i),
+                                                                                 Not_level           scaffold is level or not level        1926.1053(b)(6)
+                                                                                 Stable              If the wall under construction is     1926.451(c)(2)(ii),
+                                                                                 Not_stable          stable or not stable                  1926.451(c)(2)(iii)
+                                                                                 Protected           If the leading edge is protected or   1926.501(b)(1),
+                                                                                 Not_protected       not protected                         1926.501(b)(10)
+                                                                                 Fixed               If the anchorage is fixed or not      1926.451(g)(3)(i),
+                                                                                 Not_fixed           fixed                                 1926.1053(a)(1)(iii)
+                                                                                 Heavy               If a tool carried by the worker is    1926.451(h)(1),
+                                                                                 Not_heavy           heavy or not heavy                    1926.1053(b)(22)
+                                                                                 Walking             If the worker is walking, working,    1926.501(b)(14),
+                                                                                 Working             or standing on the surface            1926.453(b)(2)(iii)
+                                                                                 Standing
+                                                                                 Fully_planked       If the scaffold platform is fully     1926.451(b)(1),
+                                                                                 Not_fully_planked   planked or not fully planked          1926.451(b)(1)(ii)
+
+
+
+                                                                                caught-in-between; (2) images of poor quality to the extent that objects
+                                                                                can be difficult for humans to perceive. For example, some candidate
+                                                                                images were taken so far away that workers were too small to be
+                                                                                perceived. Similarly, some images may have very low resolution, be too
+                                                                                blurry or dark, or contain simulated cartoons that are unrealistically
+                                                                                rendered; and (3) fisheye images and repeated images.
+
+                                                                                4.1.2. Data annotation
+                                                                                    Data annotation is the process of adding labels to the objects in the
+                                                                                collected images, following a labeling scheme. For few-shot detection,
+                                                                                the labeling scheme of the PASCAL VOC dataset [47] was followed in
+                                                                                this study using an annotation tool named LabelImg. Labels for each
+                                                                                object instance contain two kinds of information: object class name and
+                                                                                object coordinates. Labels for each image containing multiple objects
+                                                                                were stored in an (Extensible Markup Language) XML file, which is a
+                                                                                common markup language format for storing structured data. For
+                                                                                attribute recognition, the labeling scheme of the PEdesTrian Attribute
+                                                                                (PETA) dataset [48] was followed, which requires adding multiple
+                                                                                attribute tags to an object in its existing XML file. Those multi-label
+                                                                                attributes were then converted into one-hot encoding as the input for
+                                                                                attribute recognition.
+
+                                                                                4.1.3. Data augmentation for creating image variations
+                                                                                   Data augmentation in this study aims to create image variations by
+                                                                                adding slightly modified copies of the existing data through small
+                                                                                transformations such as geometric transformations and color space
+                                                                                augmentations [49], such that the characteristics of the dataset (e.g.,
+                                                                                object scales) could resemble the true variations/distribution of site
+                                                                                images. With those augmented training samples, the deep learning
+                 Fig. 2. Fall protection-related object classes.                model would traverse over a larger feature space, better capture and
+                                                                                extract the underlying patterns, and thus could be more robust to small
+endpoint (often in the form of a web address), which returns data in the        changes, dislocations, and transformations. These variations can also act
+format specified by users. To retrieve images more specific to fall pro-        as a regularizer to prevent overfitting, which is important in further
+tection, keywords for different fall-related topics were used as queries.       ensuring the generalizability of the proposed method. The following
+To retrieve as many candidate images as possible, keywords and their            data augmentation techniques were used: random color jittering,
+synonyms were used. Candidate images from Google Image were also                random jpeg compression, random grayscale conversion, random flip-
+retrieved to add more samples for developing the dataset. To filter out         ping, and random rescaling [49]. Random rotation was not included
+some irrelevant images, queries were designed by concatenating words            because angles are important in determining certain attributes. For
+such as “construction” and/or “safety” to the original keywords, for            example, whether a roof object can be recognized as a steep roof or low-
+restricting the application domain. After retrieving a set of candidate         sloped roof can depend on the angle of the roof panels.
+images, three types of images were removed to improve the quality of
+the dataset: (1) images about other accident types such as struck-by or
+
+
+                                                                            5
+X. Wang and N. El-Gohary                                                                                                           Automation in Construction 167 (2024) 105539
+
+
+
+
+                                 Fig. 3. Example to illustrate proposed method (output, applicable clauses, compliance checking).
+
+
+4.2. Few-shot object detection                                                      the relative location of an object in an input image, two-dimensional
+                                                                                    positional encoding of the relative height and width for each object
+    Few-shot object detection aims to develop an object detection model             was added as input to the encoder block. This is similar to the relative
+that can generalize to novel objects with limited site images, in order to          positional embedding from the computational linguistics domain [52],
+address the imbalanced distribution of site objects. The proposed                   where positional encoding is typically used to preserve the relative
+method is a finetuning method that combines the benefits of both meta-              location and thus the importance of a word token in a sentence, which
+and metric-learning, as described in Section 2.1.2. The few-shot detec-             helps achieve better generalizability.
+tion method consists of two steps: base model training and few-shot                     The decoder block, on the other hand, seeks to decode the object
+finetuning. Base model training focuses on extracting features from                 embeddings from the encoder and calculate object class predictions. It
+base classes where there exist abundant training samples. It was devel-             consists of: (1) a multi-head self- and a multi-head decoder-encoder
+oped based on a transformer model with position encoding and a semi-                attention modules, which take in an input image as well as the learned
+supervised region proposal generator that can extract composition fea-              positional encodings and computes N embeddings of size d for N objects
+tures. During few-shot finetuning, the model adapts to the task of                  in parallel; (2) an FFN, which computes predictions of the bounding box
+detecting novel classes where there exists limited number of training               coordinates (̂ b) for the input image. It also produces estimated object
+samples, by utilizing the knowledge learned during base model training.                           ̂ which are to be compared with the object embed-
+                                                                                    embeddings ( emb),
+                                                                                    dings (emb) from the encoder block; and (3) a linear projection layer,
+4.2.1. Base model training
+                                                                                    which calculates probabilities of object classes (̂c ) for each bounding box
+    The proposed base model contains three main components: a semi-
+                                                                                    using a linear layer and a softmax layer. The encoder-decoder trans-
+supervised region proposal generator, an encoder-decoder trans-
+                                                                                    former architecture is illustrated in Fig. 4.
+former, and several feed forward networks (FFN) to produce predictions.
+                                                                                        The bipartite matching algorithm [14] was used to measure the
+The semi-supervised region proposal generator further consists of: (1) an
+                                                                                    alignment between the pseudo ground truth (i.e., emb, b, c) and the
+unsupervised backbone model, swapping assignments between multiple
+views of the same image (SwAV) [50]: it seeks to map features to their              predicted results (i.e., emb,
+                                                                                                             ̂ ̂  b, ̂c ). It aims to find the permutation σ such
+embedding space in a self-supervised manner, which helps further                    that it minimizes the cost between ground-truth y and the estimated
+reduce the amount of annotated data needed. It applies a set of trans-                    y , as per Eq.1:
+                                                                                    label ̂
+formations to augment an input image with different views and predicts                                   N
+                                                                                                         ∑            (           )
+the cluster assignments of these images as pseudo-labels to learn visual            σ = arg minσ∈∅N             Lmatch yi , ̂
+                                                                                                                            y σ(i) ,                                             (1)
+representations; and (2) a supervised selective search process [51]: it                                   i=1
+
+seeks to capture the connectivity between one equipment and its com-                            (           )
+ponents. It utilizes region-based features in a bottom-up manner when               where Lmatch yi , ̂
+                                                                                                      y σ(i) is a pairwise loss function defined in [53] and ∅N
+generating region proposals, by generating patches of object regions at             is the set containing all possible permutations. Training samples of base
+different scales and iteratively grouping regions that should be con-               classes were used during this step with the following loss function:
+nected. To select a variety of object proposals with high probabilities,
+                                                                                                N
+pseudo ground-truth region proposals (b) were then generated from such                          ∑              (            )          [       (            )         (           )]
+                                                                                         y) =
+                                                                                    L(y, ̂                                          =0} λb Lbox bi , b σ (i) + λe Lemb zi , ̂
+                                                                                                      λf Lclass ci , ̂c σ(i) + 1{ci ∕                ̂                      z σ(i) ,
+composition features through importance sampling. Object scores (c) for                         i=1
+all pseudo ground-truth region proposals were assigned as 1.                                                                                                                     (2)
+    The encoder-decoder transformer aims to extract object features and
+localize the objects from an input image by encoding and decoding their             where Lclass is the cross-entropy loss for measuring class predictions, Lbox
+visual features, with special attention on their position information. The          is a linear combination of L1 loss and generalized intersection over union
+encoder block takes in the output from the semi-supervised region                   (GIoU) loss [54] for measuring box predictions, and Lemb is the L1 loss for
+proposal generator and generates object embeddings (emb). To preserve               measuring the distances between embeddings.
+
+
+                                                                                6
+X. Wang and N. El-Gohary                                                                                                  Automation in Construction 167 (2024) 105539
+
+
+
+
+                                             Fig. 4. Architecture of proposed method for few-shot object detection.
+
+
+4.2.2. Few-shot finetuning                                                           where h denotes a convolutional layer for dimension reduction, ∅k (I) is
+    During few-shot finetuning, the same model architecture as in base               the bottom-up features for input image I at feature level k, and g refers to
+model training was used with a different training dataset. The training              an upsampling operation with nearest neighbor interpolation. Because
+dataset contains a small and balanced set of images for all object classes           the highest level has no top-down connections, it only contains h to be
+(both base and novel classes): the number of samples is the same across              concatenated with features from other levels, i.e., X3 = h(∅3 (I) ).
+all object classes and is small in quantity (i.e., K-shots with K = 50 in this           The proposed SALMs are then used to automatically discover the
+study). To finetune the detection model, weights of the linear projection            discriminative part of an object by: (1) localizing the regions where each
+layer were first randomly initialized for the novel classes. Then, the FFN           attribute can occur, and (2) allocating different attentions to attributes
+from the decoder block and the linear projection layer were finetuned                with different detail levels. A SALM consists of a spatial transformer
+using the new training dataset, with the weights of the entire encoder               layer and a channel-attention subnetwork. The spatial transformer layer
+block fixed. The same loss function as in Eq. 2 was used, with a smaller             is a flexible version of a spatial transformer network (STN) [57], which
+learning rate (1/2 of the learning rate in base model training).                     applies spatial transformation such as cropping, translation, and scaling
+                                                                                     to feature maps. The channel-attention subnetwork, on the other hand,
+4.3. Attribute recognition                                                           is used to reweight features for different attributes according to their
+                                                                                     detail levels, because more attention needs to be paid to finer attributes.
+    A deep learning attribute recognition model was developed to                     For example, “fixed” (i.e., whether a scaffold is fixed to a wall or not) is a
+identify a set of attributes for each site object to provide detailed se-            finer attribute that requires the model to zoom into a particular area,
+mantic information for describing its conditions. A part-based method is             capture more visual details, and thus pay higher attention. Each
+proposed in this study to locate attributes to their related regions                 channel-attention subnetwork takes the features at each level produced
+without additional region annotations and pay different amounts of                   by the batch norm-inception network with FPNs, and calculates channel-
+attention according to the attributes’ detail levels. The deep learning              wise attention weights through a set of layers including global pooling,
+model proposed in this paper consists of a main batch norm-inception                 convolution, rectified linear unit (ReLU), and sigmoid. The SALM then
+network [55] with feature pyramid networks (FPNs) [56], and a set of                 applies spatial transformation to both the features and the attention
+proposed spatial attention localization modules (SALMs). The batch                   weights. A fully connected (FC) layer is used at the end to conduct
+norm-inception network can better capture the feature distribution, due              inference and calculate predictions. During inference, a deep supervi-
+to its normalization process to prevent gradient vanishing, especially for           sion mechanism is used to provide feedback to all SALMs at different
+deeper networks. FPNs use a set of top-down or skip connections to                   feature levels in terms of whether the distinctive regions are accurately
+extract and concatenate features at different levels. This is because low-           captured. This is achieved by aggregating outputs from SALMs through a
+level details and high-level semantics are often complementary in                    voting scheme that produces the maximum responses across all feature
+contributing to attribute prediction. Thus, the batch norm-inception                 levels. The best predictions with the most accurate attribute regions are
+network with FPNs of the model has two main paths: bottom-up and                     selected using such maximum voting scheme, which is proved to be a
+top-down pathways. The bottom-up pathway consists of multiple batch                  better ensemble method than the averaging voting scheme [58].
+norm-inception blocks at different feature levels, which were used to                    During training, each object was fed into the main network through
+extract features from input images in a bottom-up manner. The top-                   both bottom-up and top-down pathways. Features extracted using the
+down pathway consists of three lateral connections and two top-down                  batch norm-inception network with FPNs were concatenated before
+connections, as shown in Fig. 5, where the lateral connections can                   being fed into the SALMs. The SALMs then performed attribute-specific
+reduce the dimensions of bottom-up features, and the top-down con-                   localization and channel-wise attention weight calculation to produce
+nections can transmit the higher-level features through an upsampling                intermediate attribute prediction vectors. Those prediction vectors were
+operation. Features from adjacent levels are concatenated following Eq.              aggregated using an element-wise maximum operation for producing
+3:                                                                                   final predictions. The process of the proposed attribute recognition
+                                                                                     model is illustrated in Fig. 5. The loss function in the form of weighted
+Xk = {h(∅k (I) ) , g(Xk+1 ) }, k ∈ {1, 2},                                (3)        binary cross-entropy was used at each feature level, as per Eq. 4.
+
+
+                                                                                 7
+X. Wang and N. El-Gohary                                                                                                Automation in Construction 167 (2024) 105539
+
+
+
+
+                                                 Fig. 5. Architecture of proposed model for attribute recognition.
+
+                       M
+                    1 ∑     (      ( ( ))               (     ( )))
+                                                                                             2×P×R
+     y k , y) = −
+Lk ( ̂                    γm ym log σ ym  + (1 − ym )log 1 − σ ym  ,       (4)       F− 1=                                                                      (7)
+                    M m=1              k                        k
+                                                                                              P+R
+
+where k is the kth level, y is the ground-truth label, ̂y k is the predicted         5. Experimental results
+label from kth level, M is the number of attributes, γm = e− am is the loss
+weight for the mth attribute, e is the exponential constant, am is the prior             The proposed few-shot detection and attribute recognition method
+class distribution of the mth attribute, and σ is the sigmoid activation.            for identifying site objects and their attributes was tested using the
+The overall loss is obtained by summing all losses at the individual                 dataset developed in Section 4.1. A set of experiments were conducted
+feature levels.                                                                      to: (1) evaluate the performance of the proposed few-shot object
+                                                                                     detection method using different splits of base/novel object classes; (2)
+4.4. Evaluation metrics                                                              evaluate the impact of few-shot detection by comparing its performance
+                                                                                     with a general detection method; and (3) evaluate the effectiveness of
+    Precision, recall, and F-1 measure were used for evaluating the                  the proposed attribute recognition method by comparing the perfor-
+performance of few-shot object detection and attribute recognition. As               mance with and without the spatial attention localization modules. The
+per Eqs. 5–6, precision (P) is defined as the percentage of the number of            hyperparameters of the few-shot object detection and attribute recog-
+correctly detected objects (or attributes) divided by the total number of            nition models were finetuned to achieve the best performance. The ex-
+predicted objects (or attributes). Recall (R) is the percentage of the               periments were conducted using a g4dn.8xlarge Amazon web services
+number of correctly detected objects (or attributes) divided by the total            (AWS) elastic compute cloud (EC2) instance with an Ubuntu system.
+number of objects (or attributes) that should be detected. F-1 measure is
+the harmonic mean of precision and recall, as per Eq. 7. For object                  5.1. Dataset characteristics
+detection, mean average precision (mAP) was also used to evaluate the
+performance of the proposed method. mAP is based on average precision                    The collected dataset included a total of 1,098 images related to fall
+(AP), the area under the precision-recall curve. A larger AP indicates               protection, which vary in their resolution, viewpoints, object scales,
+better performance. However, AP itself is not sufficient in indicating               color histograms, lightning conditions, and camera information. For
+how the model performs in localizing object instances. The intersection              example, Fig. 6 (a) shows examples for viewing a working surface from
+over Union (IoU) is thus used to measure the overlap between a ground-               different angles, which can encourage the model to learn a better
+truth mask and the predicted mask. For example, AP@50 means AP at an                 overview of the surface. Fig. 6 (b) shows examples of excavators in
+IoU overlap threshold of 50%, with mAP being the average of AP@50                    different colors, which can encourage the model to capture more fea-
+values over all instances in this case. For attribute recognition, the               tures other than color. Fig. 6 (c) shows examples of varying qualities,
+performance was evaluated at two levels: (1) at the attribute level (i.e.,           such as different exposures, resolutions, weather conditions, and light-
+average performance per attribute class); and (2) at the object level (i.e.,         ning, which can improve the robustness of the object detection model to
+average performance per object instance). Differences in performance                 such variations. Fig. 6 (d) shows examples containing different cover-
+across both levels could be seen due to the imbalanced distribution of               ages of the same equipment, which can encourage the model to predict
+attributes.                                                                          based on partial cues. Fig. 6 (e) shows images containing different
+                                                                                     shapes of barricades, which can encourage the model to capture features
+      number of correctly detected objects (or attributes)
+P=                                                                         (5)       other than geometry, such as through understanding the connections
+       total number of predicted objects (or attributes)
+                                                                                     between barricades and excavations. As shown in those examples, most
+                                                                                     objects are placed in cluttered background with varying sizes.
+            number of correctly detected objects (or attributes)
+R=                                                                                       After annotation, a total number of 12,063 object instances were
+      total number of objects (or attributes) that should be detected
+                                                                                     obtained, which is equivalent to 11.0 object instances per image. This
+                                                                           (6)
+                                                                                     dataset size is comparable to a few similar research efforts in the con-
+                                                                                     struction safety domain, in terms of both the number of images and the
+
+                                                                                 8
+X. Wang and N. El-Gohary                                                                                                   Automation in Construction 167 (2024) 105539
+
+
+
+
+Fig. 6. Examples of variations in the dataset: (a) Different viewpoints of working surfaces; (b) Different colors of excavators; (c) Different image qualities; (d)
+Different coverages of equipment; and (e) Different shapes of equipment.
+
+
+number of object instances. For example, 1,000 images were used for                  related objects in the dataset, which reflects an imbalanced distribu-
+safety guardrail detection in [59], and 4,700 object instances were used             tion of all object classes. For example, wall instances appear far more
+in [3]. The 12,063 object instances include 43.2%, 32.6%, and 24.2%                  often than hole instances. However, detecting holes accurately can be of
+small, medium, and large objects, respectively, which is comparable in               significant importance in ensuring compliance and safety, in spite of its
+terms of scale distribution to other construction safety datasets of site            rare occurrence. This reinforces the need to use few-shot detection
+images, such as the dataset by Tang et al. [31], which is composed of                rather than general detection methods for identifying such site objects.
+42.6%, 32.9%, and 24.5% small, medium, and large objects. Object
+scales can be divided into small, medium, and large by the pixels they
+cover, where a small box covers an area of less than 32-by-32 pixels and             5.2. Few-shot object detection
+a large box covers more than 96-by-96 pixels [31]. Looking at a different
+size classification to compare to general-domain datasets of unmanned                5.2.1. Performance of proposed few-shot object detection method
+aerial vehicle (UAV) images, 57.5% of the annotated objects are less                     To evaluate the effectiveness of the proposed few-shot object
+than 50-by-50 pixels. According to [60], bounding box sizes of most                  detection method, three different splits of base/novel object classes were
+objects (specific number not given) in UAV images are less than                      used, because the performance can vary due to different selections of
+50-by-50.                                                                            novel classes. For each split, the 39 object classes were divided into 35
+    In terms of object classes, Fig. 7 shows the distribution of all fall-           base classes and 4 novel classes. So, in total (i.e., for the three splits), 12
+                                                                                     classes were considered as novel, with no overlapping across the splits.
+
+                                                                                 9
+X. Wang and N. El-Gohary                                                                                              Automation in Construction 167 (2024) 105539
+
+
+
+
+                                                            Fig. 7. Distribution of object classes.
+
+
+This is similar to the method of splitting in existing few-shot detection          as shown in Table 3. The performance level of the novel classes did not
+benchmarks in the computer vision domain [15], but without over-                   drop significantly compared with the base classes, despite their large
+lapping due to the characteristics of the developed dataset. The number            difference in the number of training samples, which indicates that the
+of testing samples for all object classes is summarized in Table 2.                proposed method was effective in transferring the features learned from
+    Using 50-shots for finetuning, the proposed few-shot detection                 the base classes to the novel classes. The proposed transformer-based
+method achieved an average precision, recall, and F-1 measure of                   method also achieved an average mAP of 81.7% when using 50-shots
+88.2%, 79.5%, and 83.6%, respectively, for all object classes, which               for finetuning. Similar patterns were found when using 10-shots and
+indicates that the proposed method was effective in extracting the target          30-shots for finetuning (see Table 3).
+information from the site images. The proposed method also achieved an                 Example results of few-shot detection are shown in Fig. 8. It can be
+average precision, recall, and F-1 measure of 88.6%, 80.3%, and 84.2%              seen from the figure that most target objects are correctly localized with
+for the base classes, and 85.6%, 76.3%, and 80.7% for the novel classes,           the corresponding object class tags, which indicates the effectiveness of
+
+
+Table 2
+Number of Samples in Testing Dataset.
+ Object class              Number               Object class                              Number               Object class                            Number
+
+ Aerial_Lift               27                   Fence                                     42                   Railing                                 42
+ Anchorage                 34                   Guardrail_System                          29                   Roof                                    39
+ Arm                       31                   Guardrail                                 42                   Safety_Hook                             27
+ Back                      35                   Hard_Hat                                  49                   Safety_Net                              31
+ Barricade                 42                   Harness                                   34                   Scaffold                                30
+ Body_Belt                 31                   Hole                                      23                   Scaffold_Platform                       29
+ Connector                 30                   Ladder                                    30                   Scaffold_Pole                           44
+ Coupler                   31                   Lanyard                                   30                   Step                                    33
+ Cover                     32                   Leading_Edge                              34                   Toeboard                                25
+ Crane                     31                   Lifeline                                  28                   Tool                                    31
+ Employee                  37                   Personal_Fall_Arrest_System               26                   Trash                                   34
+ Excavation                32                   Positioning_Device_System                 27                   Walking_Working_Surface                 37
+ Excavator                 41                   Post                                      43                   Wall                                    48
+
+
+                                                                              10
+X. Wang and N. El-Gohary                                                                                                       Automation in Construction 167 (2024) 105539
+
+
+Table 3
+Experimental Results of Few-Shot Object Detection.
+ Experiment                P      mP     R       mR     mF      mAP    average mAP      bP     mbP    bR      mbR       mbF       nP      mnP      nR      mnR      mnF
+
+ K = 50-Split1             88.2   88.2   81.0    79.5   83.6    83.9   81.7             88.6   88.6   81.5    80.3      84.2      84.3    85.6     76.8    76.3     80.7
+ K = 50-Split2             88.1          79.3                   80.7                    88.2          80.3                        87.7             77.2
+ K = 50-Split3             88.4          78.2                   80.5                    88.9          79.0                        84.7             75.0
+ K = 30-Split1             75.9   75.3   72.2    71.6   73.4    73.1   72.8             76.5   75.9   73.3    72.8      74.4      70.7    69.8     62.6    61.1     65.2
+ K = 30-Split2             75.2          71.5                   72.8                    75.9          72.8                        69.1             60.1
+ K = 30-Split3             74.8          71.2                   72.4                    75.4          72.4                        69.6             60.7
+ K = 10-Split1             52.3   51.8   50.3    49.7   50.7    49.2   48.3             53.4   52.9   52.5    51.9      52.4      42.7    42.1     31.1    30.5     35.4
+ K = 10-Split2             51.6          49.7                   48.7                    52.7          51.9                        42.0             30.5
+ K = 10-Split3             51.4          49.2                   46.9                    52.5          51.4                        41.8             30.0
+ K = 50-ResNet-Split1      85.1   84.6   72.5    72.1   77.9    75.5   75.1             85.7   85.2   73.2    72.9      78.6      79.8    79.3     66.4    85.1     84.6
+ K = 50-ResNet-Split2      84.6          72.0                   74.9                    85.2          72.8                        79.3             65.0    84.6
+ K = 50-ResNet-Split3      84.1          71.9                   74.8                    84.7          72.7                        78.8             64.9    84.1
+ General-all               N/A    85.7   N/A     73.7   79.2    N/A    78.8             N/A    89.5   N/A     78.9      83.9      N/A     33.8     N/A     21.6     26.4
+ General-balanced set      N/A    60.6   N/A     57.4   59.0    N/A    52.8             N/A    60.9   N/A     59.2      57.6      N/A     60.1     N/A     54.2     57.0
+
+Note: P=Precision (%); mP = mean Precision (%); R = Recall (%); mR = mean Recall (%); mF = mean F-1 measure (%); mAP = mean average precision; bP=Precision
+for base classes (%); bR = Recall for base classes (%); nP=Precision for novel classes (%); and nR = Recall for novel classes (%).
+
+
+
+
+                                                Fig. 8. Example results of proposed few-shot object detection method.
+
+
+the proposed method. Fig. 9 shows more such examples and some failure                 improved if more prior knowledge could be incorporated, thus it might
+cases for illustrating the error causes. For example, as shown in Fig. 9              be beneficial to add a few non-fall-related objects such as pedestrians
+(a), the model failed to distinguish regular pedestrians from construction            and mirrored tools, or frequent noncompliant objects such as baseball
+workers on a busy street, because most instances in the dataset are                   caps, in future work, so that the model can learn to make more accurate
+workers, and the model tends to predict a person more often as a con-                 predictions.
+struction worker. In addition, since there is no pedestrian object class, no              Ambiguities in object classes is another source of error, despite that
+prior knowledge or supervision was provided for the model to make such                the same semantics are maintained between site objects and construc-
+distinction. As shown in Fig. 9 (b), it is difficult for the model to detect          tion safety regulations. For example, depending on the specific opera-
+objects that blend into each other (arm, tool, and lanyard in this case),             tion or activity a worker is performing, walls or roofs can sometimes be
+especially when the lightening condition was not satisfactory, because                considered as walking/working surfaces as well, which can cause
+there can be limited visual cues or features (only silhouette in this case)           confusion for the model to classify the detected wall or roof objects.
+for the model to make an accurate prediction. As shown in Fig. 9 (c), the             Similarly, a dee-ring can be considered as a connector when it is con-
+model also tends to detect mirrored workers or equipment as real object               nected with other components of a personal fall arrest system; but, it can
+instances, because the mirrored objects can have similar features. In                 be considered as a safety hook when it is used to fasten a safety net.
+addition, there can exist insufficient number of such samples in the                  Moreover, one object class can refer to a variety of objects. For example,
+dataset for the model to learn to filter out objects caused by reflection.            the tool class can include buckets, screwdrivers, and towels, and the
+As shown in Fig. 9 (d), the model can fail to distinguish a baseball cap              trash class can include debris, wasted materials, plastic bags, and empty
+from a hard hat, because those two objects can have similar colors,                   food boxes. Considering our dataset size, it may not contain sufficient
+shapes, and locations, especially for images taken from a distance or                 training samples for each subcategory of tool or trash object (even fewer
+when there are partial occlusions. Most of such failure cases can be                  than 50-shots), thus the performance can be negatively affected. To
+
+
+                                                                                 11
+X. Wang and N. El-Gohary                                                                                                       Automation in Construction 167 (2024) 105539
+
+
+
+
+Fig. 9. Examples of failure cases: (a) Errors when there are pedestrians; (b) Errors when objects blend into each other; (c) Error when there is reflection; and (d) Error
+when there is baseball hat.
+
+
+further improve the detection performance, in future work, more                         precision, recall, and F-1 measure of 85.7%, 73.7%, and 79.2%,
+detailed object subclasses could be considered and more relevant site                   respectively, for all object classes, which is comparable, or slightly
+images could be retrieved.                                                              decreased than the proposed model (88.2%, 79.5%, and 83.6%) using
+    Errors can also arise when there are no sufficient visual cues. For                 50-shots for finetuning as well. However, such performance was ach-
+example, workers can wear harnesses inside their jackets due to cold                    ieved by maximizing the performance of base classes (i.e., 83.9% in F-1
+weather, with only a small part of lanyard outside to connect with a                    measure), while sacrificing the performance of novel classes (i.e., 26.4%
+lifeline, in which case it is difficult to determine if they are using a                in F-1 measure). The proposed few-shot detection method, on the other
+complete set of personal fall arrest system and to further assess its                   hand, shows balanced performance for all object classes, since the per-
+condition. For images taken under foggy weather, site objects can be too                formance difference between the base and novel classes is relatively
+blurry to be captured. Those extreme cases are very different from                      small (i.e., 84.3% vs. 80.7%).
+partial occlusions that are frequently seen onsite, which can be effec-                     The DETR model was then trained and tested using the balanced
+tively solved by taking images from another angle or making inference                   image set. The DETR model achieved an average precision, recall, and F-
+using other existing features. For those cases, however, measures other                 1 measure of 60.6%, 57.4%, and 59.0%, respectively, for all object
+than vision-based methods, such as different sensing technologies, need                 classes, as per Table 2. Thus, the proposed few-shot detection method
+to be incorporated to help obtain useful site information for supporting                shows 27.6% (88.2% vs. 60.6%), 22.1% (79.5% vs. 57.4%), and 24.6%
+subsequent compliance comparisons.                                                      (83.6% vs. 59.0%) improvement in precision, recall, and F-1 measure,
+                                                                                        respectively, when using 50-shots for finetuning, which indicates its
+5.2.2. Comparative performance evaluation with state-of-the-art methods                 effectiveness in learning from only a limited number of site images, and
+    The performance of the proposed few-shot detection method was                       utilizing the knowledge learned from base classes to enhance the overall
+further compared with the performance of a general detection method,                    performance. The proposed few-shot detection method, therefore,
+the DETR method by Carion et al. [14]. The DETR is a basic encoder-                     shows better potential for generalizability and practicality to apply
+decoder transformer without a set of hand-crafted components (see                       onsite, given the difficulty in collecting a balanced dataset and the
+Section 2.1.1). The comparison of the DETR and the proposed method                      possible severe consequences of failing to detect certain rare site objects.
+was conducted under two different settings: (1) using all images,                           In addition, this study also compared the performance of the pro-
+including all base class images and K-shots (K = 50) novel class images,                posed method with a state-of-the-art few shot detection method based
+which aims to evaluate if the proposed method can help narrow the                       on residual network (ResNet) [15], as described in Section 2.1.2. Using
+performance gap between base and novel classes; and (2) using balanced                  50-shots, the proposed method showed an improvement of 3.6% (88.2%
+K-shots (K = 50) images as described in Section 4.2.2 for all object                    vs. 84.6%) in precision, 7.4% (79.5% vs. 72.1%) in recall, and 5.8%
+classes, following the evaluation method in Kim and Chi [38], which                     (83.6% vs. 77.9%) in F-1 measure for all object classes, which indicates
+aims to evaluate if the proposed method can help improve the perfor-                    the effectiveness of the proposed method. This may also indicate that,
+mance on novel classes. Thus, the DETR model was first trained using all                for this domain-specific application/dataset, transformer-based models
+images. As shown in Table 2, the DETR model achieved an average                         can achieve better few-shot detection performance compared to ResNet-
+
+
+                                                                                   12
+X. Wang and N. El-Gohary                                                                                                 Automation in Construction 167 (2024) 105539
+
+
+based models.                                                                        images.
+                                                                                         Compared to the few-shot object detection results in Section 5.2, the
+5.3. Attribute recognition                                                           proposed method achieved better performance in recognizing attributes
+                                                                                     for two main reasons. First, since each object can have multiple attri-
+5.3.1. Performance of proposed attribute recognition method                          butes as illustrated in Fig. 3, there are significantly more training sam-
+    At both, object and attribute levels, the proposed attribute recogni-            ples of attributes, especially given the difference in the numbers of
+tion method achieved good performance: an average precision, recall,                 object and attribute classes (39 objects classes vs. 21 attribute classes).
+and F-1 measure of 94.8%, 95.7%, and 95.3%, respectively, at the object              Second, recognizing attributes can require relatively lower-level fea-
+level, and 90.4%, 96.1%, and 92.5% at the attribute level, as shown in               tures or certain fixed visual cues than detecting objects. For example, the
+Fig. 10. This indicates that the proposed method was effective in                    attribute recognition model can use the shape information of a scaffold
+localizing and recognizing domain-specific attributes and dealing with               platform to distinguish if it is damaged or not, as shown in Fig. 3.
+imbalanced distributions. The achieved performance is comparable (or                 However, to detect an object as a scaffold board, the object detection
+even higher) to those reported in other applications outside of the                  model needs to use a set of higher-level features such as its texture, its
+construction domain. For example, an F-1 measure of 80.2% was ach-                   spatial location and connection with other scaffold components or
+ieved on the richly annotated pedestrian (RAP) dataset [19] and 86.85%               workers, and its implicit part-whole connections with scaffold, to
+on the PETA dataset [58].                                                            distinguish it from other related objects. Therefore, better performance
+    However, small variations in performance can be observed for                     was achieved for identifying attributes than objects in this study.
+different attribute classes, due to four main reasons. First, some attribute
+classes appear more frequently, which caused the model to better                     5.3.2. Comparison of proposed method with method without spatial
+recognize them for achieving the minimum errors. For example, since a                attention localization modules
+large portion of the walking/working surfaces are horizontal, the model                  To evaluate the effectiveness of the proposed attribute recognition
+performed better in recognizing the attribute of horizontal than vertical.           method in learning regional features for attributes with different detail
+Similarly, a large portion of the equipment are undamaged, therefore the             levels, the aforementioned results were compared with the performance
+model achieved better performance in recognizing attribute of undam-                 of the method without the SALMs. Instead, a fully connected layer was
+aged than damaged. Second, recognizing some attributes can be easier                 used to calculate attribute predictions from the concatenated features.
+by nature because it only requires low-level features such as lines,                 Then the best predictions were selected from predictions at different
+curves, and colors, while recognizing some other attributes can require              feature levels using the maximum voting scheme. Such method without
+finer details or implicit information such as the connections between                SALMs achieved an average precision, recall, and F-1 measure of 87.7%,
+objects. For example, better performance was achieved for recognizing                88.9%, and 88.3%, respectively, at the object level, and 80.2%, 74.8%,
+attributes such as damaged, undamaged, level, and not_level, since they              and 77.5%, respectively, at the attribute level, as shown in Fig. 10.
+require only geometry, shape, or contour information. However, a                     Therefore, the SALMs were able to improve 7.1% (94.8% vs. 87.7%),
+decrease in the performance can be observed for recognizing attributes               6.8% (95.7% vs. 88.9%), and 7.0% (95.3% vs. 88.3%) in precision,
+such as fixed and not_fixed, because the model needs to zoom into a                  recall, and F-1 measure, respectively, at the object level, as well as 9.9%
+small area for identifying the connectivity between objects. Similarly, to           (90.4% vs. 80.5%), 21.3% (96.1% vs. 74.8%), and 15.0% (92.5% vs.
+determine if an edge is protected/unprotected, the model needs to un-                77.5%) at the attribute level, which indicates its effectiveness in
+derstand the connections between a leading edge and its surroundings,                capturing attribute-specific location information and adaptively allo-
+therefore can achieve lower performance in such case. Third, some at-                cating attention accordingly to attribute detail levels.
+tributes are difficult to be correctly inferenced. For example, for
+recognizing the attributes steep and low_sloped, the model needs to                  6. Limitations
+learn the cut-off ratio of the roofs that were perceived from different
+viewpoints, thus is difficult to differentiate. Similarly, for the attributes            Seven limitations of this study are acknowledged. First, the proposed
+fully_planked and not_fully_planked, it is difficult for the model to un-            method focused on detecting fall-related objects and their attributes
+derstand how large the gap between scaffold boards would be consid-                  from site images. Images can be limited in continuously monitoring site
+ered neglectable, which can lead to errors in prediction. Fourth, some               conditions compared to videos. In future work, the authors plan to
+attributes can require dynamic information to be correctly identified,               further extend this method to site videos. A similar level of performance
+which is hard to acquire from static site images. For example, it is                 is expected since site videos consist of a sequence of related images.
+difficult to distinguish whether the worker is standing or walking due to            Second, the proposed few-shot detection method used SwAV as the
+the lack of motion information, which often occurs through consecutive               backbone model and a basic encoder-decoder transformer for encoding
+                                                                                     and localizing the objects, without testing on other deep learning model
+                                                                                     structures. In future work, the authors plan to explore different types of
+                                                                                     model architectures, such as region similarity representation learning
+                                                                                     (ReSim) [61] and other transformer-based models, to further improve
+                                                                                     the detection performance. Third, the proposed few-shot detection
+                                                                                     method was tested under limited settings: using three different base/
+                                                                                     novel splits and comparing with only one state-of-the-art general or few-
+                                                                                     shot detection method. In the future, the authors plan to further test the
+                                                                                     proposed method by conducting a comprehensive ablation study, in
+                                                                                     order to fully understand the impact of its components, its robustness
+                                                                                     under varying conditions, as well as its performance compared to
+                                                                                     additional state-of-the-art methods. Fourth, the feasibility and perfor-
+                                                                                     mance of the proposed few-shot detection and attribute recognition
+                                                                                     methods were tested using online site images. In their future work, the
+                                                                                     authors plan to conduct additional testing on site images from real
+                                                                                     construction sites (e.g., collected using UAVs), since such images may
+                                                                                     vary in viewpoints and/or object scales. However, only a small amount
+             Fig. 10. Performance of attribute recognition model.                    of adaptation is expected since the proposed deep learning method
+
+                                                                                13
+X. Wang and N. El-Gohary                                                                                               Automation in Construction 167 (2024) 105539
+
+
+already considers generating samples of different viewpoints and scales.            8. Conclusions and future work
+Fifth, the proposed method was tested on a fall-related dataset of limited
+size. In the future, the authors plan to further expand the dataset to                  This paper proposed a deep learning-based method to identify fall-
+include more image examples. As a result, more equipment components,                related objects, with multiple attributes, to provide intricate site con-
+non-fall-related objects, and noncompliant objects need to be consid-               dition information for supporting field compliance checking. The pro-
+ered. Sixth, the proposed attribute recognition method considered a                 posed method consists of three submethods: dataset development, few-
+total of 21 frequent attribute classes as described in construction safety          shot object detection, and attribute recognition. For dataset develop-
+regulations, which could be limited as more hazard scenarios are                    ment, site images covering different fall-hazard scenarios were retrieved
+considered. Thus, the authors plan to consider more attribute classes               from open image resources through an image query process. Labels that
+that are less frequent but are also important in determining compliance,            are consistent with the entity names from OSHA regulations were added
+such as different types of material that can affect the capacity or strength        to the collected images. Data augmentation was conducted to add
+of an equipment, and eventually the choice of the protection measures.              slightly modified copies of the original images for introducing more
+Seventh, this study used two separate deep learning models for object               variations. Then the proposed few-shot object detection method uses a
+detection and attribute recognition because they were regarded as two               transformer with position encoding and a semi-supervised region pro-
+different tasks. However, this could slow down the process to collect               posal generator that extracts composition features to detect novel clas-
+necessary information for subsequent compliance checking. In future                 ses, by leveraging the knowledge learned from detecting base classes.
+work, the authors plan to conduct joint detection of site objects and their         The proposed attribute recognition method conducts multi-label classi-
+associated attributes to decrease the processing time for identifying such          fication for recognizing attributes of the detected objects as semantic
+information.                                                                        descriptions about their conditions (which are consistent with entity
+                                                                                    names from OSHA regulations), by using spatial attention localization
+7. Contributions to the body of knowledge                                           modules to associate attributes with specific regions and allocate
+                                                                                    attention according to detail levels.
+    This study offers a deep learning-based method to detect multiple                   The developed fall-related dataset contains 1,098 images with 39
+fall-related site objects with imbalanced distribution and recognize their          object classes and 21 attribute classes. The proposed few-shot detection
+associated attributes for describing site conditions using computer                 method was tested on the developed dataset with three different splits of
+vision techniques. This study improves the existing object detection ef-            base and novel object classes, and achieved an average precision, recall,
+forts in the construction safety domain in three primary ways. First, it            and F-1 measure of 88.2%, 79.5%, and 83.6%, respectively, for all object
+detects multiple types of fall-related site objects, including granular             classes, with 88.6%, 80.3%, and 84.2% for base classes and 85.6%,
+objects such as equipment components, and recognizes intricate attri-               76.3%, and 80.7% for novel classes, when using 50-shots during fine-
+butes for each detected object to add semantic descriptions about their             tuning, which indicates good few-shot detection performance. It also
+conditions. Importantly, the detected objects and attributes are                    shows that the features learned from the base classes were effectively
+following the same semantics as in the construction safety regulations (i.          transferred to predicting the novel classes. Compared with a state-of-the-
+e., the names and meanings of the extracted objects and attributes are              art ResNet-based few-shot detection method, the proposed method
+matching the entity names and meanings in the regulations). Recog-                  showed an improvement of 3.6% (88.2% vs. 84.6%) in precision, 7.4%
+nizing different objects and their intricate attributes helps capture               (79.5% vs. 72.1%) in recall, and 5.8% (83.6% vs. 77.9%) in F-1 measure
+important condition information from visual site images to provide                  for all object classes, which indicates the effectiveness of using
+essential facts for subsequent compliance checking given various                    transformer-based models for this domain-specific application/dataset.
+possible hazard scenarios onsite. Following the same semantics as in the            Compared with general detection method, the proposed few-shot
+regulations means that the extracted objects and attributes are readily             detection method showed good improvement in increasing the perfor-
+mapped to the entities in the regulation. This results in consistent                mance of novel classes without sacrificing the performance of base
+concept representation between the detected site information and the                classes. The proposed attribute recognition method achieved an average
+requirements in the regulations, which facilitates subsequent compli-               precision, recall, and F-1 measure of 94.8%, 95.7%, and 95.3%,
+ance assessment. Second, this research conducts few-shot detection to               respectively, at the object level, as well as 90.4%, 96.1%, and 92.5% at
+address the imbalanced distribution of site objects, which shows good               the attribute level. Compared to the method without using spatial
+generalizability to detect novel classes with a limited number of site              attention localization modules, the proposed attribute recognition
+images. Such imbalanced distribution reflects the real site conditions              method showed effectiveness in using attribute-specific location infor-
+and the difficulty in obtaining site images of certain objects. The few-            mation and varying amounts of attention to enhance performance.
+shot learning method proposed in this study can help reduce the num-                    In their future work, the authors plan to extend this research work in
+ber of training samples required for less frequent fall-related objects, by         three main research directions. First, different deep learning model
+utilizing the rich features captured from more frequent objects. The                structures could be selected as the backbone model, encoder block, or
+semi-supervised region proposal generator, especially the unsupervised              decoder block, and tested for evaluating their effectiveness in boosting
+backbone model, can extract features in a self-supervised manner, thus              detection performance. For example, deformable transformers that use
+significantly lessens the labor of acquiring and annotating a large                 multi-scale deformable attention mechanisms and thus show better
+amount of site images. Moreover, if the proposed method is to be                    performance than basic transformers [62] can be adapted, trained, and
+adapted to other accident types such as electrocution, it can also reduce           comparatively evaluated for selecting the most appropriate model ar-
+the amount of effort in developing a dataset of electrocution-related               chitecture. Second, the authors will further evaluate the proposed
+objects in large quantities. Third, this study utilizes a few features or           method using images collected by UAVs from real construction sites, as
+techniques to enhance few-shot object detection and attribute recogni-              well as adapt the method to site videos. UAV images can contain slightly
+tion performance, including relative location information of the objects,           different distributions of viewpoints and/or object scales. Using UAV
+the connectivity between them, and the spatial attention localization               images could, thus, help further evaluate and improve the generaliz-
+modules to associate attributes with specific regions and allocate                  ability of the proposed method, which lays a solid foundation for its
+attention according to the detail levels of the attributes. Such features           real-world application. Utilizing videos can help continuously collect
+and techniques help efficiently utilize the hidden information from site            site information for making compliance comparisons, thus can replace
+images, which future research studies could incorporate when exploring              the existing expensive labor work of safety managers to monitor site
+other neural network structures.                                                    safety. Third, beyond detecting objects and attributes, the authors will
+                                                                                    develop a visual relation detection method to understand the pairwise
+
+                                                                               14
+X. Wang and N. El-Gohary                                                                                                                    Automation in Construction 167 (2024) 105539
+
+
+relations between objects with the same relation class names as in [46],                         [10] H. Chen, L. Hou, G.K. Zhang, S. Wu, Using context-guided data augmentation,
+                                                                                                      lightweight CNN, and proximity detection techniques to improve site safety
+as well as to provide a structured representation of all the detected in-
+                                                                                                      monitoring under occlusion conditions, Saf. Sci. 158 (2023) 105958, https://doi.
+formation. Visual relation detection is also an important step for field                              org/10.1016/j.ssci.2022.105958.
+compliance checking because it enriches the detected object and attri-                           [11] A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A.N. Gomez,
+bute information by adding more semantic descriptions about their in-                                 I. Polosukhin, Attention is all you need, in: Advances in Neural Information
+                                                                                                      Processing Systems 30, 2017, https://doi.org/10.48550/arXiv.1706.03762.
+teractions, spatial relations, and restrictions, based on which a site scene                     [12] A. Dosovitskiy, L. Beyer, A. Kolesnikov, D. Weissenborn, X. Zhai, T. Unterthiner,
+can be fully understood. By exploring these three directions, the authors                             N. Houlsby, An image is worth 16x16 words: Transformers for image recognition at
+seek to develop better detection methods and underlying models with                                   scale, in: arXiv preprint, 2020, https://doi.org/10.48550/arXiv.2010.11929 arXiv:
+                                                                                                      2010.11929.
+sufficient accuracy, extract necessary visual information for a variety of                       [13] O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh, S. Ma, L. Fei-Fei, Imagenet
+scenarios, and use as limited number of site images or videos as possible,                            large scale visual recognition challenge, Int. J. Comput. Vis. 115 (3) (2015)
+for establishing an effective and automated field compliance checking                                 211–252, https://doi.org/10.48550/arXiv.1409.0575.
+                                                                                                 [14] N. Carion, F. Massa, G. Synnaeve, N. Usunier, A. Kirillov, S. Zagoruyko, End-to-end
+process to enforce compliance consistently with minimum human                                         object detection with transformers, in: Proc., 16th European Conference on Computer
+assistance.                                                                                           Vision, Glasgow, UK, August 23–28, 2020 16, 2020, pp. 213–229, https://doi.org/
+                                                                                                      10.48550/arXiv.2005.12872. Part I.
+                                                                                                 [15] X. Wang, T.E. Huang, T. Darrell, J.E. Gonzalez, F. Yu, Frustratingly simple few-shot
+CRediT authorship contribution statement                                                              object detection, in: arXiv preprint, 2020, https://doi.org/10.48550/
+                                                                                                      arXiv.2003.06957 arXiv:2003.06957.
+   Xiyu Wang: Data curation, Formal analysis, Investigation, Method-                             [16] A. Parnami, M. Lee, Learning from few examples: A summary of approaches to few-
+                                                                                                      shot learning, in: arXiv preprint, 2022, https://doi.org/10.48550/
+ology, Software, Validation, Visualization, Writing – original draft. Nora                            arXiv.2203.04291 arXiv:2203.04291.
+El-Gohary: Conceptualization, Data curation, Formal analysis, Funding                            [17] T.K. Yoo, J.Y. Choi, H.K. Kim, Feasibility study to improve deep learning in OCT
+acquisition, Investigation, Methodology, Project administration, Re-                                  diagnosis of rare retinal diseases with few-shot classification, Med. Biol. Eng.
+                                                                                                      Comput. 59 (2021) 401–415, https://doi.org/10.1007/s11517-021-02321-1.
+sources, Supervision, Validation, Writing – review & editing.                                    [18] X. Wang, S. Zheng, R. Yang, A. Zheng, Z. Chen, J. Tang, B. Luo, Pedestrian attribute
+                                                                                                      recognition: a survey, Pattern Recogn. 121 (2022) 108220, https://doi.org/
+                                                                                                      10.48550/arXiv.1901.07474.
+Declaration of competing interest                                                                [19] D. Li, Z. Zhang, X. Chen, H. Ling, K. Huang, A richly annotated dataset for
+                                                                                                      pedestrian attribute recognition, in: arXiv preprint, 2016, https://doi.org/
+                                                                                                      10.48550/arXiv.1603.07054 arXiv:1603.07054.
+    The authors declare that they have no known competing financial                              [20] T. Mordan, M. Cord, P. Pérez, A. Alahi, Detecting 32 pedestrian attributes for
+interests or personal relationships that could have appeared to influence                             autonomous vehicles, Proc., Transact. Intelligent Transportat. Syst. 23 (8) (2021)
+                                                                                                      11823–11835, https://doi.org/10.48550/arXiv.2012.02647.
+the work reported in this paper.
+                                                                                                 [21] K. Saleh, M. Hossny, S. Nahavandi, Early intent prediction of vulnerable road users
+                                                                                                      from visual attributes using multi-task learning network, in: Proc., International
+Data availability                                                                                     Conference on Systems, Man, and Cybernetics, 2017, pp. 3367–3372, https://doi.
+                                                                                                      org/10.1109/SMC.2017.8123150.
+                                                                                                 [22] X. Zhao, L. Sang, G. Ding, Y. Guo, X. Jin, Grouping attribute recognition for
+    Data will be made available on request.                                                           pedestrian with joint recurrent learning, in: Proc., International Joint Conferences
+                                                                                                      on Artificial Intelligence, 2018, pp. 3177–3183, https://doi.org/10.24963/
+                                                                                                      ijcai.2018/441.
+Acknowledgements                                                                                 [23] X. Zhao, L. Sang, G. Ding, J. Han, N. Di, C. Yan, Recurrent attention model for
+                                                                                                      pedestrian attribute recognition, in: Proc., AAAI Conference on Artificial
+    The authors would like to thank the National Science Foundation                                   Intelligence Vol. 33, 2019, pp. 9275–9282, https://doi.org/10.1609/aaai.
+                                                                                                      v33i01.33019275. No. 01.
+(NSF). This paper is based on work supported by NSF under Grant No.
+                                                                                                 [24] J. Wang, X. Zhu, S. Gong, W. Li, Attribute recognition by joint recurrent learning of
+1827733. Any opinions, findings, and conclusions or recommendations                                   context and correlation, in: Proc., International Conference on Computer Vision,
+expressed in this material are those of the authors and do not necessarily                            2017, pp. 531–540, https://doi.org/10.48550/arXiv.1709.08553.
+reflect the views of NSF.                                                                        [25] X. Liu, H. Zhao, M. Tian, L. Sheng, J. Shao, S. Yi, X. Wang, Hydraplus-net: Attentive
+                                                                                                      deep features for pedestrian analysis, in: Proc., International Conference on
+                                                                                                      Computer Vision, 2017, pp. 350–359, https://doi.org/10.48550/
+References                                                                                            arXiv.1709.09930.
+                                                                                                 [26] N. Sarafianos, X. Xu, I.A. Kakadiaris, Deep imbalanced attribute classification using
+                                                                                                      visual attention aggregation, in: Proc., European Conference on Computer Vision,
+ [1] A.D.U. Rafindadi, M. Napiah, I. Othman, M. Mikić, A. Haruna, H. Alarifi, Y.Y. Al-
+                                                                                                      2018, pp. 680–697, https://doi.org/10.48550/arXiv.1807.03903.
+     Ashmori, Analysis of the causes and preventive measures of fatal fall-related
+                                                                                                 [27] J. Zhu, S. Liao, D. Yi, Z. Lei, S.Z. Li, Multi-label cnn based pedestrian attribute
+     accidents in the construction industry, Ain Shams Eng. J. 13 (4) (2022) 101712,
+                                                                                                      learning for soft biometrics, in: Proc., International Conference on Biometrics,
+     https://doi.org/10.48550/arXiv.1712.07136.
+                                                                                                      2015, pp. 535–540, https://doi.org/10.1109/ICB.2015.7139070.
+ [2] C.F. Chi, S.Z. Lin, Classification scheme and prevention measures for caught-in-
+                                                                                                 [28] J.P. Cheng, P.K.Y. Wong, H. Luo, M. Wang, P.H. Leung, Vision-based monitoring of
+     between occupational fatalities, Appl. Ergon. 68 (2018) 338–348, https://doi.org/
+                                                                                                      site safety compliance based on worker re-identification and personal protective
+     10.1016/j.apergo.2017.12.007.
+                                                                                                      equipment classification, Autom. Constr. 139 (2022) 104312, https://doi.org/
+ [3] N.D. Nath, A.H. Behzadan, S.G. Paal, Deep learning for site safety: real-time
+                                                                                                      10.1016/j.autcon.2022.104312.
+     detection of personal protective equipment, Autom. Constr. 112 (2020) 103085,
+                                                                                                 [29] K. Yan, Q. Li, H. Li, H. Wang, Y. Fang, L. Xing, C. Zhou, Deep learning-based
+     https://doi.org/10.1016/j.autcon.2020.103085.
+                                                                                                      substation remote construction management and AI automatic violation detection
+ [4] A.J. Al-Bayati, Impact of construction safety culture and construction safety
+                                                                                                      system, IET Gener. Transm. Distrib. 16 (9) (2022) 1714–1726, https://doi.org/
+     climate on safety behavior and safety motivation, Safety 7 (2) (2021) 41, https://
+                                                                                                      10.1049/gtd2.12387.
+     doi.org/10.3390/safety7020041.
+                                                                                                 [30] S. Tang, M. Golparvar-Fard, Machine learning-based risk analysis for construction
+ [5] M. Namian, F. Taherpour, E. Ghiasvand, Y. Turkan, Insidious safety threat of
+                                                                                                      worker safety from ubiquitous site photos and videos, J. Comput. Civ. Eng. 35 (6)
+     fatigue: investigating construction workers’ risk of accident due to fatigue,
+                                                                                                      (2021) 04021020, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000979.
+     J. Constr. Eng. Manag. 147 (12) (2021) 04021162, https://doi.org/10.1061/
+                                                                                                 [31] S. Tang, D. Roberts, M. Golparvar-Fard, Human-object interaction recognition for
+     (ASCE)CO.1943-7862.0002180.
+                                                                                                      automatic construction site safety inspection, Autom. Constr. 120 (2020) 103356,
+ [6] M.O. Sanni-Anibire, A.S. Mahmoud, M.A. Hassanain, B.A. Salami, A risk
+                                                                                                      https://doi.org/10.1016/j.autcon.2020.103356.
+     assessment approach for enhancing construction safety performance, Saf. Sci. 121
+                                                                                                 [32] M. Khan, R. Khalid, S. Anjum, S.V.T. Tran, C. Park, Fall prevention from scaffolding
+     (2020) 15–29, https://doi.org/10.1016/j.ssci.2019.08.044.
+                                                                                                      using computer vision and IoT-based monitoring, J. Constr. Eng. Manag. 148 (7)
+ [7] M. Zhang, R. Shi, Z. Yang, A critical review of vision-based occupational health and
+                                                                                                      (2022) 04022051, https://doi.org/10.1061/(ASCE)CO.1943-7862.0002278.
+     safety monitoring of construction site workers, Saf. Sci. 126 (2020) 104658,
+                                                                                                 [33] Z. Wang, Y. Wu, L. Yang, A. Thirunavukarasu, C. Evison, Y. Zhao, Fast personal
+     https://doi.org/10.1016/j.ssci.2020.104658.
+                                                                                                      protective equipment detection for real construction sites using deep learning
+ [8] B. Xiao, X. Yin, S.C. Kang, Vision-based method of automatically detecting
+                                                                                                      approaches, Sensors 21 (10) (2021) 3478, https://doi.org/10.3390/s21103478.
+     construction video highlights by integrating machine tracking and CNN feature
+                                                                                                 [34] W. Fang, L. Ding, H. Luo, P.E. Love, Falls from heights: a computer vision-based
+     extraction, Autom. Constr. 129 (2021) 103817, https://doi.org/10.1016/j.
+                                                                                                      approach for safety harness detection, Autom. Constr. 91 (2018) 53–61, https://
+     autcon.2021.103817.
+                                                                                                      doi.org/10.1016/j.autcon.2019.103013.
+ [9] Y. Gao, K.M. Mosalam, Deep transfer learning for image-based structural damage
+                                                                                                 [35] N. Khan, M.R. Saleem, D. Lee, M.W. Park, C. Park, Utilizing safety rule correlation
+     recognition, Comput. Aided Civ. Inf. Eng. 33 (9) (2018) 748–768, https://doi.org/
+                                                                                                      for mobile scaffolds monitoring leveraging deep convolution neural networks,
+     10.1111/mice.12363.
+
+
+                                                                                            15
+X. Wang and N. El-Gohary                                                                                                                     Automation in Construction 167 (2024) 105539
+
+     Comput. Ind. 129 (2021) 103448, https://doi.org/10.1016/j.                                   [49] C. Shorten, T.M. Khoshgoftaar, A survey on image data augmentation for deep
+     compind.2021.103448.                                                                              learning, J. Big Data 6 (1) (2019) 1–48, https://doi.org/10.1186/s40537-019-
+[36] S. Bang, F. Baek, S. Park, W. Kim, H. Kim, Image augmentation to improve                          0197-0.
+     construction resource detection using generative adversarial networks, cut-and-              [50] M. Caron, I. Misra, J. Mairal, P. Goyal, P. Bojanowski, A. Joulin, Unsupervised
+     paste, and image transformation techniques, Autom. Constr. 115 (2020) 103198,                     learning of visual features by contrasting cluster assignments, Adv. Neural Inf.
+     https://doi.org/10.1016/j.autcon.2020.103198.                                                     Proces. Syst. 33 (2020) 9912–9924, https://doi.org/10.48550/arXiv.2006.09882.
+[37] M. Ochal, M. Patacchiola, A. Storkey, J. Vazquez, S. Wang, Few-shot learning with            [51] J.R. Uijlings, K.E. Van De Sande, T. Gevers, A.W. Smeulders, Selective search for
+     class imbalance, in: arXiv preprint, 2021, https://doi.org/10.48550/                              object recognition, Int. J. Comput. Vis. 104 (2013) 154–171, https://doi.org/
+     arXiv.2101.02523 arXiv:2101.02523.                                                                10.1007/s11263-013-0620-5.
+[38] J. Kim, S. Chi, A few-shot learning approach for database-free vision-based                  [52] P. Shaw, J. Uszkoreit, A. Vaswani, Self-attention with relative position
+     monitoring on construction sites, Autom. Constr. 124 (2021) 103566, https://doi.                  representations, in: arXiv preprint, 2018, https://doi.org/10.48550/
+     org/10.1016/j.autcon.2021.103566.                                                                 arXiv.1803.02155 arXiv:1803.02155.
+[39] D. Tran-Anh, B. Bui-Quoc, A. Vu-Duc, T.A. Do, H.N. Viet, H.N. Vu, C. Tran,                   [53] H.W. Kuhn, The Hungarian method for the assignment problem, Naval Res. Logist.
+     Integrative few-shot classification and segmentation for landslide detection, IEEE                Quart. 2 (1–2) (1955) 83–97, https://doi.org/10.1002/nav.3800020109.
+     Access 10 (2022) 120200–120212, https://doi.org/10.1109/                                     [54] H. Rezatofighi, N. Tsoi, J. Gwak, A. Sadeghian, I. Reid, S. Savarese, Generalized
+     ACCESS.2022.3220906.                                                                              intersection over union: A metric and a loss for bounding box regression, in: Proc.,
+[40] M. Khoshboresh-Masouleh, R. Shah-Hosseini, Deep few-shot learning for bi-                         Conference on Computer Vision and Pattern Recognition, 2019, pp. 658–666,
+     temporal building change detection, in: arXiv preprint, 2021, https://doi.org/                    https://doi.org/10.48550/arXiv.1902.09630.
+     10.48550/arXiv.2108.11262 arXiv:2108.11262.                                                  [55] S. Ioffe, C. Szegedy, Batch normalization: Accelerating deep network training by
+[41] A. Bar, X. Wang, V. Kantorov, C.J. Reed, R. Herzig, G. Chechik, A. Globerson,                     reducing internal covariate shift, Proc., International Conference on Machine
+     Detreg: Unsupervised pretraining with region priors for object detection, in: Proc.,              Learning (2015) 448–456, https://doi.org/10.48550/arXiv.1502.03167.
+     Conference on Computer Vision and Pattern Recognition, 2022, pp. 14605–14615,                [56] T.Y. Lin, P. Dollár, R. Girshick, K. He, B. Hariharan, S. Belongie, Feature pyramid
+     https://doi.org/10.48550/arXiv.2106.04550.                                                        networks for object detection, in: Proc., Conference on Computer Vision and
+[42] W. Fang, L. Ma, P.E. Love, H. Luo, L. Ding, A.O. Zhou, Knowledge graph for                        Pattern Recognition, 2017, pp. 2117–2125, https://doi.org/10.48550/
+     identifying hazards on construction sites: integrating computer vision with                       arXiv.1612.03144.
+     ontology, Autom. Constr. 119 (2020) 103310, https://doi.org/10.1016/j.                       [57] M. Jaderberg, K. Simonyan, A. Zisserman, Spatial transformer networks, Adv.
+     autcon.2018.02.018.                                                                               Neural Inf. Proces. Syst. 28 (2015) 2017–2025, https://doi.org/10.48550/
+[43] W. Fang, L. Ding, P.E. Love, H. Luo, H. Li, F. Pena-Mora, C. Zhou, Computer vision                arXiv.1506.02025.
+     applications in construction safety assurance, Autom. Constr. 110 (2020) 103013,             [58] C. Tang, L. Sheng, Z. Zhang, X. Hu, Improving pedestrian attribute recognition with
+     https://doi.org/10.1016/j.autcon.2019.103013.                                                     weakly-supervised multi-scale attribute-specific localization, in: Proc.,
+[44] S. Chen, K. Demachi, F. Dong, Graph-based linguistic and visual information                       International Conference on Computer Vision, 2019, pp. 4997–5006, https://doi.
+     integration for on-site occupational hazards identification, Autom. Constr. 137                   org/10.48550/arXiv.1910.04562.
+     (2022) 104191, https://doi.org/10.1016/j.autcon.2022.104191.                                 [59] Z. Kolar, H. Chen, X. Luo, Transfer learning and deep convolutional neural
+[45] X. Wang, N. El-Gohary, Deep learning–based named entity recognition and                           networks for safety guardrail detection in 2D images, Autom. Constr. 89 (2018)
+     resolution of referential ambiguities for enhanced information extraction from                    58–70, https://doi.org/10.1016/j.autcon.2018.01.003.
+     construction safety regulations, J. Comput. Civ. Eng. 37 (5) (2023) 04023023,                [60] C. Chen, Y. Zhang, Q. Lv, S. Wei, X. Wang, X. Sun, J. Dong, Rrnet: A hybrid detector
+     https://doi.org/10.1061/(ASCE)CP.1943-5487.0001064.                                               for object detection in drone-captured images, Proc. International Conference on
+[46] X. Wang, N. El-Gohary, Deep learning-based relation extraction and knowledge                      Computer Vision (2019) https://doi.org/10.1109/ICCVW.2019.00018.
+     graph-based representation of construction safety requirements, Autom. Constr.               [61] T. Xiao, C.J. Reed, X. Wang, K. Keutzer, T. Darrell, Region similarity representation
+     147 (2023) 104696, https://doi.org/10.1016/j.autcon.2022.104696.                                  learning, in: Proc., International Conference on Computer Vision, 2021,
+[47] M. Everingham, L. Van Gool, C.K. Williams, J. Winn, A. Zisserman, The pascal                      pp. 10539–10548, https://doi.org/10.48550/arXiv.2103.12902.
+     visual object classes (voc) challenge, Int. J. Comput. Vis. 88 (2010) 303–338,               [62] X. Zhu, W. Su, L. Lu, B. Li, X. Wang, J. Dai, Deformable detr: Deformable
+     https://doi.org/10.1007/s11263-009-0275-4.                                                        transformers for end-to-end object detection, arXiv preprint arXiv:2010.04159
+[48] Y. Deng, P. Luo, C.C. Loy, X. Tang, Pedestrian attribute recognition at far distance,             (2020), https://doi.org/10.48550/arXiv.2010.04159.
+     in: Proc., 22nd ACM International Conference on Multimedia, 2014, pp. 789–792,
+     https://doi.org/10.1145/2647868.2654966.
+
+
+
+
+                                                                                             16
+

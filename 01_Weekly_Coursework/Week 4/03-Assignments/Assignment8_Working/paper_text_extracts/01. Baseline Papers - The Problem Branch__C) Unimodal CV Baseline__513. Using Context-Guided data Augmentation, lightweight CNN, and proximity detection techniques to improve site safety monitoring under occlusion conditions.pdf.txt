@@ -1,0 +1,906 @@
+                                                                          Safety Science 158 (2023) 105958
+
+
+                                                                    Contents lists available at ScienceDirect
+
+
+                                                                              Safety Science
+                                                           journal homepage: www.elsevier.com/locate/safety
+
+
+
+
+Using Context-Guided data Augmentation, lightweight CNN, and proximity
+detection techniques to improve site safety monitoring under
+occlusion conditions
+Haosen Chen , Lei Hou *, Guomin (Kevin) Zhang, Shaoze Wu
+School of Engineering, RMIT University, Melbourne 3000, Victoria, Australia
+
+
+
+
+A R T I C L E I N F O                                      A B S T R A C T
+
+Keywords:                                                  Automated recognition of image patterns in surveillance cameras is beneficial for safety monitoring. A repre­
+Deep Learning                                              sentative application is visual proximity detection for accident prevention. However, existing deep learning (DL)-
+Computer Vision                                            based proximity detection methods are likely to be inaccurate due to congestion, background clutter, and oc­
+Data Augmentation
+                                                           clusion in construction sites. Another problem is that most of these methods cannot suffice computing capability,
+Proximity Detection
+Construction Resource Detection
+                                                           network training efficiency, and performance accuracy at the same time. This study first presents a novel context-
+                                                           guided data augmentation method that addresses the performance loss issue due to object occlusion. This method
+                                                           places new instances on images based on contextual image information rather than randomly erasing images to
+                                                           simulate occlusion circumstances. Next, a light-weight and less-costly DL model named YOLOv4-EFNB0 is
+                                                           formulated for multi-class construction resource detection in real-time. Moreover, this study presents a proactive
+                                                           proximity detection application by integrating YOLOv4-EFNB0 with homography transformation. Based on the
+                                                           experiment, YOLOv4-EFNB0 demonstrates a better object detection outcome when trained on the augmented
+                                                           dataset over the Moving Objects in Construction Sites (MOCS) baseline dataset. This study also conducts a
+                                                           feasibility test for the visual proximity detection application. The results indicate the application has a high
+                                                           accuracy rate and a fast speed, namely, 96.76% in 25 Frames Per Second (FPS), which can facilitate the auto­
+                                                           mation of safety monitoring and inspection.
+
+
+
+
+1. Introduction                                                                                 Safety monitoring requires the collection of information on con­
+                                                                                            struction activities and the identification of hazardous circumstances. A
+    Construction is a large and complex industry that provides numerous                     conventional method for safety monitoring is through regular inspection
+job opportunities all over the world (Govender et al., 2019; Hou et al.,                    and patrol conducted by safety inspectors, through which preventative
+2017). Given the dynamic, ever-changing, and diverse spatiotemporal                         and corrective actions can be put in place. It is identified that traditional
+nature of the industry environment, it is perceived as a high-risk sector.                  safety management methods have limitations because they are mainly
+In the United States, fatalities in the construction industry reached 1008                  relied on human judgement, which could be subjective and biased
+in 2020, which are higher than the other industries (LaborStatistics,                       (Paneru and Jeelani, 2021). During construction, it is also unlikely to
+2021). In Australia, more than half (59 %) of the worker fatalities were                    identify and act on imminent incidents timely and accurately. Nowa­
+associated with vehicle collisions (41 %), falls from heights (11 %), and                   days, a viable solution would be utilising automation technology, as
+trapped-by accidents (7 %) (SafeWorkAustralia, 2021). There have been                       evidenced by a vast amount of research works ranging across unsafe
+fruitful research works around ameliorating the workforce environment                       behaviour monitoring (Fang et al., 2020b), construction activity
+through developing different safety precautionary methods (Hou et al.,                      recognition (Slaton et al., 2020), unauthorised intrusion monitoring (Jin
+2020; Luo et al., 2022; Zhang et al., 2021). These works have also proved                   et al., 2020), and so on.
+that most onsite accidents could have been prevented if consistent safety                       An important research topic for automated safety monitoring is
+monitoring process was established, and real-time safety monitoring can                     onsite proximity detection because worker and machinery location
+play a role (Awolusi et al., 2019; Cheng et al., 2022; Hou et al., 2021).                   tracking can alert struck-by accidents. While past research showed the
+
+
+ * Corresponding author.
+   E-mail address: lei.hou@rmit.edu.au (L. Hou).
+
+https://doi.org/10.1016/j.ssci.2022.105958
+Received 15 April 2022; Received in revised form 25 August 2022; Accepted 4 October 2022
+Available online 17 October 2022
+0925-7535/© 2022 Elsevier Ltd. All rights reserved.
+H. Chen et al.                                                                                                                 Safety Science 158 (2023) 105958
+
+
+potential of Radio Frequency Identification, Ultra-Wideband, and                 follows: Section 2 reviews the current DL-based applications in con­
+Bluetooth Low Energy technologies (Awolusi et al., 2019), a real-world           struction safety and the related works on dataset development and
+construction site would not allow vast deployed sensors which bring in           augmentation, Section 3 describes the methodologies in detail, Section 4
+interruption and other safety concerns. Cameras are low-cost and have            presents the experimental results and discusses the system practicality,
+been widely used in construction sites. Logistics contexts can be ac­            and Section 5 concludes the study and future work.
+quired and analysed based on the camera-generated video to derive
+movement patterns and infer unsafe scenarios. However, this informa­             2. Literature review
+tion retrieval and analytics is typically manual-based, time-consuming,
+and lack of efficiency. Fortunately, cutting-edge technologies such as              Research on vision-based construction safety management has
+computer vision and Deep Learning (DL) have been developed to                    investigated how to identify risk hazards from imagery data. Most pre­
+enhance the efficacy of surveillance cameras. Computer vision enables            vious works utilised vision-based object detection methods to recognise
+automatic pattern recognition, and data-driven DL introduces end-to-             various entities in construction sites, such as workers, construction
+end learning where image features can be extracted without hand­                 machinery, protective equipment, and so on. This review is three-facet,
+crafting engineering (Luo et al., 2018; Xu et al., 2021). Integrating DL         namely, the different vision-based applications for construction safety,
+and computer vision is a promising solution to the ineffectiveness of            the object detection algorithm development state-of-the-art, and the
+surveillance cameras since it can proactively identify hazards and pre­          existing image datasets and data augmentation methods, followed by a
+dict unsafe behaviour from video analytics. Different types of DL models         summary of the certain research gaps.
+have been investigated. Kong et al. (2021) leveraged a Long Short-Term
+Memory (LSTM) model and a SiamMask model to predict worker                       2.1. Automatic monitoring applications for construction safety
+movement trajectory and alert workers entering a hazardous area. Kolar           management
+et al. (2018) used Visual Geometry Group-16 as a DL model backbone to
+identify safety guardrails. Fang et al. (2018c) utilised two Convolutional           With the help of DL algorithms, image and video-based monitoring of
+Neural Network (CNN) models to detect if workers are wearing safety              construction sites has the potential to improve construction workforce
+harnesses while working at heights. Xiao and Kang (2021b) employed a             safety. Failure to wear Personal Protective Equipment (PPE) is one of the
+You Only Look Once (YOLO)-based model to track multiple construction             most common unsafe risks (Fang et al., 2020a). Fang et al. (2018a)
+machines for construction safety monitoring.                                     developed a CNN-based method to detect the PPE use of steeplejacks.
+    Despite the evolvement of contemporary vision-based DL models in             The proposed method achieved high precision in ever-changing envi­
+construction safety monitoring, object occlusion in proximity detection          ronments. Nath et al. (2020) investigated the performance of three DL-
+seems to be a long-standing issue that has not been well tackled (Saleh          based approaches for PPE recognition, with the pros and cons revealed.
+et al., 2021; Xiao et al., 2020; Zhao et al., 2019). The image-forming           Fang et al. (2018b) introduced a Faster Region-based CNN (Faster R-
+principle has determined that the depth of field for spatially occluded          CNN) model to accurately identify hardhats from far-field surveillance
+objects may not be correctly derived from a single camera, therefore,            videos. Li et al. (2022) utilised YOLOv5 to conduct PPE standardised use
+detection errors for occluded objects are very common, for instance,             inspection by considering the spatial relationship between workers and
+when a worker stands in front of an excavator captured by a camera.              PPE. Cheng et al. (2022) combined a worker re-identification technique
+According to Wang et al. (2020a), a viable solution is to train the DL           and PPE classification to monitor safety compliance among workers
+model using the image datasets that contain rich occlusion features,             across multiple cameras. Ding et al. (2018) enhanced the accuracy of
+which is also known as the ‘minimising the partial occlusion effect’             unsafe action recognition by coupling CNN and LSTM. As construction
+method. Unfortunately, it is revealed from our review that there are             work is physically demanding, inappropriate working postures of
+inadequate image databases that contain rich entity occlusion features           workers may cause injuries. Thus, automated postural ergonomic
+for DL model training (Li and Li, 2022; Son et al., 2019). Even if this          assessment plays an essential role in construction safety. Zhang et al.
+problem is solved, deriving the ground truth of occlusion features,              (2018) estimated 3-Dimensional (3D) skeletons and joints of workers
+namely, annotating all the occluded entities and letting the DL algorithm        from video sequences using a multi-stage CNN model. Non-ergonomic
+understand ‘what is what’, could be another problem (this process is             postures can be recognised accurately in this study. Yu et al. (2019b)
+laborious and time-consuming). In answer to this problem, Bang et al.            presented an ergonomic assessment tool by integrating CNN and two
+(2020) attempted to generate the artificial occlusion features by over­          LSTM layers. This study was the first to introduce a 2-Dimensional (2D)
+laying certain instances onto images. A downside of this, however, is            video-based 3D pose estimation onto ergonomic assessment. Yu et al.
+that the DL model may mistakenly identify the non-occluded objects as            (2019a) developed a CNN-based physical fatigue assessment by
+occluded ones in the real-world onsite environment, which is also                computing joint torques based on 3D skeletons. These studies have
+known as overfitting (Naveed, 2021; Shorten and Khoshgoftaar, 2019).             demonstrated the effectiveness of DL-based applications for construction
+Last but not least, how to improve the DL model processing speed for             safety monitoring from the perspective of object identification and
+proximity detection, how to increase the accuracy of distance mea­               classification.
+surement, and how to interpret the depth information from raw images                 Many unsafe situations in construction also relate to proximity be­
+are all the remaining issues that worth investigation (Paneru and Jee­           tween workers and heavy machinery. DL models can detect objects and
+lani, 2021). The relevant works have been identified from our review as          extract their pixel coordinates in an image (Yang et al., 2013). Based on
+well. To illustrate, Kim et al. (2016) introduced vision-based fuzzy             the pixel coordinates, the pixel distance between objects can be calcu­
+inference algorithms into proximity detection, so that the detection ac­         lated. Several image post-processing techniques are used to convert
+curacy can be slightly enhanced; Kim et al. (2019) leveraged a super­            pixel distance to actual distance (Sutton et al., 2008). The derived actual
+computer to compensate the DL model performance loss. According to               distance is essential for collision prevention. Brilakis et al. (2011)
+Paneru and Jeelani (2021); Thompson et al. (2020), these works did not           employed a couple of cameras to obtain two 2D local coordinates of a
+address the detection accuracy for entities of non-linear motions, and           construction entity. The 3D global coordinate of the entity can be
+were lack of practicality for resource-constrained construction scenarios        derived by using triangulation. Luo et al. (2020) proposed a monitoring
+either.                                                                          system that analyses construction workers and their movement patterns
+    Therefore, this study proposes two research questions, which are: 1)         by 2D image post-processing techniques. They applied the safety-
+how to enhance the quality of DL training datasets for occluded entity           checking rules that specify the distance thresholds to the system. Each
+identification, and 2) how to process real-time proximity detection using        piece of construction equipment had a predefined warning level ac­
+low computational power. The remainder of this paper is organised as             cording to the threshold. By doing this, the system automatically popped
+
+                                                                             2
+H. Chen et al.                                                                                                                      Safety Science 158 (2023) 105958
+
+
+a warning when someone entered hazard zones. Kim et al. (2017) and                 Table 1
+Wu et al. (2022) integrated AR into proximity detection to help onsite             Public image datasets dedicated to object detection.
+workers view orientational and locational information about construc­               Related articles   The size     The number   Include           Occluded
+tion equipment. With this integration, struck-by and fall-from-height                                  of dataset   of object    construction      entities are
+risks can be detected. According to their results, however, the process­                                            categories   resources         labelled
+                                                                                                                                                   sufficiently
+ing speed was low to 5 Frames Per Second (FPS) and the average latency
+was high to 280 ms. Because real-time safety monitoring has a high                  Everingham         9,963        20           NO                NO
+requirement on detection latency, the previous development did not add                et al., (2010)   images
+                                                                                    Lin et al.,        328,000      80           NO                NO
+substantial value to the safety practice. Therefore, optimising the DL                (2014)           images
+model performance through algorithmic and parametric adjustment is                  Tajeen and Zhu     2,000        5            YES               NO
+essential.                                                                            (2014)           images
+                                                                                    Roberts and        500          2            YES               NO
+                                                                                      Golparvar-       videos
+2.2. DL-based object detectors
+                                                                                      Fard (2019)
+                                                                                    Wu et al.          3,174        1            YES               NO
+    CNNs are a well-known type of DL models that have been commonly                   (2019)           images
+used for object detection (Kulchandani and Dangarwala, 2015). CNNs                  Xuehui et al.      42,000       13           YES               NO
+with multiple convolutional layers have the capability of extracting and              (2021)           images
+
+self-learning image features. With this characteristic, a well-trained CNN
+can classify and segment image patterns autonomously. Faster R-CNN                 the construction context, Tajeen and Zhu (2014) established an image
+and Mask R-CNN are typical CNN-based object detectors that have high               dataset for measuring the performance of construction machine recog­
+localisation and recognition accuracy. They first generate certain Re­             nition models. However, this dataset was not suitable for contemporary
+gions of Interest (ROIs) that have a high probability of containing an             DL model training as it contains less than 2,000 labelled images that
+object from the image. Then, the last layer of the CNN predicts the                covers only 5 machinary types. This databased was further enriched by
+outcome based on the ROIs. These detectors are mainly applied to                   Xiao and Kang (2021a). Roberts and Golparvar-Fard (2019) published a
+structural health monitoring (Nayyeri et al., 2019), such as road damage           video-based dataset that contains approximately 500 construction ac­
+detection (Wang et al., 2018) and deterioration classification (Fujita             tivity videos of excavators and trucks. Wu et al. (2019) published 3,174
+et al., 2020; Hasuike et al., 2022). However, recent research has sug­             images that range across a variety of safety helmet use cases from
+gested that R-CNNs may not be suitable for monitoring construction                 different construction sites, and annotated 18,893 safety helmet in­
+dynamics due to their complex computing pipelines (Kumar et al.,                   stances using bounding boxes. Xuehui et al. (2021) formulated a data­
+2022).                                                                             base named Moving Objects in Construction Sites (MOCS) and it is
+    In recent years, single-stage CNN models (e.g., Single Shot Detector           comprised of 42,000 onsite images and 13 construction object classes.
+(SSD) and YOLO) have prevailed. Unlike R-CNNs, they consider object                However, it is worth noting that none of these state-of-the-art datasets
+detection as a simple regression problem by predicting bounding boxes              contains a sufficient amount of ground truth labelled occlusion entities
+and computing class probabilities at the same time, which can signifi­             that are ground truth labelled for object detection.
+cantly reduce the computing complexity and the processing time. Rob­                   Data augmentation is an essential technique to improve the DL
+erts and Golparvar-Fard (2019) formulated a one-stage CNN (RetinaNet)              model robustness. Conventional image data augmentation methods
+to monitor the operational status of excavators and dump trucks; Jung              include translating, scaling, rotating, image mirroring, colour changing,
+et al. (2021) developed a one-stage 3D CNN for the real-time tracking of           and random cropping (Ding et al., 2016). In recent years, advanced
+construction machinery movement with a speed of 36.6 FPS; Wu et al.                image augmentation techniques such as automatic data augmentation,
+(2019) employed YOLOv3-tiny to detect workers and their PPE, which                 regional-level augmentation (e.g., Cutout/Random Erasing), and image-
+achieved 31.3 FPS and 63.4 % Average Precision (mAP); Nath et al.                  level augmentation (e.g., AutoAugment/Fast Augmentation) are
+(2020) further improved the mAP of YOLOv3 to 74 %. Despite the                     emerging (Hataya et al., 2020; Jiang et al., 2020; Walawalkar et al.,
+considerable results, previous research mainly adopted high-                       2020). Charalambous and Bharath (2016) proposed a simulation-based
+performance Graphics Processing Units (GPUs) to realise the high pro­              methodology to generate synthetic videos for training DL-based gait
+cessing speed and performance, and such GPUs are still too expensive to            recognition models. Kolar et al. (2018) utilised Autodesk Revit to
+vast deploy. Even though there are light-weight versions for YOLOv3                generate 3D guardrail models. Then, synthetic guardrails are pasted
+and YOLOv4, their accuracy is inadequate, namely, 22 % mAP when                    onto construction images. By doing this, a large number of construction
+tested on the MS COCO dataset (Bochkovskiy et al., 2020). These limi­              images with synthetic guardrails can be obtained. Bang et al. (2020)
+tations stimy the use of those models. A trade-off option could be opti­           introduced a cut-and-paste method by placing various construction
+mising CNN model structures. This solution can be referred to from Guo             equipment onto images. However, a common limitation is that these
+et al. (2021), which compared different activation functions and loss              methods do not consider the actual contextual information of the im­
+functions in YOLOv4 to find optimal performance in railroad component              ages, resulting in irrational image semantics (e.g., trucks in the sky). As
+inspection. However, research on optimising onsite object detectors is             well, the DL model trained from these image datasets may incur the
+relatively scant. Therefore, how to refine the model structure is a critical       overfitting problem and erroneous recognition (Dvornik et al., 2018). A
+topic for onsite proximity detection.                                              likely solution would be to place object instances at certain locations in a
+                                                                                   picture based on the surrounding context. But having said that, it is
+2.3. Image dataset development and augmentation for DL                             necessary to formulate explicit context-guided augmentation that can
+                                                                                   address occlusion conditions.
+   The efficacy of DL models in object detection can benefit from the
+expansion of imagery datasets (Russakovsky et al., 2015). At present,              3. Methodology
+there are numerous image datasets available to the public (Table 1).
+Everingham et al. (2010) developed the Pascal VOC dataset, which is                    This study aims to develop a low-cost proximity detection system
+widely used as a benchmark in the DL community. This dataset contains              that can efficiently track the position and proximity of onsite entities.
+9,963 images and 24,640 annotated objects under 20 object categories.              First, a novel data augmentation method is proposed for coping with
+The MS COCO dataset is another popular dataset that contains                       occlusion conditions. The proposed method can generate synthetic
+2,500,000 labelled instances from 328,000 images (Lin et al., 2014). In
+
+                                                                               3
+H. Chen et al.                                                                                                                 Safety Science 158 (2023) 105958
+
+
+images through overlaying various occlusion patterns onto contextual             ImageNet was employed as the context model (He et al., 2016). Once we
+image clues. Next, a light-weight DL model is developed to meet the low          input the image to the context model, the candidate regions can be
+computational requirement without compromising the model training                automatically defined as a set of bounding boxes. Given directly
+efficacy. This ensures the model can be readily applied to construction          stitching instances to these bounding boxes may lead to occluded areas
+scenarios. Last but not least, the DL model is integrated with optimised         on the detector, it is therefore suggested a simple heuristic be formulated
+image post-processing techniques to provide real-time proximity infor­           to generate larger bounding boxes that cover the single object
+mation between workers and construction entities in surveillance                 surroundings.
+videos.
+                                                                                 3.1.2. Stitching instances onto candidate regions
+                                                                                    Construction-related instances are stitched onto the corresponding
+3.1. Development of the context-guided data augmentation method                  location whenever the previous procedure generates a candidate region.
+                                                                                 Linear blur is selected to reduce the noise and artefacts during this
+    Common data augmentation methods involve, but are not limited to,            procedure.
+image rotation, cropping, flipping, and colour space conversion.
+Although these methods can significantly upsize the data, the following          3.1.3. Image annotation for the augmented data
+training process can be quite time-consuming. Compared with these                   Once the image is enhanced by stitching new objects, the annotations
+common data augmentation methods, a novel method known as CutMix                 are modified accordingly. We use LabelMe (Russell et al., 2008) to draw
+that splices two images to synthesize seems to be more robust (Yun et al.,       the tightest box around a new object and assign its class to the box. The
+2019), as it allows partially viewed objects to be correctly recognised by       output of LabelMe is saved as the JSON format and the YOLO training
+the DL model in one training epoch. Bochkovskiy et al. (2020) formu­             model labels are saved as the TXT format. Hence, the formatted files
+lated the YOLOv4-based mosaic data augmentation method which                     with labelled information can be converted to TXT files accordingly.
+further improves the CutMix efficacy through synthesising multiple
+images into one epoch. However, this image stitching technique has
+limitations as it does not examine the image context or allow the object         3.2. Development of the light-weight DL model
+detector to learn intraclass variability of targets.
+    In answer to the limitations of the state-of-the-art data augmentation       3.2.1. YOLOv4 architecture
+methods, this paper proposes a new method named context-guided data                  YOLOv4 was introduced by Bochkovskiy et al. (2020) and is an
+augmentation to generate context-aware occluded images. We first                 advanced DL model nowadays. The overall performance of YOLOv4 on
+develop a context-guided model using ResNet (He et al., 2016), which             the MS COCO dataset is impressive. The mAP is increased significantly
+can quickly locate the construction resources from an image and                  compared to the previous version without dropping the FPS. YOLOv4
+generate a bounding box containing the detected construction resource            has three significant upgrades. First, CSPNet (Wang et al., 2020b)
+and its surrounding regions. After that, the context-guided model                modifies Darknet53 to CSPDarknet53, which fulfills low-level feature
+randomly places a segmented construction-related instance onto the               fusion and robust feature extraction. As shown in Fig. 2(b), the feature
+bounding box. This way the construction resource in the bounding box             map of the base layer is split into two sections. This splitting and
+can be effectively occluded in different proportions. The augmented              merging strategy allows for more feature fusion at different levels.
+examples developed by existing methods and our proposed method are               Second, Spatial Pyramid Pooling (SPP) (He et al., 2015) is used (Fig. 3)
+shown in Fig. 1, followed by an elaboration on the image augmentation            to introduce three different pooling processes on the final output to
+rationale.                                                                       generate fixed-length feature maps, which allows the input image size to
+                                                                                 be adjusted. Third, Feature Pyramid Networks (FPN) (Lin et al., 2017)
+3.1.1. Selection of candidate regions for context-guided image stitching         are replaced by Path Aggregation Network (PANet) (Liu et al., 2018)
+   The rationale of this approach is to utilise the CNN-based context            (Fig. 4(b)).
+model to locate existing image objects and generate candidate regions to
+showcase synthetic objects. To effectively undertake multi-class image           3.2.2. EfficientNet
+identification tasks, the popular ResNet50 network pretrained on                    EfficientNet has three significant advantages. First, the network is
+
+
+
+
+                                      Fig. 1. Augmented examples using existing methods and our proposed method.
+
+                                                                             4
+H. Chen et al.                                                                                                                              Safety Science 158 (2023) 105958
+
+
+                                                                                    width, and resolution. According to (Tan and Le, 2019), the optimal
+                                                                                    coefficients of the network are: α = 1.2, β = 1.1, and γ = 1.15. Effi­
+                                                                                    cientNet comprises a stem module and seven blocks. The attention
+                                                                                    mechanism and residual structure are used to develop the blocks. There
+                                                                                    are eight versions of EfficientNet, which are from B0 to B7. B0 is most
+                                                                                    compact and computationally-efficient to feature extraction. In this
+                                                                                    study, EfficientNet-B0 (Fig. 5) is used to replace the backbone network
+                                                                                    of YOLOv4.
+
+                                                                                    3.2.3. YOLOv4-EfficientNet-B0
+                                                                                        Although the original YOLOv4 model can perform well in object
+                                                                                    detection, its parameters and weights are relatively extensive. There­
+                                                                                    fore, the backbone network CSPDarknet53 was replaced by EfficientNet-
+                                                                                    B0 in YOLOv4. Block 3, Block5 and Block7 were selected as the effective
+                                                                                    feature extraction layers. There is a size discrepancy between the out­
+                                                                                    puts of the three feature extraction layers of CSPDarknet53 and those of
+      Fig. 2. Comparison between (a) Darknet53 and (b) CSPDarknet53.
+                                                                                    EfficientNet-B0. Connecting the output of Block 3, Block 5, and Block 7
+                                                                                    through 2D convolution layers allows us to change the feature size such
+                                                                                    that it matches the output size and allows for additional feature
+                                                                                    extraction. The rest of the structure is the same as the original YOLOv4
+                                                                                    model. Fig. 6 demonstrates the architecture of YOLOv4-EFNB0
+                                                                                    (YOLOv4-EfficientNet-B0).
+                                                                                        The loss function of YOLOv4-EFNB0, comprised of confidence loss,
+                                                                                    classification loss, and regression model loss, is equivalent to that of
+                                                                                    YOLOv4. It is worth noting that compared to YOLOv3, the mean squared
+                                                                                    error is replaced by the Complete-Intersection over Union (CIoU) (Zheng
+                                                                                    et al., 2020) to produce better outcomes in regression loss. The loss
+                                                                                    function of CIoU is expressed as follows:
+
+                                                                                                                      ρ2 (b, bgt )
+                                                                                    LOSSCIoU = 1 − IoU +                             + αv                               (5)
+                                                                                                                          c2
+                         Fig. 3. Spatial pyramid pooling.
+                                                                                         ρ2 (b, bgt )
+                                                                                    d=                    + αv                                                          (6)
+                                                                                                 c2
+deepened. Feature extraction through deeper layers is well achieved by
+                                                                                             (     )
+using skip connection. Second, more features are obtained by increasing             where ρ2 b, bgt stands for the distance between the centroid of the
+the number of convolutional layers. Third, the network can learn and                ground truth and the centroid of the prediction bounding box, and c
+express more features by enhancing the input resolution. EfficientNet               stands for the diagonal distance of the area that covers both the
+scales the network width, depth, and resolution with a compound co­                 bounding box and the ground truth. Fig. 7 demonstrates the simplified
+efficient Φ, and maximises the network accuracy on resource-                        CIoU model.
+constrained computing. The relationship between the compound coef­                     The formulas of α and v are described as follows:
+ficient and the network characteristics is shown as follows:
+                                                                                               v
+                                                                                    α=                                                                                  (7)
+                                                                          (1)
+                                                                                                    ′
+Depth : d = α Φ                                                                          1 − IoU + v
+                                                                                                 (                             )2
+Width : w = βΦ #                                                          (2)            4                    wgt          w
+                                                                                    v=       2
+                                                                                                     arctan       − arctan                                              (8)
+                                                                                         π                    hgt          h
+Resolution : r = γ   Φ
+                                                                          (3)
+
+α ≥ 1, β ≥ 1, γ ≥ 1                                                       (4)       3.3. Development of the proximity detection application
+
+where α, β, and γ are the resource allocations for the network depth,                  The proximity detection application integrates YOLOv4-EFNB0 and
+
+
+
+
+                                                        Fig. 4. Comparison between (a) FPN and (b) PANet.
+
+                                                                                5
+H. Chen et al.                                                                                                                   Safety Science 158 (2023) 105958
+
+
+
+
+                                                          Fig. 5. The architecture of EfficientNet-B0.
+
+
+
+
+                                                Fig. 6. The network structure of YOLOv4-EfficientNet-B0.
+
+
+                                                                                   the target bounding box will become red and the screen will show the
+                                                                                   total number of violations. The workflow of the proximity detection
+                                                                                   application is shown in Fig. 8.
+                                                                                        Video footage collected by surveillance cameras provides an angle
+                                                                                   view of a construction site. Calculating the distance of each centroid of
+                                                                                   bounding boxes would lead to significant displacement errors. To
+                                                                                   improve the accuracy of the proximity measurement, a bird’s view of the
+                                                                                   construction site is needed. This can be derived by implementing a
+                                                                                   homography transformation to the coordinates of the selected four
+                                                                                   points from the original camera view. These four points can be derived
+                                                                                   as shown below:
+                                                                                    ⎡ ⎤ ⎡                    ⎤⎡ ⎤
+                                                                                      x       m11 m12 m13       k
+                                                                                    ⎢ ⎥ ⎢                    ⎥⎢ ⎥
+                                                                                    ⎢ y ⎥ = ⎢ m21 m22 m23 ⎥⎢ t ⎥
+                                                                                    ⎣ ⎦ ⎣                    ⎦⎣ ⎦                                        (9)
+                                                                                      1       m31 m32     1     1
+
+                                                                                   where k and t are the pixel coordinates of one of the four points in the
+                                                                                   camera view. × and y are the coordinates of the same point in the
+                                                                                   transformed view. Mij (i = 1,2,3; j = 1,2,3) is the coefficient of the
+                                                                                   homography matrix, which the direct linear transformation can
+                                                                                   calculate.
+                                                                                      After finishing the bird’s view transformation, the pixel distance of a
+                                                                                   worker and equipment in the image can be transformed to metric dis­
+                  Fig. 7. The simplified model of CIoU.
+                                                                                   tance by using the Euclidean equation:
+                                                                                                           √̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅̅
+the homography transformation to identify workers and excavators                    Euclideandistance = W* (x2 − x1 )2 + (y2 − y1 )2                      (10)
+using video frames and then estimates the distance between the cen­
+troids of the bounding boxes. When the distance limit is not maintained,           where W is a scale factor derived by a reference object’s actual size
+
+                                                                               6
+H. Chen et al.                                                                                                                           Safety Science 158 (2023) 105958
+
+
+                                                                                        activities, such as digging and lifting (crane and excavator), hauling and
+                                                                                        loading (dump truck, bulldozer, and concrete mixer truck), and com­
+                                                                                        pacting and finishing (concrete pump truck, worker, and drum roller).
+                                                                                        Following the procedures described in Section 3.1, we generated 2,534
+                                                                                        augmented images into the baseline dataset and named them MOCS-DA.
+                                                                                        The class distribution in both datasets is shown in Fig. 9. Then, YOLOv4-
+                                                                                        EFNB0 will be trained on both datasets separately.
+
+
+                                                                                        4.2. Implementation details
+
+                                                                                            The experiment in this paper was run under the PyTorch Object
+                                                                                        Detection API, which was published by the Facebook AI team. The
+                                                                                        PyTorch version is 1.8.2, and the Python version is 3.7. The experi­
+                                                                                        mental environment was a 64-bit Win10 Pro, and the CPU was an i5-
+                                                                                        7500 with frequencies of 3.40 GHz. An NVIDIA GeForce GTX 1080Ti
+                                                                                        GPU was used for acceleration. The cuDNN (version 7.6.5) and CUDA
+                                                                                        (version 11.3) packages were used to promote the training process. In
+                                                                                        terms of the general training setting, the total training epoch was 100,
+                                                                                        the batch size was 16, and a total of 14,685 iterations were performed
+                                                                                        during the training. For the first 20 epochs, the learning rate was set to
+                                                                                        0.001 to accelerate the model convergence. For the following epochs,
+                                                                                        the learning rate was changed to 0.0001 to increase the accuracy of the
+                                                                                        model. Table 2 demonstrates the basic configuration of the local com­
+                                                                                        puter. Fig. 10 showcases the loss convergence during the training pro­
+                                                                                        cess. The learning curves for both sets demonstrate that the augmented
+                                                                                        dataset provides more valuable feature information for the models to
+                                                                                        learn.
+
+
+                                                                                        4.3. Evaluation metrics
+
+                                                                                           To evaluate the detection performance, PASCAL VOC metrics have
+                                                                                        been applied for object detection and classification. The Intersection
+                                                                                        over Union (IoU) can be calculated by the area of overlap between a
+          Fig. 8. The workflow of the proximity detection application.                  predicted box (B) and a ground truth bounding box (Bgt) divided by the
+                                                                                        area of their union:
+                                                                                                    (       )
+divided by its pixel size. (x1 , y1 ) and (x2 , y2 ) are the pixel coordinates of              Area B ∩ Bgt
+the worker and the excavator, respectively.                                             IoU =       (       )                                             (11)
+                                                                                               Area B ∪ Bgt
+    A variety of conditions are set to decide the bounding box colour
+after the measurement is finished. The three conditions, namely, Num­                       A detection result is considered a True-Positive (TP) only when it
+ber of workers (W) ≥ 1, Number of excavators (E) ≥ 1, Distance between                  meets three requirements: the confidence score is larger than 0.7; the
+(W) and (E) is ≤ 10 m, are defined to judge whether or not a worker in a                predicted category matches the category of the ground truth; and the
+frame is too near to an excavator. The model would return false truth                   IoU ≥ 0.5. If the result fails to meet the last two criteria, it is considered a
+results if incorrect detection occurs. All the data are collected to validate           False-Positive (FP). Moreover, the PASCAL VOC metrics include addi­
+the accuracy of the application.                                                        tional assumptions to determine TPs and FPs. If the ground truth is
+                                                                                        associated with multiple bounding boxes, only the one with the highest
+4. Experiments                                                                          confidence score serves as a TP. When the confidence score of detection
+                                                                                        is lower than the confidence threshold, the result serves as a False-
+    In this section, three preliminary experiments have been conducted                  Negative (FN). As per these rules, the formulas for precision, recall,
+                                                                                        and F1-score are as follows:
+to validate the effectiveness of the data augmentation method, compare
+the performance of the construction resource detector against other
+cutting-edge DL models, and test the feasibility of proximity detection in
+an actual construction video.
+
+
+4.1. Baseline dataset
+
+   The MOCS (Xue et al., 2021; Xuehui et al., 2021) is our baseline
+dataset. The dataset contains approximately 40,000 images, including
+13 types of construction entities. To evaluate whether the proposed
+augmentation method is effective in a small dataset, we downsized the
+baseline data to 9 types of construction resources (6,141 images) in our
+experiments, including workers, mobile cranes, drum rollers, bulldozers,
+excavators, concrete mixer trucks, concrete pump trucks, tower cranes,
+and dump trucks. These resources are common in various earthwork                        Fig. 9. The class distribution in both baseline dataset and augmented images.
+
+                                                                                    7
+H. Chen et al.                                                                                                                       Safety Science 158 (2023) 105958
+
+
+Table 2                                                                               augmentation method improves the general model performance. How­
+The basic configuration of the local computer.                                        ever, the AP values of some categories, such as mobile and tower cranes,
+  Computer configuration                         Parameters                           are not ideal. Due to the shape of cranes, the pixels that display the crane
+                                                                                      are only a small number of the pixels contained in the bounding box.
+  Operating system                               64-bit Win10 Pro
+  GPU                                            NVIDIA GeForce GTX 1080Ti GPU        This means that the crane can be largely occluded, or even completely
+  Central Processing Unit (CPU)                  i5-7500                              occluded, by newly placed object instances. Therefore, in this case, the
+  Random Access Memory (RAM)                     16G                                  augmented data hinder the DL model from learning the features of
+                                                                                      cranes, resulting in a decrease in the AP values. As shown in Fig. 11,
+                                                                                      some representative examples are generated by the two methods. It is
+                                                                                      noted that YOLOv4-EFNB0 trained on MOCS-DA achieves better per­
+                                                                                      formance in occluded object detection and small object detection. Spe­
+                                                                                      cifically, as shown in Fig. 11(c) and Fig. 11(i), YOLOv4-EFNB0 trained
+                                                                                      on MOCS-DA can detect the truck behind the excavator correctly,
+                                                                                      whereas the one trained on MOCS fails to detect the occluded truck and
+                                                                                      trucks that are far from the camera. As shown in Fig. 11(b), the detector
+                                                                                      incorrectly recognises the uniform behind rebars as workers. The main
+                                                                                      reason is that the features of uniforms and workers are too similar.
+                                                                                      Additionally, the image with occlusion may induce the detector to be too
+                                                                                      sensitive to noise, resulting in incorrect detections. As shown in Fig. 11
+                                                                                      (e) and Fig. 11 (k), although other machines do not occlude the exca­
+                                                                                      vator, the detector trained on MOCS still cannot identify it. The main
+                                                                                      reason is that the most identifiable part of the excavator, which is the
+                                                                                      bucket, is missing. In contrast, the detector trained on MOCS-DA can
+                                                                                      detect the excavator accurately, which showcases the effectiveness of
+                                                                                      using this augmentation method. Similar findings can be observed in
+                                                                                      Fig. 11 (f) and Fig. 11 (l), where the worker sitting on the excavator can
+                                                                                      be detected by the detector trained on MOCS-DA, whereas the detector
+                                                                                      trained on the MOCS dataset fails to do it. It is believed that detectors
+   Fig. 10. Training loss curve of YOLOv4-EFNB0 trained on both datasets.
+                                                                                      trained on a large-scale dataset with context-guided data augmentation
+                                                                                      are more robust to different fields of view, illumination levels, and oc­
+                   TP
+Precision =                                                                (12)       clusion conditions.
+                 TP + FP
+
+             TP                                                                       5.2. Comparative analysis of YOLOv4-EFNB0 against other DL models
+Recall =                                                                   (13)
+           TP + FN
+                                                                                          To evaluate whether the performance of YOLOv4-EFNB0 is
+F1 = 2⋅
+        Precision⋅Recall
+                                                                           (14)       compromised due to its light-weight characteristic, YOLOv3, YOLOv4,
+       Precision + Recall                                                             and Faster R-CNN with ResNet were used to perform the comparative
+    Precision measures the ratio of TPs to the sum of TPs and FPs. Recall             analysis. These three models are all trained on both the MOCS and
+is the ratio of TPs to the total number of target objects. The F1 score is            MOCS-DA datasets with the same weight initialisation and training
+determined as the harmonic mean of precision and recall. To evaluate                  settings. Fig. 12 shows the Precision-Recall curve of these four models
+the overall performance of the developed DL model, Average Precision                  trained on two datasets. It is noted that models trained on MOCS-DA
+(AP) was applied. AP is measured by the area under the Precision-Recall               have robust performance with higher recall and precision rates.
+curve of a certain class. As YOLOv4-EFNB0 is developed for multi-object               Table 4 shows the different model sizes, parameter amounts, and
+detection, the mAP measured by the mean of the AP values of all cate­                 Floating-point Operations Per Second s (FLOPs). To better visualise the
+gories is also used as an evaluation metric:                                          results, several histogram graphs were created (Fig. 13 and Fig. 14). The
+                                                                                      histogram graph contains five performance values (APsmall, APlarge, F1
+          ∑k APi
+mAP =                                                                      (15)       score, mAP, and inference speed). APsmall is defined as the AP for an
+                                                                                      object’s pixel smaller than 63 × 63, and APlarge refers to the AP for an
+           i=1 k
+
+                                                                                      object’s pixels larger than 63 × 63. It is obvious that the overall
+5. Results and discussion
+                                                                                      Table 3
+    In this section, the experimental results of YOLOv4-EFNB0 have been
+                                                                                      Comparison of performance metric results obtained with YOLOv4-EFNB0 model
+analysed in depth, and a comparative analysis has been conducted to                   with/without data augmentation.
+illustrate the strengths of the data augmentation method and the pro­
+                                                                                       Categories           YOLOv4-EFNB0
+posed DL model. The proximity detection application has been tested on
+a real-world construction video to validate its feasibility. Moreover, the                                  Trained on MOCS             Trained on MOCS-DA
+practical implications of this study have been discussed.                                                   F1 score       AP           F1 score         AP
+
+                                                                                       worker               0.68           0.42         0.85             0.64
+5.1. Experimental results of construction resource detection with/without              crane                0.64           0.39         0.57             0.36
+using an augmented dataset                                                             roller               0.62           0.38         0.70             0.53
+                                                                                       bulldozer            0.61           0.47         0.72             0.54
+                                                                                       concrete mixer       0.70           0.34         0.88             0.65
+    To illustrate the effectiveness of the proposed augmentation method                pump truck           0.56           0.44         0.63             0.49
+on a construction-related dataset, YOLOv4-EFNB0 was trained on MOCS                    tower crane          0.38           0.32         0.33             0.29
+and MOCS-DA separately with the same weight initialisation and                         dump truck           0.62           0.48         0.71             0.54
+training settings. The ratios of the training set, validation set, and test set        excavator            0.70           0.53         0.74             0.56
+                                                                                       mAP                                 0.41                          0.52
+are 7:1:2. The test results are shown in Table 3. It is evident that the data
+
+                                                                                  8
+H. Chen et al.                                                                                                            Safety Science 158 (2023) 105958
+
+
+
+
+      Fig. 11. (a)-(f) Test examples produced by YOLOv4-EFNB0 trained on MOCS-DA; (g)-(l) Test examples produced by YOLOv4-EFNB0 trained on MOCS.
+
+
+
+
+                                                                           9
+H. Chen et al.                                                                                                                           Safety Science 158 (2023) 105958
+
+
+                                                                                        better than that of YOLOv4-EFNB0, the two-stage detector has more
+                                                                                        calculations (1.49 × 1011), vastly decreasing the inference speed.
+                                                                                        YOLOv4-EFNB0 is much better than YOLOv4 in terms of computational
+                                                                                        cost, where the weight size is decreased to 136 MB, the parameter
+                                                                                        amount is decreased to 3.76 × 107, and the calculation amount is
+                                                                                        reduced to 1.21 × 1010. Notably, the performance of YOLOv4-EFNB0
+                                                                                        trained on the MOCS dataset did not achieve desirable results, and its
+                                                                                        performance in small object detection was even lower than that of
+                                                                                        YOLOv4 trained on the MOCS dataset. The main reason may be that the
+                                                                                        detector cannot learn enough features from the dataset by the light-
+                                                                                        weight backbone. Although the light-weight characteristic makes
+                                                                                        YOLOv4-EFNB0 more suitable for practical usage in construction sites, it
+                                                                                        is essential to apply data augmentation methods to enhance the training
+                                                                                        efficiency.
+                                                                                            According to the results of comparative analysis, the model size of
+                                                                                        YOLOv4-EFNB0 is tremendously reduced with negligible compromise in
+                                                                                        accuracy. The overall performance of YOLOv4-EFNB0 trained on the
+                                                                                        MOCS-DA datasets is better than that of the state-of-the-art DL models.
+
+
+                                                                                        5.3. Feasibility test for proximity detection at the construction site
+
+                                                                                            To validate the feasibility of the proximity detection application, a
+                                                                                        case study based on an earthmoving project was conducted. First,
+                                                                                        YOLOv4-EFNB0 was applied to detect the construction entities in videos.
+                                                                                        We filtered the detected classes into “worker” and “excavator” in this
+                                                                                        case study. Once these classes were detected, their positions were con­
+                                                                                        verted from the image coordinates into the transformed coordinates.
+                                                                                        Second, as described in Section 3.4, we selected four points in the video
+                                                                                        frames to determine the projective view of the construction site. Next,
+                                                                                        the actual distance between four points in and the corresponding pixel
+                                                                                        coordinates of these points in the frames were measured accordingly.
+                                                                                        Then, these four points were used to process the homography trans­
+Fig. 12. Precision-recall curves of the testing model: (a) models trained on the        formation. The last step was to conduct the proximity measurement and
+MOCS-DA dataset; (b) models trained on the MOCS dataset.                                determine if there was a violation on the construction site. It is noted
+                                                                                        that only the entities within the projective view were considered
+                                                                                        (Fig. 15).
+Table 4
+                                                                                            This application was evaluated on a video from an earthmoving
+Computational cost comparison between different models.
+                                                                                        project containing workers and excavators. The test video contains
+  DL models                      Size (MB)       Parameter         FLOPs                4,410 frames, and the ground truth of each frame has been annotated
+  YOLOv3                         235             6.15 × 107        3.21 × 1010          accordingly. The Mean Absolute Error (MAE) (Chai and Draxler, 2014)
+  YOLOv4                         244             6.40 × 107        2.98 × 1010          of the physical distance between the worker and the excavator over all
+  Faster R-CNN with ResNet       165             4.15 × 107        1.49 × 1011
+                                                                                        frames was selected to evaluate the proximity detection application
+  YOLOv4-EFNB0                   136             3.76 × 107        1.21 × 1010
+                                                                                        performance. The equation of MAEd is:
+                                                                                                  1∑n ⃒⃒           ⃒
+performance of YOLOv4-EFNB0 and other detectors trained on the                          MAEd =           dg − dmin
+                                                                                                               i
+                                                                                                                   ⃒                                               (16)
+                                                                                                  n i=1
+MOCS-DA dataset yielded better performance than those trained on the
+baseline dataset. Although the AP rates of Faster R-CNN performed                       where dmin is the closest distance between a particular worker and an
+                                                                                               i
+
+
+
+
+                 Fig. 13. Comparison of the state-of-the-art models trained on MOCS-DA: YOLOv3, YOLOv4, and Faster R-CNN with ResNet-152.
+
+                                                                                   10
+H. Chen et al.                                                                                                               Safety Science 158 (2023) 105958
+
+
+
+
+                 Fig. 14. Comparison of the state-of-the-art models trained on MOCS: YOLOv3, YOLOv4, and Faster R-CNN with ResNet-152.
+
+
+
+
+                           Fig. 15. Demonstration of proximity detection using YOLOv4-EFNB0 and homography transformation.
+
+
+
+                                                                          11
+H. Chen et al.                                                                                                                     Safety Science 158 (2023) 105958
+
+
+excavator, and dg is the ground truth of the distance. The MAE of the              Table 6
+violation ratio was also selected as the performance matrix:                       Confusion matrix of proximity violation.
+                ⃒       ⃒                                                                                              Ground truth                        Total
+         1∑n ⃒⃒vi vg ⃒⃒
+MAEr =             −                                             (17)                                                  Violation       No violation
+                ⃒
+         n i=1 ni ng ⃒
+                                                                                    Predicted       Violation          1678            84                  1762
+where n is the number of workers inside the projective view and v is the                            No Violation       59              2589                2648
+number of workers who violate proximity inside the projective view.                                 Total              1737            2673                4410
+                                                                                                    Accuracy           0.9676
+There are two methods to calculate the distance between two bounding
+boxes. The BB-centroid method measures the distance between the
+centroids of two bounding boxes. The BB-bottom method measures the                 in real-time. The light-weight DL model with GPU batch processing
+distance between the bottom centre points of the bounding boxes. The               achieves fast inference through parallel computing, even when several
+results of the MAEd and the MAEr are shown in Table 5. It is noted that            workers and construction equipment are in a single frame. Overall, the
+the BB-bottom approach is relatively better than the BB-centroid                   system can perform video inference at a rate of around 25 FPS, which
+approach. The main reason for this is because of the camera angle. If              allows proximity hazards to be proactively detected.
+the camera view is perpendicular to the field, using the BB-centroid                   Last but not least, implementing the system in construction sites
+approach is more accurate, and vice versa.                                         would be economical. The size of the developed DL model has been
+    Due to the better performance of the BB-bottom approach, we                    significantly reduced while performance has barely decreased, which is
+selected it to evaluate the accuracy rate (Eq. (18)) of violation detection        suitable to be integrated with surveillance cameras. Studies have rec­
+in the test video. Each video frame’s confusion matrix of violation                ommended several methodologies for the layout of camera arrange­
+detection was developed (Table 6). It can be seen that the accuracy can            ments, which would optimise the field of view captured by each camera
+reach 96.76 %. Due to the light-weight characteristic of YOLOv4-EFNB0,             (Albahri and Hammad, 2016; Heyns, 2021). Hence, the hardware and
+the average processing speed is approximately 25 FPS, which achieves               software setup is deemed cost-effective. With the implementation of this
+near real-time performance.                                                        low-cost automation process, the construction industry may devote
+                      TP + TN                                                      more resources to safety education/training, planning, and inspection.
+Accuracy =                                                            (18)
+                 TP + FP + FP + FN
+                                                                                   6. Conclusion and future work
+    There is still some missed detection during testing. As shown in
+Fig. 16 at frame #276, a worker behind the excavator was not detected
+                                                                                       Although DL applications have evolved recently, their use in the
+temporarily. The main reason for this is that the excavator heavily
+                                                                                   construction sector is still in an early stage. Due to the frequent occur­
+occluded the worker. Since the application was run on video footage, the
+                                                                                   rence of collision incidents in construction sites, DL-based proximity
+occurrence of missed detection in some frames is acceptable. The pro­
+                                                                                   detection has a great potential to improve construction safety. It is likely
+posed method is still beneficial for construction safety monitoring,
+                                                                                   that certain fundamental challenges still remain, and one of these is
+although it misses some detection. This application performs robustly
+                                                                                   perceived as recognition inaccuracy due to occlusion problems in clut­
+with normal occlusion at frames #36, #186 and #336.
+                                                                                   tered scenes. Another challenge is that existing proximity detection
+                                                                                   applications are impractical as they usually demand high computation
+                                                                                   power. To effectively improve construction site safety, it is essential to
+5.4. Practical implications
+                                                                                   address these challenges. This study optimises current proximity moni­
+                                                                                   toring methods through context-guided data augmentation, CNN weight
+    Existing DL models cannot sustain detection and tracking when
+                                                                                   reduction, and homography transformation. This study provides new
+workers are partially occluded. Proximity detection would be inaccurate
+                                                                                   insights into the optimisation strategy of vision-based proximity detec­
+if construction entities cannot be consistently tracked, increasing the
+                                                                                   tion in terms of operational speed and accuracy enhancement, which can
+accident occurrence probability. Therefore, enhancing DL model per­
+                                                                                   substantially promote safety monitoring automation. The significance
+formance in occlusion situations facilitates more efficient site safety
+                                                                                   and contribution of this work are as follows:
+monitoring. The proposed system allows the proximity status of each
+worker and construction equipment to be monitored constantly and
+                                                                                      (a) A novel data augmentation method was proposed. This method
+correctly, even in a cluttered construction site.
+                                                                                          can overcome DL training data shortage by leveraging image
+    Several practical considerations related to the implementation of the
+                                                                                          contextual information without compromising algorithmic ac­
+proposed system are examined, including the impact on construction
+                                                                                          curacy. The method augments images by stitching occlusion
+site operations, computing efficiency, and setup costs. First, it is prac­
+                                                                                          patterns, which provides DL models with more varieties of
+tical and feasible to adopt the system to construction sites since
+                                                                                          training samples to adapt to the cluttered construction scenes.
+installing several surveillance cameras in construction sites is a regular
+                                                                                      (b) A light-weight DL model named YOLOv4-EFNB0 was formulated.
+practice (Yang et al., 2018). Cameras should be positioned at a certain
+                                                                                          As compared to YOLOv4, YOLOv4-EFNB0 is significantly down­
+height as it optimises the vision field and assures the homography
+                                                                                          sized. The experimental results show that when the context-
+transformation accuracy. Several studies have proved the feasibility of
+                                                                                          guided data augmentation was employed, YOLOv4-EFNB0 out­
+deploying far-field cameras to monitor the movements and behaviours
+                                                                                          performed most of the current DL models in terms of mAP, F1,
+of construction site employees (Assadzadeh et al., 2021; Fang et al.,
+                                                                                          and processing speed. Overall, this model is less costly and will
+2018b).
+                                                                                          motivate safety practitioners to use DL-based safety monitoring
+    Second, the monitoring system offers excellent computing efficiency
+                                                                                          applications.
+in video processing, making it possible to send alerts to safety inspectors
+                                                                                      (c) A proximity detection application was developed based on
+                                                                                          YOLOv4-EFNB0 and homography transformation. This applica­
+Table 5
+                                                                                          tion can achieve an outstanding accuracy rate and a promising
+Proximity detection performance.
+                                                                                          inference speed through a feasibility test, namely, 96.76 % in 25
+  Approach                           MAEd                           MAEr                  FPS. By promptly identifying the close-by hazards, this applica­
+  BB-centroid                        1.787 m                        0.074                 tion manifests significant merits in risk mitigation. In addition,
+  BB-bottom                          0.684 m                        0.036
+
+
+                                                                              12
+H. Chen et al.                                                                                                                                              Safety Science 158 (2023) 105958
+
+
+
+
+                                                                 Fig. 16. An example of worker detection failure.
+
+
+        the real-time data collection and processing features boost the                           Chai, T., Draxler, R.R., 2014. Root mean square error (RMSE) or mean absolute error
+                                                                                                       (MAE)?–Arguments against avoiding RMSE in the literature. Geosci. Model Dev. 7,
+        automation of construction work sites.
+                                                                                                       1247–1250.
+                                                                                                  Charalambous, C.C., Bharath, A.A., 2016. A data augmentation methodology for training
+    The future work will focus on further dataset augmentation to pro­                                 machine/deep learning gait recognition algorithms. arXiv preprint arXiv:
+vide more high-quality training samples and to capture more risk types                                 1610.07570.
+                                                                                                  Chen, H., Hou, L., Zhang, G.K., Moon, S., 2021. Development of BIM, IoT and AR/VR
+in occlusion conditions. In addition to providing safety alerts from single                            technologies for fire safety and upskilling. Autom. Constr. 125, 103631.
+camera views, the proposed system can benefit multi-camera systems                                Cheng, J.P., Wong, P.-K.-Y., Luo, H., Wang, M., Leung, P.H., 2022. Vision-based
+where the occlusion issues can be resolved to the greatest extent                                      monitoring of site safety compliance based on worker re-identification and personal
+                                                                                                       protective equipment classification. Autom. Constr. 139, 104312.
+(Elharrouss et al., 2021; Soltani et al., 2018). Besides, the internet of                         Ding, J., Chen, B., Liu, H., Huang, M., 2016. Convolutional neural network with data
+things (Chen et al., 2021), cloud computing, and advanced visualisation                                augmentation for SAR target recognition. IEEE Geosci. Remote Sens. Lett. 13,
+concepts will be interfaced with our development to provide a more                                     364–368. https://doi.org/10.1109/LGRS.2015.2513754.
+                                                                                                  Ding, L., Fang, W., Luo, H., Love, P.E., Zhong, B., Ouyang, X., 2018. A deep hybrid
+intelligent, autonoumous, and cost-saving safety monitoring solution.                                  learning model to detect unsafe behavior: Integrating convolution neural networks
+                                                                                                       and long short-term memory. Autom. Constr. 86, 118–124.
+CRediT authorship contribution statement                                                          Dvornik, N., Mairal, J., Schmid, C., 2018. Modeling visual context is key to augmenting
+                                                                                                       object detection datasets, Proceedings of the European Conference on Computer
+                                                                                                       Vision (ECCV), pp. 364––380.
+   Haosen Chen: Conceptualization, Data curation, Writing-original                                Elharrouss, O., Almaadeed, N., Al-Maadeed, S., 2021. A review of video surveillance
+draft, Writing-review & editing, Investigation, Validation, Formal                                     systems. J. Vis. Commun. Image Represent. 77, 103116.
+                                                                                                  Everingham, M., Van Gool, L., Williams, C.K., Winn, J., Zisserman, A., 2010. The pascal
+analysis, Methodology. Lei Hou: Writing – review & editing, Supervi­                                   visual object classes (voc) challenge. Int. J. Comput. Vision 88, 303–338.
+sion. Shaoze Wu: Writing – review & editing, Validation, Methodology,                             Fang, W., Ding, L., Luo, H., Love, P.E.D., 2018c. Falls from heights: A computer vision-
+Investigation, Formal analysis.                                                                        based approach for safety harness detection. Autom. Constr. 91, 53–61. https://doi.
+                                                                                                       org/10.1016/j.autcon.2018.02.018.
+                                                                                                  Fang, W., Ding, L., Love, P.E., Luo, H., Li, H., Pena-Mora, F., Zhong, B., Zhou, C., 2020a.
+Declaration of Competing Interest                                                                      Computer vision applications in construction safety assurance. Autom. Constr. 110,
+                                                                                                       103013.
+                                                                                                  Fang, Q., Li, H., Luo, X., Ding, L., Luo, H., Li, C., 2018a. Computer vision aided inspection
+    The authors declare that they have no known competing financial                                    on falling prevention measures for steeplejacks in an aerial environment. Autom.
+interests or personal relationships that could have appeared to influence                              Constr. 93, 148–164.
+the work reported in this paper.                                                                  Fang, Q., Li, H., Luo, X., Ding, L., Luo, H., Rose, T.M., An, W., 2018b. Detecting non-
+                                                                                                       hardhat-use by a deep learning method from far-field surveillance videos. Autom.
+                                                                                                       Constr. 85, 1–9.
+References                                                                                        Fang, W., Love, P.E., Luo, H., Ding, L., 2020b. Computer vision for behaviour-based
+                                                                                                       safety in construction: A review and future directions. Adv. Eng. Inf. 43, 100980.
+Albahri, A.H., Hammad, A., 2016. Optimizing surveillance camera placement in                      Fujita, H., Itagaki, M., Ichikawa, K., Hooi, Y.K., Kawano, K., Yamamoto, R., 2020. Fine-
+     buildings using BIM, ISARC. Proceedings of the International Symposium on                         tuned Pre-trained Mask R-CNN Models for Surface Object Detection. arXiv preprint
+     Automation and Robotics in Construction. IAARC Publications, p. 1.                                arXiv:2010.11464.
+Assadzadeh, A., Arashpour, M., Bab-Hadiashar, A., Ngo, T., Li, H., 2021. Automatic far-           Govender, R., Saba, G., Ham, N., Hou, L., Moon, S., Kim, J.-J., 2019. Appraisal of
+     field camera calibration for construction scene analysis. Comput.-Aided Civ.                      building information modeling (BIM) curriculum for early-career construction-
+     Infrastruct. Eng. 36, 1073–1090.                                                                  industry professionals: case study at C educational institute in Korea. Int. J. Constr.
+Awolusi, I., Nnaji, C., Marks, E., Hallowell, M., 2019. Enhancing construction safety                  Manage. 1–9 https://doi.org/10.1080/15623599.2019.1661069.
+     monitoring through the application of internet of things and wearable sensing                Guo, F., Qian, Y., Shi, Y., 2021. Real-time railroad track components inspection based on
+     devices: A review. Computing in civil engineering 2019: Data, sensing, and analytics,             the improved YOLOv4 framework. Autom. Constr. 125, 103596 https://doi.org/
+     530-538.                                                                                          10.1016/j.autcon.2021.103596.
+Bang, S., Baek, F., Park, S., Kim, W., Kim, H., 2020. Image augmentation to improve               Hasuike, R., Kinoshita, k., Hou, L., 2022. Classification for Images of Corroded Steel by
+     construction resource detection using generative adversarial networks, cut-and-                   Image Processing Technology, In: Hong Guan, T.C., Jianchun Li (Ed.), Recent
+     paste, and image transformation techniques. Autom. Constr. 115, 103198.                           Advances in Structural Health Monitoring Research in Australia. Nova Science
+Bochkovskiy, A., Wang, C.-Y., Liao, H.-Y.M., 2020. Yolov4: Optimal speed and accuracy                  Publishers,978-1-68507-741-9,https://doi.org/10.52305/QHVI3457.
+     of object detection. arXiv preprint arXiv:2004.10934.                                        Hataya, R., Zdenek, J., Yoshizoe, K., Nakayama, H., 2020. Faster autoaugment: Learning
+Brilakis, I., Park, M.-W., Jog, G., 2011. Automated vision tracking of project related                 augmentation strategies using backpropagation. European Conference on Computer
+     entities. Adv. Eng. Inf. 25, 713–724. https://doi.org/10.1016/j.aei.2011.01.003.                  Vision. Springer 1–16.
+
+
+                                                                                             13
+H. Chen et al.                                                                                                                                              Safety Science 158 (2023) 105958
+
+He, K., Zhang, X., Ren, S., Sun, J., 2016. Deep residual learning for image recognition,           SafeWorkAustralia, 2021. Key WHS statistics Australia.
+     Proceedings of the IEEE conference on computer vision and pattern recognition, pp.            Saleh, K., Szénási, S., Vámossy, Z., 2021. Occlusion Handling in Generic Object
+     770–778.                                                                                          Detection: A Review, 2021 IEEE 19th World Symposium on Applied Machine
+He, K., Zhang, X., Ren, S., Sun, J., 2015. Spatial pyramid pooling in deep convolutional               Intelligence and Informatics (SAMI). IEEE 000477–000484.
+     networks for visual recognition. IEEE Trans. Pattern Anal. Mach. Intell. 37,                  Shorten, C., Khoshgoftaar, T.M., 2019. A survey on image data augmentation for deep
+     1904–1916. https://doi.org/10.1109/TPAMI.2015.2389824.                                            learning. Journal of big data 6, 1–48. https://doi.org/10.1186/s40537-019-0197-0.
+Heyns, A.M., 2021. Optimisation of surveillance camera site locations and viewing angles           Slaton, T., Hernandez, C., Akhavian, R., 2020. Construction activity recognition with
+     using a novel multi-attribute, multi-objective genetic algorithm: A day/night anti-               convolutional recurrent networks. Autom. Constr. 113, 103138.
+     poaching application. Comput. Environ. Urban Syst. 88, 101638.                                Soltani, M.M., Zhu, Z., Hammad, A., 2018. Framework for location data fusion and pose
+Hou, L., Chi, H.-L., Tarng, W., Chai, J., Panuwatwanich, K., Wang, X., 2017. A framework               estimation of excavators using stereo vision. J. Comput. Civil Eng. 32, 04018045.
+     of innovative learning for skill development in complex operational tasks. Autom.             Son, H., Choi, H., Seong, H., Kim, C., 2019. Detection of construction workers under
+     Constr. 83, 29–40. https://doi.org/10.1016/j.autcon.2017.07.001.                                  varying poses and changing background in image sequences via very deep residual
+Hou, L., Wu, S., Zhang, G., Tan, Y., Wang, X., 2020. Literature review of digital twins                networks. Autom. Constr. 99, 27–38.
+     applications in construction workforce safety. Appl. Sci. 11, 339.                            Sutton, M.A., Yan, J.H., Tiwari, V., Schreier, H., Orteu, J.-J., 2008. The effect of out-of-
+Hou, L., Chen, H., Zhang, G., Wang, X., 2021. Deep learning-based applications for safety              plane motion on 2D and 3D digital image correlation measurements. Opt. Lasers
+     management in the AEC industry: A review. Appl. Sci. 11, 821.                                     Eng. 46, 746–757.
+Jiang, W., Zhang, K., Wang, N., Yu, M., 2020. MeshCut data augmentation for deep                   Tajeen, H., Zhu, Z., 2014. Image dataset development for measuring construction
+     learning in computer vision. PLoS ONE 15, e0243613.                                               equipment recognition performance. Autom. Constr. 48, 1–10. https://doi.org/
+Jin, R., Zhang, H., Liu, D., Yan, X., 2020. IoT-based detecting, locating and alarming of              10.1016/j.autcon.2014.07.006.
+     unauthorized intrusion on construction sites. Autom. Constr. 118, 103278.                     Tan, M., Le, Q., 2019. Efficientnet: Rethinking model scaling for convolutional neural
+Jung, S., Jeoung, J., Kang, H., Hong, T., 2021. 3D convolutional neural network-based                  networks. International Conference on Machine Learning. PMLR 6105–6114.
+     one-stage model for real-time action detection in video of construction equipment.            Thompson, N.C., Greenewald, K., Lee, K., Manso, G.F., 2020. The computational limits of
+     Comput.-Aided Civ. Infrastruct. Eng. https://doi.org/10.1111/mice.12695.                          deep learning. arXiv preprint arXiv:2007.05558.
+Kim, H., Kim, K., Kim, H., 2016. Vision-based object-centric safety assessment using               Walawalkar, D., Shen, Z., Liu, Z., Savvides, M., 2020. Attentive cutmix: An enhanced
+     fuzzy inference: Monitoring struck-by accidents with moving objects. J. Comput.                   data augmentation approach for deep learning based image classification. arXiv
+     Civil Eng. 30, 04015075.                                                                          preprint arXiv:2003.13048.
+Kim, K., Kim, H., Kim, H., 2017. Image-based construction hazard avoidance system                  Wang, A., Sun, Y., Kortylewski, A., Yuille, A.L., 2020a. Robust object detection under
+     using augmented reality in wearable device. Autom. Constr. 83, 390–403.                           occlusion with context-aware compositionalnets, Proceedings of the IEEE/CVF
+Kim, D., Liu, M., Lee, S., Kamat, V.R., 2019. Remote proximity monitoring between                      Conference on Computer Vision and Pattern Recognition, pp. 12645–12654.
+     mobile construction resources using camera-mounted UAVs. Autom. Constr. 99,                   Wang, C.-Y., Liao, H.-Y.M., Wu, Y.-H., Chen, P.-Y., Hsieh, J.-W., Yeh, I.-H., 2020b.
+     168–182.                                                                                          CSPNet: A new backbone that can enhance learning capability of CNN, Proceedings
+Kolar, Z., Chen, H., Luo, X., 2018. Transfer learning and deep convolutional neural                    of the IEEE/CVF conference on computer vision and pattern recognition workshops,
+     networks for safety guardrail detection in 2D images. Autom. Constr. 89, 58–70.                   pp. 390–391.
+Kong, T., Fang, W., Love, P.E., Luo, H., Xu, S., Li, H., 2021. Computer vision and long            Wang, W., Wu, B., Yang, S., Wang, Z., 2018. Road damage detection and classification
+     short-term memory: Learning to predict unsafe behaviour in construction. Adv. Eng.                with Faster R-CNN, 2018 IEEE international conference on big data (Big data). IEEE
+     Inf. 50, 101400.                                                                                  5220–5223.
+Kulchandani, J.S., Dangarwala, K.J., 2015. In: Moving Object Detection: Review of                  Wu, J., Cai, N., Chen, W., Wang, H., Wang, G., 2019. Automatic detection of hardhats
+     Recent Research Trends, pp. 1–5.                                                                  worn by construction personnel: A deep learning approach and benchmark dataset.
+Kumar, S., Gupta, H., Yadav, D., Ansari, I.A., Verma, O.P., 2022. YOLOv4 algorithm for                 Autom. Constr. 106, 102894 https://doi.org/10.1016/j.autcon.2019.102894.
+     the real-time detection of fire and personal protective equipments at construction            Wu, S., Hou, L., Zhang, G.K., Chen, H., 2022. Real-time mixed reality-based visual
+     sites. Multimedia Tools Appl. 81, 22163–22183.                                                    warning for construction workforce safety. Autom. Constr. 139, 104252.
+LaborStatistics, B.o., 2021. NATIONAL CENSUS OF FATAL OCCUPATIONAL INJURIES                        Xiao, B., Kang, S.-C., 2021a. Development of an image data set of construction machines
+     IN 2020.                                                                                          for deep learning object detection. J. Comput. Civil Eng. 35, 05020005. https://doi.
+Li, Z., Li, D., 2022. Action recognition of construction workers under occlusion. J. Build.            org/10.1061/(ASCE)CP.1943-5487.0000945.
+     Eng. 45, 103352.                                                                              Xiao, B., Kang, S.-C., 2021b. Vision-based method integrating deep learning detection for
+Li, J., Zhao, X., Zhou, G., Zhang, M., 2022. Standardized use inspection of workers’                   tracking multiple construction machines. J. Comput. Civil Eng. 35, 04020071.
+     personal protective equipment based on deep learning. Saf. Sci. 150, 105689.                  Xiao, Y., Tian, Z., Yu, J., Zhang, Y., Liu, S., Du, S., Lan, X., 2020. A review of object
+Lin, T.-Y., Maire, M., Belongie, S., Hays, J., Perona, P., Ramanan, D., Dollár, P.,                   detection based on deep learning. Multimedia Tools Appl. 79, 23729–23791.
+     Zitnick, C.L., 2014. Microsoft coco: Common objects in context. Eur. Conf. Comput.            Xu, S., Wang, J., Shou, W., Ngo, T., Sadick, A.-M., Wang, X., 2021. Computer vision
+     vision. Springer 740–755.                                                                         techniques in construction: a critical review. Arch. Comput. Methods Eng. 28,
+Lin, T.-Y., Dollár, P., Girshick, R., He, K., Hariharan, B., Belongie, S., 2017. Feature              3383–3397. https://doi.org/10.1007/s11831-020-09504-3.
+     pyramid networks for object detection. In: Proceedings of the IEEE Conference on              Xue, A., Li, Z., Zuguang, L., Chengzhi, W., Pengfei, L., Zhiwei, L., 2021. Dataset and
+     Computer Vision and Pattern Recognition, pp. 2117–2125.                                           benchmark for detecting moving objects in construction sites. Autom. Constr. 122,
+Liu, S., Qi, L., Qin, H., Shi, J., Jia, J., 2018. Path aggregation network for instance                103482 https://doi.org/10.1016/j.autcon.2020.103482.
+     segmentation. In: Proceedings of the IEEE Conference on Computer Vision and                   Xuehui, A., Li, Z., Zuguang, L., Chengzhi, W., Pengfei, L., Zhiwei, L., 2021. Dataset and
+     Pattern Recognition, pp. 8759–8768.                                                               benchmark for detecting moving objects in construction sites. Autom. Constr. 122,
+Luo, H., Xiong, C., Fang, W., Love, P.E., Zhang, B., Ouyang, X., 2018. Convolutional                   103482.
+     neural networks: Computer vision-based workforce activity assessment in                       Yang, M.-D., Chao, C.-F., Huang, K.-S., Lu, L.-Y., Chen, Y.-P., 2013. Image-based 3D scene
+     construction. Autom. Constr. 94, 282–289.                                                         reconstruction and exploration in augmented reality. Autom. Constr. 33, 48–60.
+Luo, H., Liu, J., Fang, W., Love, P.E., Yu, Q., Lu, Z., 2020. Real-time smart video                    https://doi.org/10.1016/j.autcon.2012.09.017.
+     surveillance to manage safety: A case study of a transport mega-project. Adv. Eng.            Yang, X., Li, H., Huang, T., Zhai, X., Wang, F., Wang, C., 2018. Computer-aided
+     Inf. 45, 101100.                                                                                  optimization of surveillance cameras placement on construction sites. Comput.-
+Luo, W., Sandanayake, M., Hou, L., Tan, Y., Zhang, G., 2022. A systematic review of                    Aided Civ. Infrastruct. Eng. 33, 1110–1126.
+     green construction research using scientometrics methods. J. Cleaner Prod. 132710.            Yu, Y., Li, H., Yang, X., Kong, L., Luo, X., Wong, A.Y., 2019a. An automatic and non-
+Nath, N.D., Behzadan, A.H., Paal, S.G., 2020. Deep learning for site safety: Real-time                 invasive physical fatigue assessment method for construction workers. Autom.
+     detection of personal protective equipment. Autom. Constr. 112, 103085 https://                   Constr. 103, 1–12.
+     doi.org/10.1016/j.autcon.2020.103085.                                                         Yu, Y., Yang, X., Li, H., Luo, X., Guo, H., Fang, Q., 2019b. Joint-level vision-based
+Naveed, H., 2021. Survey: Image mixing and deleting for data augmentation. arXiv                       ergonomic assessment tool for construction workers. J. Constr. Eng. Manage. 145,
+     preprint arXiv:2106.07085.                                                                        04019025.
+Nayyeri, F., Hou, L., Zhou, J., Guan, H., 2019. Foreground–background separation                   Yun, S., Han, D., Oh, S.J., Chun, S., Choe, J., Yoo, Y., 2019. Cutmix: Regularization
+     technique for crack detection. Comput.-Aided Civ. Infrastruct. Eng. 34, 457–470.                  strategy to train strong classifiers with localizable features, Proceedings of the IEEE/
+Paneru, S., Jeelani, I., 2021. Computer vision applications in construction: Current state,            CVF International Conference on Computer Vision, pp. 6023–6032.
+     opportunities & challenges. Autom. Constr. 132, 103940.                                       Zhang, H., Yan, X., Li, H., 2018. Ergonomic posture recognition using 3D view-invariant
+Roberts, D., Golparvar-Fard, M., 2019. End-to-end vision-based detection, tracking and                 features from single ordinary camera. Autom. Constr. 94, 1–10.
+     activity analysis of earthmoving equipment filmed at ground level. Autom. Constr.             Zhang, H., Zhang, M., Zhang, C., Hou, L., 2021. Formulating a GIS-based geometric
+     105, 102811 https://doi.org/10.1016/j.autcon.2019.04.006.                                         design quality assessment model for Mountain highways. Accid. Anal. Prev. 157,
+Russakovsky, O., Deng, J., Su, H., Krause, J., Satheesh, S., Ma, S., Huang, Z.,                        106172.
+     Karpathy, A., Khosla, A., Bernstein, M., 2015. Imagenet large scale visual recognition        Zhao, Z.-Q., Zheng, P., Xu, S.-T., Wu, X., 2019. Object detection with deep learning: A
+     challenge. Int. J. Comput. Vision 115, 211–252. https://doi.org/10.1007/s11263-                   review. IEEE Trans. Neural Netw. Learn. Syst. 30, 3212–3232.
+     015-0816-y.                                                                                   Zheng, Z., Wang, P., Liu, W., Li, J., Ye, R., Ren, D., 2020. Distance-IoU loss: Faster and
+Russell, B.C., Torralba, A., Murphy, K.P., Freeman, W.T., 2008. LabelMe: a database and                better learning for bounding box regression, Proceedings of the AAAI Conference on
+     web-based tool for image annotation. Int. J. Comput. Vision 77, 157–173. https://                 Artificial Intelligence, pp. 12993–13000.
+     doi.org/10.1007/s11263-007-0090-8.
+
+
+
+
+                                                                                              14
+

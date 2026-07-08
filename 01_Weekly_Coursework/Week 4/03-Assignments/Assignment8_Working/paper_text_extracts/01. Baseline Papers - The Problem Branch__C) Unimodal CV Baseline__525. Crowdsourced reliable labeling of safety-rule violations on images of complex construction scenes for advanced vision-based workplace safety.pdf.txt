@@ -1,0 +1,1028 @@
+                                                              Advanced Engineering Informatics 42 (2019) 101001
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                       Advanced Engineering Informatics
+                                                         journal homepage: www.elsevier.com/locate/aei
+
+
+Full length article
+
+Crowdsourced reliable labeling of safety-rule violations on images of                                                                                          T
+complex construction scenes for advanced vision-based workplace safety
+Yanyu Wanga, Pin-Chao Liaob, Cheng Zhangc, , Yi Rend, Xinlu Sunb, Pingbo Tanga
+                                                                            ⁎
+
+a
+  Del E. Webb School of Construction, Arizona State University, Tempe, AZ 85281, USA
+b
+  Department of Construction Management, Tsinghua University, Beijing 100084, PR China
+c
+  Zachry Department of Civil Engineering, Texas A&M University, College Station, TX 77843, USA
+d
+  School for Engineering of Matter, Transport & Energy, Arizona State University, Tempe, AZ 85281, USA
+
+
+
+
+ARTICLE INFO                                              ABSTRACT
+
+Keywords:                                                 Construction workplace hazard detection requires engineers to analyze scenes manually against many safety
+Crowdsourcing                                             rules, which is time-consuming, labor-intensive, and error-prone. Computer vision algorithms are yet to achieve
+Construction safety                                       reliable discrimination of anomalous and benign object relations underpinning safety violation detections.
+Image annotation                                          Recently developed deep learning-based computer vision algorithms need tens of thousands of images, including
+Bayesian network model
+                                                          labels of the safety rules violated, in order to train deep-learning networks for acquiring spatiotemporal rea-
+Safety inspection
+                                                          soning capacity in complex workplaces. Such training processes need human experts to label images and indicate
+                                                          whether the relationship between the worker, resource, and equipment in the scenes violate spatiotemporal
+                                                          arrangement rules for safe and productive operations. False alarms in those manual labels (labeling no-violation
+                                                          images as having violations) can significantly mislead the machine learning process and result in computer
+                                                          vision models that produce inaccurate hazard detections. Compared with false alarms, another type of mislabels,
+                                                          false negatives (labeling images having violations as “no violations”), seem to have fewer impacts on the re-
+                                                          liability of the trained computer vision models.
+                                                             This paper examines a new crowdsourcing approach that achieves above 95% accuracy in labeling images of
+                                                          complex construction scenes having safety-rule violations, with a focus on minimizing false alarms while keeping
+                                                          acceptable rates of false negatives. The development and testing of this new crowdsourcing approach examine
+                                                          two fundamental questions: (1) How to characterize the impacts of a short safety-rule training process on the labeling
+                                                          accuracy of non-professional image annotators? And (2) How to properly aggregate the image labels contributed by
+                                                          ordinary people to filter out false alarms while keeping an acceptable false negative rate? In designing short training
+                                                          sessions for online image annotators, the research team split a large number of safety rules into smaller sets of
+                                                          six. An online image annotator learns six safety rules randomly assigned to him or her, and then labels workplace
+                                                          images as “no violation” or ‘violation” of certain rules among the six learned by him or her. About one hundred
+                                                          and twenty anonymous image annotators participated in the data collection. Finally, a Bayesian-network-based
+                                                          crowd consensus model aggregated these labels from annotators to obtain safety-rule violation labeling results.
+                                                          Experiment results show that the proposed model can achieve close to 0% false alarm rates while keeping the
+                                                          false negative rate below 10%. Such image labeling performance outdoes existing crowdsourcing approaches
+                                                          that use majority votes for aggregating crowdsourced labels. Given these findings, the presented crowdsourcing
+                                                          approach sheds lights on effective construction safety surveillance by integrating human risk recognition cap-
+                                                          abilities into advanced computer vision.
+
+
+
+
+1. Introduction                                                                                plateau [2]. Automated workplace safety monitoring and diagnosis
+                                                                                               based on computer vision and deep learning technologies could achieve
+   Safety inspection aims for proactive management of hazardous                                reliable and real-time detection of construction workplace hazards
+conditions. The goal is to achieve “zero accidents” [1]. However, the                          [3–6]. A step toward automated workplace safety monitoring is to en-
+proportion of hazards identified by human inspectors has reached a                             able computer algorithms to learn the logic behind numerous safety
+
+
+   Corresponding author.
+    ⁎
+
+   E-mail addresses: ynwang@asu.edu (Y. Wang), pinchao@tsinghua.edu.cn (P.-C. Liao), czhang@tamu.edu (C. Zhang), yiren@asu.edu (Y. Ren),
+sun-xl17@mails.tsinghua.edu.cn (X. Sun), tangpingbo@asu.edu (P. Tang).
+
+https://doi.org/10.1016/j.aei.2019.101001
+Received 12 September 2018; Received in revised form 5 August 2019; Accepted 2 October 2019
+Available online 18 October 2019
+1474-0346/ © 2019 Elsevier Ltd. All rights reserved.
+Y. Wang, et al.                                                                                                Advanced Engineering Informatics 42 (2019) 101001
+
+
+rules through the use of example workplace images labeled by humans              can achieve the lowest possible false alarm rates with acceptable false
+as containing safety-rule violation scenarios or not. A dataset consisting       negative rates in labeling workplace images as containing certain
+of images labeled as violating or following certain safety rules is es-          safety-rule violation scenarios. The new approach aggregates the an-
+sential to serve as the input of machine learning algorithms for training        notations contributed by ordinary people into a labeled workspace
+automated computer-vision-based workplace safety monitoring sys-                 image dataset with the minimum false alarms and acceptable false
+tems. However, manually labeling numerous workplace images by                    negatives in the image labels of safety-rule violations. The authors ex-
+safety engineers was tedious and costly due to the limited availability of       pect that this workspace image dataset with crowdsourced labels can
+experienced safety engineers and huge manual image labeling work-                serve as a reliable training data set for deep-learning-based computer
+loads [4]. Even experienced engineers could only achieve 70% accuracy            vision algorithms that can automate safety rule compliance checking
+in labeling safety rule violations of complex scenes due to (1) distrac-         based on field videos. The presented study investigates the fundamental
+tions caused by a large number of objects in images, (2) subtle differ-          crowdsourcing methodology in the domain of vision-based safety sur-
+ences between safety rule definitions, and (3) misperceptions about              veillance through the following:
+objects and relationships in scenes [7].
+    Crowdsourcing is a promising alternative for labeling large amounts          1) Characterizing the impacts of six-rule and ten-minute long training
+of images that contain scenes that comply with or violate certain safety            processes on the labeling accuracy of the crowdsourced annotations,
+rules [8,9]. A crowdsourcing approach invites randomly recruited on-                compared to published works on crowdsourced annotations without
+line annotators to collect safety-rule violation responses of images and            any training processes;
+then aggregates their contributions into safety-rule-violation labels.           2) Examing a new crowd consensus model that automatically ag-
+Such aggregation integrates the recognition power of people without                 gregates the violation annotation results from briefly trained anno-
+professional safety knowledge into formal safety-related reasoning ca-              tators into image labels. The aggregated image labels have a low
+pacity. Unpredictable human behavior and dynamic workspaces pose                    false positive rate and an acceptable false negative rate for training
+challenges of hazard detection in complex contexts, while crowdsour-                vision-based safety surveillance algorithms.
+cing approaches are promising for addressing these challenges
+[8,10–12].                                                                           Results from an online image-based safety-violation labeling ex-
+    Image labels crowdsourced from non-professional annotators need              periment showed that the proposed innovations result in a new
+proper “annotation aggregation” –a process of resolving conflicting              crowdsourcing approach, one that achieved reliable safety-violation
+information from multiple labels of an image and obtaining the final             labeling results in twenty target photos when compared with the results
+label of that image as certain violations. In other words, the aggregation       generated by the majority votes. The Background Research section
+model sorts out the correct labels despite various errors in the crowd-          below introduces previous studies related to construction safety-rule
+sourced annotations. However, existing methods for such aggregation              violation and crowdsourcing techniques while highlighting their con-
+become unreliable when a significant portion of labels are wrong. One            tributions to this paper. The Methodology section describes the details
+commonly used method for aggregating the answers of crowdsourced                 of the new crowdsource approach that integrates the short training
+participants is “majority vote”; this algorithm identifies the correct           process and the new crowd consensus model. The Validation section
+answer as the answer agreed on by the most participants [13–16].                 compares the performance of the proposed new crowdsourcing ap-
+While majority votes yield accurate results in many cases, such methods          proach against the conventional majority vote approach for annotation
+often fail when a significant portion of participants are wrong                  aggregation. The performance metrics used in this comparison include
+[15,17,18], i.e., the majority vote mistake.                                     true positive, true negative, false positive, false negative, and correct
+    Another category of annotation aggregation methods is Expectation            rate. The Discussion and Conclusion sections present the results, con-
+Maximization-Based (EM-based). EM-based methods have the similar                 clusion, and future research plans.
+difficulties encountered by the majority-vote methods while handling
+cases where significant portions of answers are wrong [19]. When over            2. Background research
+half of the workers choose the wrong answer while dealing with com-
+plex scenes, EM-based methods will likely converge to that incorrect                 This section first reviews existing computer vision-based (CV-based)
+answer. For example, Demartini et al. found that ZenCrowd, an ela-               approaches in workplace safety. Then the authors will discuss how
+borate EM-based method, cannot achieve precision higher than 85% no              comprehensive datasets can improve CV-based safety surveillance ap-
+matter how large the number of crowd workers is [19,20]. In many                 proaches and the need for large training image datasets for such ap-
+cases, unreliable annotations produced by people who lack professional           proaches. Lastly, this section will introduce crowdsourcing techniques
+inspection training can cause biases in the aggregated results: many             as a solution to acquire large training image datasets and the challenges
+images with no safety-rule violation would be labeled as having vio-             of achieving reliable crowdsourced image labels.
+lations, or “false alarms”.                                                          Manual safety-rule violation detection is costly, time-consuming,
+    High rates of false alarms in safety-violation labeling of photos,           and error-prone [27–29]. Researchers have been trying to automate
+called “high false-positive rates,” can seriously mislead the training           safety-rule violation detection through the use of computer vision (CV).
+process of deep-learning-based computer vision algorithms. In fact,              For example, Rubaiyat et al. [30] developed CV methods for auto-
+without additional field information depicting operational contexts, the         matically detecting misses of construction helmets from the workspace
+use of training images with many false positives to train deep learning          images. Han and Lee [1] proposed a framework of CV-based unsafe
+networks for automatic labeling of photos with safety violations will            action detection on construction sites. This research used workplace
+result in algorithms that have a large number of mislabels [21]. Com-            videos to reconstruct three-dimensional (3D) human skeleton models
+puter vision researchers have been tackling noisy labels of training             containing motion information of workers in order to detect pre-defined
+example images for a decade. Many researchers developed methods for              unsafe actions. Alongside academia, the industry was also developing
+tolerating false-negatives in the training data [22–25]. Unfortunately,          CV approaches for workplace safety surveillance. A commercial solu-
+these studies found that few machine learning methods have yet to                tion [31], “Smartvid.io”, supported the collection, organization, and
+overcome high false-positive rates in the training data set [26].                retrieval of workplace videos and can automatically label the objects
+Therefore, reducing false positive rates of crowdsourced safety-rule             appearing in a construction scene, all based on CV and audio-based
+violation labels, along with minimizing the increase of the false nega-          speech content analysis. Microsoft Build 2017, which is the worldwide
+tive rates, is critical.                                                         developer's conference of Microsoft, announced a state-of-the-art Arti-
+    This paper examines a new low-cost crowdsourcing approach that               ficial Intelligence (AI) approach for workplace safety [6]. In the
+
+                                                                             2
+Y. Wang, et al.                                                                                                     Advanced Engineering Informatics 42 (2019) 101001
+
+
+announced approach, AI recognized the objects captured by a camera                 which could save significant image labeling costs.
+and can instantly notice when a non-employee is in a workplace by                      Successful applications of crowdsourcing in engineering domains
+mistake, or identify when the positioning of tools violate safety rules.           also reveal the challenges of reliable crowdsourcing. Some crowd-
+    To further improve the reasoning of task-specific or safety-rule-              sourcing studies focused on optimizing clearly-defined objective func-
+specific object relations of computer vision techniques, the academy               tions in order to evaluate the effectiveness of crowdsourced responses
+and industry need a large number of images in construction workplaces              [47]. Other research questions for which the correct or best answer was
+that show different safety-compliance or safety-violation scenes                   unknown, however, is more challenging. Unknown ground truths
+[32–37]. Most of the existing safety-oriented CV approaches focused on             (correct labels of images) brought difficulties in aggregating the an-
+detecting certain safety-related scenarios (e.g., detecting whether                swers from participants and deriving the correct answer when some-
+workers are wearing hard hats, [30,38]) or using small datasets con-               times most of the participants’ answers were wrong [15,17,19]. Dra-
+taining less than 10 k images to train machine-learning models [39,40].            peau et al. [19] described many techniques that could handle cases in
+However, the reliability of such approaches in detecting object-relation           which the majority of votes could be wrong. The most commonly used
+safety violations in different circumstances was rather limited [4,5,41].          approach is to add questions with known answers to the question pool
+This limitation is because acquiring a large dataset with images labeled           so as to evaluate the intellectual capability and identify gaming beha-
+as violating/following different object-relation safety-rules is challen-          viors of the participants (e.g., random selections without thinking about
+ging. Liao et al. (2016) presented the observation misses in a simulated           questions). Tournament voting [48] allowed the participants to eval-
+safety inspection experiment of an elevator installation project. The              uate answers from other crowdsourcing participants and vote to delete
+experiment results indicated that the inspectors could only identify               suspicious answers. MicroTalk [19] allowed the participants to debate
+15–24% of all safety-rule violations, due to complexity in object re-              when answering the crowdsourcing questions and thus achieve con-
+lationship analyses. Moreover, only 62% of the identified safety-rule              sensuses. However, these approaches assumed that majority-vote mis-
+violations were actual violations. Such results revealed that the low              takes were rare in crowdsourcing games, which was not always true
+hazard detection rate might result from the large cognitive load gen-              [18]. When most participants frequently chose the wrong answer, the
+erated by triangulating enormous safety criteria and scenes [7].                   crowdsourced results would be severely biased [49]. Also, most of the
+Moreover, labeling a large number of images by a few professional                  approaches did not provide the necessary background knowledge to
+engineers could be expensive and tedious [4]. The average salary of one            annotators in a short but effective training. Such training process was
+safety specialist was approximately 75,000 dollars a year [42–44].                 essential for professional safety-related interpretation tasks, although
+According to the author's previous study [7], using six specialists to             not necessary for the tasks that the common sense of most ordinary
+annotate twenty images would on average require twenty minutes per                 people could handle (e.g., identify buildings and people in a scene).
+person, so that annotating one image costs approximately 3.6 dollars.                  In summary, crowdsourcing approaches can either derive group
+    Crowdsourcing is a widely used image labeling approach that can                decisions on true positive answers or eliminate true negative evalua-
+potentially address the challenge of acquiring workplace safety-or-                tions. To fully utilize the advantage of the integration of humans into
+iented training datasets [36,45]. Crowdsourcing techniques make de-                automation, crowdsourcing-based safety-rule violation detection re-
+cisions based on aggregating the thoughts of agents in achieving higher            quires an effective approach that improves the safety-rule violation
+decision quality than that based on the opinions of individuals [16,46].           capability of ordinary people through a training process and then in-
+Liu et al. proposed a crowdsourcing approach that derives timely and               tegrates the annotations from ordinary people in an effective way to
+reliable construction activity analysis based on workplace video                   overcome the limitations of majority votes.
+streams through vision-based tracking algorithms and activity identi-
+fication of anonymous online non-experts [11]. Compared to the ex-
+                                                                                   3. Methodology
+pert-based image annotation, crowdsourcing is considerably less ex-
+pensive. In the authors’ experiment, hiring one worker to annotate
+                                                                                       The goal of the developed new crowdsourcing method is to achieve
+twenty images only cost 0.02 dollars and a crowdsourced image la-
+                                                                                   more reliable safety-rule violation labeling of workplace images to re-
+beling result requires the annotation results of 50 workers at most.
+                                                                                   duce high false-positive rates while keeping acceptable false negative
+Therefore, labeling one image via crowdsourcing cost about 0.05 dollar,
+                                                                                   rates. Such fundamental improvements of labeling reliability can
+
+                                                           Constraint:
+                                                          •   Crowd consensus model based              Output:
+                                                              on Bayesian networks
+                                                          •   The logic behind all safety rules           Probability of the image
+                       Inputs:                                                                                containing risks of
+                         • Safety rules                                                                   violating any safety rules
+                         • Workspace images                         Crowdsourced                                           No Violation: 0%
+                           that may contain risks                      safety-rule                                         Rule 1: 99%
+                         • Common sense form                       violation labeling                                      Rule 2: 0%
+                           random annotators on                                                                            …
+                           the Internet                                                                                    Rule N: 0%
+                                      Mechanisms
+                                      • Train the online image annotators with safety rules (responding
+                                         to type-1 majority-vote mistake)
+                                      • The online annotators annotate the scenes in workspace images
+                                         with potentially violated safety rules
+                                      • Safety-rule violation labeling based on the crowd consensus
+                                         model (responding to type-2 majority-vote mistake)
+
+Fig. 1. IDEF0 model (a method designed to model the decisions, actions, and activities of an organization or system) of crowdsourcing-based safety-rule violation
+labeling.
+
+
+                                                                               3
+Y. Wang, et al.                                                                                                   Advanced Engineering Informatics 42 (2019) 101001
+
+
+provide CV algorithms a better basis to learn correct interpretation of            2) Twenty workplace images that may contain one safety violations (shown
+images from a human. Fig. 1 shows the IDEF0 process model [50,51] of                  in Fig. 3). Professional safety engineers determined the ground
+the proposed crowd-based safety-rule violation labeling. The inputs of                truths of the images’ safety-rule violations (the correct labels of
+this process consist of three parts: (1) safety rules for properly executing          images about the contained violations), as shown in Table 2.
+certain construction activities; (2) workplace images that may contain             3) Two groups of online image annotators (group α and group β, 60 an-
+cases that violate safety rules; and (3) the safety-related cognitive                 notators in each group) recruited from the online crowdsourcing
+capability and “common sense” of online annotators, who are the                       platform Amazon Mechanical Turk [52]. All annotators were al-
+participants of construction-site image labeling games. The authors                   lowed to participate in the image labeling tasks in both groups.
+made the following assumptions about the annotators’ cognitive cap-                   These annotators were neither expected to have experiences in
+ability and common-sense necessary for properly using the crowd-                      construction safety inspection nor to be trained about the detailed
+sourcing system:                                                                      explanations of the safety rules used during the experiments.
+
+ • The annotators could recognize the objects in images that capture                   To ensure the representativeness of this study, the hazards shown in
+   workplace scenes if they knew the shapes of the objects.                        the twenty workplace images covered all performance shaping factors
+ • The annotators could correctly understand the safety-relevant spa-              (PSFs) addressed in the cognitive reliability and error analysis method
+     tial relationship between objects by looking at the images (e.g.,             (CREAM) [53]. CREAM is a mature and accurate version of risk beha-
+     object A is under object B).                                                  vioral studies [54]. The PSFs include human-related errors (e.g., ob-
+ •   The annotators have common sense about how people could be hurt               servations, explanations), technology-related issues (e.g., equipment
+     by objects or risky areas related to different energy sources (e.g.,          failures), and organization-related factors (training issues) [55], which
+     people fall from high elevation will be injured or killed; people             provides a thorough framework for analyzing risks. Table 3 shows the
+     touching objects with the electric current will be injured or killed).        detailed classification information of the PSFs and relationships be-
+                                                                                   tween the PSFs and the images containing violations in Fig. 3. For ex-
+     The outputs of the crowdsourcing process are the probabilities of a           ample, the slash marks in column A represent the PSFs involved in
+list of predefined safety rules violated in the scenes captured in images,         image A in Fig. 3, which are human planning, organization and con-
+and the probabilities of having no safety-rule violations in the images            ditions in organization-related factors.
+assessed. The constraint is the crowd consensus model that will be                     As shown in Table 3, the images containing violations in Fig. 3 in-
+discussed in detail in Section 3.3.                                                volve all the performance shaping factors, which support the notion
+     The mechanisms of this methodology are as follows. Workplace                  that the findings will be practical for the safety inspection. To further
+images that may contain violations will be uploaded to the online                  ensure the practicability of the experiment, the authors compared the
+crowdsourcing platform. The image annotators will then play a viola-               distribution of violation and safety scenes in the twenty workplace
+tion annotation game to identify the violations of safety rules based on           images with the real world distribution data in Table 1. The K_S test
+the workspace images. The game consists of three steps. (1) Training               showed that the p-value is 0.028, which cannot reject the hypothesis
+and quizzing–the annotators are divided into groups and asked to learn             that the violation distribution in the experiments corresponded with the
+about certain safety rules using the training materials. After the                 counterpart in the real practice of safety inspection records of the ele-
+training, the annotators take a quiz containing ten images about the               vator company.
+safety rule they learned. The final violation labeling process will only               The researchers divided the twelve safety rules into two sets (safety
+use the annotation results from the annotators who achieve 70% or                  rules 1-6 and safety rules 7-12). Each of the two groups of annotators
+higher correctness in the quiz. (2) Annotating–the annotators who pass             was asked to choose the violated safety rule from one of the two sets of
+the quiz will annotate images violating certain safety rules that the              safety rules, respectively (i.e., group α annotated rules 1-6 and group β
+annotators learned in the training process. (3) Violation labeling                 annotated rules 7-12). The authors used the choice of the most image
+through annotation aggregation–this step will aggregate the answers                annotators as the safety-rule violation labeling results. Such labeling
+from the annotators and then use the Bayesian-network-based crowd                  results were the “majority votes.” Then the authors integrated the an-
+consensus model to determine whether a workplace image contains                    swers of the two groups to conclude the safety-rule violation labeling
+safety-rule violations.                                                            result of each image. Table 2 lists those images, along with the violated
+     The first subsection below uses a motivation experiment to define             rules and violation labeling results. The results showed that the ma-
+the two-types of majority vote mistakes that causing a high false-posi-            jority votes misclassified nine of eleven images that contain no viola-
+tive rate in safety-rule violation labeling. The second subsection then            tions as “containing a violation.” Majority votes also incorrectly labeled
+introduces how the training process resolves type-1 mistakes. The third            six of nine images with violation rules different from the actual rules
+subsection introduces how the Bayesian-network-based crowd con-                    violated in the scenarios. The false-positive rate is up to 75%, which
+sensus approach resolves type-2 mistakes.                                          would require extra attention from professional safety inspectors.
+                                                                                       The researchers then considered the violation labeling results for
+3.1. Problem definition: two types of majority-vote mistakes made while            image-rule pairs to identify the reasons for the false positives produced
+using crowdsourcing                                                                by majority votes. The authors categorized the image-rule pairs into
+                                                                                   three types as shown in Table 4:
+    To understand the technical feasibility of utilizing crowdsourcing
+techniques for labeling images with safety-rule violations, the re-                 • Image-rule pair type 1: The image contains a violation, while the
+searchers conducted an experiment to test how online image annotators                 violated safety rule is among the choices for annotators’ selections.
+respond to the elevator-installation workplace images that might con-               • Image-rule pair type 2: The image contains a violation, but the
+tain safety-rule violations. Fig. 2 shows the process of this experiment of             violated safety rule is not among the choices for annotators’ selec-
+crowdsourced safety-risk labeling. The input of this experiment in-                     tions.
+volves three parts:                                                                 •   Image-rule pair type 3: The image contains no safety violation.
+
+1) Twelve safety rules (shown in Table 1). The elevator company has 91                 Fig. 4 shows an example of the three types of possible image la-
+   rules for the safety inspection of elevator installation scenes. In this        beling results by majority votes. The correct label is represented in the
+   experiment, the authors selected twelve rules that are violated the             green color with the highest percentage in Fig. 4(a), (b) and (c).
+   most frequently, according to historical data of the company.                   Fig. 4(a) shows the result of the image T labeling results in group α, as
+
+                                                                               4
+Y. Wang, et al.                                                                                                              Advanced Engineering Informatics 42 (2019) 101001
+
+
+
+
+                                              Fig. 2. The experiment process of crowdsourced safety-violation labeling.
+
+
+an example of the category “correct labeling result.” In this case, the                  was wrong, but the percentage gaps between each answer were smaller
+majority-vote answer was correct: the answer matched the violated                        than that in Fig. 4(b). Mistake types 1 and 2 exist in the results for all
+safety rule. However, such correct label in all results was limited. As                  types of image-rule pairs, as summarized in Table 5. The new crowd-
+shown in Table 5, the false label results accounted for 75% (fifteen out                 sourcing methods aim at addressing these two types of mistakes so as to
+of twenty). Such results indicated the capability of non-experts to                      overcome the false positives generated by majority votes.
+identify workplace hazards based on their “common sense.” The
+crowdsourcing method was viable due to such use of common sense.                         3.2. The training step for resolving type-1 mistakes of majority votes
+The authors further analyzed those incorrect result and identified two
+kinds of Majority-vote mistakes, as follows:                                                The purpose of the training step was to help the crowdsourcing
+                                                                                         annotators who had no prior knowledge about workplace safety un-
+ • Majority-vote mistake type 1 (Fig. 4b): More than 50% of the an-                      derstand the safety rules in less than ten minutes. The training process
+     notators chose the same wrong answer. Such agreement on a wrong                     needed to be informative and easy to understand for people who had no
+     answer indicated that the crowd has a strongly biased understanding                 experience in construction safety inspection. There were two steps in
+     of a certain safety rule.                                                           the training process of the crowdsourcing platform:
+ •   Majority-vote mistake type 2 (Fig. 4c): The opinions of the anno-
+     tators are diverse. The highest percentage of image annotators that                 1) Training. The training process provided the image annotators six
+     chose the same answer is less than 50%. Such diverse answers re-                       safety rules so that the cognitive workload of the annotators would
+     flected the confusion and disagreements among people about the                         be suitable for short training of ordinary online annotators, com-
+     image contents. In such cases, slight biases of image annotators                       pared with annotating the 91 safety rules of the elevator installation,
+     could cause a switch of the “majority-vote answer.”                                    which required years of professional training in safety inspection.
+                                                                                         2) Quizzing. The goal of the quiz was to filter out the annotators who
+    Fig. 4(b) shows the majority vote mistake type 1, which is the an-                      learn too little from the training, based on their quiz scores. Such
+notation result of image A in group α, more than 53% of the annotators                      filtering could help delete unreliable labels contributed by under-
+chose the same wrong answer, as represented in the dark brown color.                        performers. The quiz consisted of ten images that may contain
+Fig. 4(c) shows the majority vote mistake type 2, which is the anno-                        violations (Fig. 5).
+tation result of image B in group β. The answer chose by most people
+
+
+     Table 1
+     Twelve rules that have the highest Disqualification Percentage (DP) in elevator installations.
+      Rule No.                           Description                                                                                                              DP
+
+      1                                  Improper working platforms on scaffold structure                                                                         6.26%
+      2                                  Improper door blocking device                                                                                            4.84%
+      3                                  Failure to provide overhead protection while working in the hoistway                                                     3.88%
+      4                                  Failure to use ground fault circuit interrupters or equivalent protective devices                                        4.07%
+      5                                  Inadequate electrical protection in the proximity of work activity                                                       2.67%
+      6                                  Slings not protected against sharp edges                                                                                 1.50%
+      7                                  Improper guardrail system                                                                                                1.48%
+      8                                  Working in proximity to unguarded drive or diverter sheaves or other rotating equipment                                  1.19%
+      9                                  Employees working in a wet pit with power on                                                                             0.91%
+      10                                 Jewelry and other metallic objects were worn around live equipment                                                       0.48%
+      11                                 Unsafe oxygen-acetylene or compressed gases welding, cutting, heating equipment or procedures                            0.31%
+      12                                 Storage of workplace materials creating an unsafe mechanical energy source                                               3.56%
+
+
+
+                                                                                     5
+Y. Wang, et al.                                                                                                                 Advanced Engineering Informatics 42 (2019) 101001
+
+
+
+
+                                                   Fig. 3. Twenty workplace images that may contain violations of safety rules.
+
+
+Table 2
+Safety-violation labeling result in the preliminary experiments.
+  Workplace image No.                     A                               B                             C                          D                           E
+  Ground truths of violations             Violating Rule 7                No violation                  No violation               No violation                Violating Rule 7
+  Labeling results                        Violating Rule 2                Violating Rule 8              Violating Rule 1           Violating Rule 8            Violating Rule 2
+
+  Workplace image No.                     F                               G                             H                          I                           J
+  Ground truths of violations             Violating Rule 10               No violation                  Violating Rule 9           No violation                No violation
+  Labeling results                        Violating Rule 9                Violating Rule 1              Violating Rule 8           No violation                Violating Rule 6
+
+  Workplace image No.                     K                               L                             M                          N                           O
+  Ground truths of violations             Violating Rule 6                Violating Rule 7              No violation               No violation                No violation
+  Labeling results                        Violating Rule 6                Violating Rule 2              Violating Rule 1           Violating Rule 5            Violating Rule 8
+
+  Workplace image No.                     P                               Q                             R                          S                           T
+  Ground truths of violations             No violation                    No violation                  Violating Rule 10          Violating Rule 6            Violating Rule 4
+  Labeling results                        No violation                    Violating Rule 8              Violating Rule 9           Violating Rule 6            Violating Rule 4
+
+
+
+Table 3                                                                                              In the first step, the training materials for teaching each safety rule
+The relation between the PSFs with the images containing violation in Fig. 3.                    showed the images of the violation scenes, along with compliance
+                                               Workplace image No.
+                                                                                                 scenes and word descriptions. Images came from one elevator in-
+                                                                                                 stallation company. From the Elevator Industry Field Employees’ Safety
+  Performance Shaping Factors                  A     E    F   H   K   L   R    S    T            Handbook [56], the authors summarized some explanations of the
+                                                                                                 rules. The images together with word explanations helped the image
+  Human           Observation                             /   /           /
+                  Explanation                             /   /           /         /
+                                                                                                 annotators learn to detect hazards from job site images. For each rule,
+                  Planning                     /                      /                          the authors tried to use the minimum images and words. Specifically, in
+                  Temporary function                              /                 /            one rule, the average training images number was four, and the ex-
+                  related                                                                        planations were limited in two sentences.
+                  Permanent function                 /
+                                                                                                     The second step, quizzing, was to ensure that the annotators com-
+                  related
+                                                                                                 prehended correct knowledge from our training. The training effect
+  Technology      Equipment                                       /       /
+                                                                                                 could vary from people to people, due to their understanding and
+                  Temporary interface issues                                        /
+                                                                                                 thinking. The authors prepared ten images as the quiz to test the
+  Organization    Organization                 /     /                /                          comprehension levels of the annotators. As shown in Fig. 5, the quiz
+                  Training                                /   /           /
+                  Surrounding                                 /
+                                                                                                 images were different from the training materials and the violation
+                  Conditions                   /     /                /                          labeling materials. After the training, annotators who gained 70%
+                                                                                                 correct rates in the quiz became trustable image annotators. In the quiz,
+
+
+
+
+                                                                                             6
+Y. Wang, et al.                                                                                                            Advanced Engineering Informatics 42 (2019) 101001
+
+
+Table 4
+Three types of image-rule pairs.
+  Image-rule      Image-rule pair type 1                             Image-rule pair type 2                           Image-rule pair type 3
+  pair types
+
+  Example
+
+
+
+                                           Choices: Safety rule 7-                             Choices: Safety rule                                 Choices: Safety rule 7-
+
+
+
+
+                  12                                                 1-6                                              12
+
+
+
+image IX, VI, and VIII violate rules 1, 5 and 6 respectively, and image                 3.3. A Bayesian-network-based crowd consensus model for resolving the
+VI, II, and I violate rule 8,1 0 and 12 respectively. The other four images             type-2 mistakes of the majority votes
+contain no violation.
+    As an example of the training process, Fig. 6 shows the training                        The previous section shows that the training step could effectively
+material for the safety rule “Improper door blocking device” (upper half                convert the majority-vote mistakes in crowdsourcing violation labeling
+of the figure) and a testing image along with this image’s labeling re-                 from type-1 to type-2. The type-2 majority-vote mistakes were distin-
+sults generated by annotators who labeled the images with or without                    guishable from a true violation because in type-2 mistakes each wrong
+the training (lower half of the figure). In the experiment where the                    answer was occupying a small portion of all responses, while the an-
+annotators did not take the training, 53% of the annotators chose                       swer of a true violation would occupy the majority of the responses.
+“Improper door blocking device” as the violation in the image due to                    With the training process, the labelers were highly likely to choose the
+the lack of understanding about what that rule means, while the correct                 violated safety rule if the image contained a safety violation and the
+answer should be “No violation.” In this example, the majority of an-                   violated safety rule was among the choices. On the other hand, when
+notators chose the same wrong answer, which is a type-1 mistake.                        the image contained no safety rule violation, or the violated safety rule
+However, in the experiment including the training process, the per-                     was not among the choices, the image annotators were less likely to
+centage of annotators that mistakenly choose “Improper door blocking                    choose the correct answer of “no violation,” but may diversely choose a
+device” was reduced to 33% because the training process clarified this                  non-violated safety rule from the choices. This fact motivated the de-
+safety rule. The annotators realized that the scenario in the workplace                 velopment of a Bayesian-network-based crowd consensus model. A
+image, as shown in the lower half of Fig. 6, was not relevant to door                   crowd consensus model uses a probabilistic approach to aggregate the
+blocking devices. The training process, therefore, transformed the type-                evaluations from the set of evaluators for overcoming the noises in-
+1 majority-vote mistake into type-2.                                                    troduced by confusions of annotators in annotating images having no
+    Table 6 summaries the type-1 majority-vote mistakes in experiments                  violations, as detailed below. Specifically, the crowd consensus model
+with and without the training processes. The authors observed no type-                  aims to determine the probability of the violation of a rule in an image,
+1 mistakes in the experiments with training, while there were equal or                  given responses from the group who has learned this rule.
+more than a quarter type-1 majority-vote mistakes in the experiment                         The rationale behind selecting the Bayesian-network-based crowd
+without training. Such results indicated that the training process could                consensus model is that the Bayesian-network model is a generative
+effectively correct the biased understanding of the safety rules by the                 model that reflects the pattern of image interpretation mentioned
+online image annotators. With the help of the training session, the high                above. When one of the safety rules is selected as violated by the largest
+concentration of wrong answers became wrong answers with higher                         portion of image annotators, the crowd consensus model will assess the
+diversities (i.e., type-1 majority vote mistakes become type-2 majority-                probability of each answer being correct. If the percentage of annota-
+vote mistakes). The crowd consensus model presented below could                         tors choosing the most selected safety rule is not high enough, the
+handle type-2 mistakes correctly and annotate the images as “no vio-                    crowd consensus model will assess this image as “no violation” because
+lation.”                                                                                the probability of “no violation” being correct will be the highest, al-
+                                                                                        though it is not the answer that selected by most people. On the other
+                                                                                        hand, if “no violation” is the most-selected answer, then the correct
+
+
+
+
+                  Correct labeling result (a)                 Majority Vote Mistake Type 1 (b)                 Majority Vote Mistake Type 2 (c)
+                                                      Fig. 4. Three types of labeling results of majority vote.
+
+
+                                                                                    7
+Y. Wang, et al.                                                                                                                          Advanced Engineering Informatics 42 (2019) 101001
+
+
+Table 5
+Summary of the majority vote mistake type.
+  Image-rule pair types                                            Image-rule pair type 1                                 Image-rule pair type 2                  Image-rule pair type 3
+  Correct Label                                                    The violated safety rule                               No Violation
+  False labeled images number/Total images number                  6/9                                                    9/11
+  Majority Vote Mistake Type                                       Type 1                     Type 2                      Type 1                                  Type 2
+  Majority Vote Mistake Type Rate                                  67%                        33%                         37%                                     63%
+
+
+
+label of this image-rule pair is “no violation.” The assumptions of the                       annotators is      i . pikn is the probability of annotator n correctly
+Bayesian network model are as follows:                                                        choosing the answer k for image i, which is the function of annotator n’s
+                                                                                              cognitive ability, the difficulty of understanding safety rule k, and the
+ • Annotators are independent, i.e., the annotation of one workplace                          visual complexity of image i. The expected result from the violation
+   image from one annotator does not affect other annotators.                                 annotation is the probability of the event “the image contains a viola-
+ • The probability of each rule violated in a given image is independent                      tion of rule k” when M out of N annotators chose rule k as the violation
+   of other images.                                                                           captured in image i:
+ • Each workplace image may contain at most one violation of the                              P ( i=k|aik = M )                                                                       (2)
+   given safety rules.
+ • The probabilities of annotators correctly identifying the violations of                       Based on the Bayes rule:
+     different safety rules in images with simple and diverse backgrounds                     P ( i=k|aik = M ) = P (aik=M| i = k ) P ( i = k )/ P (aik = M )                         (3)
+     are roughly the same. In future studies, the researchers will explore
+     how various safety rules and workplace images with different visual                          Each item on the right-hand side of Eq. (3) has a practical meaning.
+     complexity will influence the annotators’ ability to identify the                        The following bullets will introduce the calculation of these right-hand
+     violations.                                                                              side items in detail.
+ •   When an annotator chooses a wrong answer, the probabilities of
+     choosing different wrong choices are the same [16].                                       • Calculating P (a =M| = k):
+                                                                                                                     ik         i
+
+
+    Fig. 7 shows a graphical representation of this crowd consensus                               P (aik =M| i = k ) is the probability of having M out of N image an-
+model. The crowdsourcing process asks N annotators (each annotator is                         notators choose rule k when k is the correct answer. Calculating
+assigned a number n) to label I images (each image is assigned a                              P (aik =M| i = k ) requires knowing the probability of having M out of N
+number i) against K rules (each rule is assigned a number k). The input                       people choose rule k as the correct answer when the ground truth
+                                                                                               i = k' , k = 0, 1,   ,K:
+                                                                                                         '
+of the crowd consensus model are the responses about image i from N
+annotators:
+
+                                    K
+                                                                                              P (aik =M| i = k ) =   ( MN ) p  ikn
+                                                                                                                                     M (1     pikn ) N M
+                                                                                                                                                                                      (4)
+Ai = {ai0 , ai1,   aik ,   aiK },         aik = N                                             where pikn is the probability that the image annotator n chooses answer
+                                                                                   (1)
+                                    k=0
+                                                                                              k as the label of image i:
+where aik is the number of annotators that choose rule k (k [0, K ]) for                               pCVI , whenk = k '            0
+image i (i [1, I ]). Notice that k = 0 refers to the answer “no violation.”                   pikn =
+                                                                                                       pTN , whenk = k ' = 0                                                          (5)
+Therefore, ai0 denotes the number of annotators who think that image i
+contains no violation against the rules they have learned in the training                         In this study, the authors assume that pikn contains two values pCVI
+step, while aik (k 0) denotes the number of annotators who think the                          and pTN for correctly annotating images with/without a violation re-
+image i contains violations against safety rule k.                                            gardless of different qualified annotators and safety rules. Section 4.2
+    The authors define the ground truth of image i capturing a violation                      will validate that the safety-rule labeling accuracy of the developed
+of safety rule k or no violation as i = 0, 1, 2, , K . i = 0 means that                       crowd consensus model is robust with this assumption, even when the
+image i contains no violation. The authors also define rikn {0, 1} as the                     value of pCVI and pTN vary in certain ranges. pCVI is the prior correct
+annotation result of image i with respect to rule k by the annotator n                        violation identification rate of a response rikn , which is the prior
+(n [1, N ]), while the integrated labeling result of image i by all                           knowledge of the average probability of image annotators correctly
+
+
+
+
+                                             Fig. 5. Ten workplace images that may contain violations of safety rules for the quiz.
+
+
+                                                                                         8
+Y. Wang, et al.                                                                                                          Advanced Engineering Informatics 42 (2019) 101001
+
+
+
+
+                                                  Fig. 6. The training process: the training material and its effect.
+
+
+Table 6                                                                               correct violated rule in all images that contain violations. To estimate
+Summary of type-1 majority vote mistake.                                              the value of pCVI using maximum likelihood estimation, the authors
+  Type-1 Majority Vote Mistake Rate   Groups
+                                                                                      generated the likelihood function:
+                                                          Group α      Group β                                               N1
+                                      Without Training    0.25         0.30           L (pCVI , M1) = P (aik=M|pCVI ) =         p M1 (1      pCVI ) N1 M1
+                                      With Training       0.00         0.00
+                                                                                                                             M1 CVI                                   (6)
+                                                                                          To derive pCVI , the authors maximized the likelihood function by
+                                                                                      differentiating (6) with respect to pCVI and setting to zero:
+                                                                                                                        M1
+                                                                                      pCVI = argmaxL (pCVI , M1) =
+                                                                                                 pCVI                   N1                                            (7)
+                                                                                          The authors calculate pTN in a similar manner. In the training data,
+                                                                                      suppose that M2 out of N2 annotators chose “no violation” correctly for
+                                                                                      all images that contain no violations. The authors derive pTN by max-
+                                                                                      imizing the likelihood function:
+                                                                                                          N                                  M2
+                                                                                      pTN = argmax      ( M22 pTN M (1
+                                                                                                                    2
+                                                                                                                                       )
+                                                                                                                             pTN ) N2 M2 =
+                                                                                                                                             N2
+                                                                                                pTN                                                                   (8)
+
+
+                                                                                       • Acquiring P ( = k ):
+                                                                                                           i
+
+
+                                                                                          P ( i = k ) is the probability that rule k is violated in a workplace
+                                                                                      image which is provided by the historical data about the chances of
+Fig. 7. Graphical representation of the Bayesian-network-based crowd con-             having violations appear in random field observations or randomly-
+sensus model.                                                                         taken field images. This probability P ( i = k ) is a site- and business-
+                                                                                      specific domain knowledge for calibrating the crowd consensus model.
+selecting the violated safety rule of a workplace image when the vio-                 Such knowledge should be derived based on a sample of workplace
+lated safety rule is among the choices. Similarly, pTN is the prior true              images selected by experienced civil engineers. In this study, P ( i = k )
+negative rate, which is the prior knowledge of the average probability                is the safety rule violation distribution of the images in Table 2. These
+of image annotators correctly selecting “no violation” when the work-                 images are selected by the safety engineers from the elevator installa-
+place image contains no violation, or the violated safety rule is not                 tion company as representative samples based on their working ex-
+among the choices.                                                                    periences in many elevator installation work spaces under the regula-
+    pCVI and pTN can be calculated based on the results of online image               tion of the company's safety standards.
+labeling games where the ground-truth violation label of each work-
+place image is known, which is the preliminary training data of the                    • Calculating P (a = M ):
+                                                                                                               ik
+
+crowd consensus model. In the result, M1 out of N1 annotators chose the
+
+
+                                                                                  9
+Y. Wang, et al.                                                                                                            Advanced Engineering Informatics 42 (2019) 101001
+
+
+    P (aik = M ) is the expectation of the probability that M number of N                  significant difference between the answers from the annotators who
+annotators chose the answer “k”, where “k” represents a choice of the                      passed the quiz and those contributed by those who failed the quiz.
+image annotating problem selected by an annotator, which can be                            With the p-value at 3.46E-05, the T-test also validates the significant
+calculated by:                                                                             difference between the pCVI and pTN for the annotators who passed the
+                        K                                                                  quiz, while no significant difference exists for the annotators who failed
+P (aik = M ) =                  P (aik =M| i = k ')           P ( i = k')                  the quiz. These results indicate that 1) the quiz can identify the anno-
+                       k '= 0                                                   (9)        tators with high capability and reliability to improve the annotation
+                                                                                           performance, and 2) the assumption that annotators are more sensitive
+where
+                                                                                           to violations rather than no-violation images is valid.
+P (aik =M| i = k') =             ( MN ) p
+                                        ikn
+                                                M (1       pikn ) N M ,
+                                                                              (10)
+                                                                                               Finally, the crowd consensus model integrated all answers from
+                                                                                           both group’s annotators (group α1 and β1) who passed the quiz to
+                                                                                           calculate the probabilities of the safety rules violated in each image, as
+              pCVI ,        whenk = k '&k '            0                                   well as the probability of having no violation in each image. The al-
+          1    pCVI
+                       , whenk          k '&k '        0                                   gorithm then determined the final violation label of the workplace
+               K
+pikn =                                      '                                              images. The authors compared the labeling results generated through
+              pTN ,         whenk = k &k '= 0
+                                                                                           the crowd consensus model against the results generated through ma-
+          1     pTN
+               K
+                       , whenk          k'&k '= 0                             (11)         jority votes. This section first verified the performance of the training
+                                                                                           step for addressing the type-1 majority vote mistakes, and then verified
+   In Eq. (9), the “k” can be any number from 0 to 6 in our experiment,                    the performance of the Bayesian-network-based crowd consensus
+wherein k = 0 means no safety rule is violated in the workplace image.                     model for addressing the type-2 majority vote mistakes.
+Because the training session will influence the probability of the an-                         The following subsections will examine how different parameters
+notators selecting each answer, the authors calculated the average                         influence the performance of the proposed crowd consensus model for
+probability that M number of N annotators chose the answer “k” when                        addressing type-2 mistakes. The performance indices of the proposed
+the correct answer is any k′ = 0,1,2,…,K. Therefore, the authors cal-                      crowd consensus model are the true negative rate and the correct
+culated the conditional probability that M number of N annotators                          identification rate:
+chose the answer “k” considering different “k'” and then get the ex-
+pectation by considering P ( i = k') .
+   Finally, the labeling result of image i, denoted as i , is the choice k
+                                                                                            • POsterior True Negative Rate ( po ): the number of images that are
+                                                                                                                                  TN
+                                                                                                correctly interpreted as containing no violation, divided by the
+that has the highest probability to be correct:                                                 number of images containing no violation of any safety rule in the
+   i = argmax (P ( i =k|aik = M ))
+                                                                                                experiment result.
+          k                                                                   (12)
+                                                                                            •   POsterior Correct Violation Identification Rate ( poCVI ): the number
+                                                                                                of images that are correctly interpreted as violating a certain safety
+                                                                                                rule, divided by the number of images containing a violation of any
+4. Validation
+                                                                                                safety rule in the experiment result.
+    The authors selected twelve safety rules with the highest dis-
+                                                                                                Two factors of this crowdsourcing method can influence the per-
+qualification percentage (shown in Table 1) and collected 66 elevator
+                                                                                           formance of safety-rule violation labeling. The first factor is the crowd
+installation workplace images for the validation experiment. The au-
+                                                                                           size. The first subsection will discuss how the number of annotators
+thors chose twenty images, including nine images containing different
+                                                                                           influences the performance of crowdsourcing-based violation labeling
+violations and some safety-rule benign images (shown in Fig. 3), as
+                                                                                           in construction projects. For any given crowd size from 10 to 50, the
+testing images to assess the labeling performance of the crowd con-
+                                                                                           authors randomly subsampled the annotators’ answers to that size for
+sensus model with various inputs. The authors also chose ten different
+                                                                                           1,000 times.
+images to set up a quiz to test the impacts of training on the perfor-
+                                                                                                The second factor is the parameters in the crowd consensus model:
+mance of the annotators (shown in Fig. 5). In the quiz, image IX, VI, and
+                                                                                           the prior correct identification rate PCVI and the prior true negative rate
+VIII violate rules 1, 5 and 6 respectively, and image VI, II, and I violate
+                                                                                           PTN . The default value ofPCVI = 0.7152 and PTN = 0.3517 is calculated
+rules 8, 10 and 12 respectively. The other four images contained no
+                                                                                           based on the result of previous image interpretation games. The dataset
+violation. The authors then used the remaining 36 images to create the
+                                                                                           for automatic workplace safety monitoring and diagnosis needs both
+training material for the twelve safety rules, providing both violation
+                                                                                           the safety-rule violation and compliance workplace image datasets. For
+and benign examples for each safety rule. The two groups of online
+                                                                                           filter out false alarms, the data set needs the crowd consensus model to
+image annotators (group α1 and β1) recruited from Amazon Mechanical
+                                                                                           have a near 100% poTN . On the other hand, for efficiently acquiring
+Turk went through the training process to learn the basic knowledge
+                                                                                           workplace images violating certain safety rules, the dataset needs the
+about six safety rules (group α1 learned rule 1-6 and group β1 learned
+                                                                                           crowd consensus model to have a relatively high poCVI . The second
+rule 7-12).
+                                                                                           subsection will introduce how the changing of PCVI and PTN influences
+    All image annotators needed to take a quiz before annotating 20
+                                                                                           the performance of indicators of the violation labeling result, poCVI and
+images based on the safety rules learned by them. Table 7 shows the
+                                                                                           poTN .
+correct rates (i.e., pCVI and pTN for images with or without safety vio-
+lations, respectively) in the annotation results of the annotators. The
+                                                                                           4.1. Evaluating the violation labeling performance concerning different
+table separates the correct rates of the annotators who passed the quiz
+                                                                                           crowd sizes
+or not. The T-test result, with the p-value at 0.003, validates the
+
+                                                                                               Fig. 8 compares the performance of the crowd consensus model and
+Table 7
+The correct rate ( pCVI or pTN ) of annotators who passed or failed the quiz.              “majority vote” in crowdsourcing violation labeling. Fig. 8(a) compares
+                                                                                           the poTN of the labeling result of majority vote and crowd consensus
+  Average Correct Rate                                              pTN     pCVI           model for workplace images with no violation. In Fig. 8(a), the crowd
+                                                                                           consensus model steadily achieved 100% poTN when the crowd size was
+  Annotators passed the quiz                                       0.418    0.783
+  Annotators failed the quiz                                       0.236    0.210          larger than 30, while the majority vote could only achieve less than
+                                                                                           40% poTN . Also, the posterior true negative rate of the result using the
+
+                                                                                      10
+Y. Wang, et al.                                                                                                       Advanced Engineering Informatics 42 (2019) 101001
+
+
+
+
+Fig. 8. Comparing the performance of the crowd consensus model and “majority vote” in crowdsourcing violation labeling: (a) poTN , (b) poCVI , (c) poFP and (d) poFN
+of the experiment result concerning different crowd size (x-axis).
+
+
+crowd consensus model was higher than 90%, even at the crowd size of
+10 people, while the counterpart using majority vote was about 20%.
+This result showed that the crowd consensus model could effectively
+improve the true-negative rate of workplace risk analysis against ma-
+jority votes with as few as ten annotators.
+    Fig. 8(b) compares the poCVI of the violation labeling results of
+majority vote and crowd consensus model for workplace images with a
+violation. The poCVI was higher than 80% of both crowd consensus
+model and the majority votes when the crowdsize was 50, which
+showed that the violation identified by the crowdsourcing could be a
+reliable reference for establishing the safety-rule violation datasets.
+    Fig. 8(c) and (d) compares the false positive and false negative rate
+of the violation labeling results of the majority vote and crowd con-                Fig. 9. Comparing the performance of the crowd consensus model and “ma-
+sensus model. The false positive rate is equal to the value of one minus             jority vote” in crowdsourcing violation labeling.
+poTN . The false negative rate is equal to the value of one minus poCVI . In
+this figure, the false positive rate has been significantly reduced in our           could achieve 95% correct rate with the crowd size of 50 people.
+crowd consensus model, and the false negative rate could be reduced to
+a relatively low level. Since many existed AI algorithms could handle                4.2. Evaluating violation labeling performance concerning different
+labels with false-negative noisy, the labelling result of crowd consensus            parameters (PCVI and PTN ) in the crowd consensus model
+model would be practical for training advanced computer vision algo-
+rithms.                                                                                  Adjusting the parameter of PCVI and PTN can improve the poCVI of
+    Fig. 9 compares the correct rate of the majority vote and the crowd              violation labeling of the crowd consensus model with the cost of re-
+consensus model. The correct rate is the total images number, which is               ducing the poTN , and vice versa. Using the violation labeling result of
+twenty in this experiment, divided by the number of images correctly                 40-people crowd size as an example, Fig. 10 visualizes the impact of the
+labeled by the algorithm. The performance of the crowd consensus                     adjustment of parameters of PCVI and PTN on the poTN , poCVI and correct
+model could achieve 90% correctness when the crowd size was 30. The                  rate, as the following:
+majority vote model correct rate also improved when the crowd size                       Fig. 10 (a)-(b) show the heat maps of the poTN and poCVI concerning
+increased. However, the majority vote model could hardly achieve 70%                 the change of PCVI (x-axis) and PTN (y-axis), respectively. The black dots
+correct rate, even if the crowd size was 50. Overall, the poTN and poCVI             visualize the default parameter of Pcvi = 0.7152 and Ptn = 0.3517,
+of the crowd consensus model could achieve 100% and 90% respec-                      which will balance the performance of poTN and poCVI . To limit false
+tively with the crowd size of 50 people. The crowd consensus model                   alarms in the dataset and improve the efficiency of AI violation
+
+                                                                                11
+Y. Wang, et al.                                                                                                             Advanced Engineering Informatics 42 (2019) 101001
+
+
+
+
+Fig. 10. Violation labeling indexes concerning PCVI (x-axis) and PTN (y-axis) when crowd size = 40: (a) poCVI ; (b) poTN ; (c) min( poCVI , poTN ); and (d) area that correct
+rate of the crowd consensus model outperform the counterpart of majority vote.
+
+
+learning, the engineers could increase PTN and/or reduce PCVI near the                    performance with respect to different poCVI and poTN based on different
+neighborhood of point of coordinates (0.7152, 0.3517) and the per-                        crowd sizes. Fig. 11 shows that poCVI increased accordingly as the
+formance of poCVI would increase (Fig. 10(a)) while the poTN could                        crowd size increased, making the crowd consensus model more reliable.
+maintain at a high rate (Fig. 10(b)). For example, increasing PTN and/or                  In Fig. 11, with the crowd size increased, the curve became sharper.
+reducing PCVI rate (say, set PCVI = 0.66; PTN = 0.48) could increase the                  This phenomenon indicated that the poTN showed increasing stability,
+poCVI from 87% to around 92% while keeping the poTN at 100%, which                        which meant that once the crowd size exceeds a certain size, the false
+would be more practical for training of advanced computer vision al-                      positive rate could maintain as 0%. In other words, the crowd con-
+gorithms.                                                                                 sensus model could produce a training image dataset containing no
+     Fig. 10(c) visualizes the heat map of the minimum of the true ne-                    instances that are safe but mistakenly labeled as containing violations.
+gative rate and the correct-risk-identification rate. In this figure, the                 Such dataset is pivotal for minimizing the impact of label noise in the
+point of (0.7152, 0.3517) is in the area with the highest “temperature.”                  positive training instances that will significantly compromise the per-
+This result showed that Ptn and Pcvi learned from the training data will                  formance of the trained advanced computer vision algorithms for
+balance the performance of true negative rate, and correct-risk-identi-                   workspace safety surveillance [26].
+fication rate of the violation labels. Fig. 10(d) portrays a red area where
+the correct rate (the sum of true positive and true negative cases, di-                   5. Discussion
+vided by the total number of images) of the crowd consensus model
+outperformed the counterpart of the majority vote method. This figure                     5.1. Limitation and future research
+shows that the performance of the crowd consensus model was robust
+and could surpass the majority vote, even when the parameter of Ptn and                       First, understanding the underlying cognitive mechanism of the
+Pcvi deviated from their preliminary value.                                               crowd consensus model considering the images contents, safety rules,
+     The researchers further evaluated violation labeling performance                     and cognitive capability of annotators could lead to higher annotation
+concerning different crowd sizes and different parameters in the crowd                    accuracy. The model recognized the fact that the capability of anno-
+consensus model. Fig. 11 further shows the tradeoff between the poTN                      tators (i.e., passed or failed the quiz) and the difficulty levels of the
+and poCVI when Ptn and Pcvi changed for different crowd sizes.                            image-rule pairs (i.e., the image contains violations or not) significantly
+     The solid lines in Fig. 11 visualize the change of correct violation                 influence the performance of the annotators. The validation section has
+identification rate concerning the changing of the posterior false posi-                  proved that the existing crowd consensus model works well even
+tive rate, which equals to the value of one minus poTN when the crowd                     without analyzing and modeling the detailed cognitive process under-
+size equals 10, 20, 30, 40, and 50, respectively. Fig. 11 shows the model                 lying the values of pikn. Therefore, it is promising to explore the
+
+                                                                                     12
+Y. Wang, et al.                                                                                                           Advanced Engineering Informatics 42 (2019) 101001
+
+
+
+
+Fig. 11. The trade-off between the posterior false-positive rate (x-axis), which equals to 1- poTN , and the poCVI (y-axis) in the experiment results with different crowd
+size.
+
+
+underlying cognitive processes of capable and less capable annotators                   safety rules. Then, natural language processing algorithms can auto-
+while working on different types of images and rules. Future studies                    matically process texts of safety rules into “Scene Description Graphs”
+will further investigate and quantify how the complexity of the safety                  that specify objects and spatial relationships related to the rule. Overall,
+rules, the quality of images, and complexity of the scenes could form                   segmented images with object information can form a basis for
+different levels of difficulties for hazard detection and trigger different             checking object-relations related to specific safety rules. In that way,
+cognitive behaviors of annotators.                                                      the integration of semantic segmentation, object detection, and safety
+    Another challenge of the presented new crowdsourcing research is                    rule parsing can examine different combinations of object pairs (e.g.,
+that this approach can only label safety rules violated but could not                   wall vs. worker, ground vs. worker, worker vs. worker) in the image to
+explicitly label the objects and relations that cause such violations.                  detect violations of multiple safety rules.
+Labeling rule-related objects and relations is critical for supporting a                    The cost of crowdsourced safety violation labeling will also affect
+spatial reasoning algorithm in automatic detection safety rule violations               the applicability of the proposed approach. The workload for each
+based on object recognition results and spatial arrangement assessment.                 person in the crowdsourcing approach may affect the cost as well as the
+In the future, the authors plan to examine an improved crowdsourcing                    result gathered from the crowd. Future studies will aim at narrowing
+game that will collect two annotations on whether the rule is (i) re-                   down the possible safety violation choices to reduce the number of
+levant and (ii) violated for each image-rule pair. The game will then                   questions to further reduce the cost of crowdsourced safety violation
+present the images, together with relevant or violated rules, to a second               detection. For example, scenario-safety rule compliance checking can
+crowd, who are tasked to provide evidence of the compliances or vio-                    identify the safety rules that are impossible to be violated in the images
+lations through highlighting image parts that contain objects relevant to               according to the construction task progress and workplace layout.
+the particular rule.                                                                        The efficiency and effectiveness of the training process will greatly
+    Third, this study only showed the case that up to one safety viola-                 influence the performance of crowdsourced safety-rule violation la-
+tion exists in each workplace image. The challenge in the crowdsour-                    beling. This study only verified that the current training process could
+cing game design is that if the annotators designate whether the image                  reduce the type-1 majority vote mistakes of the annotations that are
+violates each safety rule instead of picking one violation in a set of                  difficult to distinguish by the crowd consensus model but did not ex-
+safety rules, the number of questions in the crowdsourcing platform will                plore what training method is the most effective in improving the ac-
+increase significantly. Therefore, further studies are necessary to focus               curacy of annotators. Therefore, another direction for future research is
+on the crowd consensus model that supports multi-labeling when it                       reducing the duration of the training process and improving the
+encounters images with multiple violations or particular objects in-                    quantity/quality of the image annotators’ understanding of the safety
+volved in multiple rule violations. One possible approach is to use se-                 rule through the training process. The researchers plan to conduct a
+mantic segmentation methods to segment image into regions re-                           series of studies focusing on (1) the maximum amount of safety rules
+presenting multiple objects, and then check the spatial relationships                   that can be memorized by the anonymous online image annotators
+between objects in images against multiple safety rules. Some computer                  through the short training time, (2) the best way to visualize the
+vision researchers have been studies the integration of semantic seg-                   training material, and (3) and which safety rules usually cause confu-
+mentation with natural language processing methods that parse safety                    sion to the image annotators?
+rules into object relations [57]. In those studies, semantic segmentation                   The authors will explore the extendibility of the proposed violation
+methods segment an image into regions that represent different objects                  labeling method by using larger image sets with various construction
+(e.g., the wall, the ground, and the workers). Some objects segmented                   scenarios other than elevator installation. These construction scenarios
+in the images can form relationships with each other that might violate                 include but are not limited to crane operation, accelerated bridge
+
+                                                                                   13
+Y. Wang, et al.                                                                                                 Advanced Engineering Informatics 42 (2019) 101001
+
+
+
+
+                        Fig. 12. Envisioned crowdsourced and knowledge-integrated visual reasoning for image-driven safety science.
+
+
+construction, and modular construction. Currently, computer vision                  identifying correlations between spatiotemporal arrangements of
+learning research consistently shows that high-quality training dataset             workspaces and safety-rule violation rates. Such correlations will
+leads to higher-quality labeling results [58]. Our algorithm achieved               define the safety design principles of workspaces. Automated hazard
+the 95% correct rate of the labeling results. However, the methods still            safety-rule compliance monitoring in large amounts of imagery data
+could not reach a 100% correct rate of the labeling results. The authors            will assist engineers in advancing safety science – that is, dis-
+will further explore methods to find a better solution to improve the               covering how improper spatiotemporal arrangements of workspaces
+developed crowdsourcing approach.                                                   often setup workers to fail in complying with safety rules. For ex-
+                                                                                    ample, insufficient time and spaces and improper task orders could
+5.2. A research roadmap for the automated workspace safety monitoring               enforce workers to abandon safety routines or regulations and ex-
+                                                                                    pose themselves to risks [59–61].
+    The proposed crowdsourcing approach for labeling safety-rule vio-
+lations on images of complex construction scenes is the first step toward            The AWSM framework can ultimately lead to Computer-Aided
+an Automated Workspace Safety Monitoring (AWSM) vision. The                      Workspace Design for workspaces based on large numbers of safety-
+overall goal of AWSM is to enable automated and highly-reliable safety           related spatiotemporal relationships between workers and objects
+monitoring beyond state-of-the-art computer vision methods. The ap-              captured in historical and field images or videos. Compared with pre-
+proach is to crowdsource domain-specific knowledge and to integrate              vious studies [3,5], the AWSM research roadmap aims at enabling
+the collected knowledge into a knowledge-enabled vision system.                  computers to learn from human image assessments of workspace
+Achieving this objective will pave the path toward a real-time spatio-           images to gain the capability of automatically identifying safety viola-
+temporal diagnosis of correlations between human-workspace interac-              tions and labeling relevant parts in images in real-time.
+tions and safety issues. Furthermore, the knowledge-enabled vision
+system will systematically derive safe and resilient field workflows and
+spaces. Fig. 12 overviews the proposed framework composed of the                 6. Conclusion
+following stages:
+                                                                                     This research study shows the capability of using crowdsourcing to
+1. Crowdsourcing mechanisms for safety knowledge acquisition. This stage         label safety-rule violations on images of complex construction work-
+   aims at examining crowdsourcing mechanisms augmented by an                    places in order to acquire reliable labeling of workspace images about
+   algorithm that automatically eliminate responses produced by an-              safety violations for training computer-vision-based safety surveillance
+   notators with poor labeling histories. The purpose is to enable ac-           systems. The goal is to minimize the false alarm rates in the image la-
+   quisition of trustable safety violation assessments based on con-             bels (reporting violations on images having no violations) while
+   struction-site images with a variety of contents (objects and                 keeping an acceptable number of false negatives (reporting images
+   environments). The acquired knowledge from each image encodes                 containing violations as “no violations”). Through a short training
+   two types of information: (1) the images labeled as violating certain         composed of six illustrations of safety rules, followed by a quiz process
+   safety rules, and (2) the relations among objects, environments, and          on non-professional image annotators, the authors were able to convert
+   human beings captured in those images.                                        the majority mistake from type 1 to type 2. A crowdsourcing type 1
+2. Knowledge-integrated and reasoning-enabled computer vision framework          error of the crowdsourced labels is an erroneous bias of the whole
+   for safety. This stage focuses on investigating integrated Natural            population of annotators, while a crowdsourcing type 2 error is a di-
+   Language Processing (NLP), and Computer Vision (CV) methods for               versity in the labels from annotators without a dominating answer.
+   producing relational networks that can augment a deep-learning                Type 2 errors usually reflect confusions among multiple possible vio-
+   approach capable of learning from images containing safety-rule               lations about the image content.
+   violation and object-relation information to derive which object                  Through the Bayesian consensus model, the authors properly ag-
+   relationships are related to specific safety rules. The trained deep          gregated noisy image labels contributed by ordinary people, filtering
+   learning network could identify similar object-relationships in new           out a significant amount of false alarms and acquiring high correct rate
+   images that indicate safety violations.                                       of 95%. Compared with the results of majority votes, the proposed
+3. Image-driven safety science and engineering. This stage focused on            crowdsourcing approach, with annotator training and the crowd con-
+   applying the developed AWSM framework to examine additional                   sensus model, is reliable in discriminating images with and without
+   images collected in real workspaces and assist safety engineers in            safety violations. The resultant 0% false-positive and 95% correct rate
+                                                                                 show the potential of generating datasets about workplace safety
+
+                                                                            14
+Y. Wang, et al.                                                                                                                         Advanced Engineering Informatics 42 (2019) 101001
+
+
+violations, which may advance the AI-based safety monitoring ap-                                       direction, Inf. Syst. Front. 16 (2014) 417–434, https://doi.org/10.1007/s10796-
+proaches in complex construction workplaces. This research study                                       012-9350-4.
+                                                                                                  [16] Y. Bachrach, T. Graepel, T. Minka, J. Guiver, How to grade a test without knowing
+sheds lights on eliminating construction safety hazards through the                                    the answers – a Bayesian graphical model for adaptive crowdsourcing and aptitude
+integration of human cognitive capability and automation techniques.                                   testing, Proc. 29th Int. Conf. Mach. Learn. 2012, pp. 1183–1190.
+                                                                                                  [17] G. Radanovic, B. Faltings, R. Jurca, Incentives for effort in crowdsourcing using the
+                                                                                                       peer truth serum, ACM Trans. Intell. Syst. Technol. 7 (2016) 1–28, https://doi.org/
+Declaration of Competing Interest                                                                      10.1145/2856102.
+                                                                                                  [18] A. Burnap, Y. Ren, R. Gerth, G. Papazoglou, R. Gonzalez, P.Y. Papalambros, When
+    The authors declare that they have no known competing financial                                    crowdsourcing fails: a study of expertise on crowdsourced design evaluation, J.
+                                                                                                       Mech. Des. 137 (2015) 031101, , https://doi.org/10.1115/1.4029065.
+interests or personal relationships that could have appeared to influ-                            [19] R. Drapeau, L.B. Chilton, D.S. Weld, MicroTalk: using argumentation to improve
+ence the work reported in this paper.                                                                  crowdsourcing accuracy, Hcomp (2016) 32–41.
+                                                                                                  [20] G. Demartini, D.E. Difallah, P. Cudré-Mauroux, ZenCrowd: leveraging probabilistic
+                                                                                                       reasoning and crowdsourcing techniques for large-scale entity linking, Proc. 21st
+Acknowledgement
+                                                                                                       Int. Conf. World Wide Web, ACM, 2012, pp. 469–478.
+                                                                                                  [21] B. Frénay, M. Verleysen, Classification in the presence of label noise: a survey, IEEE
+    This material is based upon work supported by the U.S. Department                                  Trans. Neural Networks Learn. Syst. 25 (2014) 845–869.
+of Energy (DOE), the Nuclear Engineering University Program (NEUP)                                [22] T. Xiao, T. Xia, Y. Yang, C. Huang, X. Wang, Learning from massive noisy labeled
+                                                                                                       data for image classification, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. 2015,
+under Award No. DE-NE0008403, and the Natural Science Foundation                                       pp. 2691–2699.
+of China (Award No.: 51578317). Their support is acknowledged and                                 [23] Y. Li, J. Yang, Y. Song, L. Cao, J. Luo, L.-J. Li, Learning from noisy labels with
+greatly appreciated. All opinions and findings presented are those of                                  distillation, Proc. IEEE Int. Conf. Comput. Vis. 2017, pp. 1910–1918.
+                                                                                                  [24] Y. Dgani, H. Greenspan, J. Goldberger, Training a neural network based on un-
+authors and do not necessarily reflect the views of DOE and NSFC.                                      reliable human annotation of medical images, 2018 IEEE 15th Int. Symp. Biomed.
+                                                                                                       Imaging (ISBI 2018), IEEE, 2018, pp. 39–42.
+Appendix                                                                                          [25] D. Tanaka, D. Ikami, T. Yamasaki, K. Aizawa, Joint optimization framework for
+                                                                                                       learning with noisy labels, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. 2018,
+                                                                                                       pp. 5552–5560.
+    The authors used Google Form to process the crowdsourcing game,                               [26] T. Leung, Y. Song, J. Zhang, Handling label noise in video classification via multiple
+which is about annotating the violations of the safety rules in Table 1 in                             instance learning, 2011 Int. Conf. Comput. Vis., IEEE, 2011, pp. 2056–2063.
+                                                                                                  [27] R.E. Levitt, N.M. Samelson, Construction Safety Management, John Wiley & Sons,
+the workplace images shown in Fig. 3. The link to the Google Forms are                                 1993.
+the following:                                                                                    [28] I.G. Awolusi, E.D. Marks, Safety activity analysis framework to evaluate safety
+                                                                                                       performance, J. Constr. Eng. Manage. 143 (2016) 05016022, https://doi.org/10.
+
+ • Annotating the violations of safety rule 1-6: https://forms.gle/                                    1061/(ASCE)CO.1943-7862.0001265.
+                                                                                                  [29] H.-H. Wang, F. Boukamp, Ontology-Based representation and reasoning framework
+   gS9qRm71Bb7tHmP9A                                                                                   for supporting job hazard analysis, J. Comput. Civ. Eng. 25 (2011) 442–456,
+ • Annotating the violations of safety rule 7-12:https://forms.gle/                                    https://doi.org/10.1061/(ASCE)CP.1943-5487.0000125.
+                                                                                                  [30] A.H.M. Rubaiyat, T.T. Toma, M. Kalantari-Khandani, S.A. Rahman, L. Chen, Y. Ye,
+    gyhhRoukM7JTjQwU6
+                                                                                                       C.S. Pan, Automatic detection of helmet uses for construction safety, 2016 IEEE/
+                                                                                                       WIC/ACM Int. Conf. Web Intell. Work, 2016, pp. 135–142.
+References                                                                                        [31] SMARTVID.IO, 2017. doi: http://doi.org/10.5703/1288284316366.
+                                                                                                  [32] P.H. Christensen, W. Jarosz, The path to path-traced movies, Found. Trends®
+                                                                                                       Comput. Graph. Vis. 10 (2016) 103–175, https://doi.org/10.1561/0600000073.
+ [1] S. Han, S. Lee, A vision-based motion capture and recognition framework for be-              [33] I. Arganda-Carreras, S.C. Turaga, D.R. Berger, D. Cireşan, A. Giusti,
+     havior-based safety management, Autom. Constr. 35 (2013) 131–141, https://doi.                    L.M. Gambardella, J. Schmidhuber, D. Laptev, S. Dwivedi, J.M. Buhmann, T. Liu,
+     org/10.1016/j.autcon.2013.05.001.                                                                 M. Seyedhosseini, T. Tasdizen, L. Kamentsky, R. Burget, V. Uher, X. Tan, C. Sun,
+ [2] T. Cooke, H. Lingard, A retrospective analysis of work-related deaths in the                      T.D. Pham, E. Bas, M.G. Uzunbas, A. Cardona, J. Schindelin, H.S. Seung,
+     Australian construction industry, ARCOM Twenty-Seventh Annu. Conf. 2011, pp.                      Crowdsourcing the creation of image segmentation algorithms for connectomics,
+     279–288.                                                                                          Front. Neuroanat. 9 (2015) 1–13, https://doi.org/10.3389/fnana.2015.00142.
+ [3] M. Liu, S. Han, S. Lee, Tracking-based 3D human skeleton extraction from stereo              [34] J. Deng, J. Krause, L. Fei-Fei, Fine-grained crowdsourcing for fine-grained re-
+     video camera toward an on-site safety and ergonomic analysis, Constr. Innov. 16                   cognition, Proc. IEEE Comput. Soc. Conf. Comput. Vis. Pattern Recognit. 2013, pp.
+     (2016) 348–367, https://doi.org/10.1108/CI-10-2015-0054.                                          580–587, , https://doi.org/10.1109/CVPR.2013.81.
+ [4] S. Tang, M. Golparvar-Fard, Joint reasoning of visual and text data for safety hazard        [35] O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh, S. Ma, Z. Huang,
+     recognition, Comput. Civ. Eng. 2017, American Society of Civil Engineers, Reston,                 A. Karpathy, A. Khosla, M. Bernstein, A.C. Berg, L. Fei-Fei, ImageNet large scale
+     VA, 2017, pp. 450–457.                                                                            visual recognition challenge, Int. J. Comput. Vis. 115 (2015) 211–252, https://doi.
+ [5] J. Seo, S. Han, S. Lee, H.H. Kim, Computer vision techniques for construction safety              org/10.1007/s11263-015-0816-y.
+     and health monitoring, Adv. Eng. Informatics 29 (2015) 239–251, https://doi.org/             [36] J. Deng, W. Dong, R. Socher, L.J. Li, K. Li, L. Fei-Fei, ImageNet: A large-scale
+     10.1016/j.aei.2015.02.001.                                                                        hierarchical image database, 2009 IEEE Conf. Comput. Vis. Pattern Recognit. 2009,
+ [6] Microsoft, Microsoft Build 2017, (2017).                                                          pp. 248–255.
+ [7] P.-C. Liao, J. Ding, X. Wang, Enhancing cognitive control for improvement of in-             [37] A. Krizhevsky, Learning multiple layers of features from tiny images, Sci. Dep. Univ.
+     spection performance: a study of construction safety, Int. Conf. Eng. Psychol. Cogn.              Toronto Tech. (2009) 1–60 doi: 10.1.1.222.9220.
+     Ergon. (2016) 311–321.                                                                       [38] M.-W. Park, N. Elsafty, Z. Zhu, Hardhat-wearing detection for enhancing on-site
+ [8] D.C. Brabham, Crowdsourcing as a model for problem solving: an introduction and                   safety of construction workers, J. Constr. Eng. Manage. 141 (2015) 04015024,
+     cases, Converg. Int. J. Res. into New Media Technol. 14 (2008) 75–90, https://doi.                https://doi.org/10.1061/(ASCE)CO.1943-7862.0000974.
+     org/10.1177/1354856507084420.                                                                [39] M.-W. Park, I. Brilakis, Continuous localization of construction workers via in-
+ [9] A. Kittur, E.H. Chi, B. Suh, Crowdsourcing user studies with Mechanical Turk,                     tegration of detection and tracking, Autom. Constr. 72 (2016) 129–142, https://doi.
+     Proceeding Twenty-Sixth Annu. CHI Conf. Hum. Factors Comput. Syst. - CHI ’08,                     org/10.1016/j.autcon.2016.08.039.
+     ACM Press, Florence, Italy, 2008, pp. 453–456.                                               [40] M. Memarzadeh, M. Golparvar-Fard, J.C. Niebles, Automated 2D detection of
+[10] B.L. Ranard, Y.P. Ha, Z.F. Meisel, D.A. Asch, S.S. Hill, L.B. Becker, A.K. Seymour,               construction equipment and workers from site video streams using histograms of
+     R.M. Merchant, Crowdsourcing–harnessing the masses to advance health and                          oriented gradients and colors, Autom. Constr. 32 (2013) 24–37, https://doi.org/10.
+     medicine, a systematic review, J. Gen. Intern. Med. 29 (2014) 187–203, https://doi.               1016/j.autcon.2012.12.002.
+     org/10.1007/s11606-013-2536-8.                                                               [41] C. Koch, K. Georgieva, V. Kasireddy, B. Akinci, P. Fieguth, A review on computer
+[11] K. Liu, S.M. Asce, M. Golparvar-fard, A.M. Asce, Crowdsourcing construction ac-                   vision based defect detection and condition assessment of concrete and asphalt civil
+     tivity analysis from jobsite video streams, J. Constr. Eng. Manage. 141 (2015)                    infrastructure, Adv. Eng. Informatics 29 (2015) 196–210, https://doi.org/10.1016/
+     04015035, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001010.                                     j.aei.2015.01.008.
+[12] M.K. Poetz, M. Schreier, The value of crowdsourcing: Can users really compete with           [42] Salary.com, Safety Specialist in the United States, Salary.Com. (n.d.). https://
+     professionals in generating new product ideas? J. Prod. Innov. Manage. 29 (2012)                  www1.salary.com/Safety-Specialist-Salaries.html.
+     245–256, https://doi.org/10.1111/j.1540-5885.2011.00893.x.                                   [43] PayScale.com, Salary for Certification: Occupational Safety and Health
+[13] D. Zhou, Q. Liu, J.C. Platt, C. Meek, N.B. Shah, Regularized Minimax Conditional                  Administration (OSHA), (n.d.). https://www.payscale.com/research/US/
+     Entropy for Crowdsourcing, ArXiv Prepr. ArXiv1503.07240. (2015) 1–31.                             Certification=Occupational_Safety_and_Health_Administration_(OSHA)/Salary.
+[14] Y. Wang, W. Hu, Y. Wu, G. Cao, SmartPhoto: A resource-aware crowdsourcing                    [44] Salary.com, Health and Safety Manager in the United States, Salary.Com. (n.d.).
+     approach for image sensing with smartphones, 15th ACM Int. Symp. Mob. Ad Hoc                      https://www1.salary.com/Health-and-Safety-Manager-Salaries.html.
+     Netw. Comput. MobiHoc 2014, Philadelphia, PA, USA, 2014, pp. 113–122.                        [45] A. Kovashka, O. Russakovsky, L. Fei-Fei, K. Grauman, Crowdsourcing in computer
+[15] Y. Zhao, Q. Zhu, Evaluation on crowdsourcing research: current status and future                  vision, Found. Trends® Comput. Graph. Vis. 10 (2016) 177–243, https://doi.org/
+
+
+                                                                                             15
+Y. Wang, et al.                                                                                                                     Advanced Engineering Informatics 42 (2019) 101001
+
+
+     10.1561/0600000071.                                                                            unsafe behavior: the cognitive reliability and error analysis method (CREAM),
+[46] J. Howe, The rise of crowdsourcing, Wired Mag. 14 (2006) 1–5, https://doi.org/10.              Procedia Eng. 145 (2016) 715–722.
+     1086/599595.                                                                              [55] 沈祖培, 王遥, 高佳, 人因失误的后果-前因追溯表, (2005).
+[47] Y. Ren, A.E. Bayrak, P.Y. Papalambros, EcoRacer: game-based optimal electric ve-          [56] elevatorjobsitesafety.com, Elevator Industry Field Employees’ Safety Handbook,
+     hicle design and driver control using human players, J. Mech. Des. 138 (2016)                  (2015). http://www.elevatorjobsitesafety.com/pdf/SafetyHB_2015REDRev.pdf.
+     061407, , https://doi.org/10.1115/1.4033426.                                              [57] S. Aditya, Y. Yang, C. Baral, Y. Aloimonos, C. Fermüller, Image Understanding using
+[48] Y. Sun, C. Dance, How to assure the quality of human computation tasks when                    vision and reasoning through Scene Description Graph, Comput. Vis. Image
+     majority voting fails, Work. Comput. Soc. Sci. Wisdom Crowds, 2011, pp. 1–4.                   Underst. (2018), https://doi.org/10.1016/j.cviu.2017.12.004.
+[49] C.F. Salk, T. Sturn, L. See, S. Fritz, Limitations of majority agreement in crowd-        [58] N. Natarajan, I.S. Dhillon, P.K. Ravikumar, A. Tewari, Learning with noisy labels,
+     sourced image interpretation, Trans. GIS 21 (2017) 207–223.                                    Adv. Neural Inf. Process. Syst. (2013) 1196–1204.
+[50] S.-H. Kim, K.-J. Jang, Designing performance analysis and IDEF0 for enterprise            [59] R.A. Haslam, S.A. Hide, A.G.F. Gibb, D.E. Gyi, T. Pavitt, S. Atkinson, A.R. Duff,
+     modelling in BPR, Int. J. Prod. Econ. 76 (2002) 121–133, https://doi.org/10.1016/              Contributing factors in construction accidents, Appl. Ergon. 36 (2005) 401–415,
+     S0925-5273(00)00154-7.                                                                         https://doi.org/10.1016/j.apergo.2004.12.002.
+[51] D.T. Ross, Structured Analysis (SA): A Language for Communicating Ideas, IEEE             [60] Y. Li, Y. Hu, B. Xia, M. Skitmore, H. Li, Proactive behavior-based system for con-
+     Trans. Softw. Eng. SE-3 (1977) 16–34, https://doi.org/10.1109/TSE.1977.229900.                 trolling safety risks in urban highway construction megaprojects, Autom. Constr. 95
+[52] Amazon Mechanical Turk, (n.d.).                                                                (2018) 118–128, https://doi.org/10.1016/j.autcon.2018.07.021.
+[53] E. Hollnagel, Cognitive Reliability and Error Analysis Method (CREAM), Elsevier,          [61] N.S.N. Yiu, N.N. Sze, D.W.M. Chan, Implementation of safety management systems
+     1998.                                                                                          in Hong Kong construction industry – a safety practitioner’s perspective, J. Safety
+[54] P.-C. Liao, X. Luo, T. Wang, Y. Su, The mechanism of how design failures cause                 Res. 64 (2018) 1–9, https://doi.org/10.1016/j.jsr.2017.12.011.
+
+
+
+
+                                                                                          16
+

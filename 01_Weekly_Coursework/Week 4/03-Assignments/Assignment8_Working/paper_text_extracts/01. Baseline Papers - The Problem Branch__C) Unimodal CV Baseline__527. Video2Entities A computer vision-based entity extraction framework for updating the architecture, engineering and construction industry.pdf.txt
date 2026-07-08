@@ -1,0 +1,717 @@
+                                                                 Automation in Construction 125 (2021) 103617
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                              Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Video2Entities: A computer vision-based entity extraction framework for
+updating the architecture, engineering and construction industry
+knowledge graphs
+Zaolin Pan a, b, Cheng Su a, c, Yichuan Deng a, c, *, Jack Cheng d
+a
+  School of Civil Engineering and Transportation, South China University of Technology, 510641 Guangzhou, China
+b
+  Sino-Singapore International Joint Research Institute, 510555 Guangzhou, China
+c
+  State Key Laboratory of Subtropical Building Science, 510641 Guangzhou, China
+d
+  The Hong Kong University of Science and Technology, Hong Kong, China
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Due to the decentralisation and complexity of knowledge in the architecture, engineering and construction (AEC)
+Zero-shot learning                                        industry, the research on knowledge graphs (KGs) is still insufficient, and most of the research focuses on text-
+Computer vision                                           based KG structuring or updating. Entity extraction, a sub-task of knowledge extraction, is critical in general KG
+Entity extraction
+                                                          update approaches. While the mainstream approach for this task generally uses textual data, visual data is more
+Knowledge graph
+Knowledge update
+                                                          readily available, more accurate and has a shorter update cycle than textual data. Therefore, this paper integrates
+                                                          zero-shot learning techniques with general KGs to present a novel framework called “video2entities” that can
+                                                          extract entities from videos to update the AEC KG. The framework combines the perceptual capabilities of
+                                                          computer vision with the cognitive capabilities of KG to improve the accuracy and timeliness of KG updates.
+                                                          Experimental results demonstrate that the framework can extract “new entities” from architectural decoration
+                                                          videos for AEC KG updates.
+
+
+
+
+1. Introduction                                                                                layer standardises knowledge expression in the data layer through on­
+                                                                                               tologies. The ontology is the conceptual template that defines concepts,
+    In many industrial sectors, knowledge is considered an essential                           conceptual attributes and conceptual relationships. The knowledge base
+resource [1] and effective knowledge management is vital to their                              formed by ontology has a hierarchical structure with low redundancy.
+competitiveness [2]. Although knowledge management is receiving                                Besides, depending on the area covered, one can divide KGs into the
+increasing attention in the architecture, engineering and construction                         domain KG and the general KG. Domain KGs contain domain-specific
+(AEC) industry [3], the project-oriented, experience-specific, context-                        data with diverse attributes and data patterns. Compared with domain
+specific and decentralised nature of knowledge [4] still limit the                             KGs, general KGs focus on the breadth of knowledge, covering more
+acquisition and reuse of knowledge in this industry. Knowledge graph                           domains and integrating more entities, while their knowledge is not in-
+(KG) is an efficient tool for knowledge management that can effectively                        depth and precise.
+reuse, retrieve and visualise knowledge in a structured way. Since                                 Researchers have presented a great deal of work on ontology in many
+Google first introduced the concept of KG in 2012, KG has become                               aspects of the AEC field. For example, Park et al. [4] focused on
+popular in the industry and academia, and many areas such as semantic                          capturing and identifying construction knowledge characteristics and
+search [5], intelligent Q&A [6] and personalised recommendation sys­                           applying these characteristics to develop an ontology-based construc­
+tems [7] have benefited from KG technologies.                                                  tion knowledge retrieval system. Niu and IssaNiu and Issa [8] presented
+    The KG, an organic combination of a knowledge base and an                                  a delay analysis ontology for claim management. Ma et al. [9] aimed to
+ontology, consists of a data layer and a schema layer, as shown in Fig. 1.                     formalise specifications for construction cost estimation via ontologies.
+The data layer is mainly composed of a knowledge base of entities, at­                         By establishing ontology-based frameworks, Zhong et al. [10] identified
+tributes and relationships. The schema layer built on top of the data                          potential hazards from images, Li et al. [11] performed structural health
+
+
+
+    * Corresponding author at: School of Civil Engineering and Transportation, South China University of Technology, 510641 Guangzhou, China.
+      E-mail address: ctycdeng@scut.edu.cn (Y. Deng).
+
+https://doi.org/10.1016/j.autcon.2021.103617
+Received 16 September 2020; Received in revised form 30 January 2021; Accepted 3 February 2021
+Available online 13 February 2021
+0926-5805/© 2021 Elsevier B.V. All rights reserved.
+Z. Pan et al.                                                                                                          Automation in Construction 125 (2021) 103617
+
+
+
+
+                                                    Fig. 1. The logical structure of the knowledge graph.
+
+
+monitoring (SHM) for fine-grained bridge structures, and Chen et al.              new categories in the absence of supporting samples. Therefore, we need
+[12] performed facility maintenance management (FMM). However,                    to find a new technique that can recognise “new entities” using a limited
+due to the complexity of AEC KGs, little research has been devoted to KG          quantity of seen class training data, which is the main focus of zero-shot
+in this industry. Rasmussen et al. [13] applied KG to manage interrelated         learning (ZSL), aiming to classify unseen class instances [20].
+project information. Fang et al. [14] established a risk identification               Motivated by the above observations, we propose a novel framework
+system that combines object detection (OD) and KG. Zhu et al. [15]                called video2entities, which aims to update the AEC domain KG by
+constructed a KG of geographic information.                                       extracting entities from the video using ZSL techniques. The framework
+    Nevertheless, none of these researchers has investigated KG updates           consists of two iterative processes: a forward process and a backward
+or vision-based knowledge extraction. In particular, the KG update is a           process. The forward process initialises the video entity detector (VED)
+continuing problem when structuring KGs. Typically, there are two                 module using word embeddings as prior information to train the zero-
+methods to update KG: full and incremental updates [16]. Full updates             shot action recognition (ZSAR) and zero-shot object detection (ZSD)
+mean building the KG from scratch with all the updated data as input.             models. This module can recognise seen and unseen entities. Due to the
+Incremental updates fuse new knowledge in the existing KG using the               absence of well-established domain KGs in the AEC field, the forward
+current new data as input. While the incremental update consumes                  process updates the extracted entities based on general KGs. The back­
+fewer resources than the full update, it still requires significant manual        ward process combines the updated general KG with word embeddings
+intervention (e.g., defining rules) [17]. Therefore, this paper proposes a        to extract semantic embeddings using a graph convolution network
+semi-automated framework to reduce manual intervention when                       (GCN). In the next iteration, the forward process takes advantage of the
+incrementally updating AEC domain-specific knowledge to the general               better VED built by the integration of semantic embeddings and extracts
+KG data layer.                                                                    entities. Our framework combines the perceptual capabilities of com­
+    Entity extraction, a subtask of knowledge extraction, is one of the           puter vision with the cognitive abilities of KG to iteratively improve the
+most critical tasks. Although previous studies have extensively used              performance of the VED. As a result, we can extract most of the seen and
+textual data for this task, this paper chooses video data as the primary          unseen entities through multiple iterations.
+source of knowledge for the following reasons. First, vision is the most              This paper addresses the video entity extraction problem of AEC
+convenient and effective way to perceive information. Most of the in­             domain KG update by proposing a novel framework that can extract
+formation that humans acquire comes from vision. Second, video data               unseen entities from videos. Specifically, this paper addresses the unseen
+contains richer information than text data, helping to reduce deception           entities recognition problem by integrating the ZSL technique with
+and ambiguity. Third, video data is updated much faster than text data,           general KG. This paper first introduces the ZSL technique into the video
+making KG updates more efficient. Moreover, as deep learning (DL) has             entity extraction task to the best of our knowledge. Besides, this paper
+evolved, computer vision has made significant breakthroughs in image              has performed comprehensive experiments on architectural decoration
+classification and detection since 2012 [18,19], bringing it closer to            videos. The results show that the framework can extract the seen and
+human vision. As a result, one can extract entities from videos using             unseen entities from the videos to update AEC domain KGs.
+computer vision algorithms and update them into the KG.
+    However, not all computer vision algorithms are suitable for entity           2. Related works
+extraction. In theory, general supervised learning approaches can
+extract entities as long as there are sufficient training instances for all       2.1. Entity extraction
+classes. Due to the increasing number of new categories in the AEC
+domain and the long-tailed data distribution, it is almost impossible to              Entity extraction, also known as named entity recognition (NER),
+access the tail (or rare) classes’ training instances. As supervised              aims to extract entities from text. Entity extraction is the basis of solving
+learning approaches cannot transfer known knowledge to unknown                    natural language processing (NLP) problems, and it is also the most
+knowledge, they cannot recognise “new entities (entities outside the              fundamental task in knowledge extraction. Methods of extracting en­
+training set)”. Although few-shot learning can identify new categories            tities from textual data fall into rule-based methods [21], statistical
+(unseen classes) with limited supporting samples, it cannot recognise             model-based methods [22–25] and deep learning-based methods
+
+                                                                              2
+Z. Pan et al.                                                                                                         Automation in Construction 125 (2021) 103617
+
+
+
+
+                                                    Fig. 2. Schematic diagram of the principle of ZSL.
+
+
+[26–28].                                                                         space to determine the distance between the unseen and seen class in­
+    Rule-based methods require linguists to manually construct rule              stances in semantic space [33].
+templates and select specific features, including statistical information,
+punctuation, lexicality, directional words and word headings. However,           2.3. ZSL on entity extraction
+rule-based methods are cumbersome and laborious, with long update
+cycles and poor portability. The statistical model-based methods regard              ZSAR and ZSD methods can recognise construction processes or
+NER as a sequence labelling problem. The predicted tags in sequence              detect tools, materials and corresponding attributes for a construction
+labelling problems are related to the current input features and the             video. Zero-shot image or video captioning (ZSIC/ZSVC) methods can
+previously predicted tags compared with classification problems. The             also generate a textual description of images or videos, along with
+main probabilistic graph models are the hidden Markov model (HMM)                related entities and attributes. In theory, all of the above techniques can
+[25], maximum entropy model [23], support vector machine (SVM)                   extract entities and attributes. However, while the ZSIC/ZSVC method
+[24] and conditional random field (CRF) [22]. With the widespread                can simultaneously generate textual descriptions of objects, scenes and
+application of DL in NLP, deep neural networks have been successfully            actions, they require an additional entity extraction step from the
+applied to NER problems. Compared with statistical model-based                   generated text, and their data annotation efforts are more complicated
+methods, deep learning-based methods directly take word embeddings               than those of the ZSAR or ZSD method. Besides, ZSIC/ZSVC methods
+as input and implement end-to-end NER through neural networks, such              rely on the upstream ZSAR or ZSD model. Therefore, ZSAR and ZSD are
+as LSTM-CRF [27], LSTM-CNNs-CRF [26], and attention-based models                 more suitable than ZSIC/ZSVC for the KG update task.
+[28].                                                                                Existing ZSAR methods are generally divided into four types based
+                                                                                 on different prior information: attribute [34,35], word embedding
+2.2. Zero-shot learning (ZSL)                                                    [36–38], KG [30] and generative adversarial networks (GAN) [39,40].
+                                                                                 In early ZSAR works, experts manually defined and labelled attributes of
+    The nature of vision-based KG updates requires that computer vision          actions as prior information. However, handcrafted attributes are un­
+methods should recognise “new entities”. Although traditional super­             scalable, more subject to labelled data and sensitive to incorrect anno­
+vised learning or few-shot learning methods cannot accomplish this task,         tations. As a result, researchers have turned to word embedding. For
+ZSL techniques can introduce additional auxiliary information or prior           example, Xu et al. [37,38] embed labels and videos using word em­
+knowledge to complete this task. In this study, word embeddings are              beddings as a shared semantic space. Subsequently, methods using se­
+used as prior knowledge as it is the vectorisation of the word that can          mantic relations such as KG as prior knowledge have shown better
+measure the semantic distance between each word. As shown in Fig. 2              performance. For example, Gao et al. [30] first presented a GCN-based
+(a), with known knowledge (i.e., black and white panda and ordinary              ZSAR model to extract semantic information from KGs, and the perfor­
+horse) and auxiliary information “A zebra is a horse with black and              mance of this model was state of the art at that time, which suggested
+white stripes”, we know that the unseen instance label is zebra. As              that the prior information of KG is more potent than that of the attribute
+shown in Fig. 2(b), ZSL is trained using the instances and labels of seen        and the word embedding. The difficulty with ZSL is the lack of data on
+classes, applying the unseen labels and extra auxiliary information for          unseen categories. If unseen categories were available, ZSL could be
+testing. In recent years, many tasks in computer vision, such as object          easily converted to supervised learning, so some scholars have used GAN
+detection (i.e., ZSD) [29] and action recognition (i.e., ZSAR) [30], have        to “generate” data on unseen categories [39,40].
+benefited from ZSL.                                                                  Existing ZSD methods also fall into four categories: attributes [29],
+    There are two main types of existing ZSL methods. One is the                 word embedding [41], text description [42] and GAN [43,44]. The
+projection-based method, and the other is the similarity calculation             earliest work on ZSD, proposed by Rahman et al. [41], assumed that all
+method. The projection-based method computes the distance between                the foreground candidate boxes in an image could be obtained through a
+the visual features mapped to the semantic space and the semantic                region proposal network or edge box algorithm [45], thus reducing the
+embeddings to recognise the unseen classes [31,32]. The similarity               detection task to a classification task. In contrast to work [41], Zhu et al.
+calculation method uses a classifier trained on the seen classes in visual       [29] argued that general object detection methods treated the unseen
+
+                                                                             3
+Z. Pan et al.                                                                                                       Automation in Construction 125 (2021) 103617
+
+
+
+
+                                               Fig. 3. Schematic diagram of the Video2Entities framework.
+
+
+class as a background class, resulting in a lower confidence score for the       entities in the general KG with the predefined relationships. By inte­
+unseen class. Li et al. [42] chose text descriptions instead of word em­         grating the updated general KG with the corresponding word embed­
+beddings as prior information. Works [43,44] used GAN to generate                ding, the backward process can structure action-to-action and object-to-
+unseen classes’ visual features, transforming the ZSL task into a super­         object relationship graphs. Afterwards, GCN extracts the semantic in­
+vised classification learning task.                                              formation in the relationship graph to construct semantic embeddings.
+    Considering the superiority of ZSD and ZSAR over ZSIC/ZSVC, the              In the next iteration, the semantic embedding replaces the word
+VED module in the framework builds on the foundation of ZSD and                  embedding in the forward process.
+ZSAR. Additionally, since KG has more robust prior information than
+attribute and word embedding, the framework integrates the relation­
+ship graphs extracted from KG and word embedding as prior informa­               3.1. Problem definition
+tion to optimise the VED module.
+                                                                                     The VED module, which contains the ZSAR and ZSD models, is the
+3. Video2Entities                                                                critical module in our study. Formal definitions of the VED, ZSAR and
+                                                                                 ZSD are given below.
+    Our framework updates the AEC domain KG with predefined re­
+lationships and entities extracted by the VED module. The VED module             3.1.1. VED
+comprises ZSAR and ZSD models, where the ZSAR model recognises                       Formally, given a dataset D = {Inputs+u, Xs+u, Ys+u} with (S+U) en­
+construction processes, and the ZSD model detects construction mate­             tities, where Input represents the input videos or images, X represents
+rials and tools. As shown in Fig. 3, the framework contains two pro­             the prior information, Y represents the labels of Input, and S and U
+cesses: the solid black line shows the forward process, and the dash-dot         represent the seen and unseen entities, respectively. In the semi-
+blue line shows the backward process. The forward process initialises            supervised setting, where the ground truth labels of the seen entities
+the VED module using word embeddings as prior information. Following             Ys and the prior information Xs+u of both the seen and unseen entities are
+the VED entity extraction, the forward process updates the extracted             known, the goal is to infer the unseen labels Yu from the unseen entities
+                                                                                 U. The function F(⋅) = {fZSAR(⋅), fZSD(⋅)} denotes the VED module with
+
+
+
+
+                                                Fig. 4. Diagram of initialising VED in the forward process.
+
+                                                                             4
+Z. Pan et al.                                                                                                         Automation in Construction 125 (2021) 103617
+
+
+
+
+                                         Fig. 5. A ZSAR model built on word embeddings or semantic embeddings.
+
+
+two functions fZSAR(⋅) and fZSD(⋅), representing the ZSAR and ZSD                 is associated with an action label ysv ∈ Ysv. Likewise, assume there is a
+models, respectively.                                                             video test dataset Duv = {Vu, Yuv } containing unseen category videos Vu
+                                                                                  and action labels Yuv . Here, Ysv ∪ Yuv = Yv, Ysv ∩ Yuv = ∅, where Yv repre­
+3.1.2. ZSAR                                                                       sents the collection of seen and unseen action labels. The goal of the
+   Assume there is a video training dataset Dsv = {Vs, Ysv} containing seen       ZSAR model fZSAR(⋅) is to minimise the objective function L(Dsv) and
+category videos Vs and action labels Ysv, where each video instance vs ∈ Vs       generalise it to Duv .
+
+
+
+
+                                                     Fig. 6. A ZSD model based on word embeddings.
+
+                                                                              5
+Z. Pan et al.                                                                                                              Automation in Construction 125 (2021) 103617
+
+
+
+
+                                                                    Fig. 7. Relationship graph.
+
+
+3.1.3. ZSD                                                                            replace the seen class word embeddings Ws, i.e., the test phase is a ZSL
+    Assume there is an image training dataset DsI = {Is, BsI , YsI } containing       task where the test data contains only unseen instances. In the gener­
+seen category images Is and corresponding bounding boxes BsI and object               alised ZSL (GZSL) task, the seen and unseen class word embeddings W ∈
+labels YsI , where each image bounding box instance bsI ∈ BsI is associated           ℝ300×(seen+unseen) replace the seen class word embeddings Ws, i.e., the test
+with an object label ysI ∈ YsI . Likewise, assume there is a test dataset DuI =       data contains both seen and unseen instances. Due to the class imbalance
+{Iu, BuI , YuI } containing unseen category images Iu and corresponding               problem, the model’s loss function adopts focal loss [48].
+bounding boxes BuI and unseen object labels YuI . Here, YsI ∪ YuI = YI, YsI ∩
+YuI = ∅, where YI denotes the collection of seen and unseen object labels.            3.2.2. Build the ZSD model by word embeddings
+The goal of ZSD model fZSD(⋅) is to minimise the objective function L′ (DsI )             As shown in Fig. 6, the word embedding-based ZSD model contains
+and generalise it to DuI .                                                            two branches: a visual branch and a semantic branch. Based on the one-
+                                                                                      stage object detection model YOLOv2 [49], the visual branch modifies
+                                                                                      the number of output channels of the YOLOv2 to 300. The visual branch
+3.2. Forward process
+                                                                                      aims to extract visual features and obtain the boundary box coordinates
+                                                                                      and each foreground object’s confidence level. For an input image of size
+   The forward process’s main idea comes from the literature [46],
+                                                                                      512 × 512, YOLOv2 yields a tensor output of size 16 × 16 × 1525 after
+which linearly maps visual embeddings into the semantic space. As
+                                                                                      32 downsamplings. This tensor contains three parts: an object confi­
+shown in Fig. 4, the left branch is the word embedding of all candidate
+                                                                                      dence tensor (size 16 × 16 × 5), a bounding box coordinate tensor (size
+labels, and the right branch is the visual feature extraction process using
+                                                                                      16 × 16 × 20) and a visual embedding tensor (size 16 × 16 × 1500). The
+a convolutional neural network (CNN). We calculate class confidence
+                                                                                      visual embedding tensor is then resized to a two-dimensional matrix
+using the inner product. The model’s compatibility is 1 if the word
+                                                                                      (size 1280 × 300), denoted as denoted as Ve ∈ ℝ1280×300. The semantic
+embedding is compatible with the visual embedding; otherwise, it is 0.
+                                                                                      branch consists of a fully connected layer and a LeakyReLU [50] acti­
+The class with the highest confidence is the label of the video or image.
+                                                                                      vation function. The semantic branch does not change the shape of the
+                                                                                      word embedding matrix, and the semantic embedding matrix is denoted
+3.2.1. Build the ZSAR model by word embeddings
+                                                                                      as Sse ∈ ℝ300×seen in the training stage and Sue ∈ ℝ300×unseen in the testing
+   The upper branch of Fig. 5 shows the structure of the word
+                                                                                      stage. We still adopt linear mapping to align the visual and semantic
+embedding-based ZSAR model, which leverages the R (2 + 1)D CNN
+                                                                                      spaces. After normalisation by the softmax function, we obtain the class
+[47] model as the backbone network to extract the video features, with
+                                                                                      confidence vectors. The loss functions for confidence, bounding box and
+the number of neurons in the last fully connected layer of the backbone
+                                                                                      class in the ZSD model are consistent with YOLOv3 [51].
+network modified to 300. In this way, we can take a 16-frame video
+segment of size 112 × 112 × 3 (H × W × C) as input and obtain a visual
+                                                                                      3.2.3. Extract video entities and update KGs
+embedding V of length 300 through the backbone network. We calculate
+                                                                                         After building the ZSAR and ZSD models by word embeddings, the
+the inner product between the visual embedding V and the seen class
+                                                                                      VED module can extract video entities. The VED module will extract
+word embeddings Ws ∈ ℝ300×seen in the training stage, and obtain the
+                                                                                      incorrect entities due to the word embedding-based ZSAR and ZSD
+seen class confidence vector via the softmax function, as shown below
+                                                                                      models’ performance limitations, therefore statistical analysis of the
+Seen Class = softmax(VW s )                                                           ZSAR and ZSD results is required. In a video, the construction processes,
+                                                                                      materials and tools are recognised every 16 frames, and the predicted
+    In the test stage, the unseen class word embeddings Wu ∈ ℝ300×unseen
+
+                                                                                  6
+Z. Pan et al.                                                                                                           Automation in Construction 125 (2021) 103617
+
+
+
+
+                                                     Fig. 8. A ZSD model based on semantic embeddings.
+
+
+label with the most cumulative occurrences serves as the entity extrac­             than word embedding. Therefore, the backward processing aims to
+ted in this video clip. In each video clip, the top-N materials or tools with       enhance the prior information by distilling knowledge from the updated
+the same construction process label are counted to prevent accidental               general KG and word embeddings, thus optimising the VED module.
+errors. The top-N materials or tools are considered as the corresponding
+tool or material entities to that construction process. After multiple it­          3.3.1. Strengthen the prior information
+erations, we can reduce the possibility of extracting incorrect entities.               Rather than using the large-scale KG directly, the backward process
+    Although a large-scale general KG tends to lack most of the AEC                 refines the KG’s knowledge to construct a much smaller relationship
+domain’s entities and relationships, it still contains some entities rele­          graph containing only the semantic relationships between objects and
+vant to the domain, such as concrete, chainsaws and electric drills.                objects or actions and actions. In a large-scale general KG such as Con­
+Therefore, general KGs such as ConceptNet 5.5 [52] were considered in               ceptNet 5.5 [52], entities belonging to the AEC domain are considered to
+this study as a basis for updating AEC domain-specific entities and re­             be part of the seen classes, and the remaining seen classes are in the
+lationships. In order to correlate discovered unseen entities with entities         training set. Entities that neither exist in the training set nor the KG are
+in existing KGs, we combine the entities in KGs and detected unseen                 unseen classes. We use word embeddings to link the unseen classes to the
+entities (i.e. actions and objects) with predefined relationships (e.g.,            seen classes. First, word embeddings of all seen and unseen classes are
+used for) into triplets of the form <action, predefined relationship,               collected, and then the cosine similarity is calculated in pairs. Two
+object>. These triplets can be easily stored in graph databases such as             classes are linked together if their similarity is greater than a specified
+Neo4j [59], which manually or semi-automatically store and manage                   threshold. As shown in Fig. 7(b), “Iron rod”, “Aluminium”, “Electric
+triplets as graphs. Thus, in Neo4j, detected entities can be associated             drill”, “Chainsaw” and “Rebar” are linked together. After the forward
+with KG entities, as some entities in the triplets exist in the KG, meaning         process, part of the unseen classes becomes seen classes, and all seen
+that we only update the KG data layer and not the ontology. However, it             classes are updated to the general KG. Therefore, the link information
+is also worth noting that exceptions may arise where both the action and            between these unseen classes and all the seen classes in the KG is suc­
+the object are unknown, which inevitably requires manual intervention               cessfully acquired. In Fig. 7(d), “Rebar” is an unseen class. After the
+to determine the relationship between the new entity and those in the               forward process, it becomes the seen class and acquires links to entities
+KG, as the newly added triplets have no connection to the existing KG.              in KG. The final entity-to-entity (i.e. action-to-action and object-to-
+                                                                                    object) relationship graphs between the seen and unseen classes are
+                                                                                    derived by integrating the link information from word embedding and
+3.3. Backward process                                                               KG. Specifically, each node in the relationship graph is an entity, and
+                                                                                    two nodes are linked if they have a relationship in between, or if their
+    The prior information has a crucial impact on the performance of the            cosine similarity is greater than a specific threshold.
+ZSL model. The nature of ZSL determines that unknown entities need to                   If the prior information of the forward process is also seen as a
+be semantically related to known entities. If there are no or weak se­              relationship graph, then the link information of this graph only con­
+mantic connections between entities, e.g., some categories of entities              siders the word embedding, as shown in Fig. 7(b), while the link infor­
+with large sparsity, then identifying these categories of entities may be           mation of the backward process integrates both the word embedding
+challenging, as they are close to being isolated at the semantic level. To          and KG, as shown in Fig. 7(c). Therefore, it is reasonable to believe that
+reduce the effect of entity sparsity, prior information is needed to                the backward process’s prior information is more robust than that of the
+strengthen the semantic links between known and unknown entities. In                forward process, and more robust prior information should lead to better
+particular, a reasonable KG can lead to more robust prior information
+
+                                                                                7
+Z. Pan et al.                                                                                                      Automation in Construction 125 (2021) 103617
+
+
+
+
+                                              Fig. 9. The overall workflow of the video2entities framework.
+
+
+performance.                                                                    relationship graph-based ZSAR model is consistent with the word
+                                                                                embedding-based ZSAR model.
+3.3.2. Build the ZSAR model by action and action relationship graph
+    As shown in the lower branch of Fig. 5, the main difference between         3.3.3. Build the ZSD model by object and object relationship graph
+the relationship graph-based ZSAR model and the word embedding-                    The structure diagram of the relationship graph-based ZSD model is
+based ZSAR model is the semantic branch. The semantic branch of the             shown in Fig. 8. The relationship graph-based ZSD model is adapted
+relationship graph-based ZSAR model extracts the semantic features              from the word embedding-based ZSD model with the semantic branch
+from the relationship graph and word embeddings using GCN proposed              replaced. The model still leverages the idea of linear mapping to project
+in the literature [53]. Specifically, for a word embedding matrix of size       visual features into the semantic space. The rest of the relationship
+300 × (seen + unseen), a 300 × (seen + unseen) semantic embedding               graph-based ZSD model is the same as the word embedding-based ZSD
+matrix can be obtained after three graph convolution layers, which              model.
+means that all nodes (both seen and unseen) in the action and action
+relationship graph are used in the GCN, thus enabling the model to
+generalise the known knowledge to the unknown. The rest of the
+
+
+
+
+                                                             Fig. 10. Videos in the dataset.
+
+                                                                            8
+Z. Pan et al.                                                                                                        Automation in Construction 125 (2021) 103617
+
+
+Table 1                                                                          Table 2
+Comparison of ZSAR top-1 accuracy in forward and backward processes.             Comparison of ZSD mAP in the forward and backward processes.
+  Methods\task            Seen           Unseen            Seen + Unseen          Methods\task              Seen           Unseen               Seen + Unseen
+
+  Forward                 0.96           0.23              0.33                   Forward                   0.47           0.21                 0.38
+  Backward                0.95           0.53              0.86                   Backward                  0.54           0.30                 0.45
+
+
+
+3.4. Overall process                                                             that we only perform one forward and one backward process and the
+                                                                                 training and testing datasets of these two processes are the same.
+    The overall workflow of the framework is shown in Fig. 9. The solid              As shown in Table 1, although the top-1 accuracy of the forward
+black and dotted green lines indicate the forward process and the                process in the seen task is slightly better than that of the backward
+backward process, respectively. The forward process uses the VED                 process, the figure of the forward process is much lower than those of the
+module initialised by prior information to detect entities in the video.         backward process regarding the Unseen task and Seen + Unseen task,
+The backward process strengthens the prior information by distilling             which indicates that the backward process has better performance than
+knowledge from general KGs and word embeddings. All potential KG                 the forward process.
+entities fall into two categories: Seen0 (in the training set) and Unseen            Table 2 shows the comparison of the ZSD model between the forward
+(outside the training set), where Unseen = {Unseen1, Unseen2, Unseen3,           and backward processes, and the mAP of these three tasks in the back­
+…, UnseenN}. The VED module is first initialised by the word embed­              ward process is larger than that in the forward process. Tables 1 and 2
+dings of Seen0 and Unseen (Prior1). Due to the noise in the word em­             show that the backwards process’s performance is better than that of the
+beddings and the limited generalisation ability of Seen0, the VED                forward process, which means the backward process has constructed
+module can only recognise a subset of Unseen (Unseen1). Therefore,               more robust prior information, and prior information is strengthened as
+Unseen1 is converted into known data, namely, Seen1 = {Seen0, Un­                the seen classes increase in the iterative process of the framework.
+seen1}, Unseen = {Unseen2, Unseen3, …, UnseenN}. Next, the backward              Therefore, the feasibility of the video2entities framework is verified.
+process performs, with Prior2 (semantic embeddings) replaces Prior1.
+Afterwards, the VED module, initialised by Prior2, detects entities from         4.3. Qualitative results
+the video and obtains a new unseen subset (Unseen2). At this stage,
+Seen2 = {Seen0, Unseen1, Unseen2}, Unseen = {Unseen3, …, UnseenN}.               4.3.1. Seen construction process recognition
+As the two processes continue to iterate, the Seen set increases and the            The video of a seen construction process is shown in Fig. 11, with the
+Unseen set decreases. The iteration stops when the forward process fails         label “ground levelling”. After recognising the labels in the construction
+to recognise new entities.                                                       process through the forward and backward processes, 62 labels were
+                                                                                 identified. The correct rate of the backward process identification was
+4. Experiments                                                                   79.0%, and that of the forward process identification was 96.8%, as
+                                                                                 shown in Fig. 12.
+4.1. Experimental setup
+                                                                                 4.3.2. Unseen class construction process identification
+4.1.1. Dataset description                                                           Fig. 13 shows an unseen construction process video with the label
+   As shown in Fig. 10, the ZSAR dataset contains 29 seen classes and 5          “window sill cleaning”. Again, two processes were used to identify the
+unseen classes. Each class contains an average of 3 to 5 videos, and each        construction process labels, as shown in Fig. 14, with 25 labels detected
+video is at least 1 min in length. The ZSD dataset contains 24 classes of        in total. The backward process’s accuracy rate was 68.0%, and that of
+tools or materials, 20 of which are seen, and 4 are unseen.                      the forward process was 56%.
+
+4.1.2. Evaluation metrics                                                        4.3.3. Seen construction tools and materials detection
+    In the ZSAR task, the top-1 accuracy, i.e., the accuracy with which             As shown in Fig. 15, the forward process detects only the barrel,
+the top-ranked category matches the actual results, is adopted as our            while the backward process detects more categories and obtains a higher
+evaluation metric. In the ZSD task, the mean average precision (mAP) is          recall rate.
+utilised to evaluate novel object detection performance, mainly because
+it has been widely used in supervised object detection.                          4.3.4. Unseen construction tools and materials detection
+                                                                                    As shown in Fig. 16, there are 4 types of materials and tools in the
+4.1.3. Implementation details                                                    video, where barrel, tile and chainsaw are in the seen category, while
+    A general KG ConceptNet 5.5 [52] is used for AEC KG updating. The            nail belongs to the unseen category. The forward process detected tiles
+word embeddings are obtained from the literature [54] using the                  and barrels, but could not detect small objects such as chainsaws and
+word2vec model trained on the Baidu Encyclopaedia with a word                    nails, while the backward process detected all of these objects.
+embedding length of 300. The semantic branch for extracting semantic
+features utilises the GCN model with three graph convolution layers, and         4.4. Discussion
+output channels are 2048, 1024 and 300, respectively. It is worth noting
+that each convolution layer contains all seen and unseen nodes, and the          4.4.1. More intuitive comparison between the forward and backward
+features of seen nodes and unseen nodes are leveraged in the training            processes
+stage and testing stage, respectively. Only in the GZSL task do we use all           Even though we have shown that the backward process outperforms
+the features, including seen and unseen.                                         the forward process in quantitative analysis, we are still looking for a
+                                                                                 more intuitive way to demonstrate the capability of VED to classify
+4.2. Quantitative analysis                                                       different categories. We visualise the feature maps of the last layer of the
+                                                                                 forward and backward processes using t-SNE [55], a dimensionality
+    In this section, the top-1 accuracy of the forward and backward              reduction algorithm for high-dimensional data. As shown in Fig. 17,
+processes are compared under three different tasks, which are distin­            different colours represent different categories, and each circle repre­
+guished by test categories: Only Seen Class instances, Only Seen Class           sents an instance. The backward process can cluster semantically similar
+instances, Both Seen Class instances and Both Seen Class instances. Note         instances together, whereas, in the forward process, these instances are
+
+                                                                             9
+Z. Pan et al.                                                                                                            Automation in Construction 125 (2021) 103617
+
+
+
+
+                                                   Fig. 11. Seen construction process video: ground levelling.
+
+
+
+
+Fig. 12. Comparison of the results of seen construction process recognition between the two processes. Figures (a) and (b) are statistical histograms of the con­
+struction process labels.
+
+
+
+
+                                            Fig. 13. Unseen class construction process video: window sill cleaning.
+
+
+mostly discrete, which means that the backward process has a better                  the backward process on the Unseen task, while it was Zhu [29] on the
+ability to separate different categories than the forward process.                   Seen + Unseen task.
+
+4.4.2. Relationship graphs and prior information                                     4.4.4. The impact of training data on the model’s generalisation capability
+   Under three different evaluation indicators, the backward process                     The core idea of ZSL is to generalise the known knowledge to the
+has shown superior performance over the forward process, mainly due                  unknown knowledge. Due to limited training data and bias in the
+to the difference in prior information. Therefore, it is important to                training dataset, the model’s generalisation performance can be limited,
+determine the effect of different prior information on model perfor­                 so it is essential to quantify this limitation. We used different train/test
+mance, if we construct prior information using different graph struc­                splits to show the impact on the generalisation performance of the
+tures, e.g., a random graph and a fully connected graph. As shown in                 model. As shown in Tables 7 and 8, it is clear that the model perfor­
+Tables 3 and 4, it is clear that the results of these two graphs are close to        mance on Unseen and Seen + Unseen tasks improves as the training data
+random guesses. It can be seen that a well-structured relationship graph             increases, implying that the increase in training data helps to improve
+may provide extra prior information that helps to improve the model                  the generalisation performance of the model.
+performance, while a random graph has only negative effects.
+                                                                                     5. Conclusions
+4.4.3. Comparison of other methods
+   On the ZSAR task, we compared the forward and backward processes                      In this study, we presented a computer vision-based video entity
+with the following methods: attribute-based, GAN [56], ConSE [33] and                extraction framework for the AEC domain KG updates. We introduced
+LATEM [57]. In the attribute-based method, we label the 40 attributes of             the ZSL technique to develop two iterative processes (i.e., the forward
+the construction process by location, tools and materials. We also                   and backward processes) for the extraction of unseen entities. Specif­
+adapted GAN [56], ConSE [33] and LATEM [57] for ZSAR. The results                    ically, we initialised the VED using prior information to train the ZSD
+shown in Table 5 indicate that the backward process obtained the best                and ZSAR models for construction, process, tool and material detection.
+performance among all methods for both Unseen and Seen + Unseen                      We also revealed that the backward process could strengthen the prior
+tasks.                                                                               information, thus enhancing the performance of VED. To validate our
+   On the ZSD task, we adapted different ZSL methods based on                        approach, we tested our framework in architectural decoration videos.
+YOLOv2 for comparisons, such as Zhu [29], YOLOv2 + ConSE [33] and                    Experimental results showed that our framework could simultaneously
+YOLOv2 + polarity loss (PL) [58]. As shown in Table 6, on the Seen task,             extract seen and unseen entities and that the backward process achieved
+the forward process showed the best performance. The best method was                 satisfactory results in both Seen and Seen + Unseen tasks compared with
+
+
+                                                                                10
+Z. Pan et al.                                                                                                            Automation in Construction 125 (2021) 103617
+
+
+
+
+Fig. 14. Comparison of the results of unseen construction process recognition between the two processes. Figures (a) and (b) are the statistical histograms of the
+construction process labels.
+
+
+
+
+                                                  Fig. 15. Test results of seen construction tools and materials.
+
+
+existing methods. In conclusion, we can incrementally update the AEC                 while the extraction of attributes and relationships is also critical to KG
+domain KG by applying our framework to extract entities from the video               update. The current performance of ZSAR and ZSD models is not satis­
+and update them to the general KG.                                                   factory. We did not test our framework on large-scale datasets. We will
+   It is worth mentioning that we still have considerable room for                   further address these issues in future work and focus on visual rela­
+improvement in this study. For example, we have only extracted entities,             tionship extraction for AEC KG relationship updates.
+
+                                                                                11
+Z. Pan et al.                                                                                                 Automation in Construction 125 (2021) 103617
+
+
+
+
+                                      Fig. 16. Test results of unseen construction tools and materials.
+
+
+
+
+                Fig. 17. t-SNE visualisations of the feature map of the last layer during the forward and backward processes.
+
+
+
+
+                                                                     12
+Z. Pan et al.                                                                                                                     Automation in Construction 125 (2021) 103617
+
+
+Table 3                                                                                the Science and Technology Program of Guangzhou, Grant No.
+Comparison of ZSAR top-1 accuracy between different relationship graphs in the         201804020069 and the support of the Sino-Singapore International
+backward process.                                                                      Joint Research Institute, Project No. 205-D119001.
+  Methods\task              Seen            Unseen             Seen + Unseen
+
+  Random                    0.33            0.10               0.21
+                                                                                       References
+  Fully connected           0.04            0.10               0.03
+                                                                                        [1] M. Ipe, Knowledge sharing in organisations: a conceptual framework, Hum.
+                                                                                            Resour. Dev. Rev. 2 (2003) 337–359, https://doi.org/10.1177/
+                                                                                            1534484303257985.
+                                                                                        [2] Z. Mingaleva, L. Deputatova, Y. Starkov, Management of organizational knowledge
+Table 4                                                                                     as a basis for the competitiveness of enterprises in the digital economy, in: Lecture
+mAP comparison of ZSD between different relationship graphs in the backward                 Notes in Networks and Systems, Springer, 2020, pp. 203–212, https://doi.org/
+process.                                                                                    10.1007/978-3-030-22493-6_18.
+                                                                                        [3] D. Fürstenberg, Information management in AEC projects: a study of applied
+  Methods\task              Seen             Unseen            Seen + Unseen                research approaches, in: Lecture Notes in Civil Engineering, Springer, 2021,
+                                                                                            pp. 272–284, https://doi.org/10.1007/978-3-030-51295-8_20.
+  Random                    0.10             0.08              0.05
+                                                                                        [4] M. Park, K. Lee, H. Lee, J. Pan, J. Yu, Ontology-based construction knowledge
+  Fully Connected           0.04             0.09              0.02
+                                                                                            retrieval system, KSCE J. Civil Eng. 17 (2013) 1654–1663, https://doi.org/
+                                                                                            10.1007/s12205-013-1155-6.
+                                                                                        [5] A. Uyar, F.M. Aliyu, Evaluating search features of Google Knowledge Graph and
+                                                                                            Bing Satori: entity types, list searches and query interfaces, Online Inf. Rev. 39
+Table 5                                                                                     (2015) 197–213, https://doi.org/10.1108/OIR-10-2014-0257.
+Comparison of ZSAR top-1 accuracy with the other methods.                               [6] Y. Liu, B. Xu, Y. Yang, T. Chung, P. Zhang, Constructing a hybrid automatic Q&A
+                                                                                            system integrating knowledge graph and information retrieval technologies, in:
+  Methods\task             Seen             Unseen             Seen + Unseen                Lecture Notes in Educational Technology, Springer International Publishing, 2019,
+                                                                                            pp. 67–76, https://doi.org/10.1007/978-981-13-6908-7_9.
+  Attributes               0.70             0.50               0.41
+                                                                                        [7] X. Wang, X. He, Y. Cao, M. Liu, T.-S. Chua, KGAT: Knowledge Graph Attention
+  GAN                      0.98             0.23               0.36
+                                                                                            Network for Recommendation. Dl.Acm.Org, 2019, pp. 950–958, https://doi.org/
+  ConSE                    0.97             0.50               0.81                         10.1145/3292500.3330989.
+  LATEM                    0.83             0.30               0.61                     [8] J. Niu, R.R.A. Issa, Framework for production of ontology-based construction claim
+  Forward                  0.96             0.23               0.33                         documents, in: Congress on Computing in Civil Engineering, Proceedings, 2012,
+  Backward                 0.95             0.53               0.86                         pp. 9–16, https://doi.org/10.1061/9780784412343.0002.
+                                                                                        [9] Z. Ma, Z. Liu, Z. Wei, Formalized representation of specifications for construction
+The bold font highlights the largest mAP of each task.                                      cost estimation by using ontology, Comput. Aid. Civil Infrastruct. Eng. 31 (2016)
+                                                                                            4–17, https://doi.org/10.1111/mice.12175.
+                                                                                       [10] B. Zhong, H. Li, H. Luo, J. Zhou, W. Fang, X. Xing, Ontology-based semantic
+                                                                                            modeling of knowledge in construction: classification and identification of hazards
+Table 6                                                                                     implied in images, J. Constr. Eng. Manag. 146 (2020), 04020013, https://doi.org/
+Comparison of ZSD mAP with the other methods.                                               10.1061/(ASCE)CO.1943-7862.0001767.
+                                                                                       [11] R. Li, T. Mo, J. Yang, S. Jiang, T. Li, Y. Liu, Ontologies-based domain knowledge
+  Methods\task               Seen            Unseen            Seen + Unseen
+                                                                                            modeling and heterogeneous sensor data integration for bridge health monitoring
+  Zhu                        0.70            0.28              0.49                         systems, IEEE Trans. Ind. Inform. 17 (2020) 321–332, https://doi.org/10.1109/
+  YOLOv2 + ConSE             0.81            0.04              0.37                         tii.2020.2967561.
+  YOLOv2 + PL                0.71            0.11              0.42                    [12] W. Chen, M. Das, K. Chen, J.C.P. Cheng, Ontology-based data integration and
+  Forward                    0.82            0.11              0.54                         sharing for facility maintenance management, in: Construction Research Congress,
+                                                                                            2020, pp. 1353–1362, https://doi.org/10.1061/9780784482865.143.
+  Backward                   0.54            0.30              0.45
+                                                                                       [13] M.H. Rasmussen, M. Lefrançois, P. Pauwels, C.A. Hviid, J. Karlshøj, Managing
+The bold font highlights the largest mAP of each task.                                      interrelated project information in AEC Knowledge Graphs, Autom. Constr. 108
+                                                                                            (2019) 102956, https://doi.org/10.1016/j.autcon.2019.102956.
+                                                                                       [14] W. Fang, L. Ma, P.E.D. Love, H. Luo, L. Ding, A. Zhou, Knowledge graph for
+                                                                                            identifying hazards on construction sites: integrating computer vision with
+Table 7                                                                                     ontology, Autom. Constr. 119 (2020) 103310, https://doi.org/10.1016/j.
+Comparison of ZSAR top-1 accuracy with different train/test splits in the                   autcon.2020.103310.
+backward process.                                                                      [15] Y. Zhu, W. Zhou, Y. Xu, J. Liu, Y. Tan, Intelligent learning for knowledge graph
+                                                                                            towards geological data, Sci. Program. 2017 (2017), https://doi.org/10.1155/
+  Train/test split \task          Seen        Unseen           Seen + Unseen                2017/5072427.
+                                                                                       [16] Q. Liu, Y. Li, H. Duan, Y. Liu, Z. Qin, Knowledge graph construction techniques,
+  3:7                             0.99        0.00             0.00                         Jisuanji Yanjiu Yu Fazhan/Comput. Res. Dev. 53 (2016) 582–600, https://doi.org/
+  5:5                             0.98        0.00             0.03                         10.7544/issn1000-1239.2016.20148228.
+  7:3                             0.98        0.19             0.40                    [17] J. Liang, S. Zhang, Y. Xiao, How to keep a knowledge base synchronised with its
+  9:1                             0.95        0.53             0.86                         encyclopedia source, in: IJCAI International Joint Conference on Artificial
+                                                                                            Intelligence, 2017, pp. 3749–3755, https://doi.org/10.24963/ijcai.2017/524.
+                                                                                       [18] A. Krizhevsky, I. Sutskever, G.E. Hinton, ImageNet classification with deep
+                                                                                            convolutional neural networks, Commun. ACM 60 (2017) 84–90, https://doi.org/
+Table 8                                                                                     10.1145/3065386.
+mAP comparison of ZSD with different train/test splits in the backward process.        [19] J. Redmon, S. Divvala, R. Girshick, A. Farhadi, You only look once: unified, real-
+                                                                                            time object detection, in: Proceedings of the IEEE Computer Society Conference on
+  Train/test split \task          Seen        Unseen           Seen + Unseen                Computer Vision and Pattern Recognition, 2016, pp. 779–788, https://doi.org/
+                                                                                            10.1109/CVPR.2016.91.
+  2:8                             0.77        0.01             0.05                    [20] W. Wang, V.W. Zheng, H. Yu, C. Miao, A survey of zero-shot learning: settings,
+  5:5                             0.30        0.17             0.12                         methods, and applications, in: ACM Transactions on Intelligent Systems and
+  8:2                             0.54        0.30             0.45                         Technology 10, 2019, https://doi.org/10.1145/3293318.
+                                                                                       [21] D. Farmakiotou, V. Karkaletsis, J. Koutsias, G. Sigletos, C.D. Spyropoulos,
+                                                                                            P. Stamatopoulos, Rule-based named entity recognition for Greek financial texts,
+Declaration of Competing Interest                                                           in: Proc. of the Workshop on Computational Lexicography and Multimedia
+                                                                                            Dictionaries (COMLEX 2000), 2000, pp. 75–78. https://pdfs.semanticscholar.
+                                                                                            org/7791/26e98eacf61314abf08b2c7dad997a79cfa5.pdf (accessed December
+    None.                                                                                   2020).
+                                                                                       [22] N. Sobhana, P. Mitra, S.K. Ghosh, Conditional random field based named entity
+Acknowledgements                                                                            recognition in geological text, Int. J. Comput. Appl. 1 (2010) 119–125, https://doi.
+                                                                                            org/10.5120/72-166.
+                                                                                       [23] O. Bender, F.J. Och, H. Ney, Maximum entropy models for named entity
+   The authors would like to acknowledge the support of the Guang­                          recognition, in: Proceedings of the Seventh Conference on Natural Language
+dong Science Foundation, Grant No. 2018A030310363, the support of
+
+
+                                                                                  13
+Z. Pan et al.                                                                                                                               Automation in Construction 125 (2021) 103617
+
+     Learning at HLT-NAACL 2003, 2003, pp. 148–151, https://doi.org/10.3115/                         Winter Conference on Applications of Computer Vision, WACV 2018, -, 2018,
+     1119176.1119196.                                                                                pp. 372–380.
+[24] A. Ekbal, S. Bandyopadhyay, Named entity recognition using support vector                  [40] D. Mandal, S. Narayan, S.K. Dwivedi, V. Gupta, S. Ahmed, F.S. Khan, L. Shao, Out-
+     machine: a Language independent approach, Int. J. Electric. Comput. Eng. 4 (2010)               of-distribution detection for generalised zero-shot action recognition, in:
+     589–604. https://www.researchgate.net/profile/Sivaji_Bandyopadhyay/publica                      Proceedings of the IEEE Computer Society Conference on Computer Vision and
+     tion/228566833_Named_entity_recognition_using_support_vector_machine_A_Lan                      Pattern Recognition, 2019 June, pp. 9977–9985, https://doi.org/10.1109/
+     guage_independent_approach/links/00b495180b21197a58000000/Named-entity                          CVPR.2019.01022.
+     -recognition-using-support-vector-machine-A-Language-independent-approach.pdf              [41] S. Rahman, S. Khan, F. Porikli, Zero-shot object detection: learning to
+     (accessed December 2020).                                                                       simultaneously recognise and localise novel concepts, in: Lecture Notes in
+[25] F. Liu, J. Zhao, B. Lv, B. Xu, H. Yu, Product named entity recognition based on                 Computer Science (Including Subseries Lecture Notes in Artificial Intelligence and
+     hierarchical hidden Markov model, in: - (Ed.), Proceedings of the Fourth SIGHAN                 Lecture Notes in Bioinformatics), Springer Verlag, 2019, pp. 547–563, https://doi.
+     Workshop on Chinese Language Processing, -, 2005. https://www.aclweb.org/anth                   org/10.1007/978-3-030-20887-5_34.
+     ology/I05-3006.pdf (accessed December 2020).                                               [42] Z. Li, L. Yao, X. Zhang, X. Wang, S. Kanhere, H. Zhang, Zero-shot object detection
+[26] X. Ma, E. Hovy, End-to-end sequence labelling via bi-directional LSTM-CNNs-CRF,                 with textual descriptions, in: Proceedings of the AAAI Conference on Artificial
+     in: 54th Annual Meeting of the Association for Computational Linguistics, ACL                   Intelligence 33, 2019, pp. 8690–8697, https://doi.org/10.1609/aaai.
+     2016 - Long Papers, Association for Computational Linguistics (ACL), 2016,                      v33i01.33018690.
+     pp. 1064–1074, https://doi.org/10.18653/v1/p16-1101.                                       [43] S. Zhao, C. Gao, Y. Shao, L. Li, C. Yu, Z. Ji, N. Sang, GTNet: generative transfer
+[27] J. Straková, M. Straka, J. Hajic, Neural architectures for nested NER through                  network for zero-shot object detection, in: Proceedings of the AAAI Conference on
+     linearisation, in: ACL 2019 - 57th Annual Meeting of the Association for                        Artificial Intelligence 34, 2020, pp. 12967–12974, https://doi.org/10.1609/aaai.
+     Computational Linguistics, Proceedings of the Conference, Association for                       v34i07.6996.
+     Computational Linguistics (ACL), 2020, pp. 5326–5331, https://doi.org/                     [44] P. Zhu, H. Wang, V. Saligrama, Don’t even look once: synthesising features for
+     10.18653/v1/p19-1527.                                                                           zero-shot detection, in: Proceedings of the IEEE/CVF Conference on Computer
+[28] M. Rei, G.K.O. Crichton, S. Pyysalo, Attending to characters in neural sequence                 Vision and Pattern Recognition (CVPR), 2020, pp. 11690–11699, https://doi.org/
+     labelling models, in: COLING 2016 - 26th International Conference on                            10.1109/cvpr42600.2020.01171.
+     Computational Linguistics, Proceedings of COLING 2016: Technical Papers,                   [45] C.L. Zitnick, P. Dollár, Edge boxes: locating object proposals from edges, in: Lecture
+     Association for Computational Linguistics, ACL Anthology, 2016, pp. 309–318.                    Notes in Computer Science (Including Subseries Lecture Notes in Artificial
+     https://arxiv.org/pdf/1611.04361.pdf (accessed December 2020).                                  Intelligence and Lecture Notes in Bioinformatics), Springer Verlag, 2014,
+[29] P. Zhu, H. Wang, V. Saligrama, Zero shot detection, in: IEEE Transactions on                    pp. 391–405, https://doi.org/10.1007/978-3-319-10602-1_26.
+     Circuits and Systems for Video Technology 30, 2020, pp. 998–1010, https://doi.             [46] B. Romera-Paredes, P.H.S. Torr, An embarrassingly simple approach to zero-shot
+     org/10.1109/TCSVT.2019.2899569.                                                                 learning, in: 32nd International Conference on Machine Learning, ICML 2015 37,
+[30] J. Gao, T. Zhang, C. Xu, I know the relationships: zero-shot action recognition via             2015, pp. 2152–2161, in: http://www.jmlr.org/proceedings/papers/v37/romera
+     two-stream graph convolutional networks and knowledge graphs, in: Proceedings                   -paredes15.pdf (accessed December 2020).
+     of the AAAI Conference on Artificial Intelligence 33, 2019, pp. 8303–8311, https://        [47] D. Tran, H. Wang, L. Torresani, J. Ray, Y. Lecun, M. Paluri, A closer look at
+     doi.org/10.1609/aaai.v33i01.33018303.                                                           spatiotemporal convolutions for action recognition, in: Proceedings of the IEEE
+[31] C.H. Lampert, H. Nickisch, S. Harmeling, Learning to detect unseen object classes               Computer Society Conference on Computer Vision and Pattern Recognition, 2018,
+     by between-class attribute transfer, in: 2009 IEEE Conference on Computer Vision                pp. 6450–6459, https://doi.org/10.1109/CVPR.2018.00675.
+     and Pattern Recognition, 2009, pp. 951–958, https://doi.org/10.1109/                       [48] T.Y. Lin, P. Goyal, R. Girshick, K. He, P. Dollar, Focal loss for dense object
+     cvpr.2009.5206594.                                                                              detection, IEEE Trans. Pattern Anal. Mach. Intell. 42 (2020) 318–327, https://doi.
+[32] Z. Akata, F. Perronnin, Z. Harchaoui, C. Schmid, Label-embedding for image                      org/10.1109/TPAMI.2018.2858826.
+     classification, IEEE Trans. Pattern Anal. Mach. Intell. 38 (2016) 1425–1438,               [49] J. Redmon, A. Farhadi, YOLO9000: better, faster, stronger, in: Proceedings of the
+     https://doi.org/10.1109/TPAMI.2015.2487986.                                                     IEEE Conference on Computer Vision and Pattern Recognition (CVPR), 2017,
+[33] M. Norouzi, T. Mikolov, S. Bengio, Y. Singer, J. Shlens, A. Frome, G.S. Corrado,                pp. 6517–6525, https://doi.org/10.1109/CVPR.2017.690.
+     J. Dean, Zero-shot learning by convex combination of semantic embeddings, in:              [50] B. Xu, N. Wang, T. Chen, M. Li, Empirical Evaluation of Rectified Activations in
+     2nd International Conference on Learning Representations, ICLR 2014 -                           Convolutional Network, ArXiv E-Prints, 2015. https://arxiv.org/pdf/1505.00853.
+     Conference Track Proceedings, 2014. https://arxiv.org/pdf/1312.5650.pdf                         pdf (accessed December 2020).
+     (accessed December 2020).                                                                  [51] J. Redmon, A. Farhadi, Yolov3: An incremental improvement, ArXiv E-Prints
+[34] C. Gan, T. Yang, B. Gong, Learning attributes equals multi-source domain                        (2018). https://arxiv.org/pdf/1804.02767.pdf, 2018. (Accessed December 2020).
+     generalisation, in: Proceedings of the IEEE Computer Society Conference on                 [52] R. Speer, J. Chin, C. Havasi, ConceptNet 5.5: An Open Multilingual Graph of
+     Computer Vision and Pattern Recognition, 2016, pp. 87–97, https://doi.org/                      General Knowledge, ArXiv E-Prints, 2016. https://arxiv.org/pdf/1612.03975.pdf
+     10.1109/CVPR.2016.17.                                                                           (accessed December 2020).
+[35] J. Liu, B. Kuipers, S. Savarese, Recognising human actions by attributes, in:              [53] M. Fey, J.E. Lenssen, Fast Graph Representation Learning with PyTorch Geometric,
+     Proceedings of the IEEE Computer Society Conference on Computer Vision and                      ArXiv E-Prints, 2019. https://arxiv.org/pdf/1903.02428.pdf (accessed December
+     Pattern Recognition, 2011, pp. 3337–3344, https://doi.org/10.1109/                              2020).
+     CVPR.2011.5995353.                                                                         [54] S. Li, Z. Zhao, R. Hu, W. Li, T. Liu, X. Du, Analogical reasoning on Chinese
+[36] Q. Wang, K. Chen, Alternative semantic representations for zero-shot human action               morphological and semantic relations, in: ACL 2018 - 56th Annual Meeting of the
+     recognition, in: Joint European Conference on Machine Learning and Knowledge                    Association for Computational Linguistics, Proceedings of the Conference (Long
+     Discovery in Databases, 2017, pp. 87–102, https://doi.org/10.1007/978-3-319-                    Papers), 2018, pp. 138–143, https://doi.org/10.18653/v1/p18-2023.
+     71249-9_6.                                                                                 [55] L. van der Maaten, G. Hinton, Visualizing data using t-SNE, J. Machine Learn. Res.
+[37] X. Xu, T.M. Hospedales, S. Gong, Multi-task zero-shot action recognition with                   9 (2008) 2579–2605. http://www.cs.toronto.edu/~hinton/absps/tsnefinal.pdf
+     prioritised data augmentation, in: Lecture Notes in Computer Science (Including                 (accessed December 2020).
+     Subseries Lecture Notes in Artificial Intelligence and Lecture Notes in                    [56] M. Arjovsky, S. Chintala, L. Bottou, Wasserstein gan. https://arxiv.org/pdf/1701.
+     Bioinformatics). 9906 LNCS, 2016, pp. 343–359, https://doi.org/10.1007/978-3-                   07875.pdf, 2017 (accessed December 2020).
+     319-46475-6_22.                                                                            [57] Y. Xian, Z. Akata, G. Sharma, Q. Nguyen, M. Hein, B. Schiele, Latent embeddings
+[38] X. Xu, T. Hospedales, S. Gong, Transductive zero-shot action recognition by word-               for zero-shot classification, in: Proceedings of the IEEE Computer Society
+     vector embedding, Int. J. Comput. Vis. 123 (2017) 309–333, https://doi.org/                     Conference on Computer Vision and Pattern Recognition, 2016, pp. 69–77, https://
+     10.1007/s11263-016-0983-5.                                                                      doi.org/10.1109/CVPR.2016.15.
+[39] A. Mishra, V.K. Verma, M.S.K. Reddy, S. Arulkumar, P. Rai, A. Mittal, A generative         [58] S. Rahman, S. Khan, N. Barnes, Polarity Loss for Zero-shot Object Detection 14,
+     approach to zero-shot and few-shot action recognition, in: Proceedings - 2018 IEEE              2018. https://arxiv.org/pdf/1811.08982.pdf (accessed December 2020).
+                                                                                                [59] Neo4j, Inc, Neo4j Home. http://neo4j.com/, 2020 (accessed December 2020).
+
+
+
+
+                                                                                           14
+

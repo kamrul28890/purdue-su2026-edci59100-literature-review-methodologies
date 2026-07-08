@@ -1,0 +1,1347 @@
+                                                                Automation in Construction 122 (2021) 103482
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                             Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Dataset and benchmark for detecting moving objects in construction sites
+An Xuehui a, Zhou Li a, Liu Zuguang a, *, Wang Chengzhi b, Li Pengfei b, Li Zhiwei c
+a
+  Department of Hydraulic Engineering, Tsinghua University, 10084 Beijing, China
+b
+  School of River and Ocean Engineering, Chongqingjiaotong University, Chongqing 400074, China
+c
+  SinoHydro Bureau 8 Co., Ltd, 410004 Changsha, China
+
+
+
+
+A R T I C L E I N F O                                     A B S T R A C T
+
+Keywords:                                                 Detecting workers and equipment through images/videos can assist in safety monitoring, quality control, and
+Dataset                                                   productivity management at construction sites. Currently, the dominant method for detecting is Deep Neural
+Deep neural networks                                      Networks (DNNs). To apply this method, the DNNs always need to be trained on image datasets that contain
+Construction site
+                                                          objects at the construction site. However, a large-scale and publicly available image dataset for detecting objects
+Benchmark
+Object detection
+                                                          at construction sites is still absent, and this hinders research in this field. In this study, the Moving Objects in
+                                                          Construction Sites (MOCS) image dataset is presented. The dataset contains 41,668 images collected from 174
+                                                          different construction sites. Thirteen categories of moving objects found in construction sites were annotated.
+                                                          Furthermore, the objects were precisely annotated using per-pixel segmentations to assist in precise object
+                                                          localization. A detailed statistical analysis was performed in this study. Finally, a benchmark containing 15
+                                                          different DNN-based detectors was made using the MOCS dataset. The results show that all detectors trained on
+                                                          the dataset could detect objects at construction sites precisely and robustly.
+
+
+
+
+1. Introduction                                                                                  Visual Object Classes (Pascal VOC) [12,13]) make it convenient to
+                                                                                                 develop, apply, and fairly compare these detectors, and they continu­
+    The automatic process of construction management using computer                              ously push the research to state-of-the-art performance [9–13].
+vision techniques has aroused the interest of both academia and in­                                  DNNs are also leading to a revolution in the construction field.
+dustry. These techniques only require digital video and images of the                            Numerous applications have been developed, such as struck-by hazard
+construction site, which are easily accessible by inexpensive equipment,                         prevention [4], earth-moving equipment analysis [5], hardhat-wearing
+such as digital cameras, surveillance cameras, smart phones, and un­                             detection [14], noncertified work detection [15], and recognition of
+manned aerial vehicles (UAVs). Numerous applications have been                                   construction activities [16].
+developed, such as productivity analysis [1], progress monitoring [2],                               However, the detectors of the above studies are trained and tested on
+and safety monitoring [3]. For these applications, accurate detection/                           their own datasets, which could be small-scale (i.e., only a few thousand
+segmentation and correct identification of moving objects (e.g. workers,                         images) and customized (i.e., targeted at specific objects, or the images
+loaders, excavators, cranes, etc.) through digital images in construction                        are obtained from limited sites, devices, viewpoints, or weather and
+sites are one of the basic requirement [1–5]. However, the detectors                             illumination conditions). As a result, detectors trained with a limited
+employed in previous studies [1–3] are mainly based on hand-crafted                              source of data would involve high variance and be difficult to generalize
+features, and this greatly limits the generalization of applications [4].                        to the usual construction environment [4,5]. Consequently, a large-scale
+    Recently, deep neural networks (DNNs) have demonstrated superior                             dataset with strong diversity for construction object detection must be
+performance in object detection. Compared with previous artificially                             developed and made publicly available.
+designed detectors, the DNN-based detectors can learn fine-grained                                   Previous studies only detected coarse locations of objects (i.e., using
+features from a large set of data and demonstrate more-robust opera­                             a bounding box to present the location of objects in images). However,
+tion in object detection [4,6–8]. At the same time, large-scale and                              recently developed detectors, such as Mask-RCNN [17], can already
+publicly available datasets (e.g., Caltech [9,10], COCO [11], and Pascal                         detect the location of objects with high precision (i.e., pixel-level
+
+
+
+ * Corresponding author.
+    E-mail addresses: anxue@mail.tsinghua.edu.cn (A. Xuehui), zhouli18@mails.tsinghua.edu.cn (Z. Li), liu-zg15@mails.tsinghua.edu.cn (L. Zuguang), wangcz@
+cqjtu.edu.cn (W. Chengzhi), lipengfei@cqjtu.edu.cn (L. Pengfei).
+
+https://doi.org/10.1016/j.autcon.2020.103482
+Received 28 April 2020; Received in revised form 12 October 2020; Accepted 9 November 2020
+Available online 30 November 2020
+0926-5805/© 2020 Elsevier B.V. All rights reserved.
+A. Xuehui et al.                                                                                                    Automation in Construction 122 (2021) 103482
+
+
+
+
+                                            Fig. 1. Object detection (top) and instance segmentation (bottom).
+
+
+
+
+segmentation masks). This can be useful for understanding the layouts,           objects [11]. The localizing task in object detection is to mark out the
+poses, and activities of objects. Therefore, a dataset with precise anno­        bounding boxes around each object and the classification task is to
+tation is needed for the construction industry to achieve state-of-the-art       classify categories of each object in the boxes [19]. Early researchers
+performance and spawn more applications.                                         tried to solve the problem by the idea of “recognition by components”:
+    Furthermore, DNN-based detectors are emerging rapidly, and                   using the measurement of similarity between the object components,
+different detectors focus on different detection performances (e.g., ac­         shapes, and contours to detect objects [18]. Despite the promising initial
+curacy, speed, and small scale objects). The performance of these de­            results, the proposed methods did not work well on more-complicated
+tectors on common datasets, such as COCO [11] and Pascal VOC                     detection problems until machine-learning algorithms were proposed
+[12,13], has been reported. However, construction objects in images are          [18]. From 2004 to 2014, multiple machine-learning-based detectors
+different from common objects, This is because of the shooting distance,         were developed, such as a histogram-of-oriented-gradients detector
+illumination conditions, and occlusions. The discrepancy between                 [20], deformable-part-based model [21], and the OverFeat detector
+common datasets and construction datasets could lead to different de­            [22]. With the emergence of deep learning and large-scale datasets,
+tector performance on the two datasets. Therefore, a benchmark for               object detection started to evolve at an unprecedented speed after 2014.
+DNN-based detectors on a large-scale construction dataset is required.               In the field of construction, detecting resources in visual data has
+    To address the aforementioned issues, a large-scale dataset called           been a common research focus that has yielded promising results [5].
+“Moving Objects in Construction Site” (MOCS) is presented. The MOCS              Roberts et al. trained a crane detector on 456 images to monitor crane-
+dataset contains 41,668 images collected from 174 construction sites.            related safety hazards [23]. Kim et al. trained YOLO-v3 on 4512 frames
+Images of datasets are collected by five different devices and various           to detect workers and heavy machines and further evaluated the prox­
+viewpoints, illumination conditions, and weather conditions. Mean­               imity between them to prevent struck-by hazards [4]. Roberts et al.
+while, the dataset is precisely annotated with 13 categories of moving           trained a DNN-based detector on an advanced infrastructure manage­
+objects in the construction site by the styles of both bounding boxes and        ment dataset (AIM) [24], which contains 2920 images of five different
+masks. There are 222,861 annotated instances in the dataset, and the             heavy machines used in construction projects. The trained detectors
+training and validation dataset with the annotation is made publicly             were further used to analyze the productivity of excavators and trucks
+available at http://www.anlab340.com/Archives/IndexArctype/inde                  [5]. A common issue raised by all the above studies is that, to train a
+x/t_id/17.html. Furthermore, a benchmark containing 15 different                 detector for these tasks, a dataset needs to be collected and annotated by
+DNN-based detectors was created on the dataset. Test results show that           researchers, which could cost considerable time and labor. Meanwhile,
+detectors trained on the MOCS dataset could precisely detect moving              the collected datasets are often small scale and limited in specific sce­
+objects in construction sites. It is believed that the dataset can make it       narios (e.g., single project, single viewpoint, and limited objects),
+convenient for researchers and engineers to train, test, and develop             greatly reducing the generalization performance of the algorithm.
+detection algorithms and computer-vision-based applications. The
+benchmark in this study can provide a guideline for others to select
+detectors.                                                                       2.2. Instance segmentation
+
+2. Related works                                                                     As the accuracy of object detection improves rapidly, a more chal­
+                                                                                 lenging task has aroused the interest of the computer vision community:
+2.1. Object detection                                                            instance segmentation [19]. Unlike object detection, instance segmen­
+                                                                                 tation must detect all instances of each category and, for each instance,
+   Object detection involves developing computational models and                 correctly mark all pixels that belong to it [19] (Fig. 1). The problem was
+techniques that provide one of the most basic pieces of information              first raised in a previous report [19] and has been extensively studied in
+needed by computer vision applications — knowledge of what objects               recent years. Multiple methods have been proposed. Zhang et al.
+are where [18]. Therefore, the task always contains two parallel sub­            attempted to predict instance labels with a Markov random field (MRF)
+tasks: localizing objects in an image and classifying the categories of          model [25]. Armab and Torr used a conditional random field to identify
+                                                                                 instances [26]. In 2017, He et al. added an extra branch based on Faster
+
+                                                                             2
+A. Xuehui et al.                                                                                                      Automation in Construction 122 (2021) 103482
+
+
+
+
+                                               Fig. 2. Different types of construction project in MOCS dataset.
+
+
+
+
+R-CNN [8] to obtain pixel-level mask predictions and yield promising              per-instance segmentation to facilitate precise instance segmentation. In
+results [17].                                                                     addition, COCO2017 contains more small objects (area smaller than 1%
+    In the construction field, instance segmentation is also used to better       of the image) and more densely located objects than the Pascal VOC.
+understand the construction scene. Balali and Golparvar employed an               There are several other datasets as well, such as Caltech-101 [11] (9146
+MRF model to segment images and recognize roadway assets [27].                    images of 101 categories) and Caltech-256 [40] (30,607 images of 256
+Atkinson et al. used a DNN-based detector to identify floorboards, joists,        categories), which are used extensively. Hereinafter, “Pascal VOC” re­
+air vents, and pipework [28]. Wei et al. also used a DNN-based detector           fers to Pascal VOC2012 and “COCO” refers to COCO2017.
+to localize the bughole of a concrete surface [29]. A brief review of
+instance segmentation reveals that, although instance segmentation                2.3.2. Datasets for construction objects
+could provide a more accurate location and layout of moving objects in                There are few image datasets for detecting construction objects [5].
+construction sites, few studies and datasets have been proposed for               Roberts and Golparvar-Fard released a dataset for detecting, tracking
+segmentation of moving objects in construction sites.                             and analyzing earthmoving equipment [5]. The dataset contained 479
+                                                                                  atomic activity videos for excavators and dump trucks. Two objects are
+                                                                                  annotated in each frame, and the videos are annotated by the activity
+2.3. Public datasets for object detection and instance segmentation               type of equipment, such as “Loading Bucket,” “Swinging Bucket,” and
+                                                                                  “Moving.” Wu et al. released the GDUT-HWD dataset for hardhat-
+2.3.1. Datasets for common objects                                                wearing detection [30]. The dataset contains 3174 images, and 18,893
+    In the past 10 years, a number of well-known datasets and bench­              hardhats are annotated with the type of bounding box. Kim et al. created
+marks have been released. This has greatly promoted the development               a dataset that contains 2920 instances of five different categories [24].
+of both academia and industry. For example, the Pascal Visual Object              The images are collected from ImageNet, which is a large-scale dataset
+Classes (Pascal VOC)1 challenge is one of the most important competi­             for object classification.
+tions in the early computer vision community [12,13]. Two versions are                An overview of related works shows that a large-scale image dataset
+mostly used in object detection: VOC07, which contains 5000 images                for objects in construction sites is urgently needed for both the research
+with 12,000 annotated objects, and VOC12, which contains 11,000                   community and industry. Various detectors have been used in previous
+images and 27,000 annotated objects. Twenty classes of objects that are           studies. A benchmark should be created to compare the performance of
+common are annotated in these two datasets, such as a person, dog,                the detectors impartially.
+bottle, or chair. For details of the dataset, readers are referred to a
+previous article [13]. Currently, the COCO2 dataset is considered the             3. Image collection and preparation
+most challenging object detection dataset [11,18]. For example.
+COCO2017 contains 164,000 images and 897,000 annotated objects of                    A large-scale dataset was constructed in this study. Images in the
+80 categories. Compared with Pascal VOC, one of the biggest advances              dataset were collected from 174 different construction project sites. The
+in the COCO2017 dataset is that each object is further annotated with             type of construction site, devices used to collect images, and diversity of
+                                                                                  the dataset are illustrated in this section.
+                                                                                     Common datasets always collect images from web engines, such as
+ 1
+     http://host.robots.ox.ac.uk/pascal/VOC/                                      Google, Bing, and Baidu [16]. However, images from the web are always
+ 2
+     http://cocodataset.org/
+
+                                                                              3
+A. Xuehui et al.                                                                                                      Automation in Construction 122 (2021) 103482
+
+
+
+
+                                                 Fig. 3. Origin information of the images in MOCS dataset.
+
+
+
+photographed in an iconic view [11]. For example, when performing a               work, form work, scaffold work, steel work, decoration, and assembling)
+web-based image search for the category “Loader,” the top-ranked                  (Fig. 4).
+retrieved examples appear in profile, unobstructed near the center of a               Previous research has employed different devices to acquire data
+neatly composed photo. However, construction sites are chaotic and                from construction sites. For example, Kim et al. employed a UAV to
+disordered. Objects in the site images are dense and mixed in the                 monitor the proximity of objects [4]. Fang et al. used a surveillance
+background. Meanwhile, it is difficult to obtain the best distance and            camera to monitor the failure to use a hardhat [12]. Luo et al. collected
+viewpoint when capturing images at construction sites. As a result, ob­           763 images from a construction site using digital cameras [14]. To
+jects could be extremely small in images, partially occluded, and clut­           satisfy different requirements, images of the MOCS dataset were
+tered. Therefore, to keep the dataset consistent with the construction            collected by various devices (Fig. 5). In the dataset, 52.7% of the images
+site, images in the MOCS dataset were collected from construction sites           were collected by the authors. Four imaging devices (a smartphone3 a
+instead of the Internet.                                                          UAV4 and two digital cameras5) were employed to collect images from
+    To collect images, 174 construction sites were visited. These sites are       the construction site. For the UAV, a distance of 10–20 m from the
+sites of building, highway, bridge, tunnel, dam, and other (e.g., side­           ground was maintained when collecting images. Meanwhile, the UAV
+walks and interior decoration) projects in China and Pakistan from 2005           was set to circle around the site to collect images from different views.
+to 2019 (Fig. 2). Because of the privacy requirements of the construction
+company, the specific project name is omitted. As an alternative, the
+year the images were collected, the location of the images collected, and          3
+                                                                                     Two types of smartphone were used: iPhone 8 plus and HUAWEI P30.
+the percentage of the region’s images in the dataset are shown in Fig. 3.          4
+                                                                                     The UAV used in this research was Mavic Pro from Da-Jiang Innovations.
+Meanwhile, for each type of construction project, images of MOCS                   5
+                                                                                     The two digital cameras used in this research were Gopro HERO Session and
+covered different types of specific works (e.g., earth work, concrete             Canon EOS 6D.
+
+                                                                              4
+A. Xuehui et al.                                                                                              Automation in Construction 122 (2021) 103482
+
+
+
+
+                                            Fig. 4. Different types of construction work in MOCS dataset.
+
+
+
+
+                                                       Fig. 5. Devices used to collect images.
+
+
+For the smartphone and digital cameras, the sites were visited, and           of these images were extracted from on-site monitoring cameras, and
+images of various angles and distances were randomly collected. Of the        some were images recorded by site managers using mobile phones or
+images, 47.3% were provided by related construction companies. Some           digital cameras. Moreover, images were collected under different
+
+
+                                                                          5
+A. Xuehui et al.                                                                                                            Automation in Construction 122 (2021) 103482
+
+
+
+
+                          Fig. 6. Samples of different poses, viewpoints, illumination, weather conditions, and occlusions in MOCS.
+
+
+
+
+weather conditions, such as sunny, foggy, rainy, and snowy conditions.            Table 1
+Meanwhile, to keep the dataset consistent with the construction sites, no         Categories in MOCS dataset and related studies.
+additional illumination equipment was used. Most images were                       Categories      Objective of detection
+collected under sunlight. For projects that need to be conducted at night
+                                                                                   Worker          Struck-by hazard prevention [4], hard hat detection [14],
+or in tunnels, images were collected under the illumination conditions at                          noncertified work detection [15], activity recognizing [16]
+the site. Finally, images of objects were not deliberately collected from a        Tower crane     Safety monitoring [23], construction activity recognition [16]
+specific viewpoint; instead, the sites’ environments were recorded.                Hanging         Safety monitoring [23,31,32]
+Therefore, objects were often occluded in the images. Such strategies                hook
+                                                                                   Truck crane     Construction activity recognition [16], equipment detection [33]
+can be used to capture images with different viewpoints, weather con­
+                                                                                   Roller          Construction activity recognition [34], equipment recognizing [35]
+ditions, and illumination conditions. Meanwhile, objects in images                 Bulldozer       Construction activity recognition [16], equipment detection [33]
+present various poses and are sometimes occluded by other objects                  Excavator       Construction activity recognition [16,34,36], productivity analysis
+(Fig. 6).                                                                                          [5], struck-by hazard prevention [4]
+    In summary, 43,000 images were collected from 174 different con­               Truck           Construction activity recognition [5,16], equipment detection [33],
+                                                                                                   equipment recognition [35]
+struction sites. Images were captured by five different imaging devices            Loader          Struck-by hazard prevention [3], equipment detection [33]
+with different viewpoints, distances, and resolutions. At the same time,           Pump truck      Construction activity recognition [16], equipment detection [33]
+the MOCS images cover different types of construction project and                  Concrete        Construction activity recognition [16], equipment detection [33]
+different types of construction work. However, because different kinds               truck
+                                                                                   Pile driver     Position detection [37], pile driver navigation [38]
+of high-resolution camera were used, the encodings and the sizes of
+                                                                                   Other vehicle   Construction activity recognizing [16], equipment detection [33]
+images were different, and the storage space of the dataset was too large.
+Therefore, all images were converted to a red–green–blue color space
+and stored in JPG format. Then, all images were resized using OpenCV
+[57], and the interpolation method used was interpolation by area                 construction sites. Therefore, other objects, such as construction mate­
+relation: the long side of the image was reduced to 1200 pixels, while the        rials, structure components, and other construction-unrelated objects,
+scale of the image was kept constant.                                             are not annotated in this dataset. To decide which objects needed to be
+                                                                                  annotated, four construction engineers with 10–20 years of experience
+4. Image annotation                                                               were asked. They listed the 12 most common machines the construction
+                                                                                  sites: tower crane, truck crane, truck, roller, bulldozer, excavator,
+  After image collection, the objects in the images were annotated. The           loader, pump truck, concrete truck, pile driver, road paver, and tunnel
+MOCS dataset is designed to train detectors for moving objects in                 boring machine. In the dataset, there are fewer images of road pavers
+
+
+                                                                              6
+A. Xuehui et al.                                                                                                       Automation in Construction 122 (2021) 103482
+
+
+
+
+                                                        Fig. 7. Illustration of workflow of annotation.
+
+
+
+
+and tunnel boring machines (<1000 images) compared with other ma­                   significantly in size, list of categories, and types of image. Pascal VOC,
+chines. Therefore, these two machines were not annotated in the data­               Caltech-101, and Caltech-256 concentrate on object detection in natural
+set. In addition to the remaining 10 construction-related machines, three           images. COCO is designed for detection and segmentation of objects
+other objects were also annotated in the dataset: the first object is the           occurring in their natural context. MOCS aims at the detection and
+worker, who is the most common object at the construction site. Second,             segmentation of objects in a construction site context with different
+civil vehicles, which are unrelated to construction activities but often            viewpoints, illumination conditions, and weather conditions.
+appear at a site, were also annotated in the dataset. Detecting these                   In Fig. 10, the centers of objects in MOCS are plotted by the style of
+vehicles enables managers to better plan site traffic. Third, the hanging           the thermograph, which can provide a qualitative understanding of the
+hook of a tower/truck crane is considered a major hazard source in                  object distribution in the images. The coordinates of each subplot in
+construction sites by many researchers [16,23]. In total, 13 types of               Fig. 10 are the normalized image sizes (1:1). The horizontal (transverse)
+moving object were annotated in the dataset. The categories and rele­               and vertical (longitudinal) axes represent the normalized width and
+vant existing studies are listed in Table 1.                                        height of the images, respectively. The curves on the top and right of the
+    The workflow of the annotation is illustrated in Fig. 7. First, to              thermograph represent the distribution of the instance centers in the
+protect the privacy of individuals and companies, all slogans and bio­              transverse and longitudinal directions, respectively. For example, most
+metric information in images were carefully masked with the type of                 excavators appear in the center of the images. Compared with the ex­
+mosaic. This was conducted by 10 workers. Second, the masked images                 cavators, the hanging hook appears more dispersed.
+were sent to four experts who were construction engineers and familiar                  Fig. 11 shows the statistics of the MOCS dataset. The numbers of
+with construction objects. Coarse bounding boxes and categories of                  instances and images for all 13 categories in MOCS are shown in Fig. 11
+corresponding boxes were annotated in the images. Third, 10 annota­                 (a). Each category has more than 1000 images, and “worker” has the
+tors, who were professional annotators of an annotation company, were               most instances and images. This is consistent with practical construction
+employed to draw the outlines of objects carefully. Then, each annotated            sites. The MOCS dataset was roughly split into three parts for training
+image went through two rounds of inspection, and unqualified images                 (19,404 images), validation (4000 images), and testing (18,264 images
+were filtered out to revise until all the objects were meticulously an­             — approximately 1/2 training, 1/10 validation, and 1/2 testing). The
+notated. The rejection rate was used to evaluate the quality of the                 number of instances per category of split datasets is shown in Fig. 11(b).
+annotation. The rejection rates of the first and second rounds of in­               Fig. 11(c) shows the percentage of images with a certain number of
+spection were 2.626% and 0.055%, respectively.                                      instances. For example, images with two instances account for the most
+    Finally, 222,861 instances of 13 categories were precisely annotated            images in the MOCS dataset. This is similar to the COCO dataset. The
+with the type of bounding box and mask. The final bounding boxes were               number in the legend represents the average number of instances per
+generated by searching the boundaries of the masks instead of the coarse            image. Fig. 11(d) shows the percentage of images with a certain number
+boxes annotated by four experts. The annotation style of the MOCS                   of categories, and the number in the legend is the average number of
+dataset is similar to that of the COCO dataset. For each split dataset (i.e.,       categories per image. Fig. 11(e) shows the statistic of instance size. The
+training set, validation set, and test set), there is only one JSON file to         horizontal axis is the area proportion of instances in the images, and the
+store the annotation information. Details of the annotation are illus­              vertical axis is the percentage of instances. Similar to COCO, MOCS has
+trated in Fig. 8. All images were shuffled randomly and then encoded                more small objects than Pascal VOC. This is induced by the long shooting
+from 1 to 41,668. Image examples of each category are shown in Fig. 9               distance. Finally, the scale of the MOCS dataset is compared with pop­
+(the color of the mask was generated randomly).                                     ular datasets, including Caltech-101, Caltech-256, Pascal VOC, and
+                                                                                    COCO. The results are shown in Fig. 11(f).
+5. Dataset statistics
+                                                                                    6. Benchmarking
+   Next, the properties of MOCS were analyzed and compared with
+those of several other popular datasets. Because the previous datasets for              Fifteen deep-learning-based detectors were selected and evaluated.
+construction object detection were small, they were not included for                Owing to space constraints, only a brief introduction of the evaluation
+comparison. Instead, common datasets that are popular and large scale               metrics and detectors is provided. The benchmark presented in this
+were compared with MOCS in this study. These datasets are VOC,                      article was used to verify whether the detectors trained on the MOCS
+Caltech-101, Caltech-256, and COCO. These datasets varied                           dataset could detect objects well and to provide a reference for
+
+                                                                                7
+A. Xuehui et al.                                                                                                     Automation in Construction 122 (2021) 103482
+
+
+
+
+                                                   Fig. 8. Example of annotation file of MOCS dataset.
+
+
+
+
+researchers and engineers to select their detectors. Another report              tasks: object location and object classification. For the task of object
+focusing on the performance of more detectors is planned. To evaluate            location, a common criterion is the intersection over union (IoU) of the
+the performance of algorithms with less bias, the dataset was split into a       predicted bounding box with the ground truth bounding box. Only if the
+training set (19,404 images), validation set (4000 images), and test set         IoU is above a certain threshold (typically 0.5) is the predicted box
+(18,264 images) randomly. Fifteen state-of-the-art deep-learning algo­           considered a valid box. Meanwhile, for the task of classification, the
+rithms were selected to train and test the dataset.                              detectors output the category with the highest confidence score for each
+                                                                                 box. Another threshold for the confidence score is used to delete a large
+                                                                                 number of boxes with low scores. A detection is treated as a true positive
+6.1. Evaluation metrics
+                                                                                 (TP) only if the box is valid and the category of the box is the same as the
+                                                                                 ground truth. If at least one of these two conditions is not met, the
+    To evaluate the performance of DNN-based detectors on the MOCS
+                                                                                 detection is considered a false positive (FP). False negatives (FNs) are
+dataset, the metrics of the MS-COCO dataset, which has been the de
+                                                                                 ground truth bounding boxes with no sufficiently overlapping detection
+facto metric for object detection for years, were used [18].
+                                                                                 bounding boxes, as determined by the aforementioned threshold. Two
+    As mentioned in Section 2.1, object detection consists of two sub­
+
+                                                                             8
+A. Xuehui et al.                                                             Automation in Construction 122 (2021) 103482
+
+
+
+
+                   Fig. 9. Image examples of annotated categories in MOCS.
+
+
+
+
+                                              9
+A. Xuehui et al.                                                                                                     Automation in Construction 122 (2021) 103482
+
+
+
+
+                                                Fig. 10. Visualization of distribution of objects in MOCS.
+
+
+
+
+metrics can be calculated using TP, FP, and FN, as in Eqs. (1) and (2).          evaluated in this study. All the detectors evaluated were from after 2015
+                                                                                 (Faster R-CNN was proposed, which is the first end-to-end and the first
+                 TP
+Precision =                                                           (1)        near-real-time deep-learning detector).
+               TP + FP
+                                                                                    Specifically, seven detectors were selected for object detection, and
+             TP                                                                  four detectors were selected for instance segmentation. Meanwhile,
+Recall =                                                              (2)        according to previous research [18], the accuracy of a detector depends
+           TP + FN
+                                                                                 heavily on its feature extraction networks, which are referred to as
+    “Precision” denotes the portion of correct boxes in all predicted
+                                                                                 “backbone networks.” Therefore, two detectors with three different
+boxes, while “recall” denotes the portion of correct boxes in all ground
+                                                                                 backbones were compared. Owing to space constraints, only an over­
+truth boxes. The two thresholds mentioned above affect the value of
+                                                                                 view of the detectors is presented. The details of the detectors can be
+precision and recall.
+                                                                                 found in a previous report [18].
+    The first is the threshold of the confidence score. With a high
+threshold of confidence score, the precision is high, while the recall is
+                                                                                 6.2.1. Detectors for object detection
+low. However, the precision is low and the recall is high with a low
+                                                                                     Many deep-learning-based object detectors have been proposed in
+threshold. To evaluate fully the detectors under various thresholds, a
+                                                                                 recent years. They can be roughly divided into three types: one-stage
+typical method is to calculate the average precision over varying levels
+                                                                                 detectors, two-stage detectors, and others [39]. To provide a compre­
+of recall, as in Eq. (3).
+                                                                                 hensive evaluation of the MOCS dataset, the most well-known detectors
+           1     ∑                                                               for these types were selected.
+AP101 =                   Pr                                          (3)
+          101r∈{0,0.01,…1}                                                           For one-stage detectors, YOLO-v3 [7], SSD300 [6], and RetinaNet
+                                                                                 [40], which are considered milestone detectors and are widely used,
+where AP101 is the average precision of 101 levels of recall, and Pr             were selected. FCOS [41] and NAS-FPN [42], which were proposed in
+represents the precision at recall level r.                                      2019, were also selected. For two-stage detectors, Faster R-CNN [8] has
+   The second is the threshold of IoU. With a high threshold of IoU, both        been considered a baseline for many object detection tasks, such as
+precision and recall are low. In contrast, the two metrics are high. The         aerial object detection [43] and pedestrian detection [44]. Therefore,
+method to evaluate the performance of detectors on different levels of           Faster R-CNN, with a backbone of ResNet50, was evaluated. In addition
+IoU is to calculate the average AP over multiple IoUs, as follows.               to this, TridentFast [39], which is a novel detector designed for a trident
+                                                                                 block, was also evaluated. The backbones, implementation platforms,
+                ∑
+AP =
+        1
+                             AP101                                    (4)        mean average precision (mAP) on the COCO dataset, and inference time
+       10IoU∈{0.5,0.55,…0.95} IoU                                                of these detectors are presented in Table 3.
+
+where AP is the average AP101 over varying IoUs, and AP101
+                                                         IoU is the AP
+                                                                      101
+                                                                                 6.2.2. Detectors for instance segmentation
+over the threshold of IoU.                                                          For instance segmentation, Mask R-CNN [15] is considered one of the
+    For instance segmentation, the metrics are slightly different from           most flexible and efficient frameworks for instance segmentation.
+object detection: IoU is calculated by masks instead of bounding boxes.          Therefore, Mask R-CNN, with a backbone of ResNet50, was evaluated. In
+In this study, the metrics in Table 2 were used to evaluate the perfor­          addition to Mask R-CNN, the recently proposed Mask Scoring RCNN (MS
+mance of detectors on the MOCS dataset.                                          RCNN) [49], SOLO [50], and PointRend [51] were also selected to
+                                                                                 evaluate the MOCS dataset. The backbones, implementation platforms,
+6.2. Detectors for evaluation                                                    mAP of the bounding box and mask, and inference time are presented in
+                                                                                 Table 4.
+    Fifteen deep-learning-based detectors were selected to train on and
+evaluate the MOCS dataset. With the rapid development of deep-                   6.2.3. Detectors with different backbones
+learning algorithms, some promising early detectors were not                        To evaluate the effects of different backbones, Faster-RCNN and
+
+                                                                            10
+A. Xuehui et al.                                                                                                          Automation in Construction 122 (2021) 103482
+
+
+
+
+Fig. 11. Statistics of MOCS dataset.
+(a) Number of annotated instances/image per category in MOCS, (b) number of annotated instances per category in the split MOCS, (c, d) distribution of images with
+different numbers of instances/categories for MOCS, Pascal VOC, and COCO2017, (e) distribution of instance size for MOCS, Pascal VOC, and COCO2017, and (f)
+number of images versus number of instances of popular object recognition datasets.
+
+
+                                                                                      Mask-RCNN with backbones of ResNet50, ResNet101, and ResNeXt101
+Table 2                                                                               were selected for training and testing. Details of the selected detectors
+Metrics to evaluate the performance of detectors.                                     are listed in Table 5.
+  Metrics              Notes
+
+  AP                   Mean value of AP in each class
+                                                                                      6.3. Experimental results
+  APIoU=0.50           AP101 at IoU = 0.50
+  APIoU=0.75           AP101 at IoU = 0.75                                                The training settings of all detectors are listed in Table 3. Owing to
+  APsmall              AP for small objects (area of object <322 pixels)              the limitation of computing resources, the backbones pretrained on the
+  APmedium             AP for medium objects (322 pixels < area of object <962
+                                                                                      ImageNet were used instead of training anew. All the detectors were
+                       pixels)
+  APlarge              AP for large objects (area of object >962 pixels)              trained and tested on an Intel Xeon E5–2637 v4 CPU with two GeForce
+  Inference speed      Calculation time on single image                               GTX 1080Ti GPUs. Meanwhile, the optimization method of all these
+  AP for each          AP for each category                                           detectors was stochastic gradient descent. Details of the training settings
+    category                                                                          are listed in Table 6. Other settings not mentioned in this study are the
+                                                                                      same as the original implementations.
+
+
+
+
+                                                                                 11
+A. Xuehui et al.                                                                                                                            Automation in Construction 122 (2021) 103482
+
+
+Table 3                                                                                          Table 6
+Detectors for object detection.                                                                  Training settings of detectors.
+  Detectors          Backbone           Framework            COCO           Inference             Backbone                         Input         Lr sched (decay      Initial learning
+                                                             mAP            time (fps)                                             sizea         steps)b              ratec
+                                                             (bbox)
+                                                                                                  YOLO-v3 (Darknet53)              608 ×         120e (80e, 100e)     0.0005d
+  YOLO-v3 [7]        Darknet53 [45]     Darknet [45]         33.0           30.00a                                                 608
+  SSD300 [6]         VGG16 [46]         MMDetection          25.7           25.90b                SSD300 (VGG16)                   300 ×         120e (80e, 100e)     0.0005d
+                                        [55]                                                                                       300
+  RetinaNet          ResNet50 [47]      Detectron2           37.9           18.18b                RetinaNet (ResNet50 +            1333 ×        55e (50e, 40e)       0.005
+    [40]                                [56]                                                        FPN)                           800
+  FCOS [41]          ResNet50           MMDetection          36.9           11.60b                FCOS (ResNet50 + FPN)            1333 ×        55e (50e, 40e)       0.005
+                     [47]+FPN [48]      [55]                                                                                       800
+                                                                                    b
+  NAS-FPN            ResNet50 [47]      MMDetection          39.8           13.10                 NAS-FPN (ResNet50)               640 ×         55e (50e, 40e)       0.02
+    [46]                                [55]                                                                                       640
+  Faster R-CNN       ResNet50           Detectron2           40.2           26.32b                Faster R-CNN (ResNet50 +         1333 ×        55e (50e, 40e)       0.005
+    [8]              [47]+FPN [48]      [56]                                                        FPN)                           800
+  TridentFast        ResNet50           Detectron2           40.4           10.30b                Faster R-CNN (ResNet101 +        1333 ×        55e (50e, 40e)       0.005
+    [39]             [47]+FPN [48]      [56]                                                        FPN)                           800
+  a                                                                                               Faster R-CNN (ResNeXt101         1333 ×        55e (50e, 40e)       0.005
+      The inference speed was tested on a Pascal Titan X GPU.                                       + FPN)                         800
+  b
+      The inference speed was tested on a Tesla V100 GPU.                                         TridentFast (R50)                1333 ×        55e (50e, 40e)       0.005
+                                                                                                                                   800
+                                                                                                  Mask RCNN (ResNet50 +            1333 ×        55e (50e, 40e)       0.005
+                                                                                                   FPN)                            800
+                                                                                                  Mask RCNN (ResNet101 +           1333 ×        55e (50e, 40e)       0.005
+                                                                                                   FPN)                            800
+                                                                                                  Mask RCNN (ResNeXt101 +          1333 ×        55e (50e, 40e)       0.005
+                                                                                                   FPN)                            800
+Table 4                                                                                           MS RCNN (ResNet50 + FPN)         1333 ×        55e (50e, 40e)       0.005
+Detectors for instance segmentation.                                                                                               800
+                                                                                                  SOLO (ResNet50 + FPN)            1333 ×        55e (50e, 40e)       0.0025
+  Detectors         Backbone     Framework          COCO            COCO      Inference
+                                                                                                                                   800
+                                                    mAP             mAP       time (fps)
+                                                                                                  PointRend (RexNet50 +            1333 ×        55e (50e, 40e)       0.005
+                                                    (bbox)          (seg)
+                                                                                                    FPN)                           800
+                                                                                        a
+  Mask R-           ResNet50     Detectron2         41.0            37.2      23.25               a
+   CNN              [47]+FPN     [56]                                                                The original input size of detectors was used.
+                                                                                                  b
+   [15]             [48]                                                                             Lr sched (decay steps) is the training schedule for detectors. 120e means the
+  MS RCNN           RexNet50     MMDetection        38.2            35.9      10.10a             detectors have been trained 120 epochs on the whole MOCS train set. (80e,
+   [49]             [47]+FPN     [55]                                                            100e) means the learning rate is reduced to 0.1 × Initial learning rate after 80
+                    [48]                                                                         epochs and further reduced to 0.01 × Initial learning rate after 100 epochs.
+  SOLO [50]         ResNet50     MMDetection        /               35.8      12.98a               c
+                                                                                                     Because the batch sizes are different from the baselines, the initial learning
+                    [47]+FPN     [55]
+                                                                                                 rates of the detectors are adjusted according to the linear learning rate scaling
+                    [48]
+                                                                                                 rule [53].
+  PointRend         RexNet50     Detectron2         /               38.3      /                    d
+    [51]            [47]+FPN     [56]                                                                For YOLO-v3 and SSD, the initial learning rate is reduced to 5e-4 to avoid
+                    [48]                                                                         exploding losses [44].
+  a
+      The inference speed was tested on a Tesla V100 GPU.
+
+
+                                                                                                 6.3.1. Results for object detection
+                                                                                                     After the training, the detectors were evaluated on the test dataset.
+Table 5                                                                                          The overall performance of the test dataset and the inference speed of
+Detectors with different backbones.                                                              the detectors can be found in Table 4. For the task of object detection,
+  Detectors        Backbone          Framework      COCO            COCO     Inference           PointRend with a backbone of ResNet50 achieved the highest mAP
+                                                    mAP             mAP      time (fps)          (51.039) (Table 7). This is because detectors for segmentation can
+                                                    (bbox)          (seg)
+                                                                                                 benefit from multitask learning [15] (i.e., segmentation and bounding
+  Faster           ResNet50          Detectron2     40.2            /        26.32a              box location). For single-task (i.e., bounding box detection) detectors,
+    RCNN           [47]+FPN          [56]                                                        TridentFast achieved the highest mAP (50.686). Meanwhile, YOLO-v3
+    [8]            [48]
+                   ResNet101         Detectron2     42.0            /        19.61a
+                                                                                                 had the highest inference speed (27.03 fps), which could push object
+                   [47]+FPN          [56]                                                        detection into real-time detection on common devices. In addition to the
+                   [48]                                                                          overall performance of the detectors, the mAP of each category is listed
+                   ResNeXt101        Detectron2     43.0            /        10.20a              in Table 8. Several detection results in the images are shown in Section
+                   [52]+FPN          [56]
+                                                                                                 6.3.4.
+                   [48]
+  Mask             ResNet50          Detectron2     41.0            37.2     23.26a
+   RCNN            [47]+FPN          [56]                                                        6.3.2. Results for instance segmentation
+   [15]            [48]                                                                              The results for instance segmentation are listed in Table 9 and results
+                   ResNet101         Detectron2     42.9            38.6     17.86a              for each categories are listed in Table 10. PointRend achieved the
+                   [47]+FPN          [56]
+                   [48]
+                                                                                                 highest mAP (47.906) with a light backbone of ResNet50 (Table 9).
+                   RexNeXt101        Detectron2     44.3            39.5     9.71a               Meanwhile, the inference speed of the MS RCNN with a backbone of
+                   [52]+FPN          [56]                                                        ResNet50 was the fastest (9.70 fps). The segmentation results for each
+                   [48]                                                                          category are shown in Table 10. Several segmentation results are shown
+  a
+      The inference speed was tested on a Tesla V100 GPU.                                        in the images in Section 6.3.4.
+
+
+
+                                                                                            12
+A. Xuehui et al.                                                                                                             Automation in Construction 122 (2021) 103482
+
+
+Table 7
+Bounding box mAP for object detection.
+  Backbone                               mAP            AP.50            AP.75              APsmall            APmedium            APlarge        Inference speed (fps)
+
+  YOLO-v3 (Darknet53)                    39.05          65.59            41.66              9.60               26.82               51.03          27.03
+  SSD300 (VGG16)                         36.08          59.28            38.03              4.28               19.30               51.20          21.28
+  RetinaNet (ResNet50 + FPN)             50.01          72.84            53.60              14.77              38.05               62.40          6.80
+  FCOS (ResNet50 + FPN)                  46.85          69.32            50.02              13.05              34.23               60.35          14.93
+  NAS-FPN (ResNet50)                     47.60          68.55            50.06              7.01               30.64               64.03          17.61
+  Faster R-CNN (ResNet50 + FPN)          50.64          74.65            55.59              19.30              39.59               61.33          8.39
+  TridentFast (ResNet50)                 50.69          73.08            54.71              15.34              37.78               63.63          4.05
+  Mask R-CNN (ResNet50 + FPN)            50.83          74.89            55.98              19.01              39.63               62.05          7.66
+  MS RCNN (ResNet50 + FPN)               47.35          70.30            51.79              14.33              35.57               60.70          9.70
+  SOLO (ResNet50 + FPN)                  48.73          67.65            52.02              9.79               32.74               64.97          6.25
+  PointRend (RexNet50 + FPN)             51.04          74.79            55.79              19.74              39.55               62.13          8.87
+
+
+
+
+Table 8
+Bounding box AP for object detection (each category).
+  Backbone          Worker      Tower    Hanging    Crane       Roller   Bulldozer      Excavator     Truck     Loader    Pump         Concrete   Pile        Other
+                                Crane    Head                                                                             Truck        Mixer      Driver      Vehicle
+
+  YOLO-v3           42.551      38.876   16.782     36.224      48.211   49.694         56.809        40.859    41.126    41.898       44.585     24.943      25.021
+    (Darknet53)
+  SSD300            30.854      30.945   9.994      31.832      50.996   52.038         56.159        38.333    44.572    43.450       44.790     16.513      18.509
+    (VGG16)
+  RetinaNet         52.074      46.971   26.167     44.921      62.638   62.913         67.824        50.204    53.721    55.251       57.350     31.852      38.297
+    (ResNet50 +
+    FPN)
+  FCOS              48.132      44.562   24.350     42.783      59.491   59.620         64.154        46.245    49.516    51.018       55.209     28.542      35.426
+    (ResNet50 +
+    FPN)
+  NAS-FPN           45.802      46.090   21.338     43.222      59.437   61.313         67.256        48.609    51.968    58.666       56.214     30.529      28.289
+    (ResNet50)
+  Faster R-CNN      53.653      52.992   33.162     45.622      62.038   60.310         65.945        49.690    51.044    53.711       56.443     32.842      40.854
+    (ResNet50 +
+    FPN)
+  TridentFast       52.919      54.267   27.396     45.366      61.426   61.661         67.159        50.364    53.534    54.388       57.216     34.900      38.321
+    (ResNet50)
+  Mask R-CNN        53.891      53.036   32.404     46.125      61.351   60.337         66.128        50.045    51.955    54.107       57.464     33.088      40.897
+    (ResNet50 +
+    FPN)
+  MS RCNN           50.925      49.330   20.900     43.256      59.793   58.529         64.221        47.059    49.365    50.390       55.617     29.111      37.071
+    (RexNet50 +
+    FPN)
+  SOLO              46.758      47.363   17.193     45.160      60.062   64.451         68.882        48.030    54.123    58.958       53.939     33.028      35.592
+    (ResNet50)
+  PointRend         54.499      53.381   32.826     46.152      62.434   60.944         66.590        50.113    52.434    54.078       56.923     32.065      41.064
+    (RexNet50 +
+    FPN)
+
+
+
+
+Table 9
+Mask mAP for instance segmentation.
+  Backbone                               mAP            AP.50            AP.75              APsmall            APmedium            APlarge        Inference speed (fps)
+
+  Mask R-CNN (ResNet50 + FPN)            43.18          71.27            45.35              14.93              32.15               55.05          7.66
+  MS RCNN (RexNet50 + FPN)               42.86          66.85            45.98              13.50              31.97               56.20          9.70
+  SOLO (ResNet50 + FPN)                  43.64          68.79            45.95              8.18               29.57               59.33          6.25
+  PointRend (RexNet50 + FPN)             47.91          73.15            52.29              14.98              34.00               61.52          8.87
+
+
+
+
+6.3.3. Results of different backbones                                                  that were never seen in the training process are selected from the test
+    Faster R-CNN and Mask R-CNN with three different backbones were                    dataset. The object detection results can be seen in Fig. 12, and the
+trained and evaluated in this study. For both Faster R-CNN and Mask R-                 segmentation results can be seen in Fig. 13. Instances detected in images
+CNN, detectors with a backbone of ResNeXt101 achieved the highest                      are marked with boxes or translucence masks. The colors are randomly
+mAP (Table 11). However, heavy backbones have a low inference speed,                   selected to distinguish instances. The image in the first column is from
+which limits the real-time performance of detectors on common devices                  the top view, which was captured by the UAV. The second-column
+(i.e., 1080ti GPU). Results for each categories are listed in Table 12.                image was captured at night. The third-column image contains many
+                                                                                       categories of objects. The image in the fourth column contains crowded
+6.3.4. Image results                                                                   objects, and the image in the fifth column contains many small objects.
+   The image results of detection are shown in this section. Five images
+
+                                                                                  13
+A. Xuehui et al.                                                                                                                 Automation in Construction 122 (2021) 103482
+
+
+Table 10
+Mask mAP for instance segmentation (each category).
+  Backbone           Worker   Tower        Hanging     Vehicle   Roller   Bulldozer        Excavator     Truck    Loader      Pump       Concrete      Pile       Other
+                              Crane        Hook        Crane                                                                  Truck      Mixer         Driver     Vehicle
+
+  Mask R-CNN         51.434   30.771       38.639      30.386    60.421   58.300           53.281        47.387   49.726      25.761     54.204        20.531     40.438
+    (ResNet50 +
+    FPN)
+  MS RCNN            48.324   34.767       23.606      31.484    60.099   58.677           54.142        46.477   50.150      35.266     54.661        22.153     37.349
+    (RexNet50
+    + FPN)
+  SOLO               43.416   35.398       17.589      33.015    59.506   62.740           57.273        48.227   52.494      42.515     53.793        25.356     35.958
+    (ResNet50 +
+    FPN)
+  PointRend          53.118   42.646       38.622      35.995    64.026   61.534           57.778        49.808   52.616      44.396     56.625        23.310     42.306
+    (RexNet50
+    + FPN)
+
+
+
+
+Table 11
+Results of Faster R-CNN and Mask R-CNN with different backbones.
+  Detectors                   Backbone               mAP         AP.50             AP.75               APsmall       APmedium             APlarge          Inference speed
+
+  Faster R-CNN                ResNet50               50.64       74.65             55.59               19.30          39.59               61.33            8.39
+                              ResNet101              50.67       73.98             55.31               18.30          38.84               62.48            6.79
+                              ResNeXt101             52.45       74.96             57.59               20.14          40.91               64.21            4.01
+  Mask R-CNN                  ResNet50               50.83       74.89             55.98               19.01          39.63               62.05            7.66
+                              ResNet101              53.39       75.57             58.38               20.23          41.12               65.34            6.22
+                              ResNeXt101             54.76       76.79             60.07               20.43          43.35               66.57            4.16
+  Mask R-CNN (seg)            ResNet50               43.18       71.27             45.35               14.93          32.15               55.05            7.66
+                              ResNet101              45.35       72.74             47.99               15.38          33.64               57.59            6.22
+                              ResNeXt101             46.88       74.12             49.80               16.17          36.02               58.94            4.16
+
+
+
+7. Discussion                                                                               annotated in the dataset. The mask is mainly used for instance seg­
+                                                                                            mentation, which helps to understand the layout of the instance and
+7.1. Discussion of MOCS dataset                                                             to analyze the scene [19].
+
+    A growing number of researchers, engineers, and construction
+companies have begun to use computer vision to conduct progress                       7.2. Discussion of benchmark results
+monitoring, quality analysis, and safety management of the construction
+site [1–5,14–16,23,24,27–38]. Accurate detection and identification of                    A benchmark was created on the dataset. Seven detectors for object
+moving objects by means of digital images/videos form the basis of these              detection, four detectors for instance segmentation, and two detectors
+tasks [1–5,14–16,23,24]. Although many large-scale datasets for object                with three different backbones were trained and tested on the dataset.
+detection have been released, a dataset for objects at construction sites             The results presented in Section 6.3 demonstrate that, although the
+remains absent, and this greatly limits the development of research in                detectors differ in speed and precision owing to their architectures, all
+this field. In this study, a large-scale dataset was constructed for                  detectors trained on the MOCS dataset could accurately detect the
+detecting and segmenting moving objects at construction sites. The                    moving objects at the construction sites. Meanwhile, the detectors
+dataset is significant in at least four ways.                                         trained on MOCS were robust to viewpoints, occlusions, noise on the
+                                                                                      construction sites, and illumination conditions (Figs. 12 and 13). Ta­
+1) Real site and large scale: Instead of collecting images from the                   bles 8, 10, and 12 show that the mAPs of “Hanging hook” and “Pile
+   Internet, all the images were collected from 174 real construction                 driver” are lower than those of the other categories. For “Hanging hook,”
+   sites. This brings the dataset into a line with actual construction                the main reason for low mAPs is that the hanging hooks are very small in
+   scenarios, and the detectors trained on the dataset can be applied                 the images and difficult to detect. For “Pile driver,” the reason is that the
+   well to the site. Moreover, the dataset contains more than 41,668                  shapes of pile drivers are varied, while the images in MOCS are relatively
+   images and 222,861 instances, which exceeds some large-scale                       few.
+   common datasets, such as PASCAL VOC.                                                   YOLO-v3, Faster R-CNN with ResNet50, and Mask R-CNN with
+2) Various categories: Compared with several previous datasets, such as               ResNet50 were sampled for comparison with the COCO dataset
+   AIM [24], more categories of objects in construction sites are an­                 (Table 13). The mAPs of MOCS are 6–10 points higher than those of
+   notated in the MOCS dataset. The dataset includes most of the                      COCO. Table 13 shows that the higher mAPs on MOCS mainly benefit
+   common moving objects in the construction site, which broadens the                 from higher mAPs for large objects. However, for medium and small
+   application of detectors trained on the dataset.                                   objects, the mAPs of MOCS are lower than those of COCO. Fig. 14 shows
+3) Diversity: The MOCS dataset covers a variety of visual conditions in               several cases of failure detection. The main reason why small and me­
+   real construction sites, including visual ranges, viewpoints, weather              dium mAPs on MOCS are lower than those of COCO is that the con­
+   conditions, illumination conditions, individual postures, occlusions,              struction sites are more chaotic than other scenes, and the features of
+   work categories, and construction project categories. The diversity of             some unrelated construction components are similar to the small and
+   the MOCS dataset greatly enhances the generalization of the de­                    medium moving objects (Fig. 12a). In addition, occlusions always pre­
+   tectors trained on the dataset.                                                    vent the detectors from accurately detecting the objects (Fig. 14b), and
+4) Precise annotation: A bounding box is used for the object detection                crowded objects could also confuse the detectors (Fig. 12c). Further­
+   task. In addition to the bounding box, the mask of each object is                  more because most of the images in training are upright, the detectors
+                                                                                      had difficulty recognizing objects in reversed images (Fig. 14d).
+
+                                                                                14
+A. Xuehui et al.                                                                                                                                                                                                Automation in Construction 122 (2021) 103482
+
+
+                                                                                                                                                                           7.3. Limitations and future work
+
+
+
+
+                                                                                                      Other Vehicle
+                                                                                                                                                                               In this study, a large-scale image dataset, MOCS, was constructed and
+
+
+
+
+                                                                                                                       42.365
+
+
+
+                                                                                                                       44.306
+
+
+
+                                                                                                                       44.257
+                                                                                                                       40.854
+                                                                                                                       39.874
+
+                                                                                                                       40.897
+                                                                                                                       42.623
+
+                                                                                                                       40.438
+                                                                                                                       42.499
+                                                                                                                                                                           released. The dataset is intended to help researchers and engineers
+                                                                                                                                                                           develop algorithms for detecting moving objects in construction sites
+                                                                                                                                                                           and develop more applications of construction automation. Meanwhile,
+                                                                                                                                                                           a benchmark was created in this study that provides a guideline for
+                                                                                                      Pile Driver                                                          others to select detectors for their applications. However, there are
+
+
+                                                                                                                       35.774
+
+
+
+                                                                                                                       38.639
+
+
+
+                                                                                                                       25.809
+                                                                                                                       32.842
+                                                                                                                       32.645
+
+                                                                                                                       33.088
+                                                                                                                       35.354
+
+                                                                                                                       20.531
+                                                                                                                       22.069
+                                                                                                                                                                           several limitations that should be mentioned.
+                                                                                                                                                                               First, 41,000 construction site images are included in the MOCS
+                                                                                                                                                                           dataset, while only 13 categories of objects are labeled. Much infor­
+                                                                                                      Concrete Mixer
+
+
+
+
+                                                                                                                                                                           mation contained in images is not used because of the lack of annotation.
+                                                                                                                                                                           For instance, to recognize construction activities from images, it is
+                                                                                                                       58.166
+
+                                                                                                                       60.288
+
+
+
+
+                                                                                                                       57.218
+                                                                                                                       56.443
+                                                                                                                       57.188
+
+                                                                                                                       57.464
+
+                                                                                                                       60.132
+                                                                                                                       54.204
+                                                                                                                       56.614
+                                                                                                                                                                           necessary to detect moving objects and structural elements (installed
+                                                                                                                                                                           formwork, reinforcement bar, scaffolding, etc.) [16]. Such annotations
+                                                                                                                                                                           are not available in the current MOCS dataset. Another case is excavator
+                                                                                                      Pump Truck
+
+
+
+
+                                                                                                                                                                           safety monitoring, which sometimes requires more-detailed annota­
+                                                                                                                                                                           tions, such as key points of the excavator [36]. The current MOCS
+                                                                                                                       55.707
+
+                                                                                                                       59.199
+
+
+
+
+                                                                                                                       30.883
+                                                                                                                       53.711
+                                                                                                                       53.649
+
+                                                                                                                       54.107
+
+                                                                                                                       59.093
+                                                                                                                       25.761
+                                                                                                                       30.095
+
+
+
+
+                                                                                                                                                                           dataset lacks such annotations. In addition, detectors trained on the
+                                                                                                                                                                           current MOCS could not detect workers not using hardhats [14] because
+                                                                                                                                                                           such information is not labeled. Therefore, annotations in MOCS should
+                                                                                                                       54.315
+
+
+
+                                                                                                                       57.591
+
+
+
+                                                                                                                       54.219
+                                                                                                                       51.044
+                                                                                                                       52.245
+
+                                                                                                                       51.955
+                                                                                                                       54.198
+
+                                                                                                                       49.726
+                                                                                                                       51.781
+                                                                                                      Loader
+
+
+
+
+                                                                                                                                                                           be greatly enriched to develop more-advanced construction applica­
+                                                                                                                                                                           tions. The dataset is publicly available, and any improvement in the
+                                                                                                                                                                           MOCS dataset is welcomed.
+                                                                                                                                                                               Second, although 41,000 images are collected in MOCS, instances
+                                                                                                                       50.676
+
+
+
+                                                                                                                       53.245
+
+
+
+                                                                                                                       50.288
+                                                                                                                       49.690
+                                                                                                                       49.001
+
+                                                                                                                       50.045
+                                                                                                                       51.615
+
+                                                                                                                       47.387
+                                                                                                                       48.699
+                                                                                                      Truck
+
+
+
+
+                                                                                                                                                                           are relatively few for several categories (e.g., pile drivers), and some
+                                                                                                                                                                           construction machine categories (e.g., road pavers and tunnel boring
+                                                                                                                                                                           machines) are not included in the current MOCS dataset. Meanwhile,
+                                                                                                      Excavator
+
+
+
+
+                                                                                                                                                                           images are collected in limited types of construction site in China and
+                                                                                                                       67.381
+
+
+
+                                                                                                                       70.019
+
+
+
+                                                                                                                       56.875
+                                                                                                                       65.945
+                                                                                                                       65.785
+
+                                                                                                                       66.128
+                                                                                                                       69.190
+
+                                                                                                                       53.281
+                                                                                                                       55.183
+
+
+
+
+                                                                                                                                                                           Pakistan, and detectors trained on the MOCS dataset may not be appli­
+                                                                                                                                                                           cable to other sites in other countries. Therefore, for a specific project, it
+                                                                                                                                                                           is strongly recommended that detectors be trained on the MOCS dataset
+                                                                                                      Bulldozer
+
+
+
+
+                                                                                                                                                                           first, and then transfer learning strategies, such as fine tuning, should be
+                                                                                                                       62.998
+
+
+
+                                                                                                                       65.005
+
+
+
+                                                                                                                       62.502
+                                                                                                                       60.310
+                                                                                                                       62.217
+
+                                                                                                                       60.337
+                                                                                                                       64.002
+
+                                                                                                                       58.300
+                                                                                                                       60.726
+
+
+
+
+                                                                                                                                                                           used to obtain a better result. In the future, it is planned to extend the
+                                                                                                                                                                           MOCS dataset to include more categories of objects and more types of
+                                                                                                                                                                           site worldwide. It is also hoped that researchers can extend the MOCS
+                                                                                                                       63.606
+
+
+
+                                                                                                                       65.569
+
+
+
+                                                                                                                       63.758
+                                                                                                                       62.038
+                                                                                                                       62.397
+
+                                                                                                                       61.351
+                                                                                                                       63.543
+
+                                                                                                                       60.421
+                                                                                                                       61.732
+                                                                                                      Roller
+
+
+
+
+                                                                                                                                                                           dataset or develop their own datasets to verify each other.
+                                                                                                                                                                               Third, the MOCS dataset is an image dataset and currently is focused
+                                                                                                                                                                           on object detection. To develop more computer vision applications in
+                                                                                                                       47.046
+
+                                                                                                                       49.398
+
+
+
+
+                                                                                                                       33.715
+                                                                                                                       45.622
+                                                                                                                       45.796
+
+                                                                                                                       46.125
+
+                                                                                                                       49.036
+                                                                                                                       30.386
+                                                                                                                       33.415
+
+
+
+
+                                                                                                                                                                           the field of construction, more types of dataset (e.g., video datasets and
+                                                                                                      Crane
+
+
+
+
+                                                                                                                                                                           3D point cloud datasets) should be developed. For instance, to analyze
+                   Results of Faster R-CNN and Mask R-CNN with different backbones (each category).
+
+
+
+
+                                                                                                                                                                           the activity of earthmoving equipment, a dataset containing videos of
+                                                                                                                                                                           earthmoving operation must be developed [5]. Another example is that,
+                                                                                                      Hanging Head
+
+
+
+
+                                                                                                                                                                           to develop algorithms for progress monitoring or building information
+                                                                                                                                                                           model creation, datasets of 3D point clouds are sometimes required.
+                                                                                                                       33.935
+
+
+
+                                                                                                                       35.505
+
+
+
+                                                                                                                       41.050
+                                                                                                                       33.162
+                                                                                                                       32.191
+
+                                                                                                                       32.404
+                                                                                                                       33.497
+
+                                                                                                                       38.639
+                                                                                                                       40.210
+
+
+
+
+                                                                                                                                                                           Such datasets are scarce the construction research community.
+                                                                                                                                                                           Continuing work in this area is planned so that more datasets can be
+                                                                                                                                                                           made publicly available.
+                                                                                                      Tower Crane
+
+
+
+
+                                                                                                                                                                               Apart from the MOCS datasets, a benchmark for the dataset is also
+                                                                                                                       54.431
+
+
+
+                                                                                                                       56.959
+
+
+
+                                                                                                                       33.629
+
+
+
+
+                                                                                                                                                                           provided. Researchers and engineers can select and develop detectors
+                                                                                                                       52.992
+                                                                                                                       52.737
+
+                                                                                                                       53.036
+                                                                                                                       56.173
+
+                                                                                                                       30.771
+                                                                                                                       33.257
+
+
+
+
+                                                                                                                                                                           based on the benchmark results. However, the detectors were imple­
+                                                                                                                                                                           mented and trained according to the original implementations. For
+                                                                                                                                                                           better results, the following techniques can be applied. First, the de­
+                                                                                                      Worker
+
+                                                                                                                       53.653
+
+
+
+
+                                                                                                                       56.753
+
+
+
+                                                                                                                       54.063
+                                                                                                                       53.109
+                                                                                                                       55.458
+                                                                                                                       53.891
+                                                                                                                       54.958
+
+                                                                                                                       51.434
+                                                                                                                       52.667
+
+
+
+
+                                                                                                                                                                           tectors were trained without data augmentation in this research. Data
+                                                                                                                                                                           augmentation methods, such as image flipping, rotation, and clipping,
+                                                                                                                                                                           can be used to obtain better results [54]. Second, for current detectors, it
+                                                                                                                       ResNeXt101
+
+
+
+                                                                                                                       ResNeXt101
+
+
+
+                                                                                                                       ResNeXt101
+
+
+
+
+                                                                                                                                                                           is difficult to detect small objects. To improve the performance of small
+                                                                                                                       ResNet101
+
+
+
+                                                                                                                       ResNet101
+
+
+
+                                                                                                                       ResNet101
+                                                                                                      Backbone
+
+                                                                                                                       ResNet50
+
+
+
+                                                                                                                       ResNet50
+
+
+
+                                                                                                                       ResNet50
+
+
+
+
+                                                                                                                                                                           object detection, several parameters (e.g., anchor box scale for Faster R-
+                                                                                                                                                                           CNN) could be tuned. Third, the detectors presented in this research
+                                                                                                                                                                           were trained on two GPUs. In practice, more GPUs and larger batch sizes
+                                                                                                                                                                           can be used to achieve higher accuracy.
+                                                                                                                                                   Mask R-CNN (seg)
+                                                                                                                       Faster R-CNN
+
+
+
+                                                                                                                                      Mask R-CNN
+
+
+
+
+                                                                                                                                                                           8. Conclusions
+                                                                                                      Detectors
+                   Table 12
+
+
+
+
+                                                                                                                                                                              A large-scale image dataset, MOCS, was introduced. The purpose of
+                                                                                                                                                                           the dataset is to train and test computer vision algorithms for detecting
+
+                                                                                                                                                                      15
+A. Xuehui et al.                                                                                                  Automation in Construction 122 (2021) 103482
+
+
+
+
+                                                      Fig. 12. Image results of object detection.
+
+
+
+
+                                                   Fig. 13. Image results of instance segmentation.
+
+
+objects at construction sites. For the dataset, 41,668 images were             believed that releasing such a dataset can greatly benefit researchers in
+collected from real construction sites, and more than 222,861 instances        this field. Meanwhile, a benchmark was created on the dataset. Seven
+of 13 categories were precisely annotated with the styles of both              detectors for object detection, four detectors for instance segmentation,
+bounding box and mask. The dataset is publicly available, and it is            and two detectors with three different backbones were evaluated. It is
+
+
+                                                                          16
+A. Xuehui et al.                                                                                                           Automation in Construction 122 (2021) 103482
+
+
+Table 13
+Results of comparison with COCO dataset.
+  Detectors                       Dataset              mAP              AP.50                AP.75               APsmall               APmedium                APlarge
+
+  YOLO-v3                         MOCS                 39.0             65.6                 41.7                9.6                   26.8                    51.0
+                                  COCO                 33.0             57.9                 34.4                18.3                  35.4                    41.9
+  Faster R-CNN ResNet50           MOCS                 50.6             74.6                 55.6                19.3                  39.6                    61.3
+                                  COCO                 40.2             61.0                 43.8                24.2                  43.5                    52.0
+  Mask R-CNN ResNet50             MOCSbbox             50.8             74.9                 56.0                19.0                  39.6                    62.0
+                                  COCObbox             41.0             61.5                 44.9                24.9                  43.9                    53.3
+                                  MOCSsegm             43.2             71.3                 45.4                14.9                  32.2                    55.1
+                                  COCSsegm             37.2             58.6                 39.9                18.6                  39.5                    53.3
+
+
+
+
+                                                 Fig. 14. Failure cases of Mask R-CNN with ResXNet101.
+
+
+hoped that this can provide a reference for others. Several challenges            students Ding Nie, Zhongcong Ding, Xun Han, Mingqian Ren, Guoxuan
+and future directions for image datasets and improvements for detecting           Han, and Shuyang Li, in collecting images is greatly appreciated.
+objects in construction sites were discussed.
+                                                                                  References
+Declaration of Competing Interest
+                                                                                  [1] J. Gong, C.H. Caldas, An object recognition, tracking, and contextual reasoning-
+                                                                                      based video interpretation method for rapid productivity analysis of construction
+    We declare that we have no financial and personal relationships with              operations, Autom. Constr. 20 (8) (2011) 1211–1226, https://doi.org/10.1016/j.
+                                                                                      autcon.2011.05.005.
+other people or organizations that can inappropriately influence our
+                                                                                  [2] M. Golparvar-Fard, F. Peña-Mora, C.A. Arboleda, S. Lee, Visualization of
+work, there is no professional or other personal interest of any nature or            construction progress monitoring with 4D simulation model overlaid on time-
+kind in any product, service and/or company that could be construed as                lapsed photographs, J. Comput. Civ. Eng. 23 (6) (2009) 391–404, https://doi.org/
+influencing the position presented in, or the review of, the manuscript               10.1061/(asce)0887-3801(2009)23:6(391).
+                                                                                  [3] M.W. Park, N. Elsafty, Z. Zhu, Hardhat-wearing detection for enhancing on-site
+entitled.                                                                             safety of construction workers, J. Constr. Eng. Manag. 141 (9) (2015) 04015024,
+                                                                                      https://doi.org/10.1061/(ASCE)CO.1943-7862.0000974.
+Acknowledgments                                                                   [4] D. Kim, M. Liu, S. Lee, V.R. Kamat, Remote proximity monitoring between mobile
+                                                                                      construction resources using camera-mounted UAVs, Autom. Constr. 99 (2019)
+                                                                                      168–182, https://doi.org/10.1016/j.autcon.2018.12.014.
+   The authors would like to acknowledge the support of industry                  [5] D. Roberts, M. Golparvar-Fard, End-to-end vision-based detection, tracking and
+partners, including Powerchina Roadbridge Group Co., Ltd., SinoHydro                  activity analysis of earthmoving equipment filmed at ground level, Autom. Constr.
+                                                                                      105 (2019) 102811, https://doi.org/10.1016/j.autcon.2019.04.006.
+Bureau 8 Co., Ltd., and China Three Gorges Corporation. In addition, the
+support of many members of the laboratory, including former graduate
+
+                                                                             17
+A. Xuehui et al.                                                                                                                              Automation in Construction 122 (2021) 103482
+
+ [6] W. Liu, D. Anguelov, D. Erhan, C. Szegedy, S. Reed, C.Y. Fu, A.C. Berg, Ssd: single          [31] S. Takahashi, S.I. Kaneko, Motion tracking of crane hook based on optical flow and
+     shot multibox detector, in: European Conference on Computer Vision, Springer,                     orientation code matching, in: 2008 10th IEEE International Workshop on
+     Cham, 2016, October, pp. 21–37, https://doi.org/10.1007/978-3-319-46448-0_2.                      Advanced Motion Control, IEEE, 2008, March, pp. 149–152, https://doi.org/
+ [7] J. Redmon, A. Farhadi, Yolov3: An Incremental Improvement, arXiv preprint arXiv:                  10.1109/AMC.2008.4516057.
+     1804.02767, https://arxiv.org/abs/1804.02767, 2018.                                          [32] Y. Li, S. Wang, B. Li, Improved visual hook capturing and tracking for precision
+ [8] S. Ren, K. He, R. Girshick, J. Sun, Faster r-cnn: towards real-time object detection              hoisting of tower crane, Adv. Mech. Eng. 5 (2013) 426810, https://doi.org/
+     with region proposal networks, in: Advances in Neural Information Processing                      10.1155/2013/426810.
+     Systems, 2015, pp. 91–99, https://doi.org/10.1109/TPAMI.2016.2577031.                        [33] Y. Guo, Y. Xu, S. Li, Dense construction vehicle detection based on orientation-
+ [9] L. Fei-Fei, R. Fergus, P. Perona, One-shot learning of object categories, IEEE Trans.             aware feature fusion convolutional neural network, Autom. Constr. 112 (2020)
+     Pattern Anal. Mach. Intell. 28 (4) (2006) 594–611, https://doi.org/10.1109/                       103124, https://doi.org/10.1016/j.autcon.2020.103124.
+     TPAMI.2006.79.                                                                               [34] T. Slaton, C. Hernandez, R. Akhavian, Construction activity recognition with
+[10] Griffin, G., Holub, A., & Perona, P., Caltech-256 Object Category Dataset, htt                    convolutional recurrent networks, Autom. Constr. 113 (2020) 103138, https://doi.
+     ps://authors.library.caltech.edu/7694/, 2007, CaltechAUTHORS:CNS-TR-2007-                         org/10.1016/j.autcon.2020.103138.
+     001.                                                                                         [35] H. Tajeen, Z. Zhu, Image dataset development for measuring construction
+[11] T.Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, C.L. Zitnick,                    equipment recognition performance, Autom. Constr. 48 (2014) 1–10, https://doi.
+     Microsoft coco: Common objects in context, in: European conference on computer                    org/10.1016/j.autcon.2014.07.006.
+     vision, Springer, Cham, 2014, September, pp. 740–755, https://doi.org/10.1007/               [36] H. Luo, M. Wang, P.K. Wong, J.C.P. Cheng, Full body pose estimation of
+     978-3-319-10602-1_48.                                                                             construction equipment using computer vision and deep learning techniques,
+[12] Everingham, M., Eslami, S. A., Van Gool, L., Williams, C. K., Winn, J., & Zisserman,              Autom. Constr. 110 (2020) 103016, https://doi.org/10.1016/j.
+     A. (2015). The pascal visual object classes challenge: a retrospective. Int. J.                   autcon.2019.103016.
+     Comput. Vis., 111(1), pp.98–136. doi.https://doi.org/10.1007/s11263-014-0                    [37] X. Huang, T. Sasaki, H. Hashimoto, F. Inoue, B. Zheng, T. Masuda, K. Ikeuchi, An
+     733-5.                                                                                            accurate and efficient pile driver positioning system using laser range finder, in:
+[13] M. Everingham, L. Van Gool, C.K. Williams, J. Winn, A. Zisserman, The pascal                      International Workshop on Depth Image Analysis and Applications, Springer,
+     visual object classes (voc) challenge, Int. J. Comput. Vis. 88 (2) (2010) 303–338,                Berlin, Heidelberg, 2013, pp. 158–167, https://doi.org/10.1007/978-3-642-
+     https://doi.org/10.1007/s11263-009-0275-4.                                                        40303-3_17.
+[14] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-            [38] T. Sasaki, H. Kawahara, F. Inoue, H. Hashimoto, Circle fitting based pile
+     use by a deep learning method from far-field surveillance videos, Autom. Constr.                  positioning and machine pose estimation from range data for pile driver
+     85 (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.                                      navigation, IFAC Proc. Vols. 45 (22) (2012) 848–853, https://doi.org/10.3182/
+[15] Q. Fang, H. Li, X. Luo, L. Ding, T.M. Rose, W. An, Y. Yu, A deep learning-based                   20120905-3-HR-2030.00137.
+     method for detecting non-certified work on construction sites, Adv. Eng. Inform. 35          [39] Y. Li, Y. Chen, N. Wang, Z. Zhang, Scale-aware trident networks for object
+     (2018) 56–68, https://doi.org/10.1016/j.aei.2018.01.001.                                          detection, in: In Proceedings of the IEEE International Conference on Computer
+[16] X. Luo, H. Li, D. Cao, F. Dai, J. Seo, S. Lee, Recognizing diverse construction                   Vision, 2019, pp. 6054–6063, https://doi.org/10.1109/ICCV.2019.00615.
+     activities in site images via relevance networks of construction-related objects             [40] T.Y. Lin, P. Goyal, R. Girshick, K. He, P. Dollár, Focal loss for dense object
+     detected by convolutional neural networks, J. Comput. Civ. Eng. 32 (3) (2018)                     detection, in: Proceedings of the IEEE International Conference on Computer
+     04018012, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000756.                                     Vision, 2017, pp. 2980–2988, https://doi.org/10.1109/TPAMI.2018.2858826.
+[17] K. He, G. Gkioxari, P. Dollár, R. Girshick, Mask r-cnn, in: Proceedings of the IEEE         [41] Z. Tian, C. Shen, H. Chen, T. He, Fcos: Fully convolutional one-stage object
+     International Conference on Computer Vision, 2017, pp. 2961–2969, https://doi.                    detection, in: Proceedings of the IEEE International Conference on Computer
+     org/10.1109/ICCV.2017.322.                                                                        Vision, 2019, pp. 9627–9636, https://doi.org/10.1109/ICCV.2019.00972.
+[18] Z. Zou, Z. Shi, Y. Guo, J. Ye, Object Detection in 20 Years: A Survey, arXiv preprint        [42] G. Ghiasi, T.Y. Lin, Q.V. Le, Nas-fpn: Learning scalable feature pyramid
+     arXiv:1905.05055, https://arxiv.org/abs/1905.05055v2, 2019.                                       architecture for object detection, in: Proceedings of the IEEE Conference on
+[19] B. Hariharan, P. Arbeláez, R. Girshick, J. Malik, Simultaneous detection and                     Computer Vision and Pattern Recognition, 2019, pp. 7036–7045, https://doi.org/
+     segmentation, in: European Conference on Computer Vision, Springer, Cham,                         10.1109/CVPR.2019.00720.
+     2014, September, pp. 297–312, https://doi.org/10.1007/978-3-319-10584-0_20.                  [43] G.S. Xia, X. Bai, J. Ding, Z. Zhu, S. Belongie, J. Luo, L. Zhang, DOTA: A large-scale
+[20] N. Dalal, B. Triggs, Histograms of oriented gradients for human detection, in: 2005               dataset for object detection in aerial images, in: Proceedings of the IEEE
+     IEEE computer society conference on computer vision and pattern recognition                       Conference on Computer Vision and Pattern Recognition, 2018, pp. 3974–3983,
+     (CVPR’05), Vol. 1, IEEE, 2005, June, pp. 886–893, https://doi.org/10.1109/                        https://doi.org/10.1109/CVPR.2018.00418.
+     cvpr.2005.177.                                                                               [44] M. Braun, S. Krebs, F. Flohr, D.M. Gavrila, The Eurocity Persons Dataset: A Novel
+[21] P. Felzenszwalb, D. McAllester, D. Ramanan, A discriminatively trained,                           Benchmark for Object Detection. https://arxiv.org/abs/1805.07193, 2018.
+     multiscale, deformable part model, in: 2008 IEEE Conference on Computer Vision               [45] J. Redmon, Darknet: Open Source Neural Networks in C. https://pjreddie.com
+     and Pattern Recognition, IEEE, 2008, June, pp. 1–8, https://doi.org/10.1109/                      /darknet/, 2013. Accessed date: July 4, 2020.
+     CVPR.2008.4587597.                                                                           [46] K. Simonyan, A. Zisserman, Very Deep Convolutional Networks for Large-Scale
+[22] P. Sermanet, D. Eigen, X. Zhang, M. Mathieu, R. Fergus, Y. LeCun, Overfeat:                       Image Recognition. https://arxiv.org/abs/1409.1556, 2014.
+     Integrated Recognition, Localization and Detection using Convolutional Networks,             [47] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, in:
+     arXiv preprint arXiv:1312.6229, https://arxiv.org/abs/1312.6229, 2013.                            Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+[23] D. Roberts, T. Bretl, M. Golparvar-Fard, Detecting and classifying cranes using                   2016, pp. 770–778, https://doi.org/10.1109/CVPR.2016.90.
+     camera-equipped UAVs for monitoring crane-related safety hazards, in: Computing              [48] T.Y. Lin, P. Dollár, R. Girshick, K. He, B. Hariharan, S. Belongie, Feature pyramid
+     in Civil Engineering 2017, 2017, pp. 442–449, https://doi.org/10.1061/                            networks for object detection, in: Proceedings of the IEEE Conference on Computer
+     9780784480847.055.                                                                                Vision and Pattern Recognition, 2017, pp. 2117–2125, https://doi.org/10.1109/
+[24] H. Kim, H. Kim, Y.W. Hong, H. Byun, Detecting construction equipment using a                      CVPR.2017.106.
+     region-based fully convolutional network and transfer learning, J. Comput. Civ.              [49] Z. Huang, L. Huang, Y. Gong, C. Huang, X. Wang, Mask scoring r-cnn, in:
+     Eng. 32 (2) (2018) 04017082, https://doi.org/10.1061/(ASCE)CP.1943-                               Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,
+     5487.0000731.                                                                                     2019, pp. 6409–6418, https://doi.org/10.1109/CVPR.2019.00657.
+[25] Z. Zhang, S. Fidler, R. Urtasun, Instance-level segmentation for autonomous                  [50] X. Wang, T. Kong, C. Shen, Y. Jiang, L. Li, SOLO: Segmenting Objects by Locations.
+     driving with deep densely connected mrfs, in: Proceedings of the IEEE Conference                  https://arxiv.org/pdf/1912.04488, 2019. Accessed date: July 20 2020.
+     on Computer Vision and Pattern Recognition, 2016, pp. 669–677, https://doi.org/              [51] A. Kirillov, Y. Wu, K. He, R. Girshick, PointRend: Image Segmentation as
+     10.1007/978-3-319-46466-4_19.                                                                     Rendering. https://arxiv.org/abs/1912.08193, 2019. Accessed date: June 18 2020.
+[26] A. Arnab, P.H. Torr, Bottom-up Instance Segmentation using Deep Higher-order                 [52] S. Xie, R. Girshick, P. Dollár, Z. Tu, K. He, Aggregated residual transformations for
+     Crfs, arXiv preprint arXiv:1609.02583, https://arxiv.org/abs/1609.02583, 2016.                    deep neural networks, in: Proceedings of the IEEE Conference on Computer Vision
+[27] V. Balali, M. Golparvar-Fard, Segmentation and recognition of roadway assets from                 and Pattern Recognition, 2017, pp. 1492–1500, https://doi.org/10.1109/
+     car-mounted camera video streams using a scalable non-parametric image parsing                    CVPR.2017.634.
+     method, Autom. Constr. 49 (2015) 27–39, https://doi.org/10.1016/j.                           [53] P. Goyal, P. Dollár, R. Girshick, P. Noordhuis, L. Wesolowski, A. Kyrola, K. He,
+     autcon.2014.09.007.                                                                               Accurate, Large Minibatch Sgd: Training Imagenet in 1 Hour. https://arxiv.
+[28] G.A. Atkinson, W. Zhang, M.F. Hansen, M.L. Holloway, A.A. Napier, Image                           org/abs/1706.02677, 2017.
+     segmentation of underfloor scenes using a mask regions convolutional neural                  [54] Z. Zhang, T. He, H. Zhang, Z. Zhang, J. Xie, M. Li, Bag of Freebies for Training
+     network with two-stage transfer learning, Autom. Constr. 113 (2020) 103118,                       Object Detection Neural Networks. https://arxiv.org/abs/1902.04103, 2019.
+     https://doi.org/10.1016/j.autcon.2020.103118.                                                [55] K. Chen, J. Wang, J. Pang, Y. Cao, Y. Xiong, X. Li, Z. Zhang, MMDetection: Open
+[29] F. Wei, G. Yao, Y. Yang, Y. Sun, Instance-level recognition and quantification for                Mmlab Detection Toolbox and Benchmark. https://arxiv.org/abs/1906.07155,
+     concrete surface bughole based on deep learning, Autom. Constr. 107 (2019)                        2019.
+     102920, https://doi.org/10.1016/j.autcon.2019.102920.                                        [56] Y. Wu, A. Kirillov, F. Massa, W.Y. Lo, R. Girshick, Detectron2. https://github.com/
+[30] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn                    facebookresearch/detectron2, 2019.
+     by construction personnel: a deep learning approach and benchmark dataset,                   [57] G. Bradski, The OpenCV Library. Dr. Dobb’s Journal of Software Tools. https://op
+     Autom. Constr. 106 (2019) 102894, https://doi.org/10.1016/j.                                      encv.org/, 2000.
+     autcon.2019.102894.
+
+
+
+
+                                                                                             18
+

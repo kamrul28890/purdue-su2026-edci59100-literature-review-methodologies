@@ -1,0 +1,839 @@
+                                                                Automation in Construction 127 (2021) 103721
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                             Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+A vision-based method for automatic tracking of construction machines at
+nighttime based on deep learning illumination enhancement
+Bo Xiao a, Qiang Lin b, Yuan Chen c, *
+a
+  Department of Civil and Environmental Engineering, University of Alberta, Edmonton T6G 2R3, Canada
+b
+  School of Civil Engineering, Chongqing University, Chongqing 400045, PR China
+c
+  College of Management and Economics, Tianjin University, Tianjin 300072, PR China
+
+
+
+
+A R T I C L E I N F O                                    A B S T R A C T
+
+Keywords:                                                Nighttime construction has been widely conducted in many construction scenarios, but it is also much riskier due
+Deep learning                                            to low lighting conditions and fatiguing environments. Therefore, this study proposes a vision-based method
+Image enhancement                                        specifically for automatic tracking of construction machines at nighttime by integrating the deep learning illu­
+Construction machines
+                                                         mination enhancement. Five main modules are involved in the proposed method, including illumination
+Nighttime construction
+Automatic tracking
+                                                         enhancement, machine detection, Kalman filter tracking, machine association, and linear assignment. Then, a
+                                                         testing experiment based on nine nighttime videos is conducted to evaluate the tracking performance using this
+                                                         approach. The results show that the method developed in this study achieved 95.1% in MOTA and 75.9% in
+                                                         MTOP. Compared with the baseline method SORT, the proposed method has improved the tracking robustness of
+                                                         21.7% in nighttime construction scenarios. The proposed methodology can also be used to help accomplish
+                                                         automated surveillance tasks in nighttime construction to improve the productivity and safety performance.
+
+
+
+
+1. Introduction                                                                               industry accident records in the United States from 1997 to 2012, Kang
+                                                                                              et al. [4] identified 22.8% of construction accidents belonged to struck-
+    Construction at nighttime is a common practice in many construction                       by accidents, which is the second most influential factor for construction
+scenarios including pavement maintenance, highway construction, and                           safety. Therefore, monitoring construction machines at nighttime is
+railway construction [1]. Compared with daytime construction, night­                          beneficial to avoid struck-by hazards between works and machines,
+time construction has some obvious advantages [2]. For instance,                              which is important for facilitating a relatively safe working environ­
+operating outdoor construction activities (e.g., for the pavement project)                    ment. Currently, the manual method still acts as the primary approach
+at nighttime can reduce the interferences with traveling vehicles to                          for monitoring nighttime construction, but its usage is error-prone and
+avoid traffic congestions. Furthermore, the working environment of                            time-consuming. As such, automatically tracking construction machines
+nighttime construction is less complex than that during the daytime (e.                       with retrieving the trajectory information can be treated as an alterna­
+g., fewer pedestrians and traffics), which can improve the crew pro­                          tive way to help identify the potential collisions and reduce the risks of
+ductivity to some extent. Especially, in the summer months, the tem­                          struck-by accidents in nighttime construction [5].
+perature at nighttime is much lower than that at daytime. The cooler                              Recently, tracking construction machines by using vision-based
+construction condition could speed up material delivery cycles and                            methods has become a promising way considering cameras are less
+shorten machinery idling time.                                                                costly and simply to install [6]. Extensive research studies have been
+    In addition, awareness of construction safety at nighttime has been a                     conducted on tracking construction machines from videos for evaluating
+major concern in the industry since nighttime construction naturally                          crew productivity and enhancing site safety in the area of construction
+creates hazardous working conditions. The results from the study of                           engineering and management. For instance, Chen et al. [7] automati­
+Arditi et al. [3] indicated that the safety risks at nighttime can be five                    cally calculated the productivity of excavators in earthmoving works by
+times higher than daytime construction due to some significant factors:                       tracking excavators using vision-based methods. Kim et al. [8] proposed
+a) the lower illumination conditions; and b) workers and machine op­                          an automatic method for analyzing the productivity of tunnel earth­
+erators are prone to be fatigue. By analyzing 20,997 construction                             moving by means of tracking excavators and dump trucks. Yan et al. [9]
+
+
+    * Corresponding author.
+      E-mail addresses: bxiao2@ualberta.ca (B. Xiao), linqiang@cqu.edu.cn (Q. Lin), yuanchen_2020@tju.edu.cn (Y. Chen).
+
+https://doi.org/10.1016/j.autcon.2021.103721
+Received 5 September 2020; Received in revised form 16 March 2021; Accepted 13 April 2021
+Available online 21 April 2021
+0926-5805/© 2021 Elsevier B.V. All rights reserved.
+B. Xiao et al.                                                                                                         Automation in Construction 127 (2021) 103721
+
+
+adopted a struck-by accident monitoring method based on tracking                    machine [22]).
+heavy machines and workers from videos in order to enhance site safety.                 Recently, object detection has been integrated into the task of object
+    It can be seen that most of the existing vision-based methods for               tracking and this kind of method is called tracking-by-detection [23].
+tracking construction machines tend to focus on daytime construction                The tracking-by-detection comprises three main steps including: 1)
+[10], but it is difficult to achieve reliable performance when using these          detecting objects at each frame by the backbone detector, 2) converting
+approaches in nighttime scenarios. Tracking construction machines                   the detected objects to features by the appearance model, and 3) asso­
+from nighttime videos is challenging due to the limited visibility and              ciating the object features across frames to produce tracking results. For
+significant illumination variations [11]. In nighttime construction, the            example, Rezatofighi et al. [24] introduced a vision-based tracking
+lighting conditions are usually poor and construction machines are                  method based on the joint probability data association. Bewley et al.
+prone to be partially invisible. Meanwhile, the illumination variations             [25] developed a simple online sort tracking method based on Kalman
+can easily create blurs of construction objects, which will trigger some            filter tracking and pixel location similarity. Bochinski et al. [26] pro­
+difficulties in distinguishing one construction machine from others                 posed a high-speed tracking-by-detection method without using image
+through tracking. Therefore, it is urgent and necessary to develop a more           information, which has achieved the superfast tracking speed. Most
+robust appearance model for automatically tracking construction ma­                 existing vision-based tracking methods aim to track common life objects
+chines in nighttime scenarios.                                                      in general scenarios.
+    The main objective of this research is to propose a vision-based
+method for automatic tracking of construction machines at nighttime.                2.2. Vision-based tracking methods in construction
+Specifically, this approach can enhance the image quality for tracking in
+low lighting conditions and explore the robust appearance model for                     In the area of construction engineering and management, many
+describing machine objects when facing illumination variations. The                 research studies have focused on the development of vision-based
+proposed tracking method is expected to produce stable and precise                  methods specifically for construction scenarios. Xiao and Kang [27]
+bounding boxes of construction machines from nighttime videos in order              have proposed a vision-based method of tracking construction machines
+to generate trajectory information. By integrating the method developed             by introducing image hashing as the appearance model. Angah and Chen
+in this study, many surveillance tasks in nighttime construction can be             [28] have developed a deep learning-based construction worker
+accomplished automatedly including crew productivity evaluation,                    tracking method by integrating Mask R-CNN [29] and trajectory re-
+machine idling analysis, and collision alerts, which will make nighttime            matching. Roberts et al. [30] have proposed a vision-based tracking
+construction more efficient and safer.                                              method of construction workers to estimate worker body poses, which
+                                                                                    has achieved an accuracy of 72.6%. Kanstantinou et al. [31] integrated
+2. Literature review                                                                three tracking models (i.e., the adaptive model, the appearance model,
+                                                                                    and the prediction model) for tracking multiple workers from a complex
+    Automatic tracking of construction entities by vision-based methods             environment. Zhu et al. [32] employed the latent support vector ma­
+is an important topic in the research community, which is useful for                chine and particle filtering to track construction machines and workers.
+project monitoring, materials transportation, and site safety. In this              However, these developed vision-based tracking methods are mainly
+section, the literature regarding the vision-based tracking methods and             focusing on tracking construction objects in daytime construction and
+their applications in construction will be reviewed. Since this research            cannot be directly applied to automatic tracking in nighttime con­
+tries to integrate illumination enhancement methods for nighttime                   struction due to the low visibility and huge illumination changes in
+tracking, the development of the image illumination enhancement will                nighttime scenarios.
+also be reviewed comprehensively.                                                       The application of vision-based tracking methods can be broadly
+                                                                                    divided into two primary aspects: productivity estimation and safety
+2.1. Vision-based tracking methods                                                  monitoring [33]. For productivity estimation, these methods can be used
+                                                                                    to retrieve the movement information of construction machines in cyclic
+    Vision-based tracking refers to track the interested objects from               operations (e.g., earthmoving works). Golparvar-Fard et al. [34] pro­
+videos to acquire the trajectory information for surveillance, which is a           posed a framework that integrated vision-based tracking and action
+fundamental problem in the computer vision field [12]. Given the initial            recognition to measure the earthmoving productivity. Rezazadeh et al.
+pixel position of the objectat the first frame, the vision-based tracker will       [35] combined vision-based tracking with detection for automatically
+start to predict the pixel positions of this object at the subsequent frames        calculating the dirt-loading cycles. Roberts and Golparvar-Fard [36]
+[13]. In general, a typical vision-based tracking method consists of three          adopted an end-to-end system of combining vision-based detection,
+main components including the motion model, the appearance model,                   tracking, and activity recognition for monitoring the machine produc­
+and the observation model [14].                                                     tivity in earthmoving projects.
+    In the tracking process, the motion model generates a set of candi­                 To facilitate construction safety, vision-based tracking methods can
+date windows at the current frame based on the tracking window in the               be used to produce the trajectories of machines and workers to avoid
+previous frames. Dense sampling is a widely adopted motion model, by                potential collisions on the site. Son et al. [37] proposed a real-time
+means of which all possible candidacy window positions are enumerated               vision-based warning system to prevent collisions between workers
+through a sliding window mechanism [15]. Another common motion                      and heavy machines by tracking the two types of objects. Kim et al. [38]
+model is particle filtering, which estimates the potential candidate                developed a vision-based site safety assessment system to monitor the
+windows by the particle distribution [16]. The appearance model in                  struck-by accidents by tracking equipment and workers simultaneously.
+vision-based tracking aims to extract features from the candidate win­              To be noted, the abovementioned construction applications are
+dows. The classic appearance models include the histograms of oriented              currently proposed for daytime construction scenarios because few
+gradients [17], Haar-like features [18], and the covariance region                  studies have developed a reliable vision-based method that is technically
+descriptor [19], etc. The convolutional neural network (CNN) [20] has               designed for tracking construction machines at nighttime.
+also been adopted as the feature extractor for tracking common life
+objects (e.g., persons, cars, and animals). Furthermore, the observation            2.3. Image illumination enhancement
+model judges all candidate windows based on their features to produce
+the tracking result in the current frame as well as update the observation              Enhancement of low lighting images by automatic methods has
+model. The observation model can be the similarity between features                 attracted much attention from the computer vision community.
+[21] or the machine learning classifiers (e.g., the support vector                  Compared with manually adjusting the image contrast or brightness,
+
+                                                                                2
+B. Xiao et al.                                                                                                      Automation in Construction 127 (2021) 103721
+
+
+automatic methods are more convenient to be applied in dealing with a            based method are described in detail, that is, illumination enhance­
+large number of images. Existing approaches for image illumination               ment, machine detection, Kalman filter tracking, machine association,
+enhancement can be generally categorized into the retinex-based                  and linear assignment.
+methods and learning-based methods [39]. In the retinex theory [40],
+an image can be treated into the pixel-wise produce of reflectance and
+illumination, and the reflectance component is a plausible approxima­            3.1. Overall framework
+tion of the enhanced image. Therefore, the illumination enhancement
+problem is formulated as an illumination estimation problem in the                   The overall framework of the proposed methodology is depicted in
+retinex-based methods. Cai et al. [41] used a joint intrinsic-extrinsic          Fig. 1. First, the frame sequences derived from nighttime videos are
+prior model for estimating the illumination of an image. Fu et al. [42]          inputted into the illumination enhancement module, which is developed
+employed a weighted variational model to estimate the reflectance and            based on an encoder-decoder deep neural network to repair the low
+illumination of an image in order to improve the image lighting condi­           lighting images. Then, the deep learning detection is executed on the
+tions. Wang et al. [43] developed a naturalness preserved enhancement            enhanced frames to identify construction machines with the pixel po­
+algorithm for improving non-uniform illumination images. However,                sition and categorical information in the machine detection module. The
+the retinex-based methods have less capability to enhance color images           detection windows in the previous frame are used to initialize the Kal­
+since color is easily distorted locally, which will lead to some image           man filter trackers in the third module, which can produce the tracking
+details lost in the enhancement process.                                         windows for the current frame. Next, the machine association module
+    The learning-based methods treat the image illumination as a dis­            can relate detection windows to tracking windows at the current frame
+tribution estimation problem, which means the high lighting image can            based on location similarity and CNN feature similarity to construct the
+be estimated by adding a certain distribution to the original low lighting       association matrix. Subsequently, the tracking problem is converted to a
+image [44]. This kind of methods are data-driven so that they can learn          linear assignment problem, which can be solved by the Hungarian al­
+the illumination distribution from pairs of low lighting and highlighting        gorithm to produce the final tracking results. In summary, the technical
+images by deep neural networks. Lore et al. [45] proposed an encoder-            novelty of the proposed methodology consists of two primary parts: a)
+decoder network named LLNet to enhance the natural low-light images.             integrating the deep learning illumination enhancement to repair the
+Chen et al. [46] built an image illumination enhancer based on the               nighttime videos, which can overcome the low visibility issue in con­
+framework of two-way generative adversarial networks. Gharbi et al.              struction machine tracking at nighttime. b) employing a CNN feature
+[47] developed a novel neural network architecture based on bilateral            extractor in the machine association module as the appearance model
+learning and achieved the real-time processing speed. It can be seen that        for representing construction machines.
+the learning-based methods can keep most of image details in the pro­
+cedure of image illumination enhancement. Currently, the image illu­
+mination enhancement methods are mainly adopted for the use of the               3.2. Illumination enhancement
+social medias and have not been investigated in tracking construction
+entities in nighttime scenarios.                                                     The purpose of this module is to address the problem of low lighting
+                                                                                 conditions in nighttime construction videos. Insufficient illumination
+2.4. Research challenges and objectives                                          can damage the visual quality and degrade the performance of object
+                                                                                 detection algorithms for identifying construction machines from videos.
+    As reviewed in the previous subsections, tracking construction ma­           However, directly increasing the contrast and brightness of nighttime
+chines at nighttime by vision-based methods is the fundamental step for          frames can lead to the overexposure issue, and details will be lost in the
+automatic applications in nighttime construction. A robust vision-based          shadow and darkest area of the frame. Therefore, an algorithm for the
+tracking method for construction machines can be adopted in many                 deep learning illumination enhancement is employed to repair the
+surveillance tasks in order to make nighttime construction safer and             nighttime frames and further produce the illumination enhanced frames
+more efficient. However, existing methods of tracking construction               with keeping most of details.
+machines at nighttime have two major technical challenges. Firstly, the              Specifically, the global illumination-aware and detail-preserving
+backbone detector adopted in exiting tracking methods cannot produce             network (GLADNet [48]) is selected in this research due to its state-of-
+precise detection results from nighttime videos because most image data          the-art performance on public datasets including LIME [49], DICM
+used for training the backbone detector are collected at daytime. Sec­           [50], and MEF [51]. The architecture of the GLADNet, as depicted in
+ondly, the appearance models adopted in existing methods are difficult           Fig. 2, comprises two adjacent steps, that is, illumination distribution
+to extract distinguished features from construction objects in nighttime         estimation and detail reconstruction. As for the former, the input images
+videos. This is because insufficient lighting conditions in nighttime            are resized to 96 × 96 by the nearest-neighbor interpolation. Then,
+videos easily triggers the object invisibility, motion blur, and illumina­       feature maps are passed through an encoder-decoder network to esti­
+tion variations issues.                                                          mate the global illumination of the image. The encoder networks use the
+    The overall objective of this research is to develop a vision-based          CNN to down-sampling features, while the decoder networks use the
+method for automatically tracking construction machines at nighttime.            resized-CNN to up-sampling feature. The detail reconstruction step
+To overcome aforementioned research challenges, the proposed method              adopts the concatenation to combine the feature maps of the outputs
+employs the deep learning illumination enhancement to preprocess the             derived from the global illumination step with the input image. Then,
+input videos in advance. By doing that, some construction machine                the concatenated feature maps are processed by three convolutional
+objects that are partial invisible in the original images will become            layers with ReLUs in order to preserve more details of the input image.
+identifiable and detectable. Meanwhile, the CNN feature extractor is                 In the proposed method, all frames of the nighttime video are pro­
+adopted in the proposed method as the appearance model, which helps              cessed with the GLADNet to obtain the enhanced frames, which will be
+to distinguish machine objects in nighttime videos when facing the               regarded as the inputs of the machine detection module. Furthermore,
+challenge of illumination variations and motion blurs.                           Fig. 3 illustrates the original nighttime frame, the frames enhanced by
+                                                                                 GLADNet and by adjusting brightness, respectively, in order to clearly
+3. Methodology                                                                   display differences in the performance of illumination enhancement by
+                                                                                 various approaches. Compared with directly adjusting the image
+    In this section, the overall framework of the proposed methodology           brightness, the use of GLADNet is able to greatly improve lighting
+is introduced firstly. Then, five main modules involved in this vision-          conditions of this image while keeping most of details.
+
+                                                                             3
+B. Xiao et al.                                                                                                     Automation in Construction 127 (2021) 103721
+
+
+
+
+                                              Fig. 1. The overall framework of the proposed methodology.
+
+
+
+
+                                                          Fig. 2. The architecture of GLADNet.
+
+
+
+
+                                                 Fig. 3. Performance comparison of image enhancement.
+
+
+3.3. Machine detection                                                          necessary for training deep learning object detectors. This study will
+                                                                                select the Alberta Construction Image Dataset (ACID [55]), which is an
+    In this module, the enhanced frames are processed with the algo­            image dataset of standard construction machines for the task of object
+rithm for deep learning object detection to retrieve the pixel location         detection. The ACID contains 10,000 annotated images of construction
+and categorical information of pre-defined categories of construction           machines that can be divided into ten categories, including excavator,
+machines. The robust detector can produce stable and precise detection          compactor, dozer, grader, dump truck, concrete mixer truck, wheel
+windows, which will facilitate a good tracking performance. In the              loader, backhoe loader, tower crane, and mobile crane. The images of
+present research, the deep learning algorithm YOLO-v3 [52] is selected          ACID are collected from the different construction scenarios to ensure
+as the backbone because it has achieved the mean average precision              the high degree of diversity and further avoid the overfitting problem of
+(mAP) of 57.9% on the COCO benchmark [53] with more than real-time              deep learning object detectors. By training with data from the ACID, the
+detection speed (30 frames per second on a GTX Titan X GPU). The ar­            proposed tracking method can simultaneously detect construction ma­
+chitecture of the YOLO-v3 detector is illustrated in Fig. 4. YOLO-v3 is a       chines that belong to the abovementioned categories from the enhanced
+fully convolutional detection network that contains 53 convolutional            images.
+layers where each followed by batch normalization layer and leaky
+ReLU activation. Also, the YOLO-v3 algorithm adopts multiple-scale              3.4. Kalman filter tracking
+CNN architecture specifically for detecting small objects, which is
+much helpful in construction scenarios considering it is common to find             When a new machine object is detected in a frame, a Kalman filter
+this kind of objects in construction videos.                                    tracker will be initialized to track only this machine and a unique
+    When using the YOLO-v3 algorithm, an annotated dataset is                   identification (ID) is assigned to the tracklet. In the next frame, these
+
+                                                                            4
+B. Xiao et al.                                                                                                       Automation in Construction 127 (2021) 103721
+
+
+
+
+                                Fig. 4. The architecture of the YOLO-v3 detector (image reprint from [54] with permission).
+
+
+trackers belonging to all the detected machines will produce the tracking
+                                                                                  X = [xc , yc , w, h, u, v]                                                 (1)
+results to associate the detection results at the frame. The Kalman
+filtering is an algorithm that utilizes continuous measurements over
+                                                                                  where, xc and yc mean the horizontal and vertical coordinates of the
+time, and produces estimation of the current statement [56]. Fig. 5
+                                                                                  central point of the object; w is the width and h is the height of the
+shows the overall process of Kalman filter tracker, where Xk∣k− 1 refers to
+                                                                                  object; u and v represent the velocity of the object on the horizontal and
+the estimate of the tracking state at time stamp k until the k− 1th mea­
+                                                                                  vertical axis, respectively. When a detection window is associated with a
+surement, Pk∣k− 1 is the corresponding uncertainty, and yk is the mea­
+                                                                                  tracking window, the detection box will be used to update the Kalman
+surements at the time stamp k. Generally, the Kalman filter tracker
+                                                                                  filter tracker. If no detection windows are associated to this object, the
+works in two steps: a) The prediction process produces the estimation of
+                                                                                  tracker will simply update its state by using the linear velocity model.
+the current statement Xk∣k− 1 based on previous predictions and mea­
+surements, although the current statement is uncertain; and b) Once the
+measurement of the current statement yk is provided, the Kalman filter            3.5. Machine association
+can be updated by the state transition model to output the final tracking
+result Xk∣k.                                                                         In each frame, the YOLO-v3 algorithm will produce the detection
+    Similar to the previous study [25], the state of each object is modeled       windows and Kalman filter tracking will predict tracking windows. The
+as:                                                                               main purpose of the machine association module is to construct matrixes
+                                                                                  to represent the similarity between detection windows and tracking
+
+
+
+
+                                                    Fig. 5. The overall process of Kalman filter tracker.
+
+                                                                              5
+B. Xiao et al.                                                                                                               Automation in Construction 127 (2021) 103721
+
+
+windows. Afterwards, the detection window can be assigned with a                          window, while the second constraint (Eq. (9)) indicates each tracking
+tracking ID number once it is associated with a tracking window in the                    window can only be associated with one detection window. This above
+linear assignment module.                                                                 linear assignment problem can then be solved by the Hungarian algo­
+    To achieve this goal, the position similarity and CNN feature simi­                   rithm [58] to assign tracking IDs to detection windows.
+larity are combined to describe the relationship between the detection                        In the linear assignment module, if a detection window i is success­
+window i and the tracking window j. The position similarity is calculated                 fully matched with a tracking window j by the Hungarian algorithm and
+by the intersection over union (IoU), which is defined in Eq. (2).                        the similarity (i, j) is larger than 0.5, the tracking window j will be
+                                                                                          regarded as the tracking result and the detection window i will be used
+                 Area(i) ∩ Area(j)
+IoU(i, j) =                                                                     (2)       to update the corresponding Kalman filter tracker. If the detection
+                 Area(i) ∪ Area(j)
+                                                                                          window i cannot match with a tracking window j or the similarity (i, j) is
+    The CNN feature similarity evaluates the visual similarity between                    not larger than 0.5, a new tracking ID will be assigned to the detection
+two object windows, which is an efficient appearance model to distin­                     window i and a new Kalman filter tracker will be initialized in this
+guish machine objects when facing illumination variations and motion                      module. Also, the detection window i will be the tracking output. If a
+blurs in nighttime scenarios. First, all detection and tracking windows                   Kalman filter tracker cannot associate any detection window in ten
+are resized to the size of 224×224 and inputted to a ResNet50 neural                      continuously frames, this tracklet and the corresponding tracking ID will
+network [57] (pretrained on ImageNet). Then, a feature vector with the                    be destroyed.
+size of 500 by 1 can be extracted from the fully connected layer of the
+ResNet50 to represent each input object window. The CNN feature                           4. Experiments and results
+similarity k between the detection window i and the tracking window j
+can be calculated as the cosine similarity of their corresponding feature                    The experiments and results are presented in this section. First, the
+vectors (see Eq. (3)).                                                                    implementation of the proposed method is introduced. Then, the
+                         ′
+                                                                                          experimental setup, evaluation metrics, and experimental results are
+k(i, j) =
+               v(i)v(j)
+                                                                                (3)       reported in details.
+             ‖v(i) ‖‖v(j) ‖
+                                                                                          4.1. Implementation of the proposed method
+where, v(i) and v(j) indicate the feature vector processed by ResNet50 of
+the detection window i and the tracking window j, respectively. And the                      At the implementation stage, the YOLO-v3 algorithm was trained
+‖v(i)‖ is the norm of the vector v(i).                                                    200,000 iterations on the ACID dataset with the batch size of 32. The
+    Based on this, the similarity between the detection window i and the                  proposed method was implemented in Python language and adopted the
+tracking window j can be calculated as the linear combination of posi­                    Opencv library for video I/O. The GLADNet was programmed by the
+tion similarity and CNN feature similarity as Eq. (4).                                    Pytorch library. The YOLO-v3 was originally implemented by C lan­
+similarity (i, j) = α × IoU(i, j) + (1 − α) × k(i, j)                           (4)       guage and integrated in the proposed method by means of the Python
+                                                                                          wrapper. The Kalman filter tracking was built on the filterpy library and
+where, α is a constant and its value is equal to 0.5 in this study.                       the Hungarian algorithm was implemented by the scikit-learn library.
+   As such, an association matrix A can be built by integrating the                       For the hardware configuration, the proposed method was tested on a
+similarity between each pair of detection window and tracking window.                     computer that has one NVIDIA GTX 1080Ti GPU, an Intel Core i9-
+The size of the association matrix is the number of detection windows by                  7920×@2.9 Hz CPU, and two 32 GB memory cards.
+the number of tracking windows.
+                                                                                          4.2. Experimental setup
+
+3.6. Linear assignment
+                                                                                               To evaluate the performance of the proposed method, nine testing
+                                                                                          videos were collected from the nighttime construction scenarios (e.g.,
+    The linear assignment module aims to assign a tracking ID to each
+                                                                                          earthmoving and pavement maintenance works), and each video con­
+detection window by associating it with a tracking window. The
+                                                                                          tained one or several construction machine movements. Fig. 6 shows the
+tracking problem is then converted to a linear assignment problem and
+                                                                                          example images of each testing video and Table 1 summarizes the in­
+can be formulated as follows:
+                                                                                          formation of each testing video in terms of the number of frames, video
+                 ∑
+                 a ∑
+                   b                                                                      duration, video resolution, construction machines appeared, and the
+maximize :                   A[i, j] × xij                                      (5)       video brightness. The video brightness was assigned by a value between
+                                                                                          0 and 255, which showed the lighting conditions of this video. First, all
+                 i=1   j=1
+
+                                                                                          frames of the video were converted into the grayscale images and the
+A[i, j] = similarity(detection window i, tracking window j)                     (6)
+                                                                                          average of grayscale pixel values was the brightness of this frame. As
+        {                                                                                 such, the video brightness was equal to the average brightness value of
+              1, if the detection window i is assigned to the tracking window j
+xij =
+            0, if the detection window i is not assigned to the tracking window j         all frames, and the lower value indicated the lower lighting conditions in
+                                                                                          this video. Then, all videos were manually annotated at the frame level
+                                                                                (7)
+                                                                                          as the ground truth for evaluating the proposed method. In each frame,
+which is subject to:                                                                      the annotation included the frame number, ID number, and the object
+                                                                                          pixel coordinates. The annotations are in the MOT16 format [59] and
+∑                                                                                         used for a comparison of the tracking results produced by the proposed
+a
+      xij = 1when j = 1, …, b                                                   (8)
+i=1                                                                                       method in the evaluation process.
+                                                                                               In the experiments, the tracking method SORT [25] was selected as
+∑
+b                                                                                         the baseline method to compare tracking results of the testing videos
+      xij = 1when i = 1, …, a                                                   (9)       with the proposed method in this study because SORT has achieved the
+                                                                                          state-of-the-art tracking performance on the MOT16 benchmark. The
+j=1
+
+
+   The variables a and b are the number of detection and tracking                         SORT method associates the detection results across frames only based
+windows at the current frame, respectively. The first constraint (Eq. (8))                on the position similarity (IoU). Also, it adopts the Kalman filter for
+means each detection window can only be assigned with one tracking                        tracking and Hungarian algorithm for producing tracking results, which
+
+                                                                                      6
+B. Xiao et al.                                                                                                             Automation in Construction 127 (2021) 103721
+
+
+
+
+                                                                Fig. 6. Example images of testing videos.
+
+
+                                                                                        precision (MOTP), the number of ground truth trajectories (GT), and the
+Table 1                                                                                 number of most tracked trajectory (MT). The higher value on the metrics
+The basic information of the testing videos.
+                                                                                        of precision, recall, MOTA, and MOTP indicates the better tracking
+                 Number      Video      Video        Construction     Video             performance. Of them, precision, recall, and MOTA are generally used to
+                 of frames   duration   resolution   machines         brightness
+                                                                                        qualify the tracking robustness. The metrics of precision and recall [60]
+                             (s)
+                                                                                        are defined in Eq. (10) and Eq. (11), respectively, which can evaluate the
+  Video1         286         11         426×240      1 wheel loader   73.94             assignment between the tracking outputs and ground truth annotations.
+  Video2         448         14         1280×720     1 excavator, 1   53.34
+                                                     compactor, and                                     TP
+                                                     2 dump trucks                      Precision =                                                              (10)
+                                                                                                      TP + FP
+  Video3         418         13         640×480      1 excavator,     26.43
+                                                     and 1wheel
+                                                                                                     TP
+                                                     loader                             Recall =                                                                 (11)
+  Video4         450         14         640×480      1 excavator,     51.62                        TP + FN
+                                                     and 1wheel
+                                                     loader                             where, TP (true positive) indicates the number of corrected tracked
+  Video5         210         30         320×240      1 excavator      32.09             machines; FP (false positive) means the number of non-machine objects
+  Video6         300         10         1920×1080    2 compactors     44.92             tracked as machine objects; FN (false negative) denotes the number of
+  Video7         360         12         1080×608     1 excavator,     52.58
+                                                                                        missing machine objects.
+                                                     and 1 dump
+                                                     truck                                  The MOTA (defined in Eq. (12)) combines three sources of tracking
+  Video8         240         10         1280×720     2 compactors     79.65             errors including false negative, false positive, and the number of
+  Video9         280         12         1280×720     2 compactors     90.88             tracking ID switch times (IDSW [61]) in the whole trajectory lifespan.
+                                                                                                     ∑
+                                                                                                       i (FN i + FPi + IDSWi )
+                                                                                        MOTA = 1 −              ∑                                          (12)
+is similar to the proposed method. Meanwhile, this study also tested the                                          i gti
+proposed method without implementing the illumination enhancement
+module in order to analyze how the illumination enhancement module                      where, i is the frame index; gti is the number of ground truth machine
+can influence the tracking performance in nighttime scenarios. All the                  objects at the frame i; IDSWi is the number of ID switch times at the
+three methods (i.e., the proposed method, the proposed method without                   frame i; FNi and FPi have the similar meanings as Eq. (11).
+illumination enhancement, and SORT) were implemented with the same                          The MOTP measures the tracking precision as Eq. (13), which de­
+machine detection backbone, this is, the YOLO-v3 algorithm trained on                   scribes the position similarity between ground truth machine objects
+the ACID dataset.                                                                       and the tracked machine objects.
+                                                                                                  ∑
+                                                                                                    i,j IoU i,j
+                                                                                        MOTP = ∑                                                          (13)
+4.3. Evaluation metrics                                                                                  i ci
+
+
+    Six evaluation metrics from the Multiple Object Tracking Benchmark                  where, IoUi, j denotes the IoU of machine object j and its corresponding
+2016 [59] have been employed in this research: precision, recall, mul­                  ground truth annotation box at the frame i, and ci is the number of
+tiple object tracking accuracy (MOTA), multiple object tracking                         successfully matched machine objects at the frame i. The larger value of
+
+                                                                                    7
+B. Xiao et al.                                                                                                       Automation in Construction 127 (2021) 103721
+
+
+MOTP indicates the tracker produces more precise tracking windows to              and the MOTA can then be improved.
+localize the machine objects. It is noted that the MOTP is to evaluate the            When removing the illumination enhancement module, the proposed
+tracking localization ability so that it is different from the precision as       method achieved an overall precision of 98.53%, recall of 79.76%,
+introduced in Eq. (10).                                                           MOTA of 78.26%, and MOTP of 76.88%. It also successfully tracked 13
+    GT and MT are used to describe the tracking quality in the object             construction machine trajectories in the testing videos. Compared with
+tracking tasks. GT reflects the number of ground truth trajectories of            the baseline method, the value of recall and MOTA arrived at 4.17% and
+construction machines in a video, and MT shows the number of most                 4.86% higher, respectively, which, to some extent, can show the
+tracked trajectories produced by the tracking methods. A trajectory is            robustness of the proposed method even without implementing the
+considered as a MT when the object is correctly tracked over 80% of its           illumination enhancement module. These comparison results also
+lifespan in the video.                                                            proved that both the illumination enhancement module and the CNN
+                                                                                  feature similarity can improve the tracking performance when tracking
+4.4. Experimental results                                                         construction machines from nighttime videos. Furthermore, we can see
+                                                                                  these three tracking methods achieved the similar results (around 75%)
+    The experimental results in terms of tracking performance using the           on MOTP in this research, which means there is no significant difference
+three different methods are summarized in Table 2. To better demon­               in their performance on tracking precision. This is reasonable because
+strate the experimental process, example images of illumination                   the MOTP is determined by the performance of backbone detectors, and
+enhancement results for each testing video have been presented in                 all the three methods adopted the same detection algorithm (YOLO-v3)
+Fig. 7. Furthermore, Fig. 8 shows example tracking results of Video 4,            and the training dataset (ACID).
+Video 5, and Video 9 produced by the proposed method. After averaging                 In the experiments, Video 1 and Video 5 only contain the movements
+the tracking performances of nine testing videos, the proposed method             of one construction machine, while other videos contain multiple ma­
+achieved an overall precision of 98.80%, recall of 96.30%, the MOTA of            chines. The proposed method has achieved the average MOTA of
+95.10%, and MOTP of 75.90%. Meanwhile, the proposed method suc­                   93.60% and MOTP of 83.15% on two single construction machine
+cessfully tracked 17 of 18 ground truth construction machine trajec­              videos, while the average MOTA is 94.77% and MOTP is 78.03% for
+tories in this experiment. From these tracking results, it can be seen that       tracking multiple construction machines. It is found the tracking preci­
+the proposed method can robustly and precisely track construction                 sion decreased and the tracking robustness slightly increased when the
+machines from nighttime videos. Specifically, it achieved 20.71% higher           videos had multiple construction machines. Occlusions are considered
+on recall and 21.70% higher on MOTA than SORT. Also, SORT only                    as another factor that could affect the tracking precision of the proposed
+tracked 12 machine trajectories, which was less than that of the pro­             method. Video 1, Video 5, Video 8, and Video 9 have no machine oc­
+posed method. To be noted, the proposed method has achieved higher                clusions, while other videos contain some degrees of occlusions between
+robustness (MOTA of 95.10%) than exiting tracking methods [27,36] in              construction machines. The proposed method achieved the average
+construction. The MOTA can be further improved by: 1) replacing the               MOTP of 86.75% on the four non-occlusion videos, and the average
+current CNN feature extractor ResNet50 with more robust extractor (e.             MOTP of 73.10% on the rest of occlusion videos. In other words, the
+g., ResNet101) to reduce the tracking errors, and 2) increasing the               tracking precision of these nighttime videos decreased by 13.65% due to
+number of training data for backbone detector. By training with more              occlusions in this research.
+data, the backbone detector will be able to produce more robust results               The tracking speed of the proposed method was around 2.1 frames
+
+
+Table 2
+Experimental results of the testing videos.
+                      Tracking method                    Recall               Precision           MOTA               MOTP                 GT               MT
+
+  Vidoe1              Proposed method                    92.00%               100%                92.00%             82.00%               1                1
+                      Proposed method without IE         88.80%               100%                88.80%             81.40%               1                1
+                      SORT                               85.70%               100%                85.70%             81.20%               1                1
+  Vidoe2              Proposed method                    98.00%               99.20%              97.20%             72.80%               4                4
+                      Proposed method without IE         94.90%               99.50%              94.20%             72.60%               4                4
+                      SORT                               92.40%               99.50%              81.80%             72.50%               4                3
+  Vidoe3              Proposed method                    99.30%               99.20%              98.50%             72.90%               2                2
+                      Proposed method without IE         76.80%               98.90%              75.80%             68.30%               2                1
+                      SORT                               76.60%               98.90%              75.60%             68.40%               2                1
+  Vidoe4              Proposed method                    96.40%               97.50%              93.90%             71.10%               2                2
+                      Proposed method without IE         91.40%               96.80%              88.10%             70.70%               2                2
+                      SORT                               90.90%               96.80%              87.60%             70.60%               2                2
+  Vidoe5              Proposed method                    95.20%               100%                95.20%             84.30%               1                1
+                      Proposed method without IE         14.80%               100%                14.80%             79.60%               1                0
+                      SORT                               12%                  100%                12%                80.90%               1                0
+  Vidoe6              Proposed method                    91.50%               99.80%              91.10%             76.40%               2                2
+                      Proposed method without IE         69.10%               100%                68.90%             76.30%               2                0
+                      SORT                               57.40%               100%                57%                82%                  2                1
+  Vidoe7              Proposed method                    96.70%               96.50%              93.20%             72.30%               2                2
+                      Proposed method without IE         91.10%               92.80%              84%                70.10%               2                2
+                      SORT                               91.80%               96.80%              88.70%             72.20%               2                2
+  Vidoe8              Proposed method                    100%                 99.20%              99.20%             97.40%               2                2
+                      Proposed method without IE         100%                 99.20%              99.20%             87.70%               2                2
+                      SORT                               91.80%               99.10%              90.90%             87.30%               2                2
+  Video9              Proposed method                    90.70%               99.60%              90.30%             83.30%               2                1
+                      Proposed method without IE         90.90%               99.60%              90.50%             85.20%               2                1
+                      SORT                               81.70%               99.50%              81.30%             85.00%               2                1
+  Overall             Proposed method                    96.30%               98.80%              95.10%             75.90%               18               17
+                      Proposed method without IE         79.76%               98.53%              78.26%             76.88%               18               13
+                      SORT                               75.59%               98.96%              73.40%             77.79%               18               13
+
+IE refers to illumination enhancement.
+
+                                                                              8
+B. Xiao et al.                                                                                    Automation in Construction 127 (2021) 103721
+
+
+
+
+                 Fig. 7. Example images of illumination enhancement results for testing videos.
+
+
+
+
+                 Fig. 8. Example images of tracking results produced by the proposed method.
+
+
+
+
+                                                       9
+B. Xiao et al.                                                                                                              Automation in Construction 127 (2021) 103721
+
+
+per second (fps) in the current implementation. Due to the processing                   extractor by comparing the proposed method without implementing the
+speed, the proposed method is not suitable to be adopted for real-time                  illumination enhancement module and the SORT method under
+tracking applications considering real-time video streaming speed is                    different lighting conditions. The comparison results can be seen in
+around 15–30 fps. In such a case, some suggestions could be considered                  Table 4. In fact, the major difference between the above two methods is
+to improve the tracking speed, such as changing the backbone deep                       the CNN feature extractor. The proposed method without illumination
+learning detection (e.g., changing YOLO-v3 to Tiny-YOLO), adopting                      enhancement achieved 4.97% higher on MOTA than SORT under the
+better GPU, optimizing the architecture of GLADNet, etc. For practical                  extremely insufficient lighting conditions, while the MOTA improve­
+applications, the tracking speed can also be accelerated by adopting the                ments were 9.34% and 6.96% under the insufficient and normal lighting
+parallel coding strategy.                                                               conditions, respectively. These results can indicate that the CNN feature
+                                                                                        extractor has stably facilitated the tracking performance in nighttime
+5. Discussion                                                                           construction machine tracking, and its effectiveness was not signifi­
+                                                                                        cantly changed under different lighting conditions.
+    In this section, the experimental results have been analyzed in depth.
+The discussion includes the influences of the illumination enhancement                  5.3. Influences of daytime testing videos
+module and CNN feature extractor. Moreover, the proposed method has
+been tested on daytime videos to validate its feasibility. The influences                   To better understand the effectiveness of the proposed method, a
+of training images dataset have also been discussed.                                    supplemental experiment has been conducted to test the proposed
+                                                                                        method on four daytime videos from Xiao and Kang’s study [27]. Table 5
+5.1. Influences of the illumination enhancement module                                  summarizes the basic information of these videos and Fig. 9 shows
+                                                                                        example images of each video. As illustrated in Table 5, the brightness of
+    When tracking construction machines in nighttime videos, the illu­                  daytime videos is between 100 and 150. Meanwhile, the brightness of
+mination enhancement module becomes more effective as the lighting                      nighttime videos tested in this research is between 20 and 100. This
+conditions get worse. To better assess the effectiveness of this module,                numeric evidence shows that the nighttime videos have different char­
+nine testing videos were first divided into three categories to distinguish             acteristics from daytime videos in terms of brightness.
+different lighting conditions according to the values of video brightness:                  Table 6 shows the experimental results of the proposed method and
+normal lighting (70–100), insufficient lighting (45–70), and extremely                  SORT on daytime testing videos, while the source testing results of SORT
+insufficient lighting (0–45). Then, the average tracking performance of                 are obtained from [27]. As illustrated in Table 6, the proposed method
+the proposed method and the proposed method without illumination                        has achieved 93.00% and 85.98% on MOTA and MOTP, respectively.
+enhancement were compared under the above three lighting conditions.                    Compared with the state-of-the-art method SORT, the proposed method
+The detailed results have been summarized in Table 3. It is obvious to                  shows advantages in terms of tracking robustness (3.08% higher on
+find that the illumination enhancement module could significantly                       recall and 3.55% higher on MOTA) on these four testing videos. The
+improve the tracking performance under the extremely insufficient                       experimental results indicate the proposed method can achieve reliable
+lighting conditions. Specifically, the proposed method has achieved                     tracking performance on daytime construction videos.
+41.76% higher on recall and 41.77% on MOTA than that without                                Moreover, the proposed method is considered to be suitable for
+implementing the illumination enhancement module. Furthermore, the                      tracking construction machines from nighttime videos. In this research,
+illumination enhancement module improved 4.57% on recall and 6% on                      the proposed method has achieved the MOTA of 95.10%, MOTP of
+MOTA under insufficient lighting conditions, while the improvement on                   75.90%, recall of 96.30%, and precision of 98.80% on nighttime videos.
+tracking robustness is only 1% under normal lighting conditions.                        Excepting the metric of MOTP, the proposed method has achieved better
+    When the lighting conditions are extremely insufficient in nighttime                performance on metrics of MOTA, recall, and precision on nighttime
+videos, the construction machines are difficult to be identified by the                 videos than daytime videos. By contrast, the performance of SORT on
+deep learning detector and even by human eyes (e.g., images in Fig. 8                   nighttime videos has decreased by 16.96% on recall, 16.05% on MOTA,
+(b)). Therefore, the tracking performance is relatively low in extremely                and 7.51% on MOTP compared with those results on daytime videos.
+insufficient lighting conditions. For example, the proposed method                      The proposed method performs more robust when dealing with night­
+without implementing the illumination enhancement module only                           time videos because of the deep learning illumination enhancement
+achieved 14.80% of MOTP on Video 5, which means the machines                            module, while the SORT cannot maintain its robustness on nighttime
+cannot be detected in most of the frames. By contrast, after imple­                     tracking.
+menting this module, most of frames became detectable and the tracking
+performance was subsequently improved to a large degree. When the                       5.4. Influences of training image datasets
+lighting conditions were normal, the deep learning detector can identify
+construction machines from videos, but the effectiveness of the illumi­                     The performance of vision-based tracking methods is related to the
+nation enhancement module decreased.                                                    image dataset used for training the backbone detector. This research has
+                                                                                        adopted the ACID dataset for training the YOLO-v3 detector. It is found
+5.2. Influences of the CNN feature extractor                                            that the average brightness of 10,000 images in ACID is 125.52. Spe­
+                                                                                        cifically, 1181 images have a brightness between 0 and 100, 7494 im­
+    Similarly, we also analyzed the effectiveness of the CNN feature                    ages have a brightness between 100 and 150, and 1325 images have a
+
+Table 3
+Influences of the illumination enhancement module on tracking performance under different lighting conditions.
+  Lighting Condition                Video                        Tracking method                   Recall       Precision    MOTA          MOTP          GT       MT
+
+  Normal lighting                   Video 1, Video 9, Video 10   Proposed method                   94.23%       99.60%       93.83%        87.57%        5        4
+                                                                 Proposed method without IE        93.23%       99.60%       92.83%        84.77%        5        4
+  Insufficient lighting             Video 2, Video 4, Video 7    Proposed method                   97.03%       97.73%       94.77%        72.07%        8        8
+                                                                 Proposed method without IE        92.47%       96.37%       88.77%        71.13%        8        8
+  Extremely insufficient lighting   Video 3, Video 5, Video 6    Proposed method                   95.33%       99.67%       94.94%        77.87%        5        5
+                                                                 Proposed method without IE        53.57%       99.63%       53.17%        74.73%        5        1
+
+IE refers to illumination enhancement.
+
+                                                                                   10
+B. Xiao et al.                                                                                                                         Automation in Construction 127 (2021) 103721
+
+
+Table 4
+Influences of the CNN feature extractor on tracking performance under different lighting conditions.
+  Lighting Conditions                 Videos                          Tracking method                      Recall        Precision      MOTA            MOTP        GT       MT
+
+  Normal lighting                     Video 1, Video 9, Video 10      Proposed method without IE           93.23%        99.60%         92.83%          84.77%      5        4
+                                                                      SORT                                 86.40%        99.53%         85.97%          84.50%      5        4
+  Insufficient lighting               Video 2, Video 4, Video 7       Proposed method without IE           92.47%        96.37%         88.77%          71.13%      8        8
+                                                                      SORT                                 84.13%        98.77%         79.43%          73.13%      8        5
+  Extremely insufficient lighting     Video 3, Video 5, Video 6       Proposed method without IE           53.57%        99.63%         53.17%          74.73%      5        1
+                                                                      SORT                                 48.67%        99.63%         48.20%          77.10%      5        2
+
+IE refers to illumination enhancement.
+
+
+Table 5
+The basic information of four daytime videos (adopted from Xiao and Kang’s study [27]).
+                              Number of frames            Video duration (s)            Video resolution             Construction machines                       Video brightness
+
+  Daytime_Video1              1250                        50                            1280×720                     1 dump truck, and 1 wheel loader            136.11
+  Daytime_Video2              1050                        35                            1280×720                     1 dump truck, and 1 wheel loader            103.74
+  Daytime_Video3              1200                        48                            1280×720                     5 dump trucks, and 2 excavators             114.81
+  Daytime_Video4              1000                        40                            1280×720                     5 dump trucks, and 3 excavators             129.19
+
+
+
+
+                                      Fig. 9. Example images of four daytime videos (adopted from Xiao and Kang’s study [27]).
+
+
+Table 6
+Experimental results of the daytime testing videos.
+                          Tracking method                Recall                 Precision                   MOTA                     MOTP                  GT                MT
+
+  Vidoe1                  Proposed method                99.50%                 99.90%                      99.40%                   87.10%                2                 2
+                          SORT                           100.00%                98.40%                      98.40%                   87.30%                2                 2
+  Vidoe2                  Proposed method                91.70%                 91.70%                      83.40%                   87.50%                2                 2
+                          SORT                           87.90%                 91.20%                      79.30%                   86.00%                2                 1
+  Vidoe3                  Proposed method                95.30%                 98.50%                      93.60%                   83.80%                7                 6
+                          SORT                           89.50%                 97.70%                      88.00%                   82.10%                7                 6
+  Vidoe4                  Proposed method                96.00%                 99.60%                      95.60%                   85.50%                9                 8
+                          SORT                           92.80%                 98.40%                      92.10%                   85.80%                9                 8
+  Overall                 Proposed method                95.63%                 97.43%                      93.00%                   85.98%                20                18
+                          SORT                           92.55%                 96.43%                      89.45%                   85.30%                20                17
+
+
+
+brightness between 150 and 255 in ACID. The images captured at                               lighting conditions in ACID are different from those in nighttime videos.
+nighttime usually have the brightness smaller than 100. Considering                              Currently, there did not exist studies that tracked construction re­
+most images in ACID are captured in daytime, the brightness and                              sources at nighttime with training the backbone detector by image
+
+                                                                                        11
+B. Xiao et al.                                                                                                               Automation in Construction 127 (2021) 103721
+
+
+datasets collected at nighttime, while most construction image datasets           extractor as the appearance model in nighttime tracking of construction
+[55,62,63] are focusing on daytime scenarios. When adopting existing              machines.
+construction image datasets, the tracking methods are naturally more                  The future work will focus on improving the tracking speed and
+suitable for daytime tracking rather than nighttime tracking. For                 precision of the proposed method and more backbone deep learning
+example, the SORT method achieves better performance on robustness                detectors will be tested for this purpose. Currently, this research is only
+(16.05% higher on MOTA) and precision (7.51% higher on MOTP) on                   suitable for tracking construction machines from nighttime videos. More
+daytime videos. Developing a nighttime construction image dataset is a            works will be conducted on tracking construction workers in order to
+possible way of achieving reliable nighttime tracking. By adopting the            avoid the potential collisions between workers and construction ma­
+nighttime image dataset, the backbone detector is expected to produce             chines. Another future work is to combine the proposed method with
+more stable detection results from nighttime videos and the tracking              sensor-based methods (e.g., the global positioning system) to improve its
+performance will be eventually improved. However, building such a                 performance of dealing with occlusions. Finally, more efforts will be
+dataset is time-consuming and costly. To avoid the efforts required for           conducted to develop construction image datasets that were collected at
+developing a new dataset, this research solves the nighttime construc­            nighttime.
+tion machine tracking by introducing the deep learning illumination
+enhancement module. As such, the proposed method has achieved                     Declaration of Competing Interest
+robust performance on nighttime tracking by adopting existing well-
+developed construction image datasets.                                                No potential conflict of interest was reported by the authors.
+    The proposed method has achieved the MOTP of 75.90%, which is
+about 5% to 15% lower than the performance of state-of-the-art vision-
+based tracking methods on daytime scenarios [27,36]. This is mainly               Acknowledgement
+because the brightness conditions of the existing training datasets are
+different from the nighttime videos. As such, the backbone detector is               The authors would like to thank Professor Shih-Chung Kang from the
+difficult to produce precise detection results from the nighttime videos.         University of Alberta for providing us the ACID dataset for training.
+Also, the feasibility of the backbone detector affects the tracking preci­        More information about the ACID dataset can be found from the link:
+sion. To be noted, the MOTP of 75.90% can still satisfy the purpose of            www.acidb.ca. This work was supported by the National Natural Sci­
+construction machine tracking. As reported in [59], five testing tracking         ence Foundation of China under Grant (number 72002152).
+methods have achieved the MOTP of 76.04% on the MOT16 benchmark,
+while their performance is considered to be satisfactory for object               References
+tracking. The tracking precision of the proposed method can be
+                                                                                   [1] J. Yang, M.-W. Park, P.A. Vela, M. Golparvar-Fard, Construction performance
+improved from two perspectives including: 1) replacing YOLO-v3 with a                  monitoring via still images, time-lapse photos, and video streams: now, tomorrow,
+more precise deep learning detector, such as Faster RCNN [64], and 2)                  and the future, Adv Eng Inform 29 (2015) 211–224, https://doi.org/10.1016/j.
+collecting more nighttime construction images and adding them to the                   aei.2015.01.011.
+                                                                                   [2] B. Shao, Z. Hu, Q. Liu, S. Chen, W. He, Fatal accident patterns of building
+training dataset. In this way, the backbone detector will be able to                   construction activities in China, Saf Sci 111 (2019) 253–263, https://doi.org/
+produce more precise detection results for tracking.                                   10.1016/j.ssci.2018.07.019.
+                                                                                   [3] D. Arditi, D.E. Lee, G. Polat, Fatal accidents in nighttime vs. daytime highway
+                                                                                       construction work zones, J Saf Res 38 (2007) 399–405, https://doi.org/10.1016/j.
+6. Conclusions and future works                                                        jsr.2007.04.001.
+                                                                                   [4] Y. Kang, S. Siddiqui, S.J. Suk, S. Chi, C. Kim, Trends of fall accidents in the U.S.
+    This research presents a vision-based method for automatic tracking                construction industry, J Constr Eng Manag 143 (2017), https://doi.org/10.1061/
+                                                                                       (ASCE)CO.1943-7862.0001332, 04017043.
+of construction machines in nighttime videos. Specifically, the proposed           [5] B. Sherafat, C.R. Ahn, R. Akhavian, A.H. Behzadan, M. Golparvar-Fard, H. Kim, Y.-
+method adopts the deep learning illumination enhancement method to                     C. Lee, A. Rashidi, E.R. Azar, Automated methods for activity recognition of
+improve the lighting conditions in nighttime videos and a CNN feature                  construction workers and equipment: state-of-the-art review, J Constr Eng Manag
+                                                                                       146 (2020), 03120002, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001843.
+extractor as the appearance model to distinguish construction machines.            [6] S. Xu, J. Wang, W. Shou, T. Ngo, A.-M. Sadick, X. Wang, Computer vision
+After applying this approach to nine nighttime testing videos, the                     techniques in construction: a critical review, Arch Comput Methods Eng (2020),
+tracking performance of construction machines was relatively satisfac­                 https://doi.org/10.1007/s11831-020-09504-3.
+                                                                                   [7] C. Chen, Z. Zhu, A. Hammad, Automated excavators activity recognition and
+tory. For instance, the average MOTA and MOTP arrived at 95.10% and
+                                                                                       productivity analysis from construction site surveillance videos, Autom Constr 110
+75.90%, respectively. Meanwhile, 17 of 18 construction machine tra­                    (2020) 103045, https://doi.org/10.1016/j.autcon.2019.103045.
+jectories were successfully tracked by the proposed method. Under                  [8] H. Kim, S. Bang, H. Jeong, Y. Ham, H. Kim, Analyzing context and productivity of
+extremely insufficient lighting conditions, the illumination enhance­                  tunnel earthmoving processes using imaging and simulation, Autom Constr 92
+                                                                                       (2018) 188–198, https://doi.org/10.1016/j.autcon.2018.04.002.
+ment module sill can improve the tracking robustness around 41% in                 [9] X. Yan, H. Zhang, H. Li, Computer vision-based recognition of 3D relationship
+recall and MOTA. By adopting the proposed method, construction ma­                     between construction entities for monitoring struck-by accidents, Comput Civ
+chines can be robustly tracked in nighttime videos and several con­                    Infrastruct Eng 35 (2020) 1023–1038, https://doi.org/10.1111/mice.12536.
+                                                                                  [10] P. Dendorfer, H. Rezatofighi, A. Milan, J. Shi, D. Cremers, I. Reid, S. Roth,
+struction applications can be further automated in nighttime scenarios,                K. Schindler, L. Leal-Taixé, MOT20: A Benchmark for Multi Object Tracking in
+such as the crew productivity analysis and struck-by accidents                         Crowded Scenes. http://arxiv.org/abs/2003.09003, 2020.
+monitoring.                                                                       [11] B. Xiao, Z. Zhu, Two-dimensional visual tracking in construction scenarios: a
+                                                                                       comparative study, J Comput Civ Eng 32 (2018), 04018006, https://doi.org/
+    This research contributes to the body of knowledge of vision-based                 10.1061/(ASCE)CP.1943-5487.0000738.
+construction resources monitoring from three perspectives. Firstly, this          [12] D. Yuan, X. Li, Z. He, Q. Liu, S. Lu, Visual object tracking with adaptive structural
+research provides a robust method for tracking construction machines at                convolutional network, Knowledge-Based Syst 194 (2020) 105554, https://doi.
+                                                                                       org/10.1016/j.knosys.2020.105554.
+nighttime. By adopting the proposed method, a large number of auto­               [13] G. Ciaparrone, F. Luque Sánchez, S. Tabik, L. Troiano, R. Tagliaferri, F. Herrera,
+mated monitoring applications (e.g., machine idling monitoring and                     Deep learning in video multi-object tracking: a survey, Neurocomputing. 381
+machine collision alarm) can be directly applied to nighttime con­                     (2020) 61–88, https://doi.org/10.1016/j.neucom.2019.11.023.
+                                                                                  [14] N. Wang, J. Shi, D.-Y. Yeung, J. Jia, Understanding and diagnosing visual tracking
+struction scenarios without requiring additional efforts. Secondly, to the
+                                                                                       systems, in: 2015 IEEE Int. Conf. Comput. Vis., IEEE, 2015, pp. 3101–3109,
+authors’ knowledge, this is the first research that integrated the deep                https://doi.org/10.1109/ICCV.2015.355.
+learning illumination enhancement method to vision-based construction             [15] J. Hu, G.-S. Xia, F. Hu, L. Zhang, A comparative study of sampling analysis in the
+resources tracking. The experimental results show the potential of illu­               scene classification of optical high-spatial resolution remote sensing imagery,
+                                                                                       Remote Sens 7 (2015) 14988–15013, https://doi.org/10.3390/rs71114988.
+mination enhancement methods in nighttime construction sites moni­                [16] C. Bailer, A. Pagani, D. Stricker, A superior tracking approach: Building a strong
+toring. Thirdly, this research proves the feasibility of the CNN feature               tracker through fusion, in: Lect. Notes Comput. Sci. (Including Subser. Lect. Notes
+
+
+                                                                             12
+B. Xiao et al.                                                                                                                               Automation in Construction 127 (2021) 103721
+
+     Artif. Intell. Lect. Notes Bioinformatics), 2014, pp. 170–185, https://doi.org/              [40] D.H. Brainard, B.A. Wandell, Analysis of the retinex theory of color vision, J Opt
+     10.1007/978-3-319-10584-0_12.                                                                     Soc Am A 3 (1986) 1651, https://doi.org/10.1364/JOSAA.3.001651.
+[17] N. Dalal, B. Triggs, Histograms of oriented gradients for human detection, in: 2005          [41] B. Cai, X. Xu, K. Guo, K. Jia, B. Hu, D. Tao, A joint intrinsic-extrinsic prior model
+     IEEE Comput. Soc. Conf. Comput. Vis. Pattern Recognit., IEEE, 2010, pp. 886–893,                  for retinex, in: Proc. IEEE Int. Conf. Comput. Vis. 2017-Octob, 2017,
+     https://doi.org/10.1109/CVPR.2005.177.                                                            pp. 4020–4029, https://doi.org/10.1109/ICCV.2017.431.
+[18] R. Lienhart, J. Maydt, An extended set of Haar-like features for rapid object                [42] X. Fu, D. Zeng, Y. Huang, X.-P. Zhang, X. Ding, A weighted variational model for
+     detection, in: Proceedings. Int. Conf. Image Process., IEEE, 2002, pp. 900–903,                   simultaneous reflectance and illumination estimation, in: 2016 IEEE Conf. Comput.
+     https://doi.org/10.1109/ICIP.2002.1038171.                                                        Vis. Pattern Recognit., IEEE, 2016, pp. 2782–2790, https://doi.org/10.1109/
+[19] G. Gualdi, A. Prati, R. Cucchiara, Contextual information and covariance                          CVPR.2016.304.
+     descriptors for people surveillance: an application for safety of construction               [43] S. Wang, J. Zheng, H.-M. Hu, B. Li, Naturalness preserved enhancement algorithm
+     workers, EURASIP J Image Video Process (2011) 1–16, https://doi.org/10.1155/                      for non-uniform illumination images, IEEE Trans Image Process 22 (2013)
+     2011/684819.                                                                                      3538–3548, https://doi.org/10.1109/TIP.2013.2261309.
+[20] P. Voigtlaender, J. Luiten, P.H.S. Torr, B. Leibe, Siam R-CNN: Visual tracking by re-        [44] Y. Deng, C.C. Loy, X. Tang, Aesthetic-driven image enhancement by adversarial
+     detection, in: 2020 IEEE/CVF Conf. Comput. Vis. Pattern Recognit., IEEE, 2020,                    learning, in: 2018 ACM Multimed. Conf. Multimed. Conf. - MM’18, ACM Press,
+     pp. 6577–6587, https://doi.org/10.1109/CVPR42600.2020.00661.                                      New York, New York, USA, 2018, pp. 870–878, https://doi.org/10.1145/
+[21] J.S. Supancic III, D. Ramanan, Self-paced learning for long-term tracking, in: 2013               3240508.3240531.
+     IEEE Conf. Comput. Vis. Pattern Recognit., IEEE, 2013, pp. 2379–2386, https://               [45] K.G. Lore, A. Akintayo, S. Sarkar, LLNet: a deep autoencoder approach to natural
+     doi.org/10.1109/CVPR.2013.308.                                                                    low-light image enhancement, Pattern Recogn 61 (2017) 650–662, https://doi.
+[22] S. Hare, S. Golodetz, A. Saffari, V. Vineet, M.-M. Cheng, S.L. Hicks, P.H.S. Torr,                org/10.1016/j.patcog.2016.06.008.
+     Struck: structured output tracking with kernels, IEEE Trans Pattern Anal Mach                [46] Y.-S. Chen, Y.-C. Wang, M.-H. Kao, Y.-Y. Chuang, Deep photo enhancer: Unpaired
+     Intell 38 (2016) 2096–2109, https://doi.org/10.1109/TPAMI.2015.2509974.                           learning for image enhancement from photographs with GANs, in: 2018 IEEE/CVF
+[23] Z. Sun, J. Chen, C. Liang, W. Ruan, M. Mukherjee, A survey of multiple pedestrian                 Conf. Comput. Vis. Pattern Recognit., IEEE, 2018, pp. 6306–6314, https://doi.org/
+     tracking based on tracking-by-detection framework, IEEE Trans Circuits Syst Video                 10.1109/CVPR.2018.00660.
+     Technol (2020) 1, https://doi.org/10.1109/TCSVT.2020.3009717.                                [47] M. Gharbi, J. Chen, J.T. Barron, S.W. Hasinoff, F. Durand, Deep bilateral learning
+[24] S.H. Rezatofighi, A. Milan, Z. Zhang, Q. Shi, A. Dick, I. Reid, Joint probabilistic               for real-time image enhancement, ACM Trans Graph 36 (2017) 1–12, https://doi.
+     data association revisited, in: 2015 IEEE Int. Conf. Comput. Vis., IEEE, 2015,                    org/10.1145/3072959.3073592.
+     pp. 3047–3055, https://doi.org/10.1109/ICCV.2015.349.                                        [48] W. Wang, C. Wei, W. Yang, J. Liu, GLADNet: Low-light enhancement network with
+[25] A. Bewley, Z. Ge, L. Ott, F. Ramos, B. Upcroft, Simple online and realtime tracking,              global awareness, in: 2018 13th IEEE Int. Conf. Autom. Face Gesture Recognit. (FG
+     in: 2016 IEEE Int. Conf. Image Process., IEEE, 2016, pp. 3464–3468, https://doi.                  2018), IEEE, 2018, pp. 751–755, https://doi.org/10.1109/FG.2018.00118.
+     org/10.1109/ICIP.2016.7533003.                                                               [49] X. Guo, Y. Li, H. Ling, LIME: low-light image enhancement via illumination map
+[26] E. Bochinski, V. Eiselein, T. Sikora, High-speed tracking-by-detection without using              estimation, IEEE Trans Image Process 26 (2017) 982–993, https://doi.org/
+     image information, in: 2017 14th IEEE Int. Conf. Adv. Video Signal Based Surveill.,               10.1109/TIP.2016.2639450.
+     IEEE, 2017, pp. 1–6, https://doi.org/10.1109/AVSS.2017.8078516.                              [50] C. Lee, C. Lee, C.-S. Kim, Contrast enhancement based on layered difference
+[27] B. Xiao, S. Kang, Vision-Based Method Integrating Deep Learning Detection for                     representation of 2D histograms, IEEE Trans Image Process 22 (2013) 5372–5384,
+     Tracking Multiple Construction Machines, 35, 2021, https://doi.org/10.1061/                       https://doi.org/10.1109/TIP.2013.2284059.
+     (ASCE)CP.1943-5487.0000957.                                                                  [51] K. Ma, Kai Zeng, Zhou Wang, perceptual quality assessment for multi-exposure
+[28] O. Angah, A.Y. Chen, Tracking multiple construction workers through deep                          image fusion, IEEE Trans Image Process 24 (2015) 3345–3356, https://doi.org/
+     learning and the gradient based method with re-matching based on multi-object                     10.1109/TIP.2015.2442920.
+     tracking accuracy, Autom Constr 119 (2020) 103308, https://doi.org/10.1016/j.                [52] J. Redmon, A. Farhadi, YOLOv3: An Incremental Improvement. http://arxiv.
+     autcon.2020.103308.                                                                               org/abs/1804.02767, 2018.
+[29] K. He, G. Gkioxari, P. Dollár, R. Girshick, Mask R-CNN. http://arxiv.org/abs/1              [53] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollár, C.
+     703.06870, 2017.                                                                                  L. Zitnick, Microsoft COCO: Common objects in context, in: Lect. Notes Comput.
+[30] D. Roberts, W. Torres Calderon, S. Tang, M. Golparvar-Fard, Vision-based                          Sci. (Including Subser. Lect. Notes Artif. Intell. Lect. Notes Bioinformatics), 2014,
+     construction worker activity analysis informed by body posture, J Comput Civ Eng                  pp. 740–755, https://doi.org/10.1007/978-3-319-10602-1_48.
+     34 (2020), 04020017, https://doi.org/10.1061/(asce)cp.1943-5487.0000898.                     [54] X. Yin, Y. Chen, A. Bouferguene, H. Zaman, M. Al-Hussein, L. Kurach, A deep
+[31] E. Konstantinou, J. Lasenby, I. Brilakis, Adaptive computer vision-based 2D                       learning-based framework for an automated defect detection system for sewer
+     tracking of workers in complex environments, Autom Constr 103 (2019) 168–184,                     pipes, Autom Constr 109 (2020) 102967, https://doi.org/10.1016/j.
+     https://doi.org/10.1016/j.autcon.2019.01.018.                                                     autcon.2019.102967.
+[32] Z. Zhu, X. Ren, Z. Chen, Visual tracking of construction jobsite workforce and               [55] B. Xiao, S. Kang, Development of an image data set of construction machines for
+     equipment with particle filtering, J Comput Civ Eng 30 (2016), 04016023, https://                 deep learning object detection, J Comput Civ Eng 35 (2021), 05020005, https://
+     doi.org/10.1061/(ASCE)CP.1943-5487.0000573.                                                       doi.org/10.1061/(ASCE)CP.1943-5487.0000945.
+[33] W. Zhou, J. Whyte, R. Sacks, Construction safety and digital design: a review,               [56] R.J. Meinhold, N.D. Singpurwalla, Understanding the Kalman filter, Am Stat 37
+     Autom Constr 22 (2012) 102–111, https://doi.org/10.1016/j.autcon.2011.07.005.                     (1983) 123–127, https://doi.org/10.1080/00031305.1983.10482723.
+[34] M. Golparvar-Fard, A. Heydarian, J.C. Niebles, Vision-based action recognition of            [57] K. He, X. Zhang, S. Ren, J. Sun, Deep Residual Learning for Image Recognition. htt
+     earthmoving equipment using spatio-temporal features and support vector                           p://arxiv.org/abs/1512.03385, 2015.
+     machine classifiers, Adv Eng Inform 27 (2013) 652–663, https://doi.org/10.1016/              [58] H.W. Kuhn, The Hungarian method for the assignment problem, Nav Res Logist Q 2
+     j.aei.2013.09.001.                                                                                (1955) 83–97, https://doi.org/10.1002/nav.3800020109.
+[35] E. Rezazadeh Azar, S. Dickinson, B. McCabe, Server-customer interaction tracker:             [59] A. Milan, L. Leal-Taixe, I. Reid, S. Roth, K. Schindler, MOT16: A Benchmark for
+     computer vision–based system to estimate dirt-loading cycles, J Constr Eng Manag                  Multi-object Tracking, 2016, pp. 1–12. http://arxiv.org/abs/1603.00831.
+     139 (2013) 785–794, https://doi.org/10.1061/(ASCE)CO.1943-7862.0000652.                      [60] C. Goutte, E. Gaussier, A probabilistic interpretation of precision, recall and F-
+[36] D. Roberts, M. Golparvar-Fard, End-to-end vision-based detection, tracking and                    score, with implication for evaluation, Lect Notes Comput Sci 3408 (2005)
+     activity analysis of earthmoving equipment filmed at ground level, Autom Constr                   345–359.
+     105 (2019) 102811, https://doi.org/10.1016/j.autcon.2019.04.006.                             [61] K. Bernardin, R. Stiefelhagen, Evaluating multiple object tracking performance: the
+[37] H. Son, H. Seong, H. Choi, C. Kim, Real-time vision-based warning system for                      CLEAR MOT metrics, EURASIP J Image Video Process 2008 (2008) 1–10, https://
+     prevention of collisions between workers and heavy equipment, J Comput Civ Eng                    doi.org/10.1155/2008/246309.
+     33 (2019) 1–14, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000845.                          [62] A. Xuehui, Z. Li, L. Zuguang, W. Chengzhi, L. Pengfei, L. Zhiwei, Dataset and
+[38] H. Kim, K. Kim, H. Kim, Vision-based object-centric safety assessment using fuzzy                 benchmark for detecting moving objects in construction sites, Autom Constr 122
+     inference: monitoring struck-by accidents with moving objects, J Comput Civ Eng                   (2021) 103482, https://doi.org/10.1016/j.autcon.2020.103482.
+     30 (2016) 1–13, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000562.                          [63] H. Tajeen, Z. Zhu, Image dataset development for measuring construction
+[39] R. Wang, Q. Zhang, C.-W. Fu, X. Shen, W.-S. Zheng, J. Jia, Underexposed photo                     equipment recognition performance, Autom Constr 48 (2014) 1–10, https://doi.
+     enhancement using deep illumination estimation, in: 2019 IEEE/CVF Conf.                           org/10.1016/j.autcon.2014.07.006.
+     Comput. Vis. Pattern Recognit., IEEE, 2019, pp. 6842–6850, https://doi.org/                  [64] S. Ren, K. He, R. Girshick, J. Sun, Faster R-CNN: towards real-time object detection
+     10.1109/CVPR.2019.00701.                                                                          with region proposal networks, IEEE Trans Pattern Anal Mach Intell 39 (2017)
+                                                                                                       1137–1149, https://doi.org/10.1109/TPAMI.2016.2577031.
+
+
+
+
+                                                                                             13
+

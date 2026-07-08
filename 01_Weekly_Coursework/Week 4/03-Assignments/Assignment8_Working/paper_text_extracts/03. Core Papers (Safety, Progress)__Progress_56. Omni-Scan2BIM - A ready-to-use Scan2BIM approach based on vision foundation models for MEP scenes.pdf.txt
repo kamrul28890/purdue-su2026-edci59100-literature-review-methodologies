@@ -1,0 +1,971 @@
+                                                                Automation in Construction 162 (2024) 105384
+
+
+                                                                   Contents lists available at ScienceDirect
+
+
+                                                             Automation in Construction
+                                                         journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Omni-Scan2BIM: A ready-to-use Scan2BIM approach based on vision
+foundation models for MEP scenes
+Boyu Wang a, Zhengyi Chen b, *, Mingkai Li b, Qian Wang c, Chao Yin d, Jack C.P. Cheng b
+a
+  China State Construction Science and Technology Limited, Hong Kong, China
+b
+  Department of Civil and Environmental Engineering, The Hong Kong University of Science and Technology, Hong Kong, China
+c
+  Department of Construction and Real Estate, School of Civil Engineering, Southeast University, Nanjing, China
+d
+  Guangzhou Institute of Geography, Guangdong Academy of Sciences, China
+
+
+
+
+A R T I C L E I N F O                                    A B S T R A C T
+
+Keywords:                                                Mechanical, electrical, and plumbing (MEP) systems play a crucial role in providing various services and creating
+Scan-to-BIM                                              comfortable environments for urban residents. In order to enhance the management efficiency of these highly
+Building information model (BIM)                         complex MEP systems, as-built building information models (BIMs) are being increasingly adopted worldwide.
+Point clouds
+                                                         As-built BIMs accurately represent the actual conditions of facilities, making as-built BIM reconstruction
+As-built modeling
+Vision foundation model
+                                                         significantly important for construction progress tracking, quality assurance, subsequent facility management,
+Segment anything                                         and renewal. To create as-built BIMs for MEP systems, laser scanners are widely utilized to capture high-
+One-shot learning                                        resolution images and dense 3D measurements of the environment in a fast and highly accurate manner.
+                                                         Despite research efforts to automatically achieve “Scan-to-BIM,” there are still gaps in applying current solutions
+                                                         to real-world scenarios. One of the major challenges are the limited generalization of existing methods to unseen
+                                                         scenarios without proper training or fine-tuning on custom-designed datasets. To address this issue, this study
+                                                         introduces Omni-Scan2BIM, a novel approach powered by large-scale pre-trained vision foundation models.
+                                                         Omni-Scan2BIM enables the recognition of MEP-related components with a single shot by integrating an all-
+                                                         purpose feature extraction model and a class-agnostic segmentation model. Firstly, given only a single image
+                                                         with a reference mask, the visual features are extracted for both the target component and the collected on-site
+                                                         images using the vision foundation model DINOv2. Secondly, through comparing pixel features, similarity maps
+                                                         are generated for the on-site images. The prior points for the class-agnostic segmentation model are sampled from
+                                                         the local maxima of the similarity map. Thirdly, Segment Anything Model (SAM) is leveraged to sequentially
+                                                         segment the target component. Finally, the target component is segmented out in 3D space based on the
+                                                         transformation matrix describing the spatial relationship between the 2D images and the 3D point clouds. Shape
+                                                         analysis and label fusion are conducted for as-built BIM modeling purpose. To validate the feasibility of the
+                                                         proposed technique, experiments were conducted using data collected from a real construction site in Hong
+                                                         Kong. The results demonstrate that the proposed Omni-Scan2BIM approach can easily generalize to unseen
+                                                         components with significantly improved accuracy and efficiency.
+
+
+
+
+1. Introduction                                                                               Construction (AEC) industry results in an annual additional cost of $15.8
+                                                                                              billion, with $10.6 billion attributed to the O&M phase [3]. The
+    The adoption of Building Information Model (BIM) has demonstrated                         implementation of BIMs in facility management is anticipated to alle­
+significant potential in improving project efficiency throughout the                          viate unnecessary expenses by enhancing communication and stream­
+entire lifecycle of facilities, encompassing planning, design, construc­                      lining facility management activities. As a comprehensive information
+tion, and operation and maintenance (O&M) [1]. Among these stages,                            platform, BIMs provide virtual environments that enable parametric
+the O&M phase consumes the most time and incurs the highest costs [2].                        simulation, assessment of facility conditions, and identification of po­
+According to the National Institute of Standards and Technology (NIST),                       tential issues. These capabilities allow for the establishment of appro­
+inadequate interoperability in the Architecture, Engineering, and                             priate maintenance schedules to prevent severe deterioration [4].
+
+
+    * Corresponding author.
+      E-mail address: zchenfq@connect.ust.hk (Z. Chen).
+
+https://doi.org/10.1016/j.autcon.2024.105384
+Received 24 October 2023; Received in revised form 24 January 2024; Accepted 9 March 2024
+Available online 14 March 2024
+0926-5805/© 2024 Elsevier B.V. All rights reserved.
+B. Wang et al.                                                                                                       Automation in Construction 162 (2024) 105384
+
+
+Moreover, BIMs offer detailed component information, including types,             as other on-site images. These features are used to calculate similarities
+connections, and adjacency relationships with other components. This              between the specified object and the images to be processed, generating
+information assists technical staff in swiftly locating problematic areas         similarity maps in the second module. Local maxima of the similarity
+and executing repairs efficiently, particularly when dealing with com­            map are sampled to obtain prior points, which serve as input prompts for
+plex systems.                                                                     the segmentation model in the third module. The promptable segmen­
+    Mechanical, electrical and plumbing (MEP) system provides essen­              tation model segments the target objects from the on-site images in a
+tial services and creates comfortable environments to occupants, hence            sequential manner using prior points. In the fourth module, the trans­
+improving the efficiency of the MEP system is a key objective in facility         formation matrices between the camera coordinate system and the
+management [2]. In large-scale public projects, such as healthcare                world coordinate system are employed to segment the target objects
+centers or biotech industries, the investment associated with MEP sys­            from the LiDAR point clouds, utilizing the 2D segmentation masks. The
+tems can account for over 50% of the total project cost [5]. Furthermore,         skeletons of MEP components are extracted, and parametric BIMs are
+MEP systems play a critical role in various civil infrastructures,                reconstructed based on these extracted skeletons. Section 2 provides a
+including petroleum refineries and wastewater treatment facilities.               comprehensive literature review of related works on as-built BIM gen­
+Extensive research has been conducted on the implementation of BIM                eration using 2D images and 3D point clouds. Section 3 describes the
+technology for MEP system management across different phases,                     developed approach for automatic creation of as-built BIMs for MEP
+ranging from design [5–7], construction [5,8,9] to O&M [2,10]. During             scenes. A validation test on real construction scenarios and performance
+the O&M phase, BIM technology enables more intelligent facility man­              analysis are conducted in Section 4. Finally, Section 5 summarizes the
+agement by digitizing and integrating a vast amount of documents and              study and offers suggestions for future work.
+drawings within BIMs [2]. Specifically, the digital model can be utilized
+to analyze the conditions of MEP systems in virtual environments,                 2. Literature review
+monitor component conditions through wireless sensors, swiftly identify
+problematic components, and prioritize routine maintenance tasks                  2.1. Semantic-rich 3D point cloud generation
+accordingly [11]. By leveraging BIM-aided O&M management, the
+lifespan of MEP systems can be extended, ensuring the provision of high-              The acquisition of semantic-rich 3D point clouds plays a crucial role
+quality services.                                                                 in the Scan2BIM process as it enables the creation of an accurate and
+    In real construction projects, unlike disciplines such as architecture        information-rich BIM model. Precisely identifying object boundaries
+and structure, the disparities between the as-designed BIMs and as-built          within the point cloud data is a fundamental and indispensable stage in
+BIMs for MEP systems are substantial. These discrepancies arise from              this process. Two intuitive approaches can be employed to generate such
+frequent design changes or deviations during assembly, rendering it               semantic-rich 3D data. The first approach involves mapping the results
+impractical to directly utilize the as-designed BIMs for tracking con­            obtained from 2D segmentation into 3D space, while the second
+struction progress and managing facilities during the operational stage.          approach directly conducts 3D segmentation on point clouds. Currently,
+Consequently, BIM modelers are compelled to manually create as-built              deep learning methods have emerged as the predominant paradigm in
+BIMs in modeling software, relying on collected as-built data such as             both 2D and 3D semantic segmentation tasks.
+on-site photos and point clouds. However, this method entails a heavy                 Since the introduction of fully convolutional networks (FCN) in 2014
+workload, necessitating the involvement of numerous experienced                   [14], significant advancements have been made in 2D image semantic
+modelers for extended periods of time. Therefore, there is a pressing             segmentation. FCN models typically follow an encoder-decoder archi­
+need to develop a reliable and efficient approach for generating accurate         tecture, where the encoder is responsible for learning feature repre­
+and updated as-built BIMs with comprehensive facility information.                sentations, and the decoder performs pixel-level classification based on
+    To comprehensively capture the site's details, operators utilize              these representations. Over the years, the encoder component has un­
+terrestrial laser scanners (TLS), also known as Light Detection and               dergone evolution from AlexNet [15] and VGGNet [16] to ResNet [17],
+Ranging (LiDAR), to acquire on-site photos and collect point cloud data           with ResNet becoming a widely adopted choice due to its effectiveness
+with millimeter accuracy. This approach captures the external surfaces            in feature representation. More recently, the Transformer architecture
+of objects in both image and point cloud formats [12]. Although various           has emerged as a promising alternative to convolutional operators,
+deep learning methods have demonstrated potential in extracting se­               exhibiting superior performance in various vision tasks. Transformers
+mantic information from point clouds, their applicability to unseen               have the ability to capture long-range dependencies and increase the
+scenes is hindered by their reliance on purpose-built datasets. However,          receptive field to encompass the entire image. This characteristic has led
+in parallel with the rapid advancement of large language models (LLMs)            to the development of novel semantic segmentation models built upon
+like GPT [13], significant progress has been made in the development of           transformer blocks, such as SETR [18], SegFormer [19] and Segmenter
+large-scale vision models. The vision foundation models exhibit excep­            [20]. These models showcase improved performance and demonstrate
+tional transfer capabilities, demonstrating their ability to perform              the potential of transformer-based encoders in semantic segmentation
+effectively on tasks and data distributions that lie outside the boundaries       tasks. To utilize 2D segmentation results for modeling purposes, map­
+of their original training scope. The impressive generalization ability           ping of these results into 3D space is necessary. This can be achieved
+displayed by these foundation models presents opportunities for their             using either the Structure from Motion (SfM) technique or the Simul­
+application in Scan2BIM, which is the shorthand for Scan-to-BIM, for              taneous Localization and Mapping (SLAM) system.
+unknown scenarios. Nonetheless, the utilization of the vision foundation              In comparison to 2D methods, direct segmentation of 3D point clouds
+models' generalization capability and bridging the gap between the as-            is a more straightforward approach. PointNet [21] pioneered the
+built data, including images and point clouds, and the as-built BIM,              application of deep learning methods for processing point cloud data. It
+remain unexplored avenues of research.                                            employed two symmetric functions, namely multilayer perceptron
+    To address the existing research gap, this study introduces Omni-             (MLP) and maxpooling, for feature extraction. However, PointNet did
+Scan2BIM, a Scan2BIM approach for MEP scenes, utilizing vision foun­              not consider the local dependency among points, making it less robust
+dation models. The proposed method enables the detection and                      for detailed segmentation tasks. To address this limitation and explore
+modeling of essential MEP components without requiring additional                 local point features, more advanced models have been developed, such
+training. The technique leverages two data sources: camera data and               as PointNet++ [22], RandLA-Net [23] and KP-FCNN [24]. More
+LiDAR point cloud data. The presented approach consists of four mod­              recently, addressing the challenge of intensive 3D labeling, data-
+ules. In the first module, an all-purpose vision foundation model extracts        efficient learning for 3D point clouds has gained popularity. Represen­
+features from a sample image containing the target component, as well             tative works in this field include PointContrast [25], Contrastive Scene
+
+                                                                              2
+B. Wang et al.                                                                                                       Automation in Construction 162 (2024) 105384
+
+
+Contexts [26] and SQN [27]. These methods achieve comparable per­                network called PipeNet, which incorporated an optimal neighborhood
+formance to fully supervised methods while utilizing significantly fewer         selection module for pipe segmentation and parameter prediction. This
+labeled samples for training. By leveraging contrastive learning and             network aimed to accurately segment and predict parameters for pipes.
+scene context information, these approaches enabled more efficient use           Qi et al. [40] introduced the DSCNet, a deep learning model equipped
+of labeled data, reducing annotation efforts and increasing scalability.         with a novel dynamic snake convolution. This convolutional operation
+    Regardless of whether 2D or 3D semantic segmentation methods are             enabled the network to effectively capture the features of tubular
+employed, one prominent challenge is the limited generalization ability          structures by adaptively focusing on slender and tortuous local struc­
+of pretrained models. It is notoriously difficult to directly apply a pre­       tures. The integration of this dynamic snake convolution significantly
+trained model to unseen scenarios. For instance, a well-trained model on         enhanced the accuracy and continuity of tubular structure segmenta­
+indoor scenes may exhibit poor performance when applied to industrial            tion. However, it is still challenging of achieving Scan2BIM for ducts
+or construction sites without retraining or fine-tuning on a customized          with non-circular cross sections and pipes with small radii. Very few
+dataset. Moreover, even when a model is trained on a specific industrial         existing methods have effectively addressed this issue.
+plant, it may not function as expected when deployed in another plant                For irregular-shaped components with complex geometries, such as
+due to variations in appearances and differences in objects between the          valves and pumps, feature-based methods are often preferred. Deep
+two scenes. This lack of generalization poses a significant obstacle for         learning-based descriptors, in comparison to hand-crafted point cloud
+practical implementation of Scan2BIM solutions.                                  descriptors, are more expressive and provide comprehensive informa­
+                                                                                 tion, exhibiting significantly improved performance in various tasks,
+2.2. As-built BIM reconstruction for MEP systems                                 including semantic segmentation and object recognition. Agapaki and
+                                                                                 Brilakis [41] developed a framework named “CLOI-NET” based on
+    The MEP systems in the construction industry possess three signifi­          PointNet++ to automatically annotate industrial point clouds. Likewise,
+cant characteristics: high complexity, frequent design changes, and              [42,43] proposed deep learning frameworks for point cloud semantic
+prevalent installation deviations. Consequently, the AEC industry places         segmentation specifically tailored to MEP scenes. Wang et al. [29]
+great emphasis on establishing accurate as-built models of MEP systems.          initially detected target objects in 2D images and subsequently refined
+Currently, advanced algorithms have emerged with the potential to                the detection results in 3D space. To enhance the reliability of 3D
+assist in the Scan2BIM process. Based on the authors' previous articles          verification methods based on the Iterative Closest Point (ICP) algorithm
+[28,29], MEP components can be broadly categorized into two groups:              and optimization-based techniques, Wang et al. [44] considered local
+regular-shaped components and irregular-shaped components. Regular-              shape similarity and developed an object verification module. This
+shaped components, also known as tubular components, are character­              module can be easily integrated into any Scan2BIM framework, leading
+ized by constant cross sections and varying lengths. Examples include            to improved accuracy in the Scan2BIM process.
+circular pipes and ducts. Irregular-shaped components, on the other                  However, similar to generalized deep learning-based object detec­
+hand, refer to components with complex shapes such as valves and                 tion algorithms, the limited generalizability of these methods hinders
+pumps. The shapes of these components are fixed for a specific model             their application in real-world projects. Furthermore, 3D deep learning
+type, and for the purpose of BIM reconstruction, six parameters [x, y, z,        methods encounter challenges in capturing fine details of MEP piping
+px, py, pz], which include locations and poses, are required.                    systems and recognizing subsystems.
+    For regular-shaped components, the majority of previous research
+has focused on the detection of cylindrical pipes. Two widely explored           2.3. Vision foundation model
+methods include the generalized Random Sample Consensus (RANSAC)
+and the centerline-based approach. Schnabel et al. [30] developed an                 Pre-trained on extensive web-scale datasets, LLMs such as ChatGPT
+efficient RANSAC-based method capable of detecting various simple 3D             [13] have brought about a significant revolution in the field of natural
+shapes, such as planes, spheres, cylinders, cones, and tori. This contri­        language processing (NLP). These foundational models exhibit remark­
+bution has laid a solid foundation for Scan2BIM research endeavors. In           able transfer capabilities, extending their effectiveness to tasks and data
+the centerline-based method, tubular pipes are succinctly represented by         distributions that lie beyond their original training scope. LLMs
+their skeleton diagrams, which can be obtained through section analysis          demonstrate impressive zero-shot and few-shot generalization abilities
+or Hough voting in a Gaussian sphere. Ahmed et al. [31] employed a               and excel in addressing diverse language-related tasks, including lan­
+two-dimensional Hough Transform on sliced point clouds to identify               guage understanding, generation, interaction, and reasoning.
+pipes with predetermined sizes. Bosché et al. [32] integrated the “Scan-            The research on foundation models in computer vision is rapidly
+to-BIM” and “Scan-vs-BIM” frameworks based on section analysis,                  advancing and catching up with the progress made in NLP. Motivated by
+enabling efficient construction monitoring of MEP components. Wang               large-scale image-text contrastive pre-training, models such as CLIP [45]
+et al. [28] developed a slicing method wherein point cloud slices were           and ALIGN [46] demonstrate robust zero-shot transfer capabilities to
+analyzed, and the cross-sections of desired components could be                  downstream vision tasks. In contrast to being guided by text, DINOv2
+extracted using two-dimensional approaches. In addition to slicing               [47] focuses on learning versatile visual features by capturing intricate
+method, Gaussian sphere is frequently utilized to determine the prin­            information at both the image and pixel level solely from raw image
+cipal directions of cylinders [33–35]. Patil et al. [36] further enhanced        data. It achieves comparable or superior performance compared to CLIP
+this methodology by introducing hierarchical accumulation structures             on downstream tasks. However, the utilization of these foundation
+in the Hough voting process. Furthermore, Lee et al. [37] extracted              models as image encoders necessitates task-specific heads for individual
+pipeline skeletons by employing Voronoi diagrams and topological                 downstream tasks, which limits their generalizability in real-world ap­
+thinning, subsequently classifying the skeletons into straight pipes, el­        plications. Recently, Segment Anything Model (SAM) [48] has exhibited
+bows, and tee pipes.                                                             impressive zero-shot segmentation performance, showcasing significant
+    In recent years, there has been a growing trend in adapting gener­           potential in open-world image perception. SAM introduces a novel
+alized deep learning models for the purpose of pipeline extraction.              promptable segmentation paradigm, where a handcrafted prompt is
+Cheng et al. [38] developed DeepPipes, a customized deep learning                provided as input, and the model returns the corresponding mask. SAM
+model designed to reconstruct 3D pipelines from point clouds. Their              supports a wide range of acceptable prompts, including points, boxes,
+approach utilized convolutional networks to learn point cloud features           masks, and free-form texts, enabling the segmentation of various visual
+and classified points into different classes. Subsequently, robust clus­         elements. Nevertheless, as a class-agnostic segmenter, SAM lacks the
+tering techniques and graph-based aggregation methods were applied to            ability to extract high-level semantic features, which restricts its capa­
+compute a coherent pipe model. Xie et al. [39] proposed a neural                 bilities for comprehensive open-world image understanding.
+
+                                                                             3
+B. Wang et al.                                                                                                  Automation in Construction 162 (2024) 105384
+
+
+
+
+                                  Fig. 1. Overview of the proposed Omni-Scan2BIM based on vision foundation models.
+
+
+    In recent years, researchers have been exploring the integration of       modules: target-guided attention, target-semantic prompting, and
+various foundation models to address the aforementioned limitations.          cascaded post-refinement. Furthermore, Liu et al. [52] introduced a
+Grounded-SAM [49] is an example of such efforts, which combines               bidirectional matching strategy for accurate cross-image semantic dense
+Grounding DINO with Segment Anything to establish a robust pipeline           matching and a robust prompt sampler for mask proposal generation.
+for open-world image understanding. Building upon SAM, Zhang and                 However, the direct application of previous promotable SAM ap­
+Liu [50] proposed a general solution called SAMed for medical image           proaches to MEP networks results in unsatisfactory segmentation out­
+segmentation. They employed a low-rank-based (LoRA) fine-tuning               comes due to the presence of thin local structures and variable global
+strategy on the SAM image encoder and jointly finetuned it with the           morphologies within the MEP components. Additionally, the utilization
+prompt encoder and the mask decoder using labeled medical image               of vision foundation models to bridge the gap between as-built data,
+segmentation datasets. To eliminate the need for manual prompting             comprising images and point clouds, and as-built BIMs remains largely
+steps, Zhang et al. [51] proposed a training-free approach for person­        unexplored. Consequently, there is a need to investigate how to harness
+alizing SAM, referred to as PerSAM. PerSAM incorporated three                 the generalization abilities of vision foundation models and address the
+
+
+                                                                          4
+B. Wang et al.                                                                                                                 Automation in Construction 162 (2024) 105384
+
+
+
+
+Fig. 2. Foundation model based feature extraction. (a) The sample image containing the target object along with its corresponding mask; (b) The pixel-level features
+extracted for the sample image; (c) The pixel-level features specifically related to the target object; (d) An on-site image to be processed; (e) The pixel-level features
+extracted for the on-site image.
+
+
+challenges associated with transforming as-built data into accurate as-                 masks are projected to 3D space, and the skeletons of the tubular objects
+built BIMs. To unlock the full potential of vision foundation models in                 are extracted. Based on geometric analysis, the as-built BIMs are
+the Scan2BIM process, this study proposes an approach called Omni-                      reconstructed in a parametric manner.
+Scan2BIM. The proposed method aims to convert as-built data,
+including on-site images and point clouds, into as-built BIMs without
+                                                                                        3.1. Foundation model based feature extraction
+requiring explicit training. Remarkably, the Omni-Scan2BIM approach
+achieves this goal by leveraging a single sample image containing the
+                                                                                            Due to limitations in model capacity and the diversity of datasets,
+target components, along with a reference mask, as the input. This
+                                                                                        traditional deep convolutional neural networks (DCNNs) can only
+innovative approach demonstrates the potential to streamline the
+                                                                                        generate reliable feature vectors for objects present in the training
+Scan2BIM process and eliminate the need for extensive training datasets.
+                                                                                        dataset. Consequently, the application of deep learning in unknown
+                                                                                        environments is hindered. However, recent advancements in the field,
+3. Methodology
+                                                                                        such as the Transformer architecture and the availability of expansive
+                                                                                        databases, have enabled the development of vision foundation models
+    The objective of this study is to present Omni-Scan2BIM, a ready-to-
+                                                                                        capable of encoding comprehensive features for previously unseen ob­
+use Scan2BIM approach that does not require training or fine-tuning on
+                                                                                        jects through large-scale pre-training. One notable example is the
+a custom dataset. By utilizing a single sample image containing the
+                                                                                        Masked and Asymmetrically Encoded (MAE) model [53], which em­
+target components along with a reference mask, the proposed method
+                                                                                        ploys an asymmetric encoder-decoder structure and conducts masked
+automatically recognizes all target components within the entire site.
+                                                                                        image modeling to efficiently and effectively train scalable vision
+Fig. 1 provides an overview of the Omni-Scan2BIM approach. The
+                                                                                        Transformer models. MAE has demonstrated exceptional fine-tuning
+method comprises four sequential modules: 1) foundation model-based
+                                                                                        performance across various downstream tasks. Another noteworthy
+feature extraction, 2) similarity map generation and prior point sam­
+                                                                                        model is Contrastive Language-Image Pre-training (CLIP) [45], which
+pling, 3) sequential class-agnostic segmentation, and 4) shape analysis
+                                                                                        learns image representations from scratch using a dataset of 400 million
+and BIM reconstruction. These modules will be explained in Sections
+                                                                                        image-text pairs. CLIP exhibits impressive zero-shot image classification
+3.1 to 3.4, respectively. In Section 3.1, pixel-level deep descriptors are
+                                                                                        capabilities. Additionally, the DINOv2 [47] model utilizes image and
+computed for the target object present in the sample image as well as
+                                                                                        patch level discriminative self-supervised learning to acquire all-
+other on-site images. Then, in Section 3.2, a comparison of visual fea­
+                                                                                        purpose visual features suitable for diverse downstream tasks.
+tures between the target object and the on-site images is performed,
+                                                                                        Notably, DINOv2 excels in patch-matching, capturing information
+resulting in the generation of similarity maps for the on-site images.
+                                                                                        related to semantic parts that share similar characteristics across
+These similarity maps indicate the probability of each pixel belonging to
+                                                                                        different objects. Based on the technical reports [47,52], DINOv2 is the
+the target category. Subsequently, prior points are sampled from the
+                                                                                        most suitable image encoder capable of providing highly reliable fea­
+local maxima of the similarity map. In Section 3.3, the prompt encoder
+                                                                                        tures among different vision models. Consequently, in the Omni-
+of SAM is employed to sequentially process the prior points and perform
+                                                                                        Scan2BIM framework, DINOv2 has been utilized to extract features
+segmentation of the contiguous region surrounding each prompt point.
+                                                                                        from both the reference object and the on-site images, ensuring the
+Finally, in Section 3.4, leveraging the transformation matrix between
+                                                                                        robustness and accuracy of the feature extraction process.
+the camera coordinate and the world coordinate, the 2D segmentation
+                                                                                            For convenience, the sample image and the corresponding mask are
+
+                                                                                    5
+B. Wang et al.                                                                                                            Automation in Construction 162 (2024) 105384
+
+
+
+
+Fig. 3. Similarity map generation and prior point sampling. (a) Similarity map generated through feature comparison for the on-site image; (b) Similarity map after
+eliminating pixels with low similarity values. (c) Prior point sampling based on the similarity map.
+
+
+denoted as Is and Ms respectively, as depicted in Fig. 2(a). The on-site             similarity value below a specified threshold are identified and subse­
+images to be processed are represented as It , as illustrated in Fig. 2(d).          quently eliminated as background. The resulting similarity map, ob­
+The encoding operation performed by the foundation vision model is                   tained after this initial filtering process, is illustrated in Fig. 3(b).
+denoted as ENCDINOv2 . The visual features of the sample image, denoted              Considering the potential variation of the threshold value across
+as Fs and shown in Fig. 2(b), and the on-site images, denoted as Ft and              different applications, it is advisable, particularly when recognizing a
+illustrated in Fig. 2(e), are calculated using the following formulas:               new type of targeting object in novel scenes, to fine-tune this value
+                                                                                     within a localized region to ensure its suitability for the specific appli­
+Fs = ENCDINOv2 (Is ), Ft = ENCDINOv2 (It )                                 (1)
+                                                                                     cation. Once determined, this refined threshold value can be consis­
+where Fs , Ft ∈ Rhw×c . h and w denote the spatial dimensions, and c rep­            tently applied throughout the entire project. Based on the authors' tests,
+resents the number of channels. To eliminate the influence of the                    a threshold value of 0.5 is suggested as a favorable starting point to
+background, the visual features of the target object, Fo , are obtained by           initiate this fine-tuning process. Following the filtering step, regional
+spatial-wise multiplying the sample image features, Fs , with the refer­             maxima are detected within the processed similarity map presented in
+ence mask, Ms :                                                                      Fig. 3(b) to serve as prior points. These maxima correspond to pixels
+                                                                                     where the similarity values are relatively higher, surrounded by pixels
+Fo = Ms ∘Fs                                                                (2)       displaying lower similarity values. For enhanced clarity, the sampled
+                                                                                     prior points are superimposed on the original similarity map, as illus­
+where ∘ denotes spatial-wise multiplication. The resulting feature rep­              trated in Fig. 3(c). The search for regional maxima could be carried out
+resentation, Fo ∈ Rd×c is visualized in Fig. 2(c), where d corresponds to            utilizing functions from the Scikit-Image [54], an open-source image
+the size of the object in the feature map Fs .                                       processing library. The sampled prior points are depicted in Fig. 3(c).
+
+3.2. Similarity map generation and prior point sampling                              3.3. Sequential segmentation with SAM
+
+   In Omni-Scan2BIM, an efficient method is adopted to generate the                      Recently, SAM has gained attention for its impressive zero-shot class-
+similarity map for the on-site images: Firstly, the features of the target           agnostic segmentation performance, achieved through pre-training on a
+object, Fo , are aggregated using an average pooling operation:                      vast dataset of 1 billion masks and 11 million images using the model-in-
+Eo = Pooling(Fo )                                                          (3)       the-loop annotation technique. SAM introduces a novel promptable
+                                                                                     segmentation task, where the objective is to generate a segmentation
+where Eo ∈ R1×c represents the compressed global visual embedding of                 mask for any given prompt, including prior points or bounding boxes.
+the target object. Secondly, the features of the on-site images, Ft and the          However, SAM inherently lacks the ability to segment specific visual
+global embedding of the target object, Eo , are L2-normalized. Thirdly,              concepts. This necessitates users to manually locate the target object in
+the cosine similarity matrix, S ∈ Rh×w , is computed through matrix                  various poses or contexts for each image and then activate SAM with a
+multiplication:                                                                      precise prompt for segmentation. This process becomes labor-intensive
+                                                                                     and time-consuming, particularly for object segmentation tasks in
+S = Ft Eo                                                                  (4)       large-scale scenes. To address this limitation, Omni-Scan2BIM leverages
+    After resizing and bilinear interpolation, the resulting similarity map          the prior points generated through similarity analysis, as described in
+is visualized in Fig. 3(a). In the similarity maps, the jet colormap was             Sections 3.1 and 3.2, to enable SAM to automatically segment unique
+employed, where red indicates high similarity and blue represents low                visual concepts in a simple and efficient manner.
+similarity. Ideally, higher similarity values indicate a greater likelihood              The prior points are sorted in descending order based on their sim­
+of each pixel belonging to the target category. In practice, this can be             ilarity values. The point with the highest similarity is initially fed to SAM
+challenging due to variations in appearance or even differences in object            for segmentation, as indicated by the green star in Fig. 4(a). SAM
+categories between the reference and target objects. Therefore, it is                comprises three main components: an image encoder ENCSAM− img , a
+crucial for the encoder to embed rich and detailed information within                prompt encoder ENCSAM− prompt , and a lightweight mask decoder
+these features.                                                                      DECSAM− mask . In Omni-Scan2BIM, SAM takes an input image It and the
+    Upon acquiring the similarity map, a limited set of prior points needs           prior point P with the highest similarity. Firstly, ENCSAM− img is employed
+to be generated to facilitate precise target object segmentation using the           to extract the image feature, while ENCSAM− prompt encodes the given prior
+promptable segment anything model SAM. Initially, pixels exhibiting a                point into c-dimensional tokens. Subsequently, the encoded image and
+
+                                                                                 6
+B. Wang et al.                                                                                                               Automation in Construction 162 (2024) 105384
+
+
+
+
+Fig. 4. Sequential segmentation using SAM. (a) Predicted mask after the initial segmentation with SAM, utilizing the prior point with the highest similarity value; (b)
+Remaining prior points after the first segmentation with SAM; (c) Sequential segmentation with the visualization of mask predictions and prior points; (d) The final
+mask for slim pipes; (e) The final mask for slim pipes with indices recorded.
+
+
+the prompt tokens are fed into the decoder DECSAM− mask for attention-                 estimated through Intersection over Union (IoU) calculation [48].
+based feature interaction. The input tokens of the decoder are con­                        The segmentation result is initially evaluated using two straightfor­
+structed by concatenating several learnable tokens TM as a prefix to the               ward metrics: the confidence score output by SAM and the segmentation
+prompt tokens. These mask tokens play a crucial role in generating the                 purity. Segmentation purity is defined as the average similarity within
+final mask output. The segmentation process using SAM can be formu­                    the proposed mask region generated by SAM:
+lated as follows:                                                                               ∑
+                                                                                                  M∘S
+                  (                        (                        ) )                purity = ∑                                                            (6)
+M = DECSAM− mask ENCSAM− img (It ) , Concat ENCSAM− prompt (P) , TM                                M
+                                                                             (5)
+                                                                                       where M represents the segmented Boolean mask, and S represents the
+where M represents the zero-shot mask prediction generated by SAM, as                  similarity map.
+depicted in Fig. 4(a). In the original SAM framework, multiple masks of                   Once the mask is obtained from SAM, it undergoes an appearance
+three scales are simultaneously generated, representing the entire ob­                 check step. If the confidence score from SAM and the segmentation
+ject, its parts, and subparts. However, to mitigate ambiguity, Omni-                   purity exceeds the proper thresholds, the mask is deemed successful and
+Scan2BIM selects the mask with the highest confidence score, which is                  passes the appearance check. It is then preserved for the subsequent
+                                                                                       shape-based filtering process, as elucidated in Section 3.4. Masks that
+
+                                                                                   7
+B. Wang et al.                                                                                                                     Automation in Construction 162 (2024) 105384
+
+
+
+
+Fig. 5. 2D to 3D mapping. (a) The point cloud data in the camera coordinate system; (b) The blue points represent the points located on the frontside of the camera;
+(c) The green points represent the points situated within the camera's field of view (FOV); (d) The yellow points represent visible points of the camera and the red
+points specifically denote the target object. (For interpretation of the references to colour in this figure legend, the reader is referred to the web version of this article.)
+
+
+satisfy both appearance and shape requirements are retained for                            complexity of real-world scenarios, masks that pass the initial appear­
+modeling purposes. Simultaneously, the prior points falling within the                     ance check may not necessarily represent the desired objects.
+mask area are removed as shown in Fig. 4(b). Conversely, masks that fail                       To transfer the labels of the 2D masks to the 3D point clouds, it is
+to meet the aforementioned checkpoints are disregarded, and the cor­                       crucial to establish a clear transformation between the camera frame
+responding prior point is eliminated. Following the initial segmentation                   coordinate system and the world coordinate system. This transformation
+and inspection, the prior point with the highest similarity in the                         matrix can be obtained through meticulous hardware calibration. In the
+remaining points is fed into SAM for a second-round of segmentation                        case of Omni-Scan2BIM, the built-in high dynamic range (HDR) cameras
+and filtering. This sequential process of segmentation and inspection                      of commercial laser scanners are utilized to better illustrate the concept.
+continues iteratively until there are no more prompts available. The                       The calibration of these cameras is performed by the manufacturers of
+advantage of sequential segmentation of the target object, as opposed to                   the scanners. For each image captured by the built-in camera, the
+segmenting the target object in a single iteration with multiple prior                     extrinsic parameters describing the transformation are recorded,
+points, lies in its ability to effectively mitigate the level of noise                                                              [ r11 r12 r13 ]
+contamination. The progression of this iterative segmentation process is                   including a 3 × 3 rotation matrix R =             r21 r22      r23   and a 3 × 1
+visually represented in Fig. 4(c). The final mask specifically representing
+                                                                                                                                              r31 r32     r33
+the slim pipes is shown in Fig. 4(d). Additionally, Fig. 4(e) provides a                                             ⎡⎤
+                                                                                                                   t1
+visual representation of the final mask for the slim pipes, with an
+                                                                                           translation vector t = t2 ⎦.
+                                                                                                                 ⎣
+accompanying index for reference.                                                                                  t3
+                                                                                              The point clouds obtained from the laser scanner, represented ho­
+3.4. Shape analysis and BIM reconstruction                                                                        ⎡ Xw ⎤
+                                                                                                               ⎢ Yw ⎥
+3.4.1. 2D to 3D mapping                                                                    mogeneously as Pw = ⎣    ⎦ in the world coordinate system, are
+                                                                                                                 Zw
+    In this section, the qualified masks generated by SAM, which have
+successfully passed the appearance check, are mapped to 3D space for                                                      1
+further analysis. This mapping is carried out for two primary reasons.
+First, since BIMs are essential 3D representations, it is necessary to map
+the semantic labels obtained from image segmentation to 3D space to                        initially transformed to the camera coordinate system denoted as Pcam =
+facilitate BIM reconstruction process. Second, due to the inherent
+
+                                                                                       8
+B. Wang et al.                                                                                                                       Automation in Construction 162 (2024) 105384
+
+
+
+
+                                                                                                           Fig. 8. Label fusion for integrating multiple setups.
+
+
+                                                                                          ⎡ Xcam ⎤
+                                                                                          ⎢ Ycam ⎥
+                                                                                          ⎣      ⎦ using the transformation matrix:
+Fig. 6. Rule-based shape filtering for slim pipes. The extracted skeleton rep­              Zcam
+resenting the slim pipe is depicted in a magenta colour, while the distance map                1
+is visualized using a jet colormap. (For interpretation of the references to colour
+in this figure legend, the reader is referred to the web version of this article.)                              ⎡ r11         r12   r13   t1 ⎤⎡ Xw ⎤
+                                                                                                   [        ]
+                                                                                                       R   t    ⎢ r21         r22   r23   t2 ⎥⎢ Yw ⎥
+                                                                                          Pcam =             P =⎣                            ⎦⎣    ⎦                         (7)
+                                                                                                       0   1 w    r31         r32   r33   t3    Zw
+                                                                                                                         0    0     0     1     1
+
+                                                                                              The transformed point cloud, Pcam , is illustrated in Fig. 5(a). Subse­
+                                                                                          quently, points located behind the camera, specifically those with a Z
+                                                                                          value less than 0 are removed. The remaining points, depicted in Fig. 5
+                                                                                          (b), are visually distinguished by their blue colour.
+                                                                                              Following this, the transformed point cloud, Pcam , is mapped to the
+                                                                                                                             ⎡       ⎤
+                                                                                                                               Ximg
+                                                                                          image plane denoted as Pimg = ⎣ Yimg ⎦ using the projection matrix K =
+                                                                                                                               Zimg
+                                                                                           ⎡                ⎤
+                                                                                             fx 0 ox 0
+                                                                                           ⎣ 0 fy oy 0 ⎦, which incorporates the camera's intrinsic parameters
+                                                                                             0 0 1 0
+                                                                                          such as focal length in the x-axis (fx ), focal length in the y-axis (fy ), offset
+                                                                                          in the x-axis (ox ) and offset in the y-axis (oy ):
+                                                                                              After normalizing the homogeneous coordinates, the pixel co­
+                                                                                                                                    [ ]
+                                                                                                                                      u
+                                                                                          ordinates in the image plane, Ppxl =           , are calculated as follows:
+                                                                                                                                      v
+
+                                                                                                                                    X
+                                                                                                                ⎡                ⎤⎡ cam ⎤
+                                                                                                           fx       0    ox    0
+                                                                                                                                  ⎢ Ycam ⎥
+                                                                                          Pimg = KPcam = ⎣ 0        fy   oy    0 ⎦⎣      ⎦                                   (8)
+                                                                                                           0        0    1     0    Zcam
+                                                                                                                                      1
+                                                                                              Upon coordinate transformation, the points within the camera's field
+                                                                                          of view (FOV) are expected to fall within the boundaries of the captured
+                                                                                          image, adhering to geometric principles:
+                                                                                               Ximg      Yimg
+                                                                                          u=        ,v =                                                                     (9)
+                                                                                               Zimg      Zimg
+
+                                                                                          where W and H represent the width and height of the captured image,
+                                                                                          respectively. Points that do not meet these specified criteria are elimi­
+                                                                                          nated. The retained points are highlighted in green in Fig. 5(c).
+
+Fig. 7. Label fusion for integrating multiple classes within a single setup. (a)          0 < u < W, 0 < v < H                                                             (10)
+Raw on-site image; (b) Predicted mask for the slim pipe; (c) Certainty levels                 Up to this point, it has been observed that certain points are erro­
+corresponding to the predicted mask for the slim pipe; (d) Predicted mask for
+                                                                                          neously included in the image, despite being occluded and not visible.
+the duct; (e) Certainty levels corresponding to the predicted mask for the duct;
+                                                                                          For example, points located behind interior walls may also be errone­
+(f) Final mask representing the slim pipes and the ducts.
+                                                                                          ously included. To address this issue and remove hidden points, a visi­
+                                                                                          bility analysis is conducted by extracting the points residing on the
+                                                                                          convex hull of the transformed point cloud, as presented in [55]. The
+                                                                                          points highlighted in yellow in Fig. 5(d) indicate the visible points
+                                                                                          within the camera's view.
+                                                                                              Following the projection, each visible point is mapped to a pixel in
+
+
+                                                                                      9
+B. Wang et al.                                                                                                           Automation in Construction 162 (2024) 105384
+
+
+
+
+Fig. 9. Sample images for slim pipes and ducts. (a) The sample image and the manually labeled mask for slim pipes; (b) The sample image and the manually labeled
+mask for ducts.
+
+
+the mask proposed by SAM in Section 3.3, and the corresponding label                1) Circular Pipes
+is assigned to that point. This process effectively segments the target
+objects in 3D space, as exemplified by the distinct red coloration in Fig. 5            The distinctive characteristic of circular pipes lies in their cylindrical
+(d). At this stage, the connection between the image and the 3D point               bodies, allowing for the seamless integration of the efficient RANSAC
+clouds has been established, signifying that accurate segmentation in 2D            algorithm [30] to fit the segmented point clouds. Subsequently, the
+space is equivalent to accurate segmentation in 3D space. Consequently,             average distance between the point clouds and the fitted cylinders can
+the 3D objects can be successfully segmented for further analysis.                  be computed, enabling the identification and removal of false positives
+                                                                                    that surpass an appropriate threshold. The current methodology offers
+3.4.2. Rule-based shape filtering                                                   two notable advantages over the authors' previous approaches. Firstly,
+    Given that there are still a specific number of undesired masks that            the Omni-Scan2BIM system demonstrates enhanced efficiency. In the
+have passed the appearance check, which includes SAM segmentation                   authors' earlier works, alongside circular pipes, there were substantial
+confidence check and purity check, it becomes imperative to devise a                amounts of extraneous point clouds representing irrelevant objects
+filtering strategy as the authors' previous works [28,29] to enhance the            following the rough segmentation operation. To ensure the robustness of
+quality of the segmentation results. As this study focuses on regular               the entire framework, additional cross-section analysis was performed
+shaped components with intricate global morphology, the discussion                  consecutively in the X, Y, and Z directions within the Manhattan coor­
+regarding the shape filtering strategy for irregular shaped components is           dinate system. However, this process proved to be time-consuming.
+beyond the scope of this research. Interested readers are encouraged to             Secondly, the versatility of the Omni-Scan2BIM system allows for the
+refer to the authors' previous work [44] for further insights into this             accurate representation of tubular, elongated objects with arbitrary
+topic.                                                                              major directions, achieved through a more comprehensive 2D analysis
+    Regular shaped components are characterized by continuous cross                 and 3D filtering approach.
+sections and varying lengths, with circular pipes, rectangular ducts, and               For extremely thin pipes with a diameter less than three centimeters,
+I-beams being the most representative examples. The design of filtering             the effectiveness of the RANSAC algorithm diminishes due to the spar­
+rules should be tailored to the distinctive features exhibited by these             sity of points, resulting in blurry cross-sectional representations that
+components. Notably, the segmentation output achieved with the aid of               pose significant challenges in identifying circular shapes. To address this
+the powerful SAM algorithm in the newly proposed Omni-Scan2BIM                      complex issue, the local width of the object is estimated to filter out
+system demonstrates significantly improved cleanliness compared to                  wrong recognitions based on the assumption that slim pipes are the only
+the rough segmentation steps presented in the authors' earlier works                object with a local width smaller than three centimeters. In line with this
+[28,29]. Consequently, the filtering step employed in this study show­              idea, the 3D skeleton is extracted using the Laplacian-based contraction
+cases enhanced intuitiveness and efficiency.                                        (LBC) method [56] for the candidate 3D point clouds, as depicted in
+                                                                                    Fig. 6. Similar to circular pipes, a distance field can be calculated from
+
+                                                                               10
+B. Wang et al.                                                                                                          Automation in Construction 162 (2024) 105384
+
+
+
+
+                                        Fig. 10. Visualization of similarity maps and predicted masks for slim pipes.
+
+
+the point clouds to the extracted skeleton, as illustrated in Fig. 6. Any         retrieved, and the width of each cross section is verified accordingly. It is
+point sets with distances that exceed an appropriate threshold are                important to note that the cross section verification process differs from
+considered false positives and are subsequently discarded.                        the cross section analysis employed in the authors' previous works
+                                                                                  [28,29]. The main distinctions lie in the fixed number of cross sections
+2) Rectangular Ducts                                                              utilized for verification in Omni-Scan2BIM, as opposed to the dense
+                                                                                  slicing approach employed in previous works, which involved a larger
+    In contrast to circular pipes, the verification of rectangular ducts          number of cross sections.
+cannot be effectively accomplished using the efficient RANSAC method.
+Instead, a cross section verification method can be employed. Firstly, the        3.4.3. Label fusion and BIM reconstruction
+ducts' skeletons are extracted using the LBC technique. Secondly, the                Each on-site image may contain multiple types of components that
+major direction of the extracted skeleton is determined using RANSAC              need to be recognized. Since different types of components are processed
+algorithms. Thirdly, five cross sections along the major direction are            independently, one potential error in recognition is misclassifying a
+
+                                                                             11
+B. Wang et al.                                                                                                           Automation in Construction 162 (2024) 105384
+
+
+
+
+                                            Fig. 11. Visualization of similarity maps and predicted masks for ducts.
+
+
+component as a different class. An example of such an error is depicted              one image frame. However, considering the extensive area of the entire
+in Fig. 7. Fig. 7(a) shows an on-site image where both slim pipes and                site to be modeled, which requires dozens to hundreds of stations to
+ducts are expected to be recognized. Utilizing the techniques described              cover, the integration of segmentation masks from multiple setups
+in previous sections, the predicted masks for slim pipes and ducts are               through label fusion becomes imperative to achieve a unified result.
+visualized in Fig. 7(b) and Fig. 7(d) respectively. It can be observed in                In the registered point cloud data, a single point may be visible from
+Fig. 7(b) that one segment of the duct has been incorrectly recognized as            multiple laser scanning stations, which can result in conflicting labels
+a slim pipe.                                                                         assigned to that point. To address potential label conflicts, the Omni-
+    To address this issue, a label fusion mechanism has been developed               Scan2BIM methodology employs the principle of proximity, whereby
+to handle multiple classes within a single setup. During the sequential              the label assigned to a point is determined by the prediction of the
+segmentation process, for each segment that passes both the appearance               nearest scanning station as shown in Fig. 8. The data fusion strategy
+check and the shape check, the similarity value of the prior point for that          relies on the observation that objects closer to the camera exhibit greater
+particular segmentation is recorded along with the segmented masks,                  clarity and are easier to recognize.
+indicating the certainty level of the proposed mask. The certainty levels                The BIM reconstruction process in this study adheres to the para­
+for slim pipes and ducts in the captured on-site image are visualized in             metric modeling approaches previously introduced by the authors in
+Fig. 7(c) and Fig. 7(e) respectively. It is evident that although the duct           their prior works [28,29].
+has been mislabeled as a slim pipe in Fig. 7(b), the certainty level for that
+segment is relatively low, as indicated by the light green colour in Fig. 7          4. Validation
+(c). Conversely, the certainty level for it being a duct is significantly
+higher, as shown in Fig. 7(e). In such cases, the pixels belonging to that           4.1. Dataset for validation experiment
+segment will be labeled as ducts, as the certainty level of it being a duct
+is greater than that of it being a slim pipe. The resulting 2D mask after               To assess the effectiveness of the proposed Omni-Scan2BIM method,
+label fusion within one setup is displayed in Fig. 7(f).                             point cloud data were collected using the LEICA RTC360 laser scanner at
+    At the current stage, the introduced approach can only be applied to             construction site of a university student apartment in Hong Kong. The
+
+                                                                                12
+B. Wang et al.                                                                                                                Automation in Construction 162 (2024) 105384
+
+
+
+
+Fig. 12. Point cloud segmentation results from Omni-Scan2BIM: (a) The original point cloud data (floors and ceilings were removed for better visualization); (b)
+Labeled point cloud data based on Omni-Scan2BIM (slim pipe in red and duct in blue); (c) Segmented point clouds of slim pipes (true positives in red, false negatives
+in yellow and false positives in cyan); (d) Segmented point clouds of ducts (true positives in blue, false negatives in yellow). (For interpretation of the references to
+colour in this figure legend, the reader is referred to the web version of this article.)
+
+
+                                                                                        employed LiDAR system could achieve an accuracy of approximately 2
+                                                                                        mm and a resolution of 5 mm at a distance of 10 m. The LiDAR had a
+                                                                                        horizontal field of view of 360◦ and a vertical field of view of 300◦ . The
+                                                                                        laser scanner's internal HDR camera was utilized to capture images with
+                                                                                        a resolution of 2048 × 2048. Six images were taken for each setup,
+                                                                                        ensuring full coverage of the scanner's visible area. In total, 29 stations
+                                                                                        were set to collect point cloud data within the designated area. The point
+                                                                                        clouds collected from multiple stations were registered using the LEICA
+                                                                                        CYCLONE software, and the registered point clouds are visualized in
+                                                                                        Fig. 12(a). The transformation matrices, which describe the relation­
+                                                                                        ships between the 2D images and the 3D point clouds, were obtained
+                                                                                        from the LEICA software. It is important to note that the proposed Omni-
+                                                                                        Scan2BIM method is not restricted to the specific scanning hardware.
+                                                                                        The use of LEICA devices in this experiment was solely for demonstra­
+Fig. 13. Metric demonstration: the centerline lengths of the tubular objects
+                                                                                        tion purposes. The experiment specifically focused on two representa­
+were employed to assessing the effectiveness of Scan2BIM methods.
+                                                                                        tive tubular MEP components, namely slim pipes (Fig. 9(a)) and ducts
+                                                                                        (Fig. 9(b)). In this one-shot version of the Omni-Scan2BIM, the sample
+
+
+                                                                                   13
+B. Wang et al.                                                                                                             Automation in Construction 162 (2024) 105384
+
+
+Table 1                                                                                removed as false positives.
+Comparison of the Scan2BIM results achieved by Omni-Scan2BIM and previous                  The similarity maps and the predicted masks generated by Omni-
+Scan2BIM approaches.                                                                   Scan2BIM for slim pipes and ducts are presented in Fig. 10 and
+                    True         False          False        Recall   Precision        Fig. 11, respectively. In the similarity maps, the jet colormap was
+                    Positive     Negative       Positive                               employed, where red indicates high similarity and blue represents low
+                    (meter)      (meter)        (meter)                                similarity. A higher similarity value suggests a higher probability of the
+  Direct Slicing                                                                       presence of the target objects. It is evident that the similarity maps,
+                    Cannot work without Manhattan world assumption
+    Method [28]                                                                        generated through feature comparison, successfully indicated the
+  Deep Learning
+                                                                                       approximate locations of the desired components on the 2D images. This
+    Methods         Cannot generalize to unknown scenes
+    [29,43]                                                                            demonstrates the ability of the vision foundation model to extract
+  EdgeWise for                                                                         comprehensive features from on-site images without the need for
+    Slim Pipe       24.5         58.0           3.1          29.7%    88.8%            additional training. Moreover, with the assistance of SAM, the proposed
+    [57]                                                                               approach accurately segmented the target objects, producing clear
+  Omni-
+    Scan2BIM        75.2         7.3            0.8          91.2%    98.9%
+                                                                                       outlines on the 2D images based on the sampled prior points.
+    for Slim Pipe                                                                          Upon propagating the 2D labels into the 3D domain and applying
+  Omni-                                                                                label fusion, the target systems, namely the slim piping system and duct
+    Scan2BIM        19.4         1.9            0            91.1%    100%             system, were successfully segmented from the noisy point cloud data, as
+    for Duct
+                                                                                       illustrated in Fig. 12(b). For clearer visualization of the segmentation
+                                                                                       results, the 3D point clouds of the slim piping system and the duct sys­
+                                                                                       tem were visualized separately in Fig. 12(c) and Fig. 12(d), respectively.
+image selection process is based on a small testing. Initially, 6–8                    The observations indicated that the vast majority of pipelines, including
+candidate images are chosen based on intuition, selecting images that                  slim pipes and ducts, were successfully segmented with minimal false
+can effectively represent the general appearance of the target object in               positives. In fact, no false positives were observed for ducts, which could
+the project. These candidate images are then sequentially tested to                    be attributed to their larger sizes, facilitating easier recognition. Since
+determine their success in recognizing the target objects in other images.             the focus of this research lies on tubular components such as pipes and
+The candidate image that exhibits the best performance, accurately                     ducts, rather than conducting statistical analysis of point cloud labels, a
+reflecting the general appearance of the target object, is ultimately                  more meaningful measure is the quantification of centerline lengths
+selected as the final sample.                                                          covered by the labeled point clouds, as demonstrated in Fig. 13. The
+                                                                                       quantitative results have been summarized in Table 1, in which the true
+4.2. Results of validation experiments                                                 positive, false negative and false positive were measured by the
+                                                                                       centerline lengths of the tubular objects in meters. It is evident from the
+   In this experiment, the operator annotated the sample image as                      table that 75.2 m of slim pipes were accurately identified, with only 7.3
+shown in Fig. 9(a)(b) using the widely recognized labeling tool                        m of false negatives and 1.4 m of false positives. The recall and precision
+‘LabelMe’, to indicate the visual representations of the target compo­                 rates for slim pipes reached 91.2% and 98.2%, respectively. Further­
+nents to the developed Omni-Scan2BIM system. Subsequently, the HDR                     more, 19.4 m of ducts, out of a total length of 21.3 m, were successfully
+images captured by the laser scanner underwent several processing                      recognized without any false positives. The recall and precision rates for
+steps, including deep feature extraction, similarity map generation,                   ducts were 91.1% and 100%, respectively. Based on these findings, it
+prior point sampling, and sequential segmentation. Afterwards, the la­                 can be concluded that, in the testing scenario, over 90% of tubular
+bels associated with the 2D masks were propagated to the corresponding                 components, in terms of length, were successfully recognized and could
+3D point clouds, and the 3D shapes of the segmented objects were                       be further modeled.
+examined to eliminate potential outliers. Additionally, the labeled point                  In contrast, previous Scan2BIM methods based on deep learning
+clouds obtained from different setups were fused together using the                    [29,43] are limited in their ability to generalize to unknown scenes
+proximity principle. Finally, considering the spatial relationship be­                 without retraining or fine-tuning on purpose-built datasets. Traditional
+tween different segments of components, the isolated components which                  methods that encompass ducts and slim pipes [28,29] only function
+are far away from any other components in the same system are                          effectively under the assumption of a Manhattan world, while diagonal
+
+
+
+
+Fig. 14. Point cloud segmentation results from EdgeWise: (a) Labeled point cloud data based on EdgeWise (slim pipe in purple); (b) Comparison of the segmented
+slim pipes obtained from Omni-Scan2BIM (red) and EdgeWise (purple). (For interpretation of the references to colour in this figure legend, the reader is referred to
+the web version of this article.)
+
+                                                                                  14
+B. Wang et al.                                                                                                              Automation in Construction 162 (2024) 105384
+
+
+                                                                                         parts (false negatives) in the segmented point clouds, as depicted in
+                                                                                         Fig. 12(c) and Fig. 12(d). The underlying reason for this phenomenon,
+                                                                                         according to the mechanism of the proposed Omni-Scan2BIM method,
+                                                                                         was the failure to recognize the target objects in the image from the
+                                                                                         nearest setup. Fig. 15(a) and Fig. 15(b) illustrate two examples of such
+                                                                                         failures, one involving slim pipes and the other involving ducts,
+                                                                                         respectively. It can be observed that the slim pipes in Fig. 15(a) and the
+                                                                                         ducts in Fig. 15(b) were not recognized due to the low similarity in
+                                                                                         appearance between the objects in the captured on-site images and the
+                                                                                         objects in the sample images.
+                                                                                             The slim pipes depicted in the sample image shown in Fig. 9(a) are
+                                                                                         predominantly covered by white plastic insulation material, whereas the
+                                                                                         slim pipes in the captured image illustrated in Fig. 15(a) are primarily
+                                                                                         composed of bronze metal. This significant variation in appearance
+                                                                                         contributes to the low similarity observed between the target object in
+                                                                                         the captured image and the corresponding object in the sample image.
+                                                                                             In the case of ducts, the sample image displayed in Fig. 9(b) was
+                                                                                         acquired in an environment with abundant lighting conditions.
+                                                                                         Conversely, the captured images depicted in Fig. 15(b) were obtained in
+                                                                                         a confined and dimly lit MEP room. Consequently, the ducts could not be
+                                                                                         recognized due to the insufficient illumination levels present in these
+                                                                                         images.
+                                                                                             To address this limitation, a potential solution would involve
+                                                                                         incorporating multiple sample images that encompass a wider range of
+                                                                                         possible situations. This approach would enable the system to learn from
+Fig. 15. Failure case analyses: (a) Failure case for the slim pipe mask predic­
+                                                                                         various appearances and adapt to different scenarios. The authors are
+tion. The lefthand side is the raw image and the righthand side is the similarity
+map for slim pipes; (b) Failure case for the duct mask prediction. The lefthand
+                                                                                         actively working on the development of the few-shot version of Omni-
+side is the raw image and the righthand side is the similarity map for ducts.            Scan2BIM to enhance its robustness under different lighting and mate­
+                                                                                         rial conditions.
+                                                                                             Additionally, the recognition performance of the Scan2BIM process
+components present significant challenges for these techniques. Com­
+                                                                                         can be significantly influenced by the quality of captured images and the
+mercial software such as EdgeWise [57] can handle circular pipes in
+                                                                                         level of occlusion present in highly dense MEP components. It is evident
+novel scenarios through improved geometric methods, potentially uti­
+                                                                                         that recognition outcomes are adversely affected by very poor-quality
+lizing techniques such as Hough Transform or efficient RANSAC. The
+                                                                                         images, whereas higher-quality images produce more reliable results.
+results of EdgeWise on the tested scenes are also provided in Table 1 and
+                                                                                         Nevertheless, establishing a quantitative threshold for image resolution
+visualized in Fig. 14(a). However, due to the small diameter of the slim
+                                                                                         which defines a minimum requirement may vary depending on the
+pipes, the software exhibits poor performance, with a recall rate of
+                                                                                         specific objects being analyzed, thereby requiring further research. To
+around 30%, significantly trailing behind the performance of the pro­
+                                                                                         address the challenges posed by occlusions, one potential solution is the
+posed approach, as depicted in Fig. 14(b).
+                                                                                         deduction approach, wherein closely arranged MEP components are
+                                                                                         collectively treated as a set and deducted as a whole. If a portion of the
+4.3. Failure case analysis                                                               set has already been successfully recognized, the entire set is presumed
+                                                                                         to be complete based on the information provided by the as-designed
+    Observing Table 1, it is apparent that there were still some missing                 BIM. This method effectively utilizes the knowledge of the overall
+
+
+
+
+Fig. 16. Potential applications of Omni-Scan2BIM by integrating Scan-vs-BIM: (a) As-built slim pipes in red versus as-designed slim pipes in pink (b) A zoom in view
+of the comparison between as-built pipes and as-designed pipes for one room. (For interpretation of the references to colour in this figure legend, the reader is
+referred to the web version of this article.)
+
+                                                                                    15
+B. Wang et al.                                                                                                             Automation in Construction 162 (2024) 105384
+
+
+system design to infer the presence and completeness of obscured                   Omni-Scan2BIM demonstrated successful reconstruction over a length
+components.                                                                        of 75.2 m, within a total range of 82.5 m. The achieved recall and pre­
+                                                                                   cision values were 91.2% and 98.9% respectively. In comparison, the
+4.4. Potential applications                                                        state-of-the-art commercial software EdgeWise, which relies on tradi­
+                                                                                   tional geometry analysis, only reconstructed 24.5 m of the pipelines,
+    The proposed Omni-Scan2BIM methodology holds significant po­                   with a recall of 29.7% and precision of 88.8%. Regarding ducts, Omni-
+tential in facilitating the updating of as-designed models, monitoring             Scan2BIM achieved successful reconstruction over a length of 19.4 m,
+construction progress, and conducting engineering quality inspections              within a total range of 21.3 m. The recall and precision values for this
+for MEP systems. As highlighted in the introduction, the presence of               category were also reported as 91.1% and 100.0% respectively. It is
+assembly deviations and frequent design alterations leads to substantial           worth noting that there is currently a scarcity of mature automatic so­
+disparities between the actual as-built conditions and the corresponding           lutions for rectangular duct BIM reconstruction, both in commercial
+as-designed BIM representations. Consequently, updating as-designed                markets and research domains. Traditional deep learning models also
+models, monitoring construction progress, and conducting quality in­               face challenges in direct generalization to new sites without retraining
+spections pose particular challenges for MEP systems, distinguishing               or fine-tuning on custom-designed datasets. Due to these inherent lim­
+them from architecture and structural systems.                                     itations, the results obtained from these methods cannot be easily
+    While Omni-Scan2BIM has demonstrated promising results in                      replicated and are therefore not presented in this study.
+recognizing MEP systems and generating parametric as-built models,                     While this study has yielded promising results, it is important to
+there still exists a significant lack of data and details pertaining to the        acknowledge certain limitations. The developed Omni-Scan2BIM tech­
+geometric model. This includes globally unique identifiers (GUIDs),                nique relies on a single sample image, which may not adequately cap­
+supplier information, insulation conditions, tags, and other relevant              ture the variability in appearance or account for illumination variations.
+attributes. As this kind of information is typically entered manually by           Consequently, false positives were observed during the validation phase
+BIM modelers into the as-designed BIM, it is more prudent to update the            of this research, highlighting the need to incorporate a slightly larger
+as-designed BIM to the as-built positions by establishing correspon­               number of samples to encompass a broader range of scenarios.
+dences between the two data sources, rather than re-entering the in­               Furthermore, this study introduces three potential application directions
+formation manually. In the conducted experiment, the as-built                      for the developed Omni-Scan2BIM methodology, namely as-designed
+conditions of slim pipes are represented in red, while the corresponding           model updating, construction progress tracking, and engineering qual­
+as-designed model is depicted in pink, as illustrated in Fig. 16(a). While         ity inspection. However, these directions warrant further exploration
+the overall trends of the as-built and as-designed pipes remain consis­            and investigation to fully understand their potential and feasibility.
+tent, deviations are observed in specific locations. A more detailed
+illustration of this argument is presented in Fig. 16(b), which provides a         CRediT authorship contribution statement
+zoomed-in view of a specific room. By identifying the corresponding
+objects in the as-built model, the as-designed model can be automati­                 Boyu Wang: Conceptualization, Data curation, Methodology, Soft­
+cally updated to reflect the as-built positions along with comprehensive           ware, Validation, Writing – original draft, Writing – review & editing.
+information, as indicated by the blue arrows in Fig. 14(b). In addition to         Zhengyi Chen: Conceptualization, Data curation, Formal analysis,
+efficiently updating the as-designed model, this correspondence be­                Methodology, Software, Supervision, Writing – original draft, Writing –
+tween the as-built and as-designed models can also aid in construction             review & editing. Mingkai Li: Conceptualization, Methodology, Project
+progress tracking and quality inspection in real projects. The logic               administration, Resources, Supervision, Validation, Visualization. Qian
+behind this approach is as follows: for each object in the as-designed             Wang: Project administration, Resources, Software, Supervision. Chao
+model, if the corresponding objects can be found in the as-built model,            Yin: Data curation, Methodology, Software, Supervision, Validation.
+the construction status of the object would be marked accordingly.                 Jack C.P. Cheng: Funding acquisition, Investigation, Methodology,
+                                                                                   Project administration, Resources, Software, Supervision, Validation.
+5. Conclusions
+                                                                                   Declaration of competing interest
+    This study introduces Omni-Scan2BIM, an innovative Scan2BIM
+approach that leverages vision foundation models with exceptional
+                                                                                       The authors declare that they have no known competing financial
+generalizability. Unlike previous methods, Omni-Scan2BIM can be
+                                                                                   interests or personal relationships that could have appeared to influence
+readily applied to unseen scenarios without the need for training or fine-
+                                                                                   the work reported in this paper.
+tuning. In the proposed method, users are required to annotate the target
+object on a single sample image. Visual features are then computed
+                                                                                   Data availability
+using an all-purpose feature extraction model, such as DINOv2, for the
+specified object in the sample image as well as hundreds of additional
+                                                                                      Data will be made available on request.
+on-site images. By comparing these features, similarity maps are
+generated for the captured on-site images, indicating the potential
+                                                                                   Acknowledgments
+likelihood of each pixel belonging to the target component. Subse­
+quently, prior points are sampled from the local maxima of the similarity
+                                                                                      The authors would like to acknowledge the support by the China
+maps and fed into the generalized segmentation model, SAM, for precise
+                                                                                   State Construction Engineering (Hong Kong) Limited and China Post­
+boundary segmentation. By leveraging the transformation matrix be­
+                                                                                   doctoral Science Foundation (Grant No. 2023M740761).
+tween 2D images and 3D point clouds, the 2D labels are propagated to
+the corresponding 3D point cloud data. Furthermore, a joint shape
+analysis involving both 2D and 3D data is performed to alleviate po­               References
+tential outliers in the segmentation process. To ensure accuracy and
+                                                                                    [1] S. Azhar, Building information modeling (BIM): trends, benefits, risks, and
+completeness, labels from different setups are fused based on the prox­                 challenges for the AEC industry, Leadersh. Manag. Eng. 11 (3) (2011) 241–252,
+imity principle. This fusion process enhances the consistency and reli­                 https://doi.org/10.1061/(ASCE)LM.1943-5630.0000127.
+ability of the final segmentation results.                                          [2] Z.-Z. Hu, P.-L. Tian, S.-W. Li, J.-P. Zhang, BIM-based integrated delivery
+                                                                                        technologies for intelligent MEP management in the operation and maintenance
+    The proposed technique was validated using data collected from an                   phase, Adv. Eng. Softw. 115 (2018) 1–16, https://doi.org/10.1016/j.
+actual construction site in Hong Kong. In the case of slim pipelines,                   advengsoft.2017.08.007.
+
+
+                                                                              16
+B. Wang et al.                                                                                                                                 Automation in Construction 162 (2024) 105384
+
+ [3] C.M. Eastman, C. Eastman, P. Teicholz, R. Sacks, K. Liston, BIM Handbook: A Guide             [29] B. Wang, Q. Wang, J.C. Cheng, C. Song, C. Yin, Vision-assisted BIM reconstruction
+     to Building Information Modeling for Owners, Managers, Designers, Engineers and                    from 3D LiDAR point clouds for MEP scenes, Autom. Constr. 133 (2022) 103997,
+     Contractors, 2011, https://doi.org/10.1002/9781119287568.                                          https://doi.org/10.1016/j.autcon.2021.103997.
+ [4] M. Yalcinkaya, V. Singh, Building information modeling (BIM) for facilities                   [30] R. Schnabel, R. Wahl, R. Klein, Efficient RANSAC for point-cloud shape detection,
+     management–literature review and future needs, IFIP Int. Conf. Prod. Lifecycle                     Comp. Graphics Forum (2007) 214–226, https://doi.org/10.1111/j.1467-
+     Manag. (2014) 1–10, https://doi.org/10.1007/978-3-662-45937-9_1.                                   8659.2007.01016.x.
+ [5] T. Olofsson, G. Lee, C. Eastman, D. Reed, Benefits and lessons learned of                     [31] M.F. Ahmed, C.T. Haas, R. Haas, Automatic detection of cylindrical objects in built
+     implementing building virtual design and construction (VDC) technologies for                       facilities, J. Comput. Civ. Eng. 28 (3) (2014) 04014009, https://doi.org/10.1061/
+     coordination of mechanical, electrical, and plumbing, J. Inform. Technol.                          (ASCE)CP.1943-5487.0000329.
+     Construct. 13 (2007) 324–342. https://www.itcon.org/2008/22.                                  [32] F. Bosché, M. Ahmed, Y. Turkan, C.T. Haas, R. Haas, The value of integrating scan-
+ [6] E. Pärn, D. Edwards, M.C. Sing, Origins and probabilities of MEP and structural                   to-BIM and scan-vs-BIM techniques for construction monitoring using laser
+     design clashes within a federated BIM model, Autom. Constr. 85 (2018) 209–219,                     scanning and BIM: the case of cylindrical MEP components, Autom. Constr. 49
+     https://doi.org/10.1016/j.autcon.2017.09.010.                                                      (2015) 201–213, https://doi.org/10.1016/j.autcon.2014.05.014.
+ [7] J. Wang, X. Wang, W. Shou, H.-Y. Chong, J. Guo, Building information modeling-                [33] R. Qiu, Q.-Y. Zhou, U. Neumann, Pipe-run extraction and reconstruction from point
+     based integration of MEP layout designs and constructability, Autom. Constr. 61                    clouds, in: European Conference on Computer Vision, Zurich, Switzerland, 2014,
+     (2016) 134–146, https://doi.org/10.1016/j.autcon.2015.10.003.                                      pp. 17–30, https://doi.org/10.1007/978-3-319-10578-9_2.
+ [8] T.M. Korman, C. Tatum, Prototype tool for mechanical, electrical, and plumbing                [34] T. Rabbani, F. Van Den Heuvel, Efficient hough transform for automatic detection
+     coordination, J. Comput. Civ. Eng. 20 (1) (2006) 38–48, https://doi.org/10.1061/                   of cylinders in point clouds, in: ISPRS WG III/3, III/4, V/3 Workshop “Laser
+     (ASCE)0887-3801(2006)20:1(38).                                                                     Scanning 2005”, Enschede, the Netherlands, 2005, pp. 60–65, in: https://www.ispr
+ [9] A.R. Tabesh, S. Staub-French, Modeling and coordinating building systems in three                  s.org/PROCEEDINGS/XXXVI/3-W19/papers/060.pdf.
+     dimensions: a case study, Can. J. Civ. Eng. 33 (12) (2006) 1490–1504, https://doi.            [35] T.-T. Tran, V.-T. Cao, D. Laurendeau, Extraction of cylinders and estimation of their
+     org/10.1139/l06-124.                                                                               parameters from point clouds, Comput. Graph. 46 (2015) 345–357, https://doi.
+[10] X. Liu, B. Akinci, M. Bergés, J.H. Garrett Jr., Extending the information delivery                org/10.1016/j.cag.2014.09.027.
+     manual approach to identify information requirements for performance analysis of              [36] A.K. Patil, P. Holi, S.K. Lee, Y.H. Chai, An adaptive approach for the reconstruction
+     HVAC systems, Adv. Eng. Inform. 27 (4) (2013) 496–505, https://doi.org/                            and modeling of as-built 3D pipelines from point clouds, Autom. Constr. 75 (2017)
+     10.1016/j.aei.2013.05.003.                                                                         65–78, https://doi.org/10.1016/j.autcon.2016.12.002.
+[11] A. Akcamete, B. Akinci, J.H. Garrett, Potential utilization of building information           [37] J. Lee, H. Son, C. Kim, C. Kim, Skeleton-based 3D reconstruction of as-built
+     models for planning maintenance activities, Proc. Int. Conf. Comp. Civil Build. Eng.               pipelines from laser-scan data, Autom. Constr. 35 (2013) 199–207, https://doi.
+     (2010) 151–157. https://www.researchgate.net/publication/260056325_Potential                       org/10.1016/j.autcon.2013.05.009.
+     _utilization_of_building_information_models_for_planning_maintenance_activities.              [38] L. Cheng, Z. Wei, M. Sun, S. Xin, A. Sharf, Y. Li, B. Chen, C. Tu, DeepPipes: learning
+[12] Q. Wang, M.-K. Kim, Applications of 3D point cloud data in the construction                        3D pipelines reconstruction from point clouds, Graph. Model. 111 (2020) 101079,
+     industry: A fifteen-year review from 2004 to 2018, Adv. Eng. Inform. 39 (2019)                     https://doi.org/10.1016/j.gmod.2020.101079.
+     306–319, https://doi.org/10.1016/j.aei.2019.02.007.                                           [39] Y. Xie, S. Li, T. Liu, Y. Cai, As-built BIM reconstruction of piping systems using
+[13] OpenAI, GPT-4 Technical Report, 2023, https://doi.org/10.48550/                                    PipeNet, Autom. Constr. 147 (2023) 104735, https://doi.org/10.1016/j.
+     arXiv.2303.08774.                                                                                  autcon.2022.104735.
+[14] J. Long, E. Shelhamer, T. Darrell, Fully convolutional networks for semantic                  [40] Y. Qi, Y. He, X. Qi, Y. Zhang, G. Yang, Dynamic Snake Convolution based on
+     segmentation, Proc. IEEE Conf. Comput. Vis. Pattern Recognit. (2015) 3431–3440,                    Topological Geometric Constraints for Tubular Structure Segmentation, arXiv
+     https://doi.org/10.1109/CVPR.2015.7298965.                                                         preprint arXiv:.08388, 2023, https://doi.org/10.48550/arXiv.2307.08388.
+[15] A. Krizhevsky, I. Sutskever, G.E. Hinton, Imagenet classification with deep                   [41] E. Agapaki, I. Brilakis, CLOI-NET: class segmentation of industrial facilities’ point
+     convolutional neural networks, Adv. Neural Inf. Proces. Syst. 25 (2012) https://dl.                cloud datasets, Adv. Eng. Inform. 45 (2020) 101121, https://doi.org/10.1016/j.
+     acm.org/doi/10.1145/3065386.                                                                       aei.2020.101121.
+[16] K. Simonyan, A. Zisserman, Very Deep Convolutional Networks for Large-Scale                   [42] Y. Perez-Perez, M. Golparvar-Fard, K. El-Rayes, Scan2BIM-NET: deep learning
+     Image Recognition, 2014, https://doi.org/10.48550/arXiv.1409.1556.                                 method for segmentation of point clouds for scan-to-BIM, J. Constr. Eng. Manag.
+[17] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition, Proc.               147 (9) (2021) 04021107, https://doi.org/10.1061/(ASCE)CO.1943-
+     IEEE Conf. Comput. Vis. Pattern Recognit. (2016) 770–778, https://doi.org/                         7862.0002132.
+     10.1109/CVPR.2016.90.                                                                         [43] C. Yin, B. Wang, V.J. Gan, M. Wang, J.C. Cheng, Automated semantic segmentation
+[18] S. Zheng, J. Lu, H. Zhao, X. Zhu, Z. Luo, Y. Wang, Y. Fu, J. Feng, T. Xiang, P.                    of industrial point clouds using ResPointNet++, Autom. Constr. 130 (2021)
+     H. Torr, Rethinking semantic segmentation from a sequence-to-sequence                              103874, https://doi.org/10.1016/j.autcon.2021.103874.
+     perspective with transformers, Proc. IEEE/CVF Conf. Comp. Vision Pattern Recog.               [44] B. Wang, Q. Wang, J.C. Cheng, C. Yin, Object verification based on deep learning
+     (2021) 6881–6890, https://doi.org/10.1109/CVPR46437.2021.00681.                                    point feature comparison for scan-to-BIM, Autom. Constr. 142 (2022) 104515,
+[19] E. Xie, W. Wang, Z. Yu, A. Anandkumar, J.M. Alvarez, P. Luo, SegFormer: simple                     https://doi.org/10.1016/j.autcon.2022.104515.
+     and efficient design for semantic segmentation with transformers, Adv. Neural Inf.            [45] A. Radford, J.W. Kim, C. Hallacy, A. Ramesh, G. Goh, S. Agarwal, G. Sastry,
+     Proces. Syst. 34 (2021) 12077–12090. https://arxiv.org/abs/2105.15203.                             A. Askell, P. Mishkin, J. Clark, Learning transferable visual models from natural
+[20] R. Strudel, R. Garcia, I. Laptev, C. Schmid, Segmenter: transformer for semantic                   language supervision, Int. Conf. Machine Learn. (2021) 8748–8763, https://doi.
+     segmentation, Proc. IEEE/CVF Int. Conf. Comp. Vision (2021) 7262–7272, https://                    org/10.48550/arXiv.2103.00020.
+     doi.org/10.1109/ICCV48922.2021.00717.                                                         [46] C. Jia, Y. Yang, Y. Xia, Y.-T. Chen, Z. Parekh, H. Pham, Q. Le, Y.-H. Sung, Z. Li,
+[21] C.R. Qi, H. Su, K. Mo, L.J. Guibas, Pointnet: deep learning on point sets for 3d                   T. Duerig, Scaling up visual and vision-language representation learning with noisy
+     classification and segmentation, Proc. IEEE Conf. Comput. Vis. Pattern Recognit.                   text supervision, Int. Conf. Machine Learn. (2021) 4904–4916, https://doi.org/
+     (2017) 652–660, https://doi.org/10.1109/CVPR.2017.16.                                              10.48550/arXiv.2102.05918.
+[22] C.R. Qi, L. Yi, H. Su, L.J. Guibas, Pointnet++: deep hierarchical feature learning on         [47] M. Oquab, T. Darcet, T. Moutakanni, H. Vo, M. Szafraniec, V. Khalidov,
+     point sets in a metric space, Adv. Neural Inf. Proces. Syst. 30 (2017), https://doi.               P. Fernandez, D. Haziza, F. Massa, A. El-Nouby, DINOv2: Learning Robust Visual
+     org/10.1109/ICRA40945.2020.9196740 pp.                                                             Features without Supervision, arXiv preprint, 2023, https://doi.org/10.48550/
+[23] Q. Hu, B. Yang, L. Xie, S. Rosa, Y. Guo, Z. Wang, N. Trigoni, A. Markham, Randla-                  arXiv.2304.07193.
+     net: efficient semantic segmentation of large-scale point clouds, Proc. IEEE/CVF              [48] A. Kirillov, E. Mintun, N. Ravi, H. Mao, C. Rolland, L. Gustafson, T. Xiao,
+     Conf. Comp. Vision Pattern Recog. (2020) 11108–11117, https://doi.org/10.1109/                     S. Whitehead, A.C. Berg, W.-Y. Lo, Segment Anything, arXiv Preprint, 2023,
+     CVPR42600.2020.01112.                                                                              https://doi.org/10.48550/arXiv.2304.02643 pp.
+[24] H. Thomas, C.R. Qi, J.-E. Deschaud, B. Marcotegui, F. Goulette, L.J. Guibas,                  [49] S. Liu, Z. Zeng, T. Ren, F. Li, H. Zhang, J. Yang, C. Li, J. Yang, H. Su, J. Zhu,
+     Kpconv: flexible and deformable convolution for point clouds, Proc. IEEE/CVF Int.                  Grounding DINO: Marrying Dino with Grounded Pre-Training for Open-Set Object
+     Conf. Comp. Vision (2019) 6411–6420, https://doi.org/10.1109/                                      Detection, arXiv preprint, 2023, https://doi.org/10.48550/arXiv.2303.05499.
+     ICCV.2019.00651.                                                                              [50] K. Zhang, D. Liu, Customized Segment Anything Model for Medical Image
+[25] S. Xie, J. Gu, D. Guo, C.R. Qi, L. Guibas, O. Litany, Pointcontrast: Unsupervised pre-             Segmentation, arXiv Preprint, 2023, https://doi.org/10.48550/arXiv.2304.13785.
+     training for 3d point cloud understanding, in: Computer Vision–ECCV 2020: 16th                [51] R. Zhang, Z. Jiang, Z. Guo, S. Yan, J. Pan, H. Dong, P. Gao, H. Li, Personalize
+     European Conference, Glasgow, UK, August 23–28, 2020, Proceedings, Part III 16,                    segment anything model with one shot, arXiv preprint, 2023, https://doi.org/
+     2020, pp. 574–591, https://doi.org/10.1007/978-3-030-58580-8_34.                                   10.48550/arXiv.2305.03048.
+[26] J. Hou, B. Graham, M. Nießner, S. Xie, Exploring data-efficient 3d scene                      [52] Y. Liu, M. Zhu, H. Li, H. Chen, X. Wang, C. Shen, Matcher: Segment Anything with
+     understanding with contrastive scene contexts, Proc. IEEE/CVF Conf. Comp. Vision                   One Shot using All-Purpose Feature Matching, arXiv preprint, 2023, https://doi.
+     Pattern Recog. (2021) 15587–15597, https://doi.org/10.1109/                                        org/10.48550/arXiv.2305.03048.
+     CVPR46437.2021.01533.                                                                         [53] K. He, X. Chen, S. Xie, Y. Li, P. Dollár, R. Girshick, Masked autoencoders are
+[27] Q. Hu, B. Yang, G. Fang, Y. Guo, A. Leonardis, N. Trigoni, A. Markham, SQN:                        scalable vision learners, in: Proceedings of the IEEE/CVF Conference on Computer
+     weakly-supervised semantic segmentation of large-scale 3d point clouds, in:                        Vision and Pattern Recognition, 2022, pp. 16000–16009, https://doi.org/10.1109/
+     European Conference on Computer Vision, 2022, pp. 600–619, https://doi.org/                        CVPR52688.2022.01553.
+     10.1007/978-3-031-19812-0_35.                                                                 [54] S. Van der Walt, J.L. Schönberger, J. Nunez-Iglesias, F. Boulogne, J.D. Warner,
+[28] B. Wang, C. Yin, H. Luo, J.C. Cheng, Q. Wang, Fully automated generation of                        N. Yager, E. Gouillart, T. Yu, Scikit-image: image processing in Python, PeerJ 2
+     parametric BIM for MEP scenes based on terrestrial laser scanning data, Autom.                     (2014), https://doi.org/10.7717/peerj.453 e453, 2 (2014), pp. e453.
+     Constr. 125 (2021) 103615, https://doi.org/10.1016/j.autcon.2021.103615.
+
+
+
+
+                                                                                              17
+B. Wang et al.                                                                                                                   Automation in Construction 162 (2024) 105384
+
+[55] S. Katz, A. Tal, R. Basri, Direct Visibility of Point Sets, ACM SIGGRAPH 2007         [57] ClearEdge3D, EdgeWise, https://www.clearedge3d.com/edgewise/ Accessed Date:
+     Papers, 2007, https://doi.org/10.1145/1275808.1276407, pp. 24-es.                          6 Oct 2023.
+[56] J. Cao, A. Tagliasacchi, M. Olson, H. Zhang, Z. Su, Point cloud skeletons via
+     laplacian based contraction, in: 2010 Shape Modeling International Conference,
+     2010, pp. 187–197, https://doi.org/10.1109/SMI.2010.25.
+
+
+
+
+                                                                                      18
+

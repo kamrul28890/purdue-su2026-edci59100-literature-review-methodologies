@@ -1,0 +1,1066 @@
+                                                                Automation in Construction 119 (2020) 103334
+
+
+                                                                  Contents lists available at ScienceDirect
+
+
+                                                             Automation in Construction
+                                                     journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+Manifesting construction activity scenes via image captioning                                                                                            T
+                  a                          a                      b                c                             d                          b,⁎
+Huan Liu , Guangbin Wang , Ting Huang , Ping He , Martin Skitmore , Xiaochun Luo
+a
+  Department of Construction Management and Real Estate, School of Economics and Management, Tongji University, 1239 Siping Road, Shanghai, China
+b
+  Department of Building and Real Estate, Hong Kong Polytechnic University, Hung Hom, Kowloon, Hong Kong, China
+c
+  School of Intelligent Systems Science and Engineering, Jinan University, Zhuhai, Guangdong, China
+d
+  School of Built Environment, Queensland University of Technology (QUT), Brisbane, Australia
+
+
+
+
+ARTICLE INFO                                              ABSTRACT
+
+Keywords:                                                 This study proposed an automated method for manifesting construction activity scenes by image captioning – an
+Construction activity scenes                              approach rooted in computer vision and natural language generation. A linguistic description schema for
+Computer vision                                           manifesting the scenes is developed initially and two unique dedicated image captioning datasets are created for
+Natural language generation                               method validation. A general model architecture of image captioning is then instituted by combining an encoder-
+Image captioning
+                                                          decoder framework with deep neural networks, followed by three experimental tests involving the selection of
+Convolutional neural network
+Recurrent neural network
+                                                          model learning strategies and performance evaluation metrics. It is demonstrated the method's performance is
+                                                          comparable with that of state-of-the-art computer vision methods in general. The paper concludes with a dis-
+                                                          cussion of the feasibility of the practical application of the proposed approach at the current technical level.
+
+
+
+
+1. Introduction                                                                              scene as an integral whole by capturing the multiple objects, relation-
+                                                                                             ships, and related attributes from images synchronously and converting
+    Visual information relating to construction activity scenes are be-                      them into complete sentences.
+coming increasingly important for construction management [1,2]. For                             Image captioning, which is rooted in computer vision (CV) and
+instance, capturing the latest state of construction activities (especially                  natural language generation (NLG), provides a solution by auto-
+direct work) by studying site images of scenes can be of significant help                    matically representing scene information with both visual information
+to project managers in meeting their objectives [2,4]. As scenes contain                     and natural language sentences [27–32]. A completed image captioning
+elements such as objects, relationships, and attributes [3], a construc-                     method consists of a deep learning-based model and datasets. Recent
+tion activity scene in images can be defined as an integral whole view of                    advances recommend a general framework of image captioning model
+the activity in pictures – synchronously containing objects (workers,                        architecture that integrates a CNN “encoder” for extracting image in-
+equipment, materials, etc.), their interrelationships (e.g., cooperation                     formation, word-embedding module, and an RNN “decoder” for gen-
+between objects or coexistence of objects), and other essential scenario                     erating image descriptions. However, existing benchmark image cap-
+elements.                                                                                    tioning datasets (e.g., Flickr8k [33], Flickr30k [34], and MS COCO
+    One current approach to capturing vision information from site                           [35]) involving general daily life cannot fit the unique scenario of
+images is by incorporating computer vision techniques with deep                              construction activities – necessitating the creation of dedicated con-
+learning algorithms. This can be divided into four categories of object                      struction datasets. Then, the structural linkage between the visual in-
+recognition [5–12], motion recognition [13–21], activity recognition                         formation of scene elements and the corresponding natural language
+[5,22–25], and scene analysis [26]. A limitation of these methods in the                     words needs to be identified.
+capture process and final manifestation is that the scene elements are                           In addressing these needs, this study involves two innovations. First,
+captured separately (e.g., objects, object-object relationships, and ob-                     a novel linguistic description schema of a construction activity scene is
+jects with their attributes are treated independently). Another limita-                      proposed, which guides the development of the dedicated datasets.
+tion is that, depending on the capture process, the final manifestation is                   Second, a novel automated image captioning method is devised and
+typically generated as a predefined simple combination of semantic                           validated for manifesting construction scenes. The image captioning
+labels in the form of a single word or phrase. What is needed is an                          model architecture of this method is established by integrating recent
+automated manifestation method that treats a construction activity                           advances of image captioning in CV and NLG. Three experiments are
+
+
+
+    ⁎
+        Corresponding author.
+        E-mail address: bsericlo@polyu.edu.hk (X. Luo).
+
+https://doi.org/10.1016/j.autcon.2020.103334
+Received 19 November 2019; Received in revised form 14 June 2020; Accepted 19 June 2020
+Available online 06 July 2020
+0926-5805/ © 2020 Elsevier B.V. All rights reserved.
+H. Liu, et al.                                                                                                        Automation in Construction 119 (2020) 103334
+
+
+described in which the datasets are used to train the image-captioning             productivity (e.g., excavators) [18]. A further study has even developed
+model, the results of which indicate the method's performance to be                and demonstrated a novel method for automatically estimating the full-
+comparable with that of state-of-the-art computer vision methods in                body posture and movement of onsite construction equipment that can
+general. The paper then concludes with a discussion of the feasibility of          avoid potential collisions and other accidents for safer onsite conditions
+the practical application of the method at the current technical level.            [21]. These vision solutions involving motion recognition are based on
+    The remainder of this paper is organized as follows. Section 2 pre-            ergonomics: integrating object recognition and pattern recognition,
+sents the background and related vision solutions for information                  with the motion information being obtained by detecting the key points
+manifestation in the construction domain and image captioning in CV                of the object's structure (e.g., the joint of a human body or angle of an
+and NLG; Section 3 outlines the method and materials used in devel-                excavator's arm) and analyzing the inner time-spatial interrelationships
+oping the automated manifesting method; and the experimental testing               involved.
+is described in Section 4. Section 5 contains a discussion of the results of           Activity recognition, defined as matching the relationship between
+the study, its contribution to knowledge, practical implications, appli-           detected objects with an activity pattern label, has emerged recently –
+cation challenges, and research limitations, while Section 6 provides              mainly involving direct work with the worker's action [5,22–25] – with
+some brief concluding remarks.                                                     these relationships being represented as the cooperation between ob-
+                                                                                   jects or coexistence of objects [24]. Yang et al.'s [22] comprehensive
+2. Background and related work                                                     study of worker actions abstracted 11 common types of actions from 5
+                                                                                   different trades, and established a new real-world video dataset with
+2.1. Vision solutions for manifesting construction activity scenes                 1176 instances. A cutting-edge video description method with dense
+                                                                                   trajectories has also been applied for action recognition. Considering
+    Capturing vision information from site images of construction ac-              the challenges in a specific application scenario, such as safety, Ding
+tivities has generally involved the incorporation of adaptive computer             et al. [5] develop a new hybrid deep learning model by integrating a
+vision techniques and deep learning algorithms. The differences be-                convolution neural network (CNN) and long short-term memory
+tween the different existing vision-based methods in the capture process           (LSTM) that automatically recognizes the unsafe actions of workers.
+and final manifestation can be divided into object recognition, motion             Luo et al. [24], on the other hand, have introduced a two-step method
+recognition, activity recognition, and scene analysis.                             for recognizing diverse construction activities in still images. In doing
+    Object recognition has been the subject of numerous studies in the             this, 22 classes of construction-related objects using convolutional
+construction domain over past decades. These commonly involve                      neural networks were detected initially, then they defined semantic
+simple computer vision tasks (e.g., object detection, object tracking,             relevance (representing the likelihood of the cooperation or coexistence
+and semantic segmentation). Deep learning-based methods are mainly                 between two objects in a construction activity), spatial relevance (re-
+used to detect onsite objects (e.g., sewer pipes [8]), monitor workers'            presenting the two-dimensional pixel proximity in the image co-
+unsafe behaviors (e.g., not wearing hardhats [7], not wearing safety               ordinates), and activity patterns to recognize 17 types of construction
+belts [6], and misusing ladders [5]), and track the location of con-               activities. After further improvement, construction activity recognition
+struction equipment (e.g., backhoes, automobiles, trucks, compactors,              was used to measure the worker productivity of the site [23]. Although
+excavators, and workers [11,12]). Semantic segmentation by color-                  these activity recognition methods focus on exploring the relationships
+based labeling has been used to identify and list whole objects in an              between objects, which are more complicated than simple object re-
+image [9,10]. For example, Kim et al. [9] present a data-driven scene              cognition tasks, the final manifestations are limited to representing an
+parsing method to recognize various objects in a construction site                 action or type of work state.
+image. Rahimian et al. [10] develop a system that includes object re-                  Scene analysis has received relatively little attention in the con-
+cognition and semantic segmentation to identify different structural               struction domain to date. It has been used in semantic segmentation to
+elements from a visual representation for superimposing real-world                 detect and label all objects in a whole picture [9,10] and to classify site
+images on an ‘as-planned’ model. All these methods involving object                pictures by matching the scenes involved with specific safety rules [26].
+recognition are implemented using a preexisting structure between la-              Specifically, a crowdsourcing approach for the safety inspection is ex-
+bels to train better models [36]. Such fixed semantic relationships of             amined, an approach developed to label images of complex construc-
+vision are only suitable for object recognition tasks and cannot re-               tion scenes having safety-rule violations, with a focus on minimizing
+present typical complicated construction activity scenes with diverse              false alarms while keeping within acceptable rates of false negatives.
+combinations of objects and relationships.                                         For information capturing and manifestation, this approach considers
+    Motion recognition in the construction domain uses a systematic                the construction scene as an integral whole for recognition and
+approach to understand and analyze the camera-captured movement of                 matching the semantic relationships between the scene's vision features
+construction workers and equipment [37]. This mostly involves posture              and manual text labels representing the safety rules. The final mani-
+estimation of workers and equipment. Worker posture recognition is                 festations are the combination of the scene images and text of safety
+mainly applied to estimating the workers' state of health and safety               rule violation labels. The safety rule violation labels manifested only
+behaviors. On the one hand, methods have been developed for the                    correspond with the captured matching relationships but ignore the
+workload estimation and physical fatigue of construction workers                   related inner elements.
+[14–17]; for example, Yu et al.'s [14] automatic workload estimation                   Fig. 1 summarizes the existing vision solutions in depicting some
+using image-based three-dimensional (3D) posture-capture smart in-                 sample images of the four categories of information manifestation from
+soles to assess body joints, and a biomechanical analysis to provide               ten published papers in the construction domain, and Table 1 presents
+accurate assessments based on real data instead of simulation. On the              the process captures and final manifestations – the images in Fig. 1
+other hand, to monitor and assess ergonomic hazards on site, Yan et al.            corresponding with each category of existing methods in Table 1. This
+[19] address construction hazard prevention by developing an ergo-                 shows that the scene elements are captured separately: the objects,
+nomic posture recognition technique from view-invariant features in 2D             object-object relationships, and objects with their attributes are treated
+skeleton motion based on an ordinary 2D camera. In contrast, equipment             independently. In addition, depending on the capture process, the final
+posture recognition has mainly involved recognizing single actions of              manifestation is typically generated as a predefined simple combination
+earthmoving construction equipment based on computer vision algo-                  of semantic labels in the form of a single word or phrase (e.g., objects
+rithms [13]. Automatic equipment posture estimation focusing on the                are labeled with nouns, and relationships are labeled with verbs or
+action of equipment has been implemented to improve the recognition                verbal phrases). Taken alone, therefore, current vision solutions are
+efficiency of equipment work states [20] and enhance equipment                     inappropriate for manifesting construction activity scenes as an integral
+
+                                                                               2
+H. Liu, et al.                                                                                                                 Automation in Construction 119 (2020) 103334
+
+
+
+
+Fig. 1. Sample images from previous studies of vision-based methods to manifest information in the construction domain, comprising (a) safety guardrails detection
+[38], (b) equipment detection, (c) worker hardhat detection [7], (d) object recognition in whole images with semantic segmentation [9], (e) scene analysis for
+recognizing safety-rule violations [26], (f) excavator posture estimation [21], (g) worker posture estimation for avoiding hazards [19], (h) single activity recognition
+[22], (j) multiple activity recognition on site [24], and (k) multiple activity recognition for work sampling [23].
+
+
+Table 1
+Captures and manifestations by using existing vision-based methods in the construction domain.
+  Methods                Schematic of the process                                      Captures                         Final manifestation                     Samples in
+                                                                                                                                                                Fig. 1
+
+  Object recognition                                                                   An object                         • Visual attention: object          (a); (b); (c);
+                                                                                                                         • Labels: text of the object's name (d)
+
+
+  Motion recognition                                                                   A pattern relationship within
+                                                                                       an object
+                                                                                                                         • Visual
+                                                                                                                           motion
+                                                                                                                                   attention: object with its   (f); (g)
+
+
+                                                                                                                         • Labels:  text of the recognized
+                                                                                                                           pattern's name
+
+
+
+
+  Activity recognition                                                                 A relationship (cooperation or
+                                                                                       coexistence) between objects
+                                                                                                                         • Visual  attention: an activity
+                                                                                                                           scene with related objects
+                                                                                                                                                            (h); (j); (k)
+
+
+                                                                                                                         • Labels:  text for expressing the
+                                                                                                                           relationships between objects in
+                                                                                                                           the scene
+
+
+  Scene analysis                                                                       A matching relationship
+                                                                                       between scene focus and
+                                                                                                                         • Visual  attention: image with the
+                                                                                                                           focused scene
+                                                                                                                                                             (e)
+
+                                                                                       predefined text labels            • Labels:  text for expressing the
+                                                                                                                           scene category
+
+
+
+
+                                                                                   3
+H. Liu, et al.                                                                                                    Automation in Construction 119 (2020) 103334
+
+
+
+
+                                                    Fig. 2. Steps in method development and testing.
+
+
+whole, which needs to capture multiple objects, relationships, and re-          architecture and the gap to be bridged between the existing methods
+lated attributes synchronously. A potential solution is image captioning,       and scenario applications.
+which can be used to manifest the construction activity scene with both             As a branch of the natural language processing (NLP) field, NLG is
+visual information and natural language descriptions [36], as described         defined as “the subfield of artificial intelligence and computational
+in the next section.                                                            linguistics that is concerned with the construction of computer systems
+                                                                                that can produce understandable texts in English or other human lan-
+                                                                                guages from some underlying non-linguistic representation of in-
+2.2. Image captioning                                                           formation” [39]. While NLG can involve either text-to-text or data-to-
+                                                                                text considerations, image captioning is arguably a paradigm case of
+    Several studies of automated image captioning methods in the fields         data-to-text generation where the input is in the form of an image [40].
+of CV and NLG have emerged in recent decades, but as yet with no                Recent studies show that such NLG architectures and methods as deep
+related construction management applications. This section presents             neural networks (DNNs) and the encoder-decoder framework are now
+recent advances in image captioning to identify the general model
+
+                                                                            4
+H. Liu, et al.                                                                                                         Automation in Construction 119 (2020) 103334
+
+
+
+
+                                       Fig. 3. Sample linguistic description schema of construction activity scenes.
+
+
+also the dominant approach in image captioning [40]. DNNs are de-               representation can be used for a variety of vision methods [53]. Many
+signed to learn representations at increasing levels of abstraction by          methods inspired by the encoder-decoder framework in machine
+exploiting backpropagation [41] and have had notable successes in               translation (details in Section 3.3) have been proposed for image cap-
+sequential modeling using feedforward networks [42,43], log-bilinear            tioning, based on a CNN as the encoder and an RNN as the decoder
+models [44], and recurrent neural networks (RNNs) [45], including               [27,28,30,32,54–57] – the LSTM model being one of RNNs pre-
+RNNs with long short-term memory (LSTM) units [46] – now the                    dominantly used for sentence generation [27,30,54,55,57]. Moreover,
+dominant type of RNN for language modeling tasks. The encoder-de-               an alignment model has been proposed based on a structured objective
+coder framework is an influential architecture for NLG [47], where an           aimed at two modalities through a multi-model embedding, a novel
+RNN is used to encode the input into a vector representation, which is          combination of CNNs for representing images, and bidirectional RNNs
+also the auxiliary input of the decoder RNN. This decoupling between            for disposing of sentences [32]. Subsequently, the results of the image
+coding and decoding makes it possible to share coding vectors across            captioning model based on the above core concept (of combining a CNN
+multiple natural language processing tasks in a multitasking learning           encoder with an RNN decoder) were further improved by using the
+environment [48]. The encoder-decoder framework is well-suited to               LSTM model as the RNN decoder for sentence generation [30].
+such Sequence-to-Sequence (seq2seq) tasks as machine translation,                   Datasets are also vital for image captioning methods due to them
+where the variable-length input sequence in the source language needs           being on deep learning models; big data for training such models is
+to be mapped to the variable-length sequence in the target [49], making         essential. Several benchmark image captioning datasets exist (e.g.,
+it easy to apply the framework to NLG: for example, seq2seq models              Flickr8k [33], Flickr30k [34], and MS COCO [35]), containing tens and
+have also been used to generate text from abstract meaning re-                  hundreds of thousands of images involving general daily life, but none
+presentations [50].                                                             involve the complicated construction site environment.
+    The traditional approach to establishing image captioning models                A general image captioning model architecture can therefore be
+followed machine translation [51], after which a method was devel-              constructed using an “encoder” CNN to extract the features of images,
+oped that can express the possibility of linking an image to a sentence         and a “decoder” RNN to generate sentences by connecting embedding
+by computing a score [52]. Recently, it has been shown that convolu-            words with an image semantic sequence. Hence, the remaining work in
+tional neural networks (CNNs) can produce a rich representation of the          establishing a model mainly involves selecting the latest DNNs (an
+input image by embedding it in a fixed-length vector such that this             “encoder” CNN and a “decoder” RNN) and adopting adaptive training
+
+
+                                                                            5
+H. Liu, et al.                                                                                                                    Automation in Construction 119 (2020) 103334
+
+
+Table 2
+Overview of the scene image-sentence pairs for the five categories of construction activities.
+  Scenes                        Scene elements
+
+                                Main objects                                                     Main actions                                    Main attributes
+
+  Cart transportation           Worker; cart; safety measurements                                Pull; push; unload                              Color; count; gesture
+  Masonry work                  Worker; bricks; mortar; safety measurements                      Lay; fix; cut; measure; build; move             Color; count; gesture
+  Rebar work                    Worker; reinforcing/steel bars; safety measurements              Tie; shear; weld                                Color; count; gesture; shape
+  Plastering                    Worker; mortar; safety measurements                              Plaster; mix                                    Color; count; gesture; shape
+  Tiling                        Worker; mortar; hammer; safety measurements                      Lay; stick; fix; cut                            Color; count; gesture; shape
+
+
+
+strategies and evaluation metrics. However, existing image captioning                     3.2.1. Guidelines for developing the image captioning datasets
+methods, involving both the model architecture and general-life data-
+sets, are unsuited to manifesting construction activity scenes because of                 1) Image collection. Images with construction activity scenes can be
+the lack of a structural linguistic description schema of construction                       collected from real-world construction sites using digital cameras.
+activity scenes and the datasets for method validation. What is needed                       These need to meet two requirements: (1) each image should focus
+is a merging of the state-of-art image captioning techniques and lin-                        on at least one construction activity; and (2) the number of images is
+guistic description analysis.                                                                enough for deep learning.
+                                                                                          2) Image description. In one scene image, the interactions between ob-
+                                                                                             jects are highly complex, going beyond simple pairwise relations
+3. Method                                                                                    [3], so multiple sentences with different combinations of scene
+                                                                                             elements (objects, relationships, and attributes) are used to describe
+    Fig. 2 shows the steps taken in developing a scenario-based image                        the scene. Guided by the adopted manifestation schema in Fig. 3,
+captioning method for construction activity scenes, including dataset                        one logic sentence should reflect one complete construction activity,
+development, model establishment, and experimental testing. The ap-                          including objects, relationships, and attributes. Each image is de-
+proach described here involves the development of 1) a linguistic de-                        scribed with five sentences, following the rules of creating the
+scription schema of construction activity scenes, 2) the datasets, and 3)                    benchmark datasets (e.g., Flickr8k [33], Flickr30k [34], and MS
+the image captioning model.                                                                  COCO [35]). The process of image description is carried out
+                                                                                             manually. In addition to the description of the object having to be
+                                                                                             related to construction activity scenes, the syntactic requirements of
+3.1. Linguistic description schema of construction activity scenes                           other aspects follow the production instructions of the MS COCO
+                                                                                             caption dataset [58].
+    Confirming a structural linguistic description schema of construc-
+tion activity scenes is the primary consideration in developing an au-                    3.2.2. Developing process of two datasets
+tomated method via image captioning for their manifestation. This in-                         Based on the above general principals and instructions, two image
+volves 1) deconstructing the scene image by transferring the activity-                    captioning datasets are created of different sizes and with different
+related vision information into scene elements based on the concept of                    construction activity categories in the following steps.
+the scene, 2) selecting the words with the correct parts of speech to
+match the identified scene elements, and 3) forming logically and                         1) Selection of construction activity categories. Five categories of con-
+correct descriptive sentences by adding the necessary conjunctions or                        struction activity scenes are chosen: cart transporting, masonry
+transformations.                                                                             work, rebar work, plastering, and tiling. All the photographs are
+    Fig. 3 provides a sample linguistic schema of masonry work and                           taken on actual construction sites. Table 2 summarizes the scene
+rebar work scenes. Fig. 3(a) and (b) contain a of pictures of masonry                        elements in each category.
+and rebar work scenes respectively; Fig. 3(c) and (d) contain scene                       2) Classification of scene elements. Following the different construction
+elements corresponding to the images in Fig. 3(a) and (b) respectively,                      management roles involved, the main scene elements are classified
+connected by lines and arrows based on their real-world relationships.                       into the five categories (see Fig. 4) of: 1) subjects (i.e., “workers”)
+Here, the white boxes represent the main objects to be identified in the                     that directly involve site safety, expressed as Object I; 2) objects
+picture, the green boxes represent the actions describing the relation-                      (e.g., “carts”, “steel/reinforcing bars”, “bricks”, “wall”, and
+ship between the recognized objects, and the blue ellipsoid boxes re-                        “ceramic tile”) that directly represent tools or materials of the ac-
+present such basic attributes of objects as color, shape, size, and count.                   tivity, expressed as Object II; 3) safety apparel (e.g., “helmets”, “re-
+There is an additional attribute for the “workers” representing their                        flective vests”, and “safety belts”) that are always attached to the
+adjoint behaviors, e.g., gestures of the worker. A complete scene of site                    first class of objects, expressed as Object III; 4) object relationships
+photo should therefore contain multiple scene elements (objects, ac-                         between Object I and Object II, with different verbs being used to
+tions, and attributes) simultaneously. Fig. 3(e) illustrates the corre-                      describe the interactions involved; and 5) object attributes, mostly
+spondence between the scene elements and the parts of speech. The                            concerning “color” and “count”.
+corresponding manifestations with structural descriptive sentences are                    3) Image description. The descriptive sentences of images are organized
+presented in Fig. 3(f) and (g).                                                              manually in complying with the MS COCO caption dataset produc-
+                                                                                             tion instructions [58]. The substitution of synonyms, conversion of
+                                                                                             active and passive voices, addition and deletion of accompanying
+3.2. Image captioning datasets                                                               features and attributes, and other forms of sentence transformation
+                                                                                             are also considered in addition to emphasizing objectivity rules. The
+   Two image captioning datasets of different sizes and different ca-                        synonyms or word neighbors are summarized and classified in ad-
+tegories of construction activity are developed. The next two sections                       vance (see Table 3) to avoid biasing the statistical results. Fig. 5
+describe the guidelines used in developing the datasets and provide an                       shows the ultimate captioning examples of the five activity types.
+overview of the resulting datasets.                                                       4) Data preprocessing. All the selected images and corresponding
+
+
+                                                                                      6
+H. Liu, et al.                                                                                                      Automation in Construction 119 (2020) 103334
+
+
+
+
+                                                      Fig. 4. Classification of the main scene elements.
+
+
+Table 3                                                                           and the other 17% form the testing set. The part-of-speech distributions
+Some example words with their synonym or nearest neighbors.                       of Dataset I and Dataset II are compared by using the NLTK toolkit [59]
+  Word                                 Synonym/Neighbors
+                                                                                  in Fig. 6, as the part-of-speech can partially reflect its role in con-
+                                                                                  struction scenes; for example, “NN” and “NNS” represent the nouns that
+  Worker                               Man/men, woman, construction worker        describe the still-objects onsite photographs, and “VB” represents the
+  Cart                                 Van                                        verbs that describe the relationships between different objects. The
+  Rebar                                Steel-bars, reinforcing-bars
+                                                                                  words that represent the scene elements are termed “scene words”.
+  Brick                                Block
+  Helmet                               Hat, sunbonnet, hardhat
+  Reflective vest                      Safety belt                                3.3. Image captioning model
+
+                                                                                      The image captioning model is established by two steps: 1) ex-
+    descriptive sentences are pairwise coded for model learning. Before           plicating the modeling task by reviewing recent advances in image
+    training, all the images are scaled to 224 × 224 pixels, and captions         captioning, and 2) constructing its general architecture.
+    mapped to images in the form of JSON files.
+                                                                                  3.3.1. Modeling task explication
+    Table 4 presents an overview of the two datasets. Dataset I com-                  The fundamental theoretical framework for image captioning is
+prises 2400 (i.e., 480 × 5) image-sentence pairs for three categories of          mainly inspired by the machine translation model structure [27,30], as
+activities (i.e., cart transportation, masonry work, and rebar work).             Fig. 7 shows. An image I (instead of an input sentence in a source
+Dataset II comprises 34,510 (i.e., 6902 × 5) image-sentence pairs for             language) is “translated” into its description D, with the RNN “encoder”
+all categories of activities in Table 2. In each dataset, 66% of the image-       replaced by a CNN, which has been widely used to study image tasks
+sentence pairs are used as the training set, 17% form the validation set,         and is the state-of-the-art in object recognition and detection. In this
+
+                                                                              7
+H. Liu, et al.                                                                                                                            Automation in Construction 119 (2020) 103334
+
+
+
+
+                                                                  Fig. 5. Examples of the manual image descriptions.
+
+
+Table 4
+Overview of the created datasets.
+                                Activity categories                                                               Image count              Sentence count               Word count
+
+  Dataset I                     Cart transportation; Masonry work; Rebar work                                     480                      2400                         29,103
+  Dataset II                    Cart transportation; Masonry work; Rebar work; Plastering; Tiling                 6902                     34,510                       409,576
+
+
+
+way, a basic theoretical framework for image captioning can be con-
+                                                                                                                     n
+                                                                                                    L (I |D ) =            log pt (Dt )                                           (3)
+                                                                                                                     t=1
+structed by taking an image I as input and maximizing the likelihood p
+(D|I) of producing a target sequence of words as a descriptive sentence                             this being minimized w.r.t. all the LSTM parameters, the CNN image
+D, where each word is obtained from a given dictionary to describe the                              embedder top layer, and word embedding We [32].
+image [27].
+    The main objective of modeling the image captioning is to maximize                              3.3.2. Model architecture
+the probability p(D|I) of the correct descriptive sentence from                                         Fig. 8 depicts the general architecture of the image captioning
+                                                                                                    model. A joint model system combining an “encoder” CNN with a
+   = argmax                  log p (D I ; )
+                  (I , D )                                                             (1)          “decoder” RNN is constructed. The “encoder” CNN is used for re-
+                                                                                                    presenting site images, by first pre-training it for an image classification
+where ξ represent the parameters of the model, I represents an image,                               task according to the scene elements and using the last hidden layer as
+and D is its correct descriptive sentence. Due to the unbounded length                              an input to the RNN decoder that generates the sentences. Word em-
+of descriptive sentence D, the joint probability is modeled over D0, …,                             bedding is one of the most popular representations of document voca-
+Dn by the chain rule [27,30], where n is the length of the sentence, a                              bulary by capturing the context of a word in an original sentence bank,
+particular example being                                                                            and its semantic and syntactic similarity in relation to other words.
+                   n
+log p (D |I ) =
+                   t=0
+                             log p (Dt I , D0 ,…, Dt 1)                                (2)          1) CNN, RNN, and Word embedding methods. The VGG-16 [60] and
+                                                                                                       ResNet-50 [61] is used as the basic CNN framework, as these per-
+where p(Dt| I, D0, …, Dt−1) represents one word generated at time t                                    form well in visual recognition, with ResNet winning the 2015 Im-
+conditioned on a context vector, inferring the previous hidden state and                               ageNet Large Scale Visual Recognition Challenge (ILSVRC) compe-
+the previously generated words. In the training process, the image-                                    tition [61]. The performances of different DNN are compared in the
+sentence (D, I) pairs are the training samples, with the sum of the log                                experimental tests as they may be different with the same datasets.
+probabilities in Eq. (2) needing to be raised using stochastic gradient
+descent optimizers [40]. The loss during training is the sum of the                                    The LSTM is used as the decoder RNN, as recent advances of image
+negative log-likelihood of the correct word at each step, expressed as                              captioning have widely shown it to be the typical approach to model
+
+                                                                                              8
+H. Liu, et al.                                                                                                       Automation in Construction 119 (2020) 103334
+
+
+
+
+                                                   Fig. 6. Part-of-speech distribution in Datasets I and II.
+
+
+time series vector p(Dt| I, D0, …, Dt−1) [27,30,55]. A common LSTM unit           (1) Experiment 1 (E#1): VGG-16 + LSTM @ Dataset I;
+comprises a cell, input gate, output gate, and forget gate. The cell re-          (2) Experiment 2 (E#2): VGG-16 + LSTM @ Dataset II;
+members values over arbitrary time intervals, and the three gates reg-            (3) Experiment 3 (E#3): ResNet-50 + LSTM @ Dataset II.
+ulate the flow of information into and out of the cell (see [57] for more
+details).                                                                             At the current level of technology, the image captioning task is more
+    The words are represented with a words-embedding model, which                 challenging than the object classification and data-driven approaches
+can capture a large number of precise syntactic and semantic word                 [30]; training a deep learning model is still full of uncertainties. Since
+relationships [62]. Fig. 8 shows the specific embedding process used. A           this is an initial trial of image captioning in the construction manage-
+dense vector WeDt′ is generated after the input word Dt′ passes through           ment context, this section focuses on describing the training process and
+two word-embedding layers We, whence the dense vector WeDt′ con-                  evaluation results.
+tinues to be passed on to RNN. Following [27,30], the dimension of
+each embedding layer is 512.
+                                                                                  4.1. Setting for training
+2) Model learning strategies. A joint model combining the CNN for image
+   representation with the LSTM is trained to predict each word of a                  Two main tasks in training settings are to avoid overfitting and
+   sentence (similar to [27,30]). The experimental tests to ensure the            determine the hyperparameters.
+   performance of these DNNs (i.e., CNN and LSTM) use batch nor-                      The biggest challenge of these experiments is that the small dataset
+   malization [63]. Beam Search is used as the inference method to                (compared with the computer-vision benchmark datasets) used for
+   generate a sentence in the model by following the recommendations              training the deep learning networks can result in overfitting. Several
+   of [27,30]. This is well-suited to scene labeling, because it explicitly       techniques were tried to deal with this. The conventional way (similar
+   accounts for the spatial extent of objects, conforms to inconsistency          to [66]), called Fine-tuning, of initializing the weights of the CNN part
+   constraints from domain knowledge, and has a low computational                 of the model loaded from a pre-trained model (e.g., on ImageNet [65])
+   cost [64]. The method iteratively considers the set of k best sen-             produced no obvious improvement in the evaluation scores. Then, si-
+   tences up to time t as candidates to generate a t + 1 size of sentences        milar to [27,30], the model-level techniques of Dropout [67] and model
+   and retain the resulting best k. Therefore, Beam Search can ap-                assembling were tried, as well as exploring the capacity of the model by
+   proximate D = arg maxD′ p(D′| I) well, and is used with beam size set          trading off a few hidden units against depth. Dropout is used to simplify
+   as k = 3 (similar to [27,30]) in the experiments.                              the structure of the networks automatically during the training process
+                                                                                  – the dropout degree relying on an initialized dropout rate, while model
+                                                                                  assembling is a one-off operation at the beginning of training by setting
+4. Experiments and results                                                        the initial number of layers or dimensions of the networks. As Fig. 9
+                                                                                  indicates, Dropout and model assembling improve the evaluation con-
+    Given the established model architecture with two DNN composi-                siderably more the Fine-tuning in E#1.
+tions (i.e., the VGG-16 “encoder” with LSTM “decoder”, and ResNet-50                  Table 5 gives the necessary hyperparameter settings in the three
+“encoder” with LSTM “decoder”) and two created datasets (i.e., Dataset            experiments. Firstly, when experimenting on the tiny dataset in E#1,
+I and Dataset II), three experiments in this study are conducted, termed:         the structure of the networks of the model were actively simplified and
+                                                                                  the Dropout strategy adopted in the process of training to prevent
+
+                                                                              9
+H. Liu, et al.                                                                                                       Automation in Construction 119 (2020) 103334
+
+
+
+
+                                        Fig. 7. Comparison of the machine translation and image captioning models.
+
+
+overfitting. However, for the larger dataset in E#2 and E#3, only the             close to the value of the subsequent test result. The generalization er-
+appropriate network dropout rate was set in the training process. The             rors of the models in E#2 and E#3 are therefore small, indicating that
+dropout rate in E#3 is set lower than E#2 because the ResNet-50 has its           the training process of the models could be effective [70].
+skip module called “shortcut connections” [61], which can skip one or
+more layers during the training process and achieve better results.               4.2. Performance evaluation metrics
+Secondly, the initial learning rate is a very important indicator for the
+initialization of model hyperparameters as it determines whether the              4.2.1. Automatic evaluation metrics for method validation
+loss function can converge and whether the correct rate tends to be                   This section introduces a series of automatic evaluation metrics to
+roughly stable during training. Because of the small-size dataset in E#1,         measure the captioning efficiency in the experiments. For all metrics,
+a larger learning rate is needed for the model loss function to converge          higher values indicate a better configuration of the proposed method.
+more quickly. Also, batch normalization optimizes the deep learning
+training process [63], and the “Adam” optimizer was used to learn the             1) Bi-lingual Evaluation Understudy (BLEU). The machine translation
+network parameters [68]. Table 4 shows the number of iterations and                  community's BLEU [71] is a modified precision metric with a sen-
+training time in the three experiments. HD Graphics 630 (Kaby Lake                   tence-brevity penalty, calculated as a weighted geometric mean over
+GT2) and an Nvidia GeForce GTX 1080 GPU were used to train models                    different length n-grams. The common formulations of BLEU are
+on the small E#1 dataset and bigger E#2 and E#3 datasets respectively,               BLEU-1, BLEU-2, BLEU-3, and BLEU-4, with BLEU-n meaning using
+implemented with activity recognition [24].                                          1-gram up to n-grams.
+     Figs. 10 and 11 show the accuracy and total loss in the training             2) Recall-Oriented Understudy for Gisting Evaluation (ROUGE). The
+process corresponding to the best results of E#2 and E#3. A polynomial               summarization community's ROUGE [72] is a package of measures
+fit analysis (order = 8) [69] helps show the changing in accuracy and                for the automatic evaluation of text summaries using F-measures. As
+loss more clearly. This indicates that the fitting lines of training accu-           with BLEU, versions of ROUGE can also be defined by varying the n-
+racy and loss stop early and tend to a uniform stability, the loss is                gram count, expressed as ROUGE-N, and three other versions of
+convergent, and the value of the current accuracy in a stable state is               ROUGE are ROUGE-L, ROUGE-S, and ROUGE-W, of which the
+
+
+                                                                             10
+H. Liu, et al.                                                                                                               Automation in Construction 119 (2020) 103334
+
+
+
+
+                                                     Fig. 8. General architecture of the image-captioning model.
+
+
+                                                                                             reference sentences, which are then compared by summing their
+                                                                                             cosine similarity across n-grams. To help defend against the gaming
+                                                                                             of the CIDEr metric, CIDEr-D is proposed after improving the basic
+                                                                                             CIDEr metric.
+                                                                                          4) Semantic Propositional Image Caption Evaluation (SPICE). Recently, a
+                                                                                             new automatic caption evaluation metric coined SPICE [74] is de-
+                                                                                             fined over scene images. Previous studies with extensive evaluations
+                                                                                             across a range of models and datasets indicate that SPICE captures
+                                                                                             human judgments over model-generated captions better than other
+                                                                                             automatic metrics.
+
+
+                                                                                          4.2.2. Manual evaluation metrics for method testing
+                                                                                              The performance of automatic captioning in the experiments can be
+                                                                                          reflected at the level of scene element. Drawing on the traditional in-
+                                                                                          formation retrieval evaluation method [75], Precision, Recall rate, and F-
+                                                                                          score are common indicators to assess the correctness of generated
+Fig. 9. Comparison of results of different overfitting avoiding strategies in E#1.        captions at the level of scene word, given by.
+
+                                                                                                          TP
+   ROUGE-L is used in the present study.                                                  Precision =
+                                                                                                        TP + FP                                                      (4)
+3) Consensus-based Image Description Evaluation (CIDEr). CIDEr [73]
+   captures the consensus by applying term frequency to inverse
+                                                                                                        TP
+   document frequency weights to n-grams in the candidate and                             Recall =
+                                                                                                     TP + FN                                                         (5)
+
+
+                                                                                     11
+H. Liu, et al.                                                                                                                 Automation in Construction 119 (2020) 103334
+
+
+Table 5
+Some necessary hyperparameter settings for the three experiments.
+    Setting items                                                      E#1                                 E#2                            E#3
+
+    Model architecture        Encoder CNN                              VGG-16                              VGG-16                         ResNet-50
+                              Decoder RNN                              LSTM                                LSTM                           LSTM
+                              Dimension of the decoder layer           128                                 512                            512
+                              Number of words embedding layers         2                                   2                              2
+                              Dimension of each word embedding layer   512                                 512                            512
+                              Initialization                           NO                                  YES                            YES
+                              Number of initialization layers          –                                   2                              2
+                              Dimension of each initialization layer   –                                   512                            512
+                              Beam search (size)                       3                                   3                              3
+                              Initial learning rate                    0.1                                 0.001                          0.001
+                              CNN drop rate                            0.7                                 0.7                            0.5
+                              RNN drop rate                            0.5                                 0.5                            0.3
+    Vocabulary dimensions                                              200                                 260                            260
+    Optimizer                                                          Adam                                Adam                           Adam
+    Batch normalization   Epochs                                       10                                  10                             10
+                          Batch size                                   8                                   8                              8
+    Training process      Training time                                1 h 38 min 29 s                     52 h 13 min 45 s               30 h 38 min 09 s
+                          Iterations                                   2200                                28,360                         28,360
+                          Training time(s)/iteration                   2.68                                6.63                           3.89
+    Computer hardware                                                  HD Graphics 630 (Kaby Lake GT2)     Nvidia GeForce GTX 1080 GPU    Nvidia GeForce GTX 1080 GPU
+
+
+
+
+F      Score = (1 +      2)     Precision·Recall                                            4.3. Experimental results
+                              2 ·Precision + Recall
+                                                                                 (6)
+                                                                                                The evaluation of the proposed image captioning method contains
+where the distributions of the scene elements retrieval results are as                      two parts. First, the effect of the pre-trained image captioning model is
+shown in Fig. 12. Precision represents the ratio of the amount of the                       evaluated by using automatic evaluation metrics [71–74], and the ef-
+scene element retrieved and relevant (TP) to the total amount of the                        ficiency of the image captioning method in the above three experiments
+scene element retrieved (TP + FP). Recall rate represents the ratio of the                  is analyzed. Second, the testing results are evaluated by human analysis
+amount of the scene element retrieved and relevant (TP) to the total                        at the sentence and word level.
+amount of the scene element relevant (TP + FN). For the F-score, the
+weight of the Precision and Recall rate can be controlled by adjusting β –
+the Precision rate is more important when β < 1, the Recall rate is more                    4.3.1. Validation results
+important when β > 1, and the Precision and Recall rate have equal                              Table 6 shows the best evaluation scores of each evaluation metric
+importance (now called F1) when β = 1.                                                      in the three experiments. The MS COCO caption evaluation results
+    Given the possible retrieval deviation caused by the diversity of                       shown in Table-C5 (CIDEr-D of 1.196, Rouge-L of 0.573, BLEU-4 of
+vocabulary application, there is a general assumption that the final                        0.369, and SPICE of 0.215), which indicates the method's performance
+evaluation score of each scene element is calculated based on com-                          to be comparable with that of state-of-the-art computer vision methods
+bining the retrieval results of all the corresponding words; e.g., scene                    in general (see http://cocodataset.org/#captions-leaderboard, referred
+words such as “helmet” and “hardhat” are synonyms that correspond to                        to on 30 October 2019). The image captioning method has an evalua-
+the same object in images, so when calculating the performance score of                     tion score with CIDEr-D of 1.605, Rouge-L of 0.651, BLEU-4 of 0.491,
+this object, the two words are treated as the same.                                         and SPICE of 0.364, which is higher than the top score of the MS COCO
+                                                                                            caption evaluation results. Notably, the SPICE of 0.364 in E#1 is much
+                                                                                            higher than the other two experiments; this is because the number of
+                                                                                            scene element categories in Dataset I is smaller than Dataset II, and the
+
+
+
+
+                                                        Fig. 10. Accuracy and total loss of the training process in E#2.
+
+
+                                                                                       12
+H. Liu, et al.                                                                                                              Automation in Construction 119 (2020) 103334
+
+
+
+
+                                                     Fig. 11. Accuracy and total loss of the training process in E#3.
+
+
+                                                                                         Section 4.2.1.
+                                                                                             In Table 7, bolded results are the average scores of all valid results
+                                                                                         of each experiment. Fig. 13 intuitively shows the differences between
+                                                                                         E#1 and E#2 by comparing the average value, and the D-value re-
+                                                                                         presents the difference in evaluation scores between E#1 and E#2,
+                                                                                         which used the same DNN compositions with two different datasets. It
+                                                                                         is found that the effect of the same model on Dataset II (in E#2) is
+                                                                                         significantly better than that on Dataset I (in E#1), because Dataset II
+                                                                                         has a larger size of image-sentence samples and richer categories of
+                                                                                         scene elements than Dataset I. The results clearly accord with the
+                                                                                         convention of the learning of a deep learning model in the computer
+                                                                                         science field. The results also indicate that the constructed method re-
+                                                                                         lies heavily on datasets.
+
+
+                                                                                         4.3.1.2. Comparison of E#2 and E#3 results. The evaluation results of
+            Fig. 12. Distribution of the scene element retrieval results.                the same dataset in E#2 and E#3 were compared to explore the
+                                                                                         difference in performance of the two DNN compositions (i.e., VGG-16
+Table 6                                                                                  with LSTM, and ResNet-50 with LSTM). The experimental results in
+Highest values of each evaluation metric.                                                Table 8 and comparison results in Fig. 14 indicate that the E#3 results
+           Evaluation metric
+                                                                                         are slightly better than E#2. However, the difference between the two
+                                                                                         experiments is not significant. The Rouge-L result in E#2 is better than
+           CIDEr-D    Rouge-L    BLEU-1     BLEU-2    BLEU-3     BLEU-4     SPICE        that in E#3, which generally accords with the results of previous
+                                                                                         research [76]. The difference between VGG-16 and ResNet-50 in
+  E#1      1.088      0.501      0.518      0.427     0.36       0.318      0.364
+                                                                                         gaining robustness against the label noise of caption datasets is that
+  E#2      1.545      0.651      0.658      0.576     0.522      0.482      0.349
+  E#3      1.605      0.616      0.680      0.595     0.537      0.491      0.354        ResNet-50 performed better than VGG-16 [76]. The difference in
+                                                                                         application is that the CNNs within the joint deep learning model are
+                                                                                         used for representing the vision of images.
+probability of a single scene element in the Dataset I output to the                         In conclusion, the evaluation results of the proposed image cap-
+sentence generation results is higher. These results are therefore com-                  tioning method are comparable with the CV community's state-of-the-
+parable with the image captioning methods with benchmarking data-                        art results. The grouping comparison results show that the difference in
+sets in the CV community.                                                                the influence of the two datasets on the method is significant: the da-
+    The E#1, E#2, and E#3 results are next compared and discussed to                     taset with a larger size and richer categories of samples performed
+explore the influence of different datasets or different DNN composi-                    better. Moreover, the difference in influence of the two DNN compo-
+tions on the application of the image captioning method.                                 sitions on the method is not significant, although the E#3 results are
+                                                                                         generally slightly better than E#2. It is shown that the proposed
+                                                                                         method relies on the dataset more heavily than the DNN compositions
+4.3.1.1. Results comparison between E#1 and E#2. Table 7 partially
+                                                                                         of the model. The definite difference in performance of sentence gen-
+presents the valid results in E#1 and E#2, with validity meaning the
+                                                                                         eration between E#2 and E#3 not only depends on the quality of the
+achieved generalization ability of the model confirmed by the
+                                                                                         datasets and the established model architecture itself but is also related
+convergence of the total loss, accuracy stability, and accuracy
+                                                                                         to the research conditions and other uncertainties that need to be fur-
+comparison results with no significant difference between the process
+                                                                                         ther explored in follow-up studies.
+in training and testing. The underlined scores are the best results of the
+corresponding evaluation metrics. The best results do not necessarily
+appear in the same configuration of experiments because the evaluation                   4.3.2. Testing results
+dimension of different metrics is different, as previously introduced in                 4.3.2.1. Human evaluation. Keeping the training setting in E#1, E#2,
+
+                                                                                    13
+H. Liu, et al.                                                                                                        Automation in Construction 119 (2020) 103334
+
+
+Table 7
+Experimental results corresponding to the configurations in E#1 and E#2.
+  Configuration                         Evaluation metric
+
+                                        CIDEr-D             Rouge-L         BLEU-1              BLEU-2            BLEU-3             BLEU-4               SPICE
+
+  E#1                 1                 0.933               0.497           0.479               0.388             0.329              0.287                0.348
+                      2                 1.088               0.490           0.495               0.412             0.36               0.318                0.283
+                      3                 0.950               0.501           0.484               0.395             0.336              0.293                0.299
+                      4                 0.972               0.495           0.518               0.427             0.355              0.296                0.297
+                      5                 0.868               0.482           0.468               0.375             0.316              0.273                0.364
+                      6                 0.898               0.497           0.506               0.391             0.321              0.269                0.347
+                      7                 0.843               0.451           0.446               0.345             0.288              0.25                 0.314
+                      8                 0.815               0.438           0.464               0.355             0.289              0.247                0.348
+                      9                 0.934               0.499           0.48                0.391             0.332              0.288                0.349
+                      10                0.893               0.493           0.475               0.382             0.323              0.279                0.345
+                      11                0.796               0.423           0.438               0.336             0.277              0.234                0.318
+                      12                0.611               0.389           0.419               0.311             0.245              0.194                0.276
+                      13                0.657               0.43            0.449               0.362             0.3                0.253                0.272
+                      14                0.631               0.426           0.443               0.355             0.292              0.246                0.269
+                      15                0.972               0.495           0.518               0.427             0.355              0.296                0.297
+                      Avg.              0.857               0.467           0.472               0.377             0.315              0.268                0.315
+  E#2                 1                 1.456               0.64            0.621               0.511             0.424              0.357                0.341
+                      2                 1.493               0.641           0.614               0.502             0.420              0.357                0.344
+                      3                 1.502               0.639           0.615               0.502             0.420              0.357                0.344
+                      4                 1.493               0.641           0.614               0.502             0.420              0.357                0.344
+                      5                 1.496               0.648           0.617               0.514             0.435              0.369                0.326
+                      6                 1.467               0.561           0.671               0.538             0.438              0.366                0.272
+                      7                 1.497               0.645           0.620               0.509             0.424              0.361                0.342
+                      8                 1.130               0.548           0.545               0.428             0.337              0.267                0.237
+                      9                 1.545               0.651           0.658               0.576             0.522              0.482                0.318
+                      10                1.508               0.642           0.619               0.511             0.423              0.362                0.349
+                      Avg.              1.459               0.626           0.619               0.509             0.426              0.364                0.322
+
+
+
+
+            Fig. 13. Comparison of E#1 and E#2 average-score results.
+                                                                                               Fig. 14. Comparison of E#2 and E#3 highest scores.
+and E#3, the images in the testing sets from actual construction sites
+were annotated automatically. Table 9 shows some examples of the                    good and bad samples in Table 9 are not presented in the training set.
+testing results generated by the Beam Search decoder [64]; good                     This caption-generating model can deal with diverse situations,
+examples marked with a G achieved the top evaluation scores, and                    indicating its generalizability. Fig. 15 gives an intuitive comparative
+poor examples with some obvious errors and incompleteness are                       analysis of the image captioning results, grouped by human rating. In
+marked with B1 and B2. Some sentences (underlined) containing both                  the first row, the sentences describing the scene pictures with the
+
+
+Table 8
+Experimental results with the highest metric score corresponding to the configurations in E#2 and E#3.
+  Configuration                         Evaluation metric
+
+                                        CIDEr-D             Rouge-L         BLEU-1              BLEU-2            BLEU-3             BLEU-4               SPICE
+
+  E#2                  1                1.545               0.651           0.658               0.576             0.522              0.482                0.318
+                       2                1.508               0.642           0.619               0.511             0.423              0.362                0.349
+  E#3                  1                1.605               0.616           0.680               0.595             0.537              0.491                0.354
+
+
+
+                                                                              14
+H. Liu, et al.                                                                                                                      Automation in Construction 119 (2020) 103334
+
+
+      Table 9
+      Example sentences from the caption generation results.
+        Example sentence                                                                                                       Typea                              Source
+
+        Two men are tying the steel bars.                                                                                      G                                  E#1
+        A man wearing a yellow helmet and a reflective vest                                                                    G                                  E#1
+        A man is squatting to tie the steel bars.                                                                              G                                  E#1
+        A man in a yellow helmet is squatting to tie the steel bars.                                                           G                                  E#1
+        A man in a yellow helmet is pushing a two-wheeled cart.                                                                G                                  E#1
+        A man wearing a yellow helmet and a reflective vest                                                                    B2                                 E#1
+        A masonry worker wearing a yellow helmet and a reflective vest is pulling a two-wheeled cart.                          B1                                 E#1
+        A man is fixing a brick.                                                                                               G                                  E#2
+        A man wearing a yellow helmet is fixing a brick.                                                                       G                                  E#2
+        A man wearing a red helmet is cleaning side mortar of the brick wall.                                                  G                                  E#2
+        A man wearing a yellow helmet and an orange reflective vest is fixing a brick.                                         G                                  E#2
+        A man wearing a yellow helmet and a yellow reflective vest is fixing the ceramic tiles.                                G                                  E#2
+        A worker wearing a red hardhat is cleaning side mortar of the brick wall.                                              G                                  E#3
+        A worker wearing a yellow hardhat is cleaning side mortar of the brick wall.                                           G                                  E#3
+        A worker wearing a yellow helmet is fixing a brick wall.                                                               G                                  E#3
+        A worker wearing a yellow hardhat is fixing a brick wall.                                                              G                                  E#3
+        A man wearing a yellow helmet and a yellow reflective vest is fixing the ceramic tile.                                 G                                  E#3
+        A worker wearing a yellow helmet is fixing a yellow helmet is cleaning side mortar of the brick.                       B1                                 E#3
+        A worker wearing a worker wearing a yellow helmet is cleaning side mortar of the brick.                                B1                                 E#3
+        A worker wearing a brick                                                                                               B2                                 E#3
+        A worker wearing a brick wall                                                                                          B2                                 E#3
+
+        a
+          G denotes a good example of the top five in each experiment, B1 denotes a poor example with logic or grammar errors, and B2 denotes a poor example
+      with an incomplete description.
+
+completeness of a scene have no errors. In other rows, all the sentences                       some scope for improvement from a practical perspective as there are
+generated have mismatching errors with the visual information in                               errors in the generated sentences, as shown in Table 9 and Fig. 15.
+presented pictures, of which the corresponding error words are marked                          Table 10 and Fig. 16 also show that correctness varies between different
+in red boxes.                                                                                  categories of scene elements. From the perspective of statistics, this may
+                                                                                               be due to the limitations of the original image captioning datasets in
+4.3.2.2. Correctness at the scene element level. Eighty pictures                               that: 1) the number of each scene element is small; 2) there are not
+(containing three categories of construction activity of cart                                  enough scene categories, and the number of categories is quite varied.
+transportation, rebar work, and masonry work) from actual
+construction sites as the testing sets are automatically annotated by                          5. Discussion
+the learned image captioning model in E#1. According to the
+classification of the scene elements in Fig. 4, the correctness in                             5.1. Knowledge contribution
+Precision, Recall rate, and F-Score of each concerned scene element
+and each category are calculated. A similar previous study calculated                              This study makes significant contributions to current scholarly lit-
+the F-scores by semantic proposition subcategory (object, relation,                            erature. First, the sparse existing literature considers the automatic
+attribute, color, count, size, etc.) [77]. The results are presented in                        manifestation of the construction activity scene as an integral whole.
+Table 10; the average values of the Precision, Recall rate, and F-score in                     This study represents one of the first attempts to bridge this important
+the same category of scene elements are also presented. For                                    void by employing recent advances of image captioning, rooted in the
+comparison, the column chart in Fig. 16 presents a comparison of                               fields of CV and NLG, to manifest the scene as an integral whole, with
+retrieval correctness between different categories of scene elements,                          both visual information and natural language sentences. The method
+showing that the retrieval correctness of Object I, Object III, and                            adopts a joint deep learning model by integrating a CNN “encoder” and
+Attributes are better than the other two categories. The most likely                           an RNN “decoder” and other related function modules (e.g., word
+reason is that the proposed model architecture for caption generation is                       embedding model, and optimizer). Two dedicated image captioning
+based on the encoder-decoder framework with two DNNs, which                                    datasets are created for training the proposed model and validating the
+corresponds to the statistical approach for NLG [40]. The final                                method, which imposes such major challenges as overfitting problems
+prediction correctness of objects is closely related to the adequacy of                        during the model learning process and operation testing. These are
+the corresponding training samples, which accords with statistical law                         overcome and solutions are presented containing the hyperparameter
+of large numbers, where the larger the basic sample size is, the more                          settings. The experiment results validated the method by showing its
+accurate the learning results will be. As Fig. 16 shows, the correctness                       performance to be comparable with that of state-of-the-art computer
+of different categories of scene elements on Precision, Recall rate, and F-                    vision methods in general.
+score is consistent with their different frequency in the original data                            Second, a novel linguistic description schema of construction ac-
+(pictures and sentences), which is represented as the blue line chart in                       tivity scenes is pioneered, which guided the dataset production in the
+Fig. 16.                                                                                       follow-up experimental study. The originality and easy applicability of
+    In summary, the experimental tests indicate the following results.                         the proposed schema is shown as follows. 1) It bridges the gap between
+The automated evaluation results show the method's performance to be                           the image captioning method and scenario applications at the level of
+comparable with that of state-of-the-art computer vision methods in                            information formats by structurally linking the visual information of
+general. The group comparison results indicated that the method relies                         scene elements with the corresponding natural language words or
+on the dataset more heavily than DNN compositions of the model (see                            phrases. It is also generic and can be applied to other tasks that combine
+Figs. 13 and 14); the dataset with a larger size and richer categories of                      the techniques in the fields of CV and NLP (e.g., text-based image re-
+samples performed better. The tests by human evaluation proved the                             trieval [3,78]). 2) The three steps for manifesting the construction
+generalizability of the method. Although the automated image cap-                              scenes with descriptive sentences, including deconstructing the scene
+tioning is more efficient in time than manual annotation, there is still                       image, matching words with the scene elements, and forming a
+
+                                                                                          15
+H. Liu, et al.                                                                                                              Automation in Construction 119 (2020) 103334
+
+
+
+
+                                                   Fig. 15. Intuitive comparative analysis of captioning results.
+
+
+Table 10
+Distinguishing the Precision, Recall, and F-Score between different scene elements.
+  Categories         Scene elements              TP + FP        TP + FN         TP       Precision      Recall      F1             Average/category
+
+                                                                                                                                   Precision       Recall       F1
+
+  Object I           Worker/man                  80             79              79       0.988          1.000       0.994          0.988           1.000        0.994
+  Object II          Cart                        15             45               5       0.111          0.333       0.167          0.273           0.203        0.186
+                     Brick                       33             16               6       0.375          0.182       0.245
+                     Bars                        32              9               3       0.333          0.094       0.146
+  Object III         Helmet                      73             79              73       0.924          1.000       0.961          0.631           0.843        0.707
+                     Reflection vest             35             71              24       0.338          0.686       0.453
+  Relationships      Laying/build                31             14               5       0.357          0.161       0.222          0.288           0.210        0.190
+                     Tie                         32              8               3       0.375          0.094       0.150
+                     Pull/push                   16             45               6       0.133          0.375       0.197
+  Attributes         Color – “yellow”            36             72              32       0.444          0.889       0.593          0.564           0.902        0.688
+                     Count of workers – “1”      59             79              54       0.684          0.915       0.783
+
+
+
+
+                                                                                 16
+H. Liu, et al.                                                                                                                 Automation in Construction 119 (2020) 103334
+
+
+                                                                                      and five in Dataset II, and the proposed method is fit for application in
+                                                                                      the scenarios involving these activities. Moreover, while two dedicated
+                                                                                      datasets created in this study can serve for both practice and further
+                                                                                      research, making the proposed method more practical in the context of
+                                                                                      construction management means that they need to be constantly sup-
+                                                                                      plemented to expand their sample size and categories. Ideally, this
+                                                                                      would be an industry-based process, but is unlikely at present because
+                                                                                      of the expense involved in creating such a dataset for general objects
+                                                                                      and services – the lack of well-known datasets for testing optional ap-
+                                                                                      proaches already being a chronic problem [24].
+                                                                                          The study is also limited to two DNN compositions (i.e., VGG-16
+                                                                                      with LSTM, and ResNet-50 with LSTM) of the image captioning model,
+                                                                                      whose difference in results is not significant. There are more un-
+                                                                                      certainties in the training process of a joint model with multiple DNNs,
+                                                                                      such as a many hyperparameter settings and the users' degree of ex-
+                                                                                      perience in making adjustments. Therefore, future studies could further
+                                                                                      explore the difference between different DNN compositions of this
+  Fig. 16. Correctness comparison of different categories of scene elements.
+                                                                                      image captioning model.
+
+descriptive sentence, are easily implemented either manually or by                    6. Conclusions
+using NLP tools (e.g., NLTK toolkit [59] in Fig. 6).
+                                                                                          This paper introduces an automated method for manifesting con-
+5.2. Practical implications and application challenges                                struction activity scenes via image captioning employing recent ad-
+                                                                                      vances of image captioning in the fields of CV and NLG. A joint image
+   The practical implication and application challenges of the pro-                   captioning model is established by integrating a CNN (i.e., VGG-16 [60]
+posed image captioning method are discussed in this section.                          or ResNet-50 [61]) “encoder” for image representation with the Skip-
+                                                                                      gram model [62] for word embedding, and an RNN (i.e., LSTM [57])
+1) Practical implications. The proposed method addresses the two low-                 “decoder” for sentence generation. The testing results by human eva-
+   efficiency problems of image application. First, it can manifest the               luations demonstrate the feasibility of the proposed method's applica-
+   activity scene of a site image with a complete sentence. Managers                  tion in practice at the current technical level, although there is still
+   can obtain objective information of the construction activity state by             scope for improvement. The discussion of practical implications and
+   scanning the generated image captions centrally. For example, a                    application challenges also indicates the need to constantly improve the
+   worker's safety state can be estimated by analyzing the distribution               method by extending the dedicated datasets and improving the per-
+   of such scene words as “helmet”, “hardhat”, or “reflective vest”.                  formance of the model structure.
+   Second, the lack of content indexing method for managing random
+   images leads to the low reuse rate of these images. The captions of                Declaration of competing interest
+   images generated by the proposed method can be used as indices of
+   images, which can assist in managing random site images by image                       We have no financial and personal relationships with other people
+   classification and image retrieval based on scene words in captions.               or organizations that could inappropriately influence (bias) the work or
+   By repeated extraction and utilization of visual information from                  state, which is reported in this paper for publication consideration by
+   images for different image-based management objectives, the value                  Automation in Construction.
+   of site images can be improved considerably.
+2) Application challenges. Given the proposed method is based on a                    Acknowledgments
+   supervised learning-based model with multiple DNNs and manual
+   datasets for training, two application challenges are apparent. First,                 This research is funded by the National Natural Science Foundation
+   the accuracy needs to be improved. The application performance                     of China (Grant No. 71771172 and 71471138), the Innovation and
+   depends on the quantity and quality of the training dataset and the                Technology Commission (ITC) of Hong Kong (ITP/020/18LP), the
+   inherent performance of the model architecture. The still-devel-                   Sichuan Science and Technology Program (2020YFH0124), and the
+   oping technologies of image captioning and difficulties in the pro-                Research Institute for Sustainable Urban Development (RISUD) in Hong
+   duction of big datasets in the context of the construction industry                Kong (5-ZJLG). The authors are grateful to Guipeng Zhang at the China
+   may be inhibiting accuracy, especially compared to the usual simple                State Construction Engineering Corporation (CSCEC) and Kechen An for
+   object detection and image classification tasks developed by the CV                their valuable assistance during the data collection processes. The au-
+   community. Second, the difficulty of cross-scenario applications of                thors also would like to thank the editor and the reviewers for their
+   the method needs to be addressed. Natural language sentences in the                helpful suggestions.
+   image captioning dataset of different scenarios need to be diversi-
+   fied and generalized. Even for the complex world of construction                   Appendix A. Supplementary data
+   site activities, the proposed method is based on limited categories of
+   construction activity, as well as the limited number and diversity of                  The pre-trained models and datasets are publicly available at
+   words. Developing a more comprehensive method may require en-                      https://github.com/HannahHuanLIU/AEC-image-captioning.
+   tirely new lexicons, continuously updated with the additional
+   polysemy and synonymy words, which will constitute a significant                   References
+   application challenge.
+                                                                                       [1] M.C. Gouett, C.T. Haas, P.M. Goodrum, C.H. Caldas, Activity analysis for direct-
+5.3. Research limitations                                                                  work rate improvement in construction, J. Constr. Eng. Manag. 137 (2011)
+                                                                                           1117–1124, https://doi.org/10.1061/(ASCE)CO.1943-7862.0000375.
+                                                                                       [2] A. Khosrowpour, J.C. Niebles, M. Golparvar-Fard, Vision-based workface
+     This study is limited to three categories of site activities in Dataset I
+
+                                                                                 17
+H. Liu, et al.                                                                                                                              Automation in Construction 119 (2020) 103334
+
+
+     assessment using depth images for activity analysis of interior construction opera-              generator, Proceedings of the IEEE Computer Society Conference on Computer
+     tions, Autom. Constr. 48 (2014) 74–87, https://doi.org/10.1016/j.autcon.2014.08.                 Vision and Pattern Recognition, 2015: pp. 3156–3164. doi:https://doi.org/10.
+     003.                                                                                             1109/CVPR.2015.7298935.
+ [3] J. Johnson, R. Krishna, M. Stark, L.-J. Li, D.A. Shamma, M.S. Bernstein, L. Fei-Fei,        [28] J. Donahue, L.A. Hendricks, M. Rohrbach, S. Venugopalan, S. Guadarrama,
+     Image retrieval using scene graphs, Proceedings of the IEEE Conference on                        K. Saenko, T. Darrell, Long-term recurrent convolutional networks for visual re-
+     Computer Vision and Pattern Recognition, 2015: pp. 3668–3678. doi:https://doi.                   cognition and description, IEEE Trans. Pattern Anal. Mach. Intell. 39 (2017)
+     org/10.1109/CVPR.2015.7298990.                                                                   677–691, https://doi.org/10.1109/TPAMI.2016.2599174.
+ [4] H. Nasir, C.T. Haas, D.A. Young, S.N. Razavi, C. Caldas, P. Goodrum, Erratum: an            [29] B. Dai, S. Fidler, R. Urtasun, D. Lin, Towards diverse and natural image descriptions
+     implementation model for automated construction materials tracking and locating,                 via a conditional GAN, Proceedings of the IEEE International Conference on
+     Can. J. Civ. Eng. 37 (2010) 588–599, https://doi.org/10.1139/L10-060.                            Computer Vision, 2017: pp. 2989–2998. doi:https://doi.org/10.1109/ICCV.2017.
+ [5] L. Ding, W. Fang, H. Luo, P.E.D. Love, B. Zhong, X. Ouyang, A deep hybrid learning               323.
+     model to detect unsafe behavior: integrating convolution neural networks and long           [30] O. Vinyals, A. Toshev, S. Bengio, D. Erhan, Show and tell: lessons learned from the
+     short-term memory, Autom. Constr. 86 (2018) 118–124, https://doi.org/10.1016/j.                  2015 MSCOCO image captioning challenge, IEEE Trans. Pattern Anal. Mach. Intell.
+     autcon.2017.11.002.                                                                              39 (2017) 652–663, https://doi.org/10.1109/TPAMI.2016.2587640.
+ [6] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, C. Li, Computer vision aided inspection on         [31] P. Kuznetsova, V. Ordonez, T.L. Berg, Y. Choi, TreeTalk: composition and com-
+     falling prevention measures for steeplejacks in an aerial environment, Autom.                    pression of trees for image descriptions, Transactions of the Association for
+     Constr. 93 (2018) 148–164, https://doi.org/10.1016/j.autcon.2018.05.022.                         Computational Linguistics. 2 (2014) 351–362, https://doi.org/10.1162/tacl_a_
+ [7] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-use             00188.
+     by a deep learning method from far-field surveillance videos, Autom. Constr. 85             [32] A. Karpathy, L. Fei-Fei, Deep visual-semantic alignments for generating image de-
+     (2018) 1–9, https://doi.org/10.1016/j.autcon.2017.09.018.                                        scriptions, Proceedings of the IEEE Conference on Computer Vision and Pattern,
+ [8] J.C.P. Cheng, M. Wang, Automated detection of sewer pipe defects in closed-circuit               2015: pp. 3128–3137. doi:https://doi.org/10.1109/TPAMI.2016.2598339.
+     television images using deep learning techniques, Autom. Constr. 95 (2018)                  [33] M. Hodosh, P. Young, J. Hockenmaier, Framing image description as a ranking task:
+     155–171, https://doi.org/10.1016/j.autcon.2018.08.006.                                           data, models and evaluation metrics, J. Artif. Intell. Res. 47 (2013) 853–899,
+ [9] H. Kim, K. Kim, H. Kim, Data-driven scene parsing method for recognizing con-                    https://doi.org/10.1613/jair.3994.
+     struction site objects in the whole image, Autom. Constr. 71 (2016) 271–282,                [34] P. Young, A. Lai, M. Hodosh, J. Hockenmaier, From image descriptions to visual
+     https://doi.org/10.1016/j.autcon.2016.08.018.                                                    denotations: new similarity metrics for semantic inference over event descriptions,
+[10] F.P. Rahimian, S. Seyedzadeh, S. Oliver, S. Rodriguez, N. Dawood, On-demand                      Transactions of the Association for Computational Linguistics. 2 (2014) 67–78,
+     monitoring of construction projects through a game-like hybrid application of BIM                https://doi.org/10.1162/tacl_a_00166.
+     and machine learning, Autom. Constr. 110 (2020) 103012, https://doi.org/10.                 [35] T.-Y. Lin, M. Maire, S. Belongie, J. Hays, P. Perona, D. Ramanan, P. Dollár, C.L.
+     1016/j.autcon.2019.103012.                                                                       Zitnick, Microsoft COCO: Common Objects in Context, Lecture Notes in Computer
+[11] B. Xiao, Z. Zhu, Two-dimensional visual tracking in construction scenarios: a                    Science (Including Subseries Lecture Notes in Artificial Intelligence and Lecture
+     comparative study, J. Comput. Civ. Eng. 32 (2018) 04018006, , https://doi.org/10.                Notes in Bioinformatics), 2014: pp. 740–755. doi:https://doi.org/10.1007/978-3-
+     1061/(ASCE)CP.1943-5487.0000738.                                                                 319-10602-1_48.
+[12] E. Konstantinou, I. Brilakis, Matching construction workers across views for auto-          [36] V. Ramanathan, C. Li, J. Deng, W. Han, Z. Li, K. Gu, Y. Song, S. Bengio, C.
+     mated 3D vision tracking on-site, J. Constr. Eng. Manag. 144 (2018) 04018061, ,                  Rossenberg, L. Fei-Fei, Learning semantic relationships for better action retrieval in
+     https://doi.org/10.1061/(asce)co.1943-7862.0001508.                                              images, Proceedings of the IEEE Conference on Computer Vision and Pattern
+[13] M. Golparvar-Fard, A. Heydarian, J.C. Niebles, Vision-based action recognition of                Recognition, 2015: pp. 1100–1109. doi:https://doi.org/10.1109/CVPR.2015.
+     earthmoving equipment using spatio-temporal features and support vector machine                  7298713.
+     classifiers, Adv. Eng. Inform. 27 (2013) 652–663, https://doi.org/10.1016/j.aei.            [37] G.V. Kale, V.H. Patil, A study of vision based human motion recognition and ana-
+     2013.09.001.                                                                                     lysis, International Journal of Ambient Computing and Intelligence. 7 (2016)
+[14] Y. Yu, H. Li, W. Umer, C. Dong, X. Yang, M. Skitmore, A.Y.L. Wong, Automatic                     75–92, https://doi.org/10.4018/IJACI.2016070104.
+     biomechanical workload estimation for construction workers by computer vision               [38] Z. Kolar, H. Chen, X. Luo, Transfer learning and deep convolutional neural networks
+     and smart insoles, J. Comput. Civ. Eng. 33 (2019) 04019010, , https://doi.org/10.                for safety guardrail detection in 2D images, Autom. Constr. 89 (2018) 58–70,
+     1061/(ASCE)CP.1943-5487.0000827.                                                                 https://doi.org/10.1016/j.autcon.2018.01.003.
+[15] Y. Yu, H. Li, X. Yang, L. Kong, X. Luo, A.Y.L. Wong, An automatic and non-invasive          [39] E. Reiter, R. Dale, Building applied natural language generation systems, Nat. Lang.
+     physical fatigue assessment method for construction workers, Autom. Constr. 103                  Eng. 3 (1997) S1351324997001502, , https://doi.org/10.1017/
+     (2019) 1–12, https://doi.org/10.1016/j.autcon.2019.02.020.                                       S1351324997001502.
+[16] Y. Yu, X. Yang, H. Li, X. Luo, H. Guo, Q. Fang, Joint-level vision-based ergonomic          [40] A. Gatt, E. Krahmer, Survey of the state of the art in natural language generation:
+     assessment tool for construction workers, J. Constr. Eng. Manag. 145 (2019)                      Core tasks, applications and evaluation, J. Artif. Intell. Res. 61 (2018) 65–170,
+     040190925, , https://doi.org/10.1061/(ASCE)CO.1943-7862.0001647.                                 https://doi.org/10.1613/jair.5477.
+[17] L. Kong, H. Li, Y. Yu, H. Luo, M. Skitmore, M.F. Antwi-Afari, Quantifying the               [41] Y. LeCun, Y. Bengio, G. Hinton, Deep learning, Nature. 521 (2015) 436–444,
+     physical intensity of construction workers, a mechanical energy approach, Adv.                   https://doi.org/10.1038/nature14539.
+     Eng. Inform. 38 (2018) 404–419, https://doi.org/10.1016/j.aei.2018.08.005.                  [42] H. Schwenk, J. Gauvain, Training Neural Network Language Models on Very Large
+[18] J. Xu, H.S. Yoon, Vision-based estimation of excavator manipulator pose for auto-                Corpora, Proceedings of the Conference on Human Language Technology and
+     mated grading control, Autom. Constr. 98 (2019) 122–131, https://doi.org/10.                     Empirical Methods in Natural Language Processing - HLT ‘05, Association for
+     1016/j.autcon.2018.11.022.                                                                       Computational Linguistics, Morristown, NJ, USA, 2005, pp. 201–208, https://doi.
+[19] X. Yan, H. Li, C. Wang, J.O. Seo, H. Zhang, H. Wang, Development of ergonomic                    org/10.3115/1220575.1220601.
+     posture recognition technique based on 2D ordinary camera for construction hazard           [43] Y. Bengio, R. Ducharme, P. Vincent, C. Jauvin, A neural probabilistic language
+     prevention through view-invariant features in 2D skeleton motion, Adv. Eng.                      model, J. Mach. Learn. Res. 1 (2000) 1137–1155, https://doi.org/10.1162/
+     Inform. 34 (2017) 152–163, https://doi.org/10.1016/j.aei.2017.11.001.                            153244303322533223.
+[20] E. Rezazadeh Azar, B. McCabe, Part based model and spatial-temporal reasoning to            [44] A. Mnih, G. Hinton, Three New Graphical Models for Statistical Language
+     recognize hydraulic excavators in construction images and videos, Autom. Constr.                 Modelling, Proceedings of the 24th International Conference on Machine Learning -
+     24 (2012) 194–202, https://doi.org/10.1016/j.autcon.2012.03.003.                                 ICML ‘07, ACM Press, New York, New York, USA, 2007, pp. 641–648, https://doi.
+[21] H. Luo, M. Wang, P.K.Y. Wong, J.C.P. Cheng, Full body pose estimation of con-                    org/10.1145/1273496.1273577.
+     struction equipment using computer vision and deep learning techniques, Autom.              [45] T. Mikolov, S. Kombrink, L. Burget, J. Cernocky, S. Khudanpur, Extensions of re-
+     Constr. 110 (2020) 103016, https://doi.org/10.1016/j.autcon.2019.103016.                         current neural network language model, 2011 IEEE International Conference on
+[22] J. Yang, Z. Shi, Z. Wu, Vision-based action recognition of construction workers                  Acoustics, Speech and Signal Processing (ICASSP), 2011: pp. 5528–5531.
+     using dense trajectories, Adv. Eng. Inform. 30 (2016) 327–336, https://doi.org/10.               doi:https://doi.org/10.1109/ICASSP.2011.5947611.
+     1016/j.aei.2016.04.009.                                                                     [46] S. Hochreiter, J. Schmidhuber, Long short-term memory, Neural Comput. 9 (1997)
+[23] X. Luo, H. Li, D. Cao, Y. Yu, X. Yang, T. Huang, Towards efficient and objective                 1735–1780, https://doi.org/10.1162/neco.1997.9.8.1735.
+     work sampling: recognizing workers’ activities in site surveillance videos with two-        [47] I. Sutskever, O. Vinyals, Q. V. Le, Sequence to sequence learning with neural net-
+     stream convolutional networks, Autom. Constr. 94 (2018) 360–370, https://doi.                    works, Advances in Neural Information Processing Systems, 2014: pp. 3104–3112.
+     org/10.1016/j.autcon.2018.07.011.                                                                https://arxiv.org/pdf/1409.3215.pdf.
+[24] X. Luo, H. Li, D. Cao, F. Dai, J. Seo, S. Lee, Recognizing diverse construction ac-         [48] D. Dong, H. Wu, W. He, D. Yu, H. Wang, Multi-Task Learning for Multiple Language
+     tivities in site images via relevance networks of construction-related objects de-               Translation, Proceedings of the 53rd Annual Meeting of the Association for
+     tected by convolutional neural networks, J. Comput. Civ. Eng. 32 (2018) 04018012,                Computational Linguistics and the 7th International Joint Conference on Natural
+     , https://doi.org/10.1061/(asce)cp.1943-5487.0000756.                                            Language Processing (Volume 1: Long Papers), Association for Computational
+[25] J. Gong, C.H. Caldas, C. Gordon, Learning and classifying actions of construction                Linguistics, Stroudsburg, PA, USA, 2015, pp. 1723–1732, https://doi.org/10.3115/
+     workers and equipment using Bag-of-Video-Feature-Words and Bayesian network                      v1/P15-1166.
+     models, Adv. Eng. Inform. 25 (2011) 771–782, https://doi.org/10.1016/j.aei.2011.            [49] N. Kalchbrenner, P. Blunsom, Recurrent Continuous Translation Models,
+     06.002.                                                                                          Proceedings of the 2013 Conference on Empirical Methods in Natural Language
+[26] Y. Wang, P.C. Liao, C. Zhang, Y. Ren, X. Sun, P. Tang, Crowdsourced reliable la-                 Processing, 2013: Pp, https://www.aclweb.org/anthology/D13-1176.pdf,
+     beling of safety-rule violations on images of complex construction scenes for ad-                (1700–1709).
+     vanced vision-based workplace safety, Adv. Eng. Inform. 42 (2019) 101001,                   [50] T. Castro Ferreira, I. Calixto, S. Wubben, E. Krahmer, Linguistic realisation as ma-
+     https://doi.org/10.1016/j.aei.2019.101001.                                                       chine translation: Comparing different MT models for AMR-to-text generation,
+[27] O. Vinyals, A. Toshev, S. Bengio, D. Erhan, Show and tell: A neural image caption                Proceedings of the 10th International Conference on Natural Language Generation,
+
+
+                                                                                            18
+H. Liu, et al.                                                                                                                                 Automation in Construction 119 (2020) 103334
+
+
+     Association for Computational Linguistics, Stroudsburg, PA, USA, 2017: pp. 1–10.                   2014: pp. 1178–1185. doi:https://doi.org/10.1109/CVPR.2014.154.
+     doi:10.18653/v1/W17-3501.                                                                     [65] J. Deng, W. Dong, R. Socher, L. Li, K. Li, L. Fei-Fei, ImageNet: A large-scale hier-
+[51] P. Duygulu, K. Barnard, J.F.G. de Freitas, D.A. Forsyth, Object recognition as ma-                 archical image database, Proceedings of the IEEE Conference on Computer Vision
+     chine translation: learning a lexicon for a fixed image vocabulary, in: Lecture Notes              and Pattern Recognition, 2009: pp. 248–255. doi:https://doi.org/10.1109/CVPRW.
+     in Computer Science (Including Subseries Lecture Notes in Artificial Intelligence                  2009.5206848.
+     and Lecture Notes in Bioinformatics), 2007: pp. 97–112. doi:https://doi.org/10.               [66] P. Kuznetsova, V. Ordonez, A. Berg, Collective generation of natural image de-
+     1007/3-540-47979-1_7.                                                                              scriptions, Proceedings of the 50th Annual Meeting of the Association for
+[52] A. Farhadi, M. Hejrati, M.A. Sadeghi, P. Young, C. Rashtchian, J. Hockenmaier, D.                  Computational Linguistics, 2012: pp. 359–368. https://doi.org/10.5555/2390524.
+     Forsyth, Every picture tells a story: generating sentences from images, Lecture Notes              2390575.
+     in Computer Science (Including Subseries Lecture Notes in Artificial Intelligence             [67] I. Sutskever, G. Hinton, A. Krizhevsky, R.R. Salakhutdinov, Dropout: a simple way
+     and Lecture Notes in Bioinformatics), 2010: pp. 15–29. doi:https://doi.org/10.                     to prevent neural networks from overfitting, J. Mach. Learn. Res. 15 (2014)
+     1007/978-3-642-15561-1_2.                                                                          1929–1958, https://doi.org/10.5555/2627435.2670313.
+[53] P. Sermanet, D. Eigen, X. Zhang, M. Mathieu, R. Fergus, Y. LeCun, Overfeat:                   [68] D.P. Kingma, J.L. Ba, Adam: A Method for Stochastic Gradient Descent,
+     Integrated Recognition, Localization and Detection Using Convolutional Networks,                   International Conference on Learning Representations, ICLR, 2015https://arxiv.
+     2nd International Conference on Learning Representations, ICLR 2014 - Conference                   org/abs/arXiv:1412.6980v9.
+     Track Proceedings, https://arxiv.org/abs/1312.6229, (2014).                                   [69] J.F. Beltrão, J.B.C. Silva, J.C. Costa, Robust polynomial fitting method for regional
+[54] Z. Yang, Y. Yuan, Y. Wu, R. Salakhutdinov, W.W. Cohen, Review networks for                         gravity estimation, Geophysics. 56 (1991) 80–89, https://doi.org/10.1190/1.
+     caption generation, Advances in Neural Information Processing Systems. (2016)                      1442960.
+     2369–2377. http://arxiv.org/abs/1605.07912.                                                   [70] C. Zhang, S. Bengio, M. Hardt, B. Recht, O. Vinyals, Understanding deep learning
+[55] Y.B. Kelvin Xu, J. Ba, R. Kiros, K. Cho, A. Courville, R. Salakhutdinov, R. Zemel,                 requires rethinking generalization, ArXiv Preprint ArXiv:1611.03530, 2016 https://
+     Show, Attend and Tell: Neural Image Caption Generation With Visual Attention,                      arxiv.org/abs/1611.03530.
+     International Conference on Machine Learning, 2015: pp. 2048–2057. doi:https://               [71] K. Papineni, S. Roukos, T. Ward, W. Zhu, BLEU: a method for automatic evaluation
+     doi.org/10.1109/72.279181.                                                                         of machine translation, Proceedings of the 40th Annual Meeting on Association for
+[56] X. Chen, C.L. Zitnick, Mind's eye: A recurrent visual representation for image cap-                Computational Linguistics. Association for Computational Linguistics, 2002: pp.
+     tion generation, in: Proceedings of the IEEE Computer Society Conference on                        311–318. doi:https://doi.org/10.3115/1073083.1073135.
+     Computer Vision and Pattern Recognition, 2015: pp. 2422–2431. doi:https://doi.                [72] C.Y. Lin, Rouge: a package for automatic evaluation of summaries, Proceedings of
+     org/10.1109/CVPR.2015.7298856.                                                                     the Workshop on Text Summarization Branches out (WAS 2004), 2004: pp. 25–26.
+[57] X. Jia, E. Gavves, B. Fernando, T. Tuytelaars, Guiding the long-short term memory                  https://www.aclweb.org/anthology/W04-1013.
+     model for image caption generation, Proceedings of the IEEE International                     [73] R. Vedantam, C.L. Zitnick, D. Parikh, CIDEr: Consensus-based image description
+     Conference on Computer Vision, 2015: pp. 2407–2415. doi:https://doi.org/10.                        evaluation, Proceedings of the IEEE Computer Society Conference on Computer
+     1109/ICCV.2015.277.                                                                                Vision and Pattern Recognition, 2015: pp. 4566–4575. doi:https://doi.org/10.
+[58] X. Chen, H. Fang, T.-Y. Lin, R. Vedantam, S. Gupta, P. Dollár, C.L. Zitnick, Microsoft             1109/CVPR.2015.7299087.
+     coco captions: data collection and evaluation server, ArXiv Preprint                          [74] P. Anderson, B. Fernando, M. Johnson, S. Gould, SPICE: Semantic propositional
+     ArXiv:1504.00325, 2015 https://arxiv.org/pdf/1504.00325.pdf.                                       image caption evaluation, Lecture Notes in Computer Science (Including Subseries
+[59] E. Loper, S. Bird, NLTK, Proceedings of the ACL-02 Workshop on Effective Tools and                 Lecture Notes in Artificial Intelligence and Lecture Notes in Bioinformatics), 2016:
+     Methodologies for Teaching Natural Language Processing and Computational                           pp. 382–398. doi:https://doi.org/10.1007/978-3-319-46454-1_24.
+     Linguistics, Association for Computational Linguistics, Morristown, NJ, USA, 2002,            [75] C. Goutte, E. Gaussier, A probabilistic interpretation of precision, recall and F-score,
+     pp. 63–70, https://doi.org/10.3115/1118108.1118117.                                                with implication for evaluation, European Conference on Information Retrieval,
+[60] K. Simonyan, A. Zisserman, Very deep convolutional networks for large-scale image                  2005: pp. 345–359. doi:https://doi.org/10.1007/978-3-540-31865-1_25.
+     recognition, Computer Vision and Pattern Recognition (Cs.CV), 2014 https://arxiv.             [76] A. Vahdat, Toward robustness against label noise in training deep discriminative
+     org/abs/1409.1556.                                                                                 neural networks, Advances in Neural Information Processing Systems, 2017: pp.
+[61] K. He, X. Zhang, S. Ren, J. Sun, Deep residual learning for image recognition,                     5597–5606. http://papers.nips.cc/paper/7143-toward-robustness-against-label-
+     Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,                     noise-in-training-deep-discriminative-neural-networks.pdf.
+     2016: pp. 770–778. doi:https://doi.org/10.1109/CVPR.2016.90.                                  [77] H. Fang, S. Gupta, F. Iandola, R.K. Srivastava, L. Deng, P. Dollár, J. Gao, X. He, M.
+[62] T. Mikolov, I. Sutskever, K. Chen, G. Corrado, J. Dean, Distributed representations                Mitchell, J.C. Platt, C.L. Zitnick, G. Zweig, From captions to visual concepts and
+     of words and phrases and their compositionality, Adv. Neural Inf. Proces. Syst.                    back, Proceedings of the IEEE Computer Society Conference on Computer Vision
+     (2013) 1–9 http://arxiv.org/abs/1310.4546.                                                         and Pattern Recognition, 2015: pp. 1473–1482. doi:https://doi.org/10.1109/
+[63] S. Ioffe, C. Szegedy, Batch normalization: accelerating deep network training by                   CVPR.2015.7298754.
+     reducing internal covariate shift, 32nd International Conference on Machine                   [78] V. Ordonez, X. Han, P. Kuznetsova, G. Kulkarni, M. Mitchell, K. Yamaguchi,
+     Learning, 2015: pp. 448–456. https://arxiv.org/abs/1502.03167v3.                                   K. Stratos, A. Goyal, J. Dodge, A. Mensch, H. Daumé, A.C. Berg, Y. Choi, T.L. Berg,
+[64] A. Roy, S. Todorovic, Scene labeling using beam search under mutex constraints, in:                Large scale retrieval and generation of image descriptions, Int. J. Comput. Vis. 119
+     Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition,                     (2016) 46–59, https://doi.org/10.1007/s11263-015-0840-y.
+
+
+
+
+                                                                                              19
+

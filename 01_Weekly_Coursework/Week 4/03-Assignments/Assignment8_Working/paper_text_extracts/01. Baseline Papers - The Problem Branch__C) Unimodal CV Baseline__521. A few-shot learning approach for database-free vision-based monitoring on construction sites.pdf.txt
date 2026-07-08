@@ -1,0 +1,713 @@
+                                                                   Automation in Construction 124 (2021) 103566
+
+
+                                                                     Contents lists available at ScienceDirect
+
+
+                                                               Automation in Construction
+                                                           journal homepage: www.elsevier.com/locate/autcon
+
+
+
+
+A few-shot learning approach for database-free vision-based monitoring on
+construction sites
+Jinwoo Kim a, c, Seokho Chi b, c, *
+a
+  Department of Civil and Environmental Engineering, University of Michigan, Ann Arbor, MI 48109, USA
+b
+  Department of Civil and Environmental Engineering, Seoul National University, Seoul 08826, Republic of Korea
+c
+  Institute of Construction and Environmental Engineering, Seoul National University, Seoul 08826, Republic of Korea
+
+
+
+
+A R T I C L E I N F O                                       A B S T R A C T
+
+Keywords:                                                   This paper proposes a few-shot learning approach that can successfully learn and detect new construction objects
+Construction site                                           when only a few training data are given. The proposed approach includes few-shot model design and meta-
+Vision-based                                                learning processes. To validate the approach, the authors conducted experiments using a popular construction
+Site monitoring
+                                                            benchmark dataset, AIMDataset. Even if only 20 training images were provided to a new construction object, the
+Database-free (DB-free)
+Few-shot learning
+                                                            few-shot learning could build an object detection model with the mean Average Precision of 73.1% on average,
+Meta-learning                                               whereas the performance of the existing supervised learning was limited to 36.5%. The results imply that the
+                                                            proposed approach can successfully learn and detect new types of construction objects only with few labeled
+                                                            images given, enabling to reduce the number of training images while maximizing the model performance. It
+                                                            would be then possible to save human efforts required for data labeling and enhance the practicality of vision-
+                                                            based construction monitoring systems.
+
+
+
+
+1. Introduction                                                                                   construction sites owing to time and cost limitations. For these reasons,
+                                                                                                  they have installed video cameras at site, observed the collected images,
+    Construction site monitoring, which is a process of measuring,                                and conducted vision-based monitoring remotely [7,8]. The remote
+analyzing, and improving project performance such as operational                                  vision-based monitoring has received more attention in practice [9,10]
+productivity and safety, is an important task for successful project                              as the Korean Government has allowed construction firms to include the
+management [1]. Project managers can evaluate the operational effi­                               camera-installation costs in their safety management budget since 2016
+ciency of input resources (e.g., direct work rate, hourly productivity)                           [11]. Nonetheless, because project managers are required to manually
+and discover root-causes of productivity loss [2–4]. For instance, if there                       observe and process a large amount of site videos to obtain on-site in­
+are too many loaders that wait for trucks to arrive, they can make de­                            formation (e.g., locations of input resources), the time and cost problems
+cisions to allocate more dump trucks on the site and minimize loaders’                            still arise. Hence, many researchers have developed numerous vision-
+waiting times. Through continuous monitoring, it is also possible to                              based algorithms for automated video analysis and jobsite monitoring,
+identify potential hazardous objects (e.g., holes on worksites) and                               enabling to capture on-site information from visual data without human
+recognize unsafe behaviors of workers (e.g., working at heights without                           intervention. The previous research efforts have demonstrated the high
+wearing personal-protective-equipment) [5]. Based on such on-site in­                             potential of vision-based algorithms for diverse monitoring purposes,
+formation, project managers can proactively remove hazardous objects                              such as productivity evaluation [12,13], safety analysis [14–16], and
+and perform safety training to minimize construction accident risks.                              progress measurement [17].
+Accordingly, timely and accurate monitoring of construction sites can                                  However, as most state-of-the-art technologies rely on traditional
+provide project managers with the information required for project                                deep learning algorithms, they require a significant amount of training
+controls and successful completion.                                                               data with accurate label information (e.g., object types and locations) to
+    Due to the importance, project managers have directly visited con­                            develop vision-based algorithms with high performance. It is thus
+struction sites and collected on-site information manually [6]. However,                          essential to collect many construction images and annotate target ob­
+they faced difficulties in monitoring dynamic and large-scale                                     jects (e.g., heavy equipment) and/or their operational information (e.g.,
+
+
+    * Corresponding author at: Department of Civil and Environmental Engineering, Seoul National University, Seoul 08826, Republic of Korea.
+      E-mail addresses: jinwooki@umich.edu (J. Kim), shchi@snu.ac.kr (S. Chi).
+
+https://doi.org/10.1016/j.autcon.2021.103566
+Received 15 July 2020; Received in revised form 19 November 2020; Accepted 18 January 2021
+Available online 28 January 2021
+0926-5805/© 2021 Elsevier B.V. All rights reserved.
+J. Kim and S. Chi                                                                                                      Automation in Construction 124 (2021) 103566
+
+
+object types and locations) on every single image frame. Since such                 learning-based visual algorithms to productivity and safety monitoring
+human-dependent processes are time-consuming, expensive, and labor-                 on construction sites. For automated work sampling and productivity
+intensive, it is still challenging to build an extensive and high-quality           analysis, Kim et al. [28] fed CNN-based equipment detection results in
+training image database (DB) [18–21]. Considering the fact that                     an earthmoving process simulation model to evaluate the operational
+various types of construction resources exist on the site and they often            efficiency. In a later study [29], they further applied the method for
+vary from phase to phase, this issue becomes more problematic. Every                detecting dump truck’s license plates and gathering their site-access log
+time a new type of resources appears, project managers should build and             data. Luo et al. [30] developed a construction activity recognition
+update a training DB. For these reasons, it is frequent that the perfor­            method by integrating CNNs and relevance networks that analyze the
+mance of vision-based monitoring would decline in practice. To address              types of construction objects (e.g., workers, equipment, and materials)
+such problems, this paper proposes a few-shot learning approach for DB-             and their spatial interrelations (e.g., size, proximity). Luo et al. [13]
+free vision-based monitoring on construction sites. Herein, DB-free re­             proposed a two-stream CNN approach to detect specific actions of con­
+fers to a concept where the purpose is to minimize amount of training               struction workers from site surveillance videos, and they improved the
+data and cost of data labeling, while maintaining the monitoring per­               method by appending Bayesian nonparametric learning to capture ac­
+formance. To this end, this research builds on a few-shot learning                  tivities of the workers from far-field surveillance images [31]. As the
+approach that can successfully learn and detect new types of construc­              CNN models often suffer from its inherent limitations, i.e., frame-by-
+tion objects (i.e., novel classes) even if few training data are given, i.e.,       frame time-independent analysis, some researchers made efforts to
+less than 30 images. Fig. 1 illustrates the concept of few-shot learning.           integrate time-series analysis models. Kim and Chi [32] combined CNN
+The approach learns meta-knowledge (i.e., how to learn objects) from                and double-layer long short term memory (LSTM) to incorporate
+sufficient training data labeled with base classes (e.g., dump trucks,              sequential working patterns of earthmoving excavators (e.g., operation
+mixer trucks, rollers, and loaders), and leverages such knowledge to                cycles), and Roberts and Golparvar-Fard [12] exploited a hidden Mar­
+learn and detect novel classes (e.g., excavators) when a few training               kov model to deal with temporal sequences of earthwork activities. Chen
+samples are given. In this paper, as shown in Fig. 1, the base classes are          et al. [33] also designed a rule-based reasoning algorithm to interpret
+types of construction objects with sufficient labeled training data, while          the time-series states of excavators from the CNN detection results. To
+the novel classes mean types of objects with few training data.                     understand the interactive operations of multiple construction re­
+    This paper presents the following contributions. First, this study              sources, Cai et al. [34] developed a two-step LSTM method that cate­
+characterizes a novel technical approach that can learn new types of                gorizes working groups and their activity types. Bang and Kim [35] also
+construction objects and achieve the promising performance of vision-               integrated CNN and LSTM models to interpret object-to-object re­
+based monitoring only with a few training images. Second, the                       lationships (e.g., proximity) and extract their operational information
+approach can save time and costs for data labeling, and enhance the                 (e.g., activity types) from site images.
+practical usability of vision-based systems in real-world construction                  Another mainstream of computer vision applications is construction
+sites. Third, to the best of authors’ knowledge, this study is the first            safety monitoring. In one study [36], a CNN model was used to localize
+attempt to evaluate the feasibility of few-shot learning, which is one of           construction resources (e.g., workers, excavators, and wheel loaders)
+the most appealing research topics in the field of deep learning and                and measure their physical movements (e.g., proximities, speeds) for
+computer vision, to the construction domain. Particularly, the authors              proactive responses to possible struck-by-object accidents. Son et al.
+adapted and customized the few-shot learning to be applicable to con­               [37] also analyzed the spatial collision risks between construction
+struction environments, which have complex and different characteris­               workers and equipment using CNN-based object detection results. As
+tics from others (e.g., indoor buildings, urban areas). Last, the                   wearing personal-protective-equipment (PPE) is a major safety indica­
+quantitative results and theoretical findings of this study may play a              tor, Fang et al. [15] utilized the CNN model to detect whether workers
+crucial role as a baseline for future research directions in the area of            are wearing safety helmets or not. Wu et al. [38] further tested the
+vision-based construction monitoring. Future researchers can enhance                performance of various CNN models on identifying workers’ helmet-
+their vision systems with the integration of the proposed few-shot                  wearing states. In another study [14], they proposed a two-stream
+learning.                                                                           CNN approach to capture non-harness-wearing actions of construction
+                                                                                    workers for preventing falls from height. Similarly, Nath et al. [25]
+2. Literature review                                                                designed a two-step CNN architecture to recognize workers who do not
+                                                                                    wear safety helmet or vest, and Fang et al. [39] developed a vision-based
+    For automated construction monitoring, researchers have mainly                  method that detects diverse types of PPEs, e.g., helmets, harnesses, and
+focused on studying deep learning-based visual algorithms owing to                  anchorages, simultaneously. Other researchers also applied computer
+their excellent performance. Kim et al. [22], for example, developed a              vision techniques to monitoring workers’ unsafe postures and behaviors.
+region-based convolutional neural network (R-CNN) for detecting                     Fang et al. [40] combined multiple CNN models for detecting non-
+various types of construction equipment (e.g., excavators, dump trucks,             certified workers who carry out a certain operation without permis­
+mixer trucks, rollers, and loaders). Son et al. [23] investigated how to            sion (e.g., operating an excavator without driving license). Ding et al.
+recognize construction workers under varying postures and viewpoints                [41] proposed a hybrid deep learning model composed of CNN and
+using the R-CNN. Fang et al. [24] further improved the previous R-CNN               LSTM to recognize unsafe motions of workers while performing ladder-
+methods to classify construction workers and equipment simulta­                     climbing tasks.
+neously. You only look once (YOLO) architecture, which is lighter and                   Existing studies have shown the exceptional performance of deep
+faster than the R-CNN model, has also received attention from con­                  learning algorithms on vision-based construction monitoring. However,
+struction researchers. Nath et al. [25] used YOLO architecture for                  to generate a powerful deep learning model, it is inevitable to build a
+detecting construction workers, and Luo et al. [26] proposed a YOLO-                high quality and extensive training image DB. This process involves
+based model to track the detected workers continuously. Pi et al. [27]              manually annotating target construction objects and/or their opera­
+also tested the applicability of YOLO model to the identification of                tional information, such as object types and locations, on every single
+diverse types of construction and building elements from aerial top-view            image frame. Such manual processes not only require an excessive
+images. The results of earlier works showed the high potential of the               amount of time and effort but also have difficulty in incorporating a
+CNN models in complex construction environments and their robustness                wide range of characteristics of different construction objects (e.g.,
+to the leading causes of the performance deviations of vision-based                 different types, shapes, and colors of construction equipment). Thus, the
+analysis (e.g., scale deviations, illumination effects).                            practical use of vision-based monitoring on construction sites has been
+    The findings of existing studies led researchers to apply deep                  limited. To solve this problem, researchers have studied how to reduce
+
+                                                                                2
+J. Kim and S. Chi                                                                                                          Automation in Construction 124 (2021) 103566
+
+
+
+
+                                                             Fig. 1. Concept of few-shot learning.
+
+
+the time and effort required to build a training DB. Liu and Golparvar-             features that represent and explain general characteristics of the entire
+Fard [20], for instance, tested the practicality of crowdsourcing tech­             dataset (e.g., a set of object images) [45–47]. In this study, the module
+niques, which are an effective way of outsourcing tedious image-                    was built with the backbone of YOLOv2 (i.e., DarkNet-19) developed by
+annotation tasks to a crowd of non-expert individuals from an online                Redmon Farhadi [48], which is one of the most popular and outstanding
+community, such as Amazon Mechanical Turk. As they focused on                       feature extraction architectures extensively used in both computer
+annotating only workers and their action types, Wang et al. [19]                    vision and construction domains [25–27]. Although the meta-features
+improved the crowdsourcing technique to label complex safety-rule vi­               can provide generic visual information about all the target objects
+olations on construction images. However, as such crowdsourcing                     (both of base and novel classes), it may have difficulty in distinguishing
+techniques still depend on human efforts and cannot reduce the required             different object classes each other due to a lack of class-specific cues.
+amount of training data, research efforts have been made to automate                Such shortcoming can be counterbalanced by the class-attention module
+the image-annotation process. Soltani et al. [42] produced training data            that captures class-specific information from the input images. Specif­
+from a virtual equipment model and built a powerful object detector                 ically, this module learns how to transform the input image to semantic
+using the virtual images. Braun and Borrmann [43] also generated                    class-attention vectors that assign greater weights on class-specific di­
+training images from building information modeling for detecting                    mensions of the meta-feature vectors (Fig. 2). This allows to amplify
+building elements, such as columns, walls, and slabs. Despite their                 visual signals that are more informative for a specific object class (e.g.,
+encouraging proofs-of-concept, since real construction images have                  excavator’s unique characteristics such as its bucket and arm), thereby
+significantly different visual characteristics (e.g., textures and types of         extracting class-specific visual cues from the meta-features and classi­
+resources), it would not be guaranteed that deep learning models trained            fying different types of construction objects more effectively. The class-
+by virtual images have high performances. It may be also challenging to             attention module, in this research, was designed with a light-weight
+gather proper virtual models for every construction object and site. To             CNN [44] and its initial configuration performed well in the authors’
+minimize the amount of data labeling while maintaining the monitoring               feasibility test to check computational efficiency and learning ease.
+performance, this research builds upon a few-shot learning approach                 Finally, the extracted meta-features and semantic class-attention vectors
+that can successfully learn and detect new types of construction objects            are channel-wise multiplied, and the multiplied channels are then fed
+(i.e., novel classes) even if few training samples are given, i.e., less than       into the prediction module to classify object types and localize their
+30 images. Particularly, this study focuses on construction object                  bounding boxes (Fig. 2). The authors designed the prediction module
+detection, which is a crucial step for vision-based site monitoring.                with two fully-connected layers of 128 hidden units and one softmax
+                                                                                    layer behind the last fully-connected layer. The model is learned by the
+3. Proposed approach: Few-shot learning                                             meta-learning scheme as shown in Fig. 3 that is further explained in the
+                                                                                    next section.
+    As shown in Fig. 1, the proposed approach aims to generate a few-                   Technically, the few-shot model predicts final outcomes from an
+shot model that can learn and detect new types of construction objects              input image as follows. Given the input image Ii for class i = 1, 2, …, N,
+(i.e., novel classes) with only few images given. To achieve this, this             the corresponding meta-feature F is generated by the meta-feature
+research designs a few-shot learning model, and trains the model with               extraction module M (Eq. 1.1). Let us suppose that the support image
+the application of meta-learning which is the most critical algorithm for           Ii and their labeling information Li (i.e., bounding box annotation) for
+the few-shot learning. Details of model design and meta-learning are                class i are entered to the model; the support images mean a few labeled
+explained in the following sections.                                                data given to novel classes. The class-attention module A receives one
+                                                                                    support image Ii and its corresponding label Li as input, and embeds the
+                                                                                    image into a semantic class-attention vector wi (Eq. 1.2); the dimension
+3.1. Few-shot model design
+                                                                                    of each class-attention vector was carefully determined as 1024 based on
+                                                                                    the findings of the previous study [44] and the authors’ heuristic ex­
+    This process designs a few-shot model that can learn meta-
+                                                                                    periments. Using the semantic class-attention coefficients wi, it is
+knowledge (i.e., how to learn target objects from image data) from
+                                                                                    possible to obtain the class-specific feature Fi for a novel class i (Eq. 1.3).
+training images labeled only with base classes, and leverage such
+                                                                                    Next, the feature vectors for all classes (i.e., a set of Fi for i = 1, 2, . . , N)
+knowledge to learn novel classes. The few-shot model consists of meta-
+                                                                                    are fed into the prediction module P, which is a two-layer fully con­
+feature extraction, class-attention, and prediction modules (see Fig. 2).
+                                                                                    nected neural network with hidden units of 128. The detection results Di,
+    First, the meta-feature extraction module learns how to extract
+                                                                                    including the objectness score oi (i.e., how likely the bounding box in­
+generalized visual features that can represent generic information about
+                                                                                    cludes an object), bounding box coordinate (xi, yi, wi, hi), and
+various construction objects; such generic features are called meta-
+
+                                                                                3
+J. Kim and S. Chi                                                                                                                     Automation in Construction 124 (2021) 103566
+
+
+classification confidence ci, can be eventually obtained (Eqs. 1.4-1.5).                   truck” given two labeled images, and the remaining three classes for
+                                                                                           “mixer trucks,” “rollers,” and “loaders” are assigned to the sub-base
+F = M(Ii )                                                                     (1.1)
+                                                                                           classes. In this case, the designed few-shot model (Fig. 2) is trained to
+                                                                                           detect “dump trucks” only with two labeled “dump truck” images by
+wi = A(Ii , Li ) for∀i                                                         (1.2)
+                                                                                           using the information learnt from “mixer truck,” “roller,” and “loader”
+Fi = F ⊗ wi for∀i                                                              (1.3)       base classes. This simulation allows the model to “learn how to learn”
+                                                                                           novel classes. By randomly selecting the values of k and n, the model can
+Di = (oi , xi , yi , wi , hi , ci ) = P(Fi ) for∀i                             (1.4)       experience various few-shot scenarios and learn the meta-knowledge
+                                                                                           used for construction object detection. Based on the meta-knowledge,
+ci = oi ⋅IoU⋅li                                                                (1.5)       it would be possible to quickly adapt the designed model, as illus­
+                                                                                           trated in Fig. 2, to the original novel classes (e.g., “excavators” in Fig. 3).
+i = 1, 2, …, N                                                                 (1.6)           Once the base learning is completed, the few-shot transfer learning
+                                                                                           proceeds to finally learn a few support images for the novel classes and
+where ⊗ indicates channel-dimension wise multiplication, ci indicates                      adapt the model to novel class detection scenarios. The training pro­
+the softmax function-based probability of the corresponding object                         cedure is similar to the base learning, except that (a) the training data for
+belonging to class i, IoU is the intersection over union between predicted                 novel classes (e.g., “excavators” in Fig. 3) are used, and (b) it takes
+boxes and ground truths, and li represents the conditional probability                     considerably fewer iterations required for the model to converge due to
+that the object belongs to class i, given an object is presence.                           a less amount of training data of the novel classes. It is also important to
+                                                                                           note that equal number of images for each object class are trained. In the
+3.2. Meta-learning                                                                         case of k-way n-shot detection, n images are given to both novel and base
+                                                                                           classes.
+    The meta-learning, called “learning how to learn,” is the most critical                    For both training phases, the loss function for object detection is
+algorithm of the few-shot learning; it guides the few-shot model to learn                  defined as a linear sum of the classification loss Lcls, the localization loss
+how to (1) extract meta-features and semantic class-attention vectors                      Lloc, and the objectness loss Lobj (Eq. 2.1). The classification loss can be
+from input images using training data labeled only with base classes and                   computed with the cross-entropy loss over the calibrated softmax
+(2) quickly adapt them for novel classes detection when a few support                      function score (Eq. 2.2), which is a widely-used loss function for a multi-
+images are provided. Fig. 3 illustrates how the few-shot model, depicted                   classification problem. Eq. 2.3 explains how the localization loss, i.e.,
+in Fig. 2, is trained. The meta-learning is typically composed of two-                     errors between the predicted bounding boxes and the ground truth, is
+phase learning steps: base learning and few-shot transfer learning.                        calculated. The objectness loss is measured by Eq. 2.4.
+    First, the base learning plays an important role in learning how to
+                                                                                           Ldet = Lcls + Lloc + Lobj                                                       (2.1)
+extract meta-features and semantic class-attention vectors from input
+images, i.e., meta-knowledge. To do that, the base learning simulates                                                     ⎛       ⎞
+multiple few-shot detection scenarios using sufficient training data                                  ∑∑ obj      ecij
+                                                                                           Lcls = −       lij log⎝∑ cn ⎠                                                   (2.2)
+labeled only with base classes. For example, in Fig. 3, a series of few-shot                          i j
+                                                                                                                   e
+scenarios are simulated with the original base classes of “dump trucks,”                                                      n
+
+“mixer trucks,” “rollers,” and “loaders.” The base classes are randomly                                        [                         )2 ]
+                                                                                                         ∑∑ obj (          )2 (
+split to sub-base classes and sub-novel classes, and each few-shot scenario                Lloc = λloc     lij   xij − ̂            y ij
+                                                                                                                       x ij + yij − ̂
+can have k sub-novel classes and n support images per class, which is                                     i       j
+                                                                                                               [                                      ]
+generally called k-way n-shot detection scenario. Hereinafter, during the                                ∑∑ obj (√̅̅̅̅̅̅ √̅̅̅̅̅̅ )2 (√̅̅̅̅̅ √̅̅̅̅̅ )2
+base-learning phase, the sub-base classes mean types of construction                              + λloc   lij    wij −   ŵ ij    +  hij −  ̂
+                                                                                                                                             h ij                          (2.3)
+objects with sufficient amount of training data, the sub-novel classes                                        i       j
+
+refer to types of objects with few training data. An example of 1-way 2-
+shot problems can be organized with the one sub-novel class of “dump
+
+
+
+
+                                  Fig. 2. The architecture of the proposed few-shot detection model (partially adopted from Kang et al. [44]).
+
+                                                                                       4
+J. Kim and S. Chi                                                                                                          Automation in Construction 124 (2021) 103566
+
+
+
+
+                                                                 Fig. 3. Two-phase meta-learning scheme.
+
+
+         ∑∑ obj (         )2         ∑∑ no obj (            )2                          indicates the i-th 7 × 7 two-dimensional grid in a given image, which is
+Lobj =     lij cij − ̂c ij + λno obj   lij      cij − ̂c ij                 (2.4)       introduced in the original YOLOv2 research [48].
+                                                                                            To minimize the defined loss function, the few-shot detection model
+          i   j                           i      j
+
+
+                                 obj          no_obj                                    is trained using stochastic gradient descent with a momentum of 0.9, a
+where the binary variables lij         and lij         represent whether the j-th
+                                                                                        weight decay of 0.0005, and a batch size of 64. For base learning, a total
+boundary box in cell i is responsible for detecting the object or not,                  of 80,000 iterations proceed with the various learning rates of 0.001
+respectively; n is the number of object classes; cij indicates the confi­               (~500 iterations), 0.0001 (~40,000 iterations), 0.00001 (~60,000 it­
+dence score of the box j in cell i; xij, yij, wij, and hij denotes the center           erations), and 0.000001 (~80,000 iterations). The few-shot transfer
+coordinates of the box j in cell i and its width and height; xij and ̂ x ij are         learning is performed with a fixed learning rate of 0.001 and a total of
+for the ground truth and the predicted box, respectively (likewise for yij,             1500 iterations. These parameters worked well in the authors’ heuristic
+wij, hij, and cij); λloc and λno_obj mean the weighting parameter for the               experiments.
+localization loss and non-objectness loss, respectively; here, cell i
+
+
+                                                                                    5
+J. Kim and S. Chi                                                                                                    Automation in Construction 124 (2021) 103566
+
+
+4. Experimental results and analysis                                             75% [54–57], the proposed approach could reduce the number of
+                                                                                 training data to 1/15 (from 300 to 20 images), while achieving the
+    To validate the proposed approach, two different experiments were            comparable performance.
+conducted: one with few-shot learning and the other without few-shot
+learning (i.e., with supervised learning). Supervised learning is a tradi­       4.2. Performance with and without few-shot learning
+tional approach of “learning target objects” appeared in a number of
+support images used for training a model, whereas few-shot learning                  The authors also observed significant positive effects of the proposed
+focuses on “learning how to learn” even with a few support images                few-shot learning from the experiments. As presented in Fig. 4, the
+provided. This research adopted YOLOv2, Faster R-CNN, and single shot            performances for novel classes were always higher for few-shot learning
+detector (SSD) as the baseline detectors for supervised learning, because        than existing supervised learning (i.e., YOLOv2, Faster R-CNN, and SSD)
+they are the most popular and outstanding architectures for visual object        under the same experimental conditions (i.e., the same values of k and n
+detection. Comparison with various deep architectures enabled the                when using the same data augmentation methods). Among the super­
+research team to evaluate the impacts of few-shot learning more                  vised learning models, Faster R-CNN had the lowest performance for all
+comprehensively. When training object detectors using few-shot and               conditions, and SSD slightly worked better than YOLOv2. These results
+supervised learning, the authors utilized the common data augmenta­              were consistent with the existing body of knowledge in computer vision
+tion methods including image scaling, rotation, noising, translation, and        and deep learning, i.e., complex models would not be trained well given
+horizontal/vertical flipping [49]. Thus, the authors can confirm both the        few training data. The performance difference between the few-shot
+applicability and practicality of the few-shot learning and evaluate its         learning and the best supervised learning (i.e., SSD) was approxi­
+beneficial effects objectively.                                                  mately 33.5% on the average, and these differences rose as the values of
+    For the experiments and result analyses, the research team used the          k and n increased; the peak value was nearly 42.5% at k = 3 and n = 30.
+AIMDataset that is one of the most popular construction benchmark                This might be because the supervised learning method, which requires
+datasets. The AIMDataset introduced by Kim et al. [22] contains five             abundant labeled training data for all classes, faced difficulty in
+different classes of construction objects: “excavators,” “dump trucks,”          “learning novel classes” only with few images; however, the few-shot
+“mixer trucks,” “rollers,” and “loaders.” In the dataset, the construction       learning could “learn how to learn novel classes” using a few given
+equipment has a range of working movements (e.g., loading, unloading)            samples. Owing to this ability, the proposed approach achieved the novel
+and viewpoints (e.g., front, front-left, rear, rear-right). As the images        mAP over 78% at n = 30 (Table 1) even when the number of novel classes
+were collected from ImageNet [50] and there were various types of                was set as 3 (k = 3), which is the case that more than the half of the total
+construction objects, the dataset would be enough to measure the                 number of object classes were assigned to novel classes (the total number
+generalization capability of the model [22]. The total number of samples         of object classes was five in the experiments). Reversely, the novel mAP
+is 2920, and widths and heights of the images range from 200 to 3651. In         of supervised learning remained in the vicinity of 30.2% under the same
+the authors’ experiments, the data were randomly divided into training           configuration. These results indicate that the few-shot learning
+data consisting of 2044 images (70%) and testing data consisting of 876          approach not only reduces the number of training data required to
+images (30%). Using the data, the research team trained and tested the           generate a deep learning model but also quickly learn to detect novel
+models in diverse k-way n-shot scenarios, where the number of novel              classes even if only a few training data are given. With these benefits, it
+classes k was set from 1 to 3 and the number of support images n (given to       may be applicable to real-world construction environments where there
+each novel class) was set to 1, 2, 3, 5, 10, 20, and 30 considering the          are many novel and base objects simultaneously.
+motivation of few-shot learning and the setup of previous studies; many
+researchers attempted to train and evaluate a deep learning model with           4.3. Generalizability and expandability of the proposed approach
+less than 30 images [44,51,52]. The performances of the trained models
+were measured by the mean Average Precision (mAP), which is one of                   To further confirm the generalizability and expandability of the
+the most widely-used metrics in vision-based object detection chal­              proposed approach, the authors conducted an additional experiment
+lenges, e.g., PASCAL VOC [53]. Hereinafter, base mAP indicates the mAP           using different image data collected from actual construction sites. A
+for base classes, novel mAP implies the mAP for novel classes, and all mAP       total of 5000 image frames were collected with 1280 × 720 resolution,
+refers to the mAP for all classes.                                               and the collected data were randomly split into 3500 (70%) training and
+                                                                                 1500 (30%) testing images. The image data included two different types
+4.1. Performance of the proposed approach                                        of construction objects (i.e., “excavators,” “dump trucks”), and object
+                                                                                 detection models were trained in the same manner with the prior
+    Table 1 provides experimental results according to different few-shot        experiment. Table 2 shows the novel mAPs of few-shot and supervised
+detection scenarios (k = 1, 2, 3 and n = 1, 2, 3, 5, 10, 20, 30). The            learning approaches according to different n values; the number of novel
+developed model successfully detected construction equipment with the            classes was set as 1 (“excavators”). For all cases, the few-shot learning
+all mAP of 81.6% in the case of a 1-way 2-shot scenario. In detail, the          approach outperformed the supervised learning, and the performance
+base mAP recorded about 85.7%: “dump truck” (87.6%), “mixer truck”               difference was 32.5% on average. In line with the previous experimental
+(90.8%), “roller” (78.5%), and “loader” (86.1%). The novel mAP was               results, the performance differences tended to rise as the value of n
+achieved to be 65.0% even if only two labeled images were given to the           increased, and the peak value was nearly 42.2% at n = 10. The highest
+novel class, i.e., “excavators.” Furthermore, the novel mAP rapidly              performance of the few-shot learning was discovered as 72.5%. These
+increased as only a few more images were added, and it eventually                experimental results indicated that the proposed approach have a po­
+reached about 74.3% when 20 examples were trained. The proposed                  tential to be generalized and applied to image data collected from
+approach was also able to achieve 74.5% novel mAP and 80.0% base mAP             different monitoring environments.
+(on the average for all k = 1, 2, 3) when more than 20 labeled data were
+used for each class. Despite the promising results, inevitable detection         5. Results and discussion
+errors were also observed. Specifically, the model occasionally experi­
+enced difficulty in classifying dump trucks and mixer trucks due to their            It was found that the proposed approach can learn the meta-
+similar appearances. It might be also because 20 training images had a           knowledge (i.e., how to learn target objects) from training data
+lack of detailed information to distinguish two similar objects. However,        labeled only with base classes, and leverage such knowledge to detect
+considering the fact that at least 300 image samples (per one object             novel classes when a few support images are given. The trained model
+class) are generally required to obtain the detection performance over           effectively localized the different types of construction objects, such as
+
+                                                                             6
+J. Kim and S. Chi                                                                                                      Automation in Construction 124 (2021) 103566
+
+
+“excavators,” “dump trucks,” “mixer trucks,” “rollers,” and “loaders,”
+with the all mAP of 80.4% in the 1-way 20-shot scenario (Table 1). Fig. 5
+displays the detection results of the developed model. As can be seen, the
+model performed well even when the heavy equipment presents a range
+of working postures and visual characteristics (e.g., colors, shapes, sizes)
+under different camera positions and viewpoints. Specifically, although
+the dump trucks in the figure had different visual appearances, all of
+them were classified well by the model. The model was also able to
+detect construction objects in cluttered background and correctly clas­
+sify the equipment that has similar visual characteristics (e.g., dump
+trucks-mixer trucks, loaders-rollers). In addition, at the example of the
+bottom-left of Fig. 5, the model succeeded in localizing novel (i.e., ex­
+cavators) and base objects (i.e., dump trucks) in the same image. The
+fourth image in the first row also shows that the developed model could
+localize the excavator that was partially occluded by the loader. Simi­
+                                                                                   Fig. 4. Comparative analysis for the novel mAPs of few-shot and super­
+larly, the model detected the roller that was not fully visible from the
+                                                                                   vised learning.
+image (the last image in the first row).
+     The results also demonstrated the substantial benefits of the pro­
+                                                                                   used to interpret how much the vectors are well-trained for object
+posed few-shot learning. As reported in the experiments using the
+                                                                                   classification. Fig. 6 illustrates the t-SNE of the 3-way 20-shot scenario.
+AIMDataset, the novel mAPs were always higher when using few-shot
+                                                                                   In the figure, the closer the data points for the same classes are and the
+learning than supervised learning (Fig. 4), which means that the pro­
+                                                                                   greater the distances between different classes (e.g., “excavators” and
+posed approach can build a more powerful object detection model given
+                                                                                   “dump trucks”) become, it means that the trained model can classify
+the equal number of training data. When k is equal to 1 (i.e., the most
+                                                                                   target objects more effectively. In the case of few-shot learning, most of
+straightforward few-shot scenario), the novel mAP recorded approxi­
+                                                                                   the data points tended to form clusters, and the intercluster distances
+mately 40.0% only with one image sample (n = 1), and the all mAP was
+                                                                                   were quite large (see Fig. 6(a)). It is easily noticeable that the novel
+approximately 71.0%. The all mAP of supervised learning was also
+                                                                                   classes of “excavators,” “dump trucks,” and “mixer trucks” are evenly
+achieved to be 74.0%, but the novel mAP was limited to only 36.4%. It
+                                                                                   distributed, which denotes that the model knows how to distinguish
+was notable that the performance disparity for novel classes had been
+                                                                                   those objects. In contrast, as shown in Fig. 6(b), the supervised learning
+more striking as more support images were added. When n ranges from 1
+                                                                                   had quite large overlapping areas between different clusters. The clus­
+to 30, the performance difference between the two approaches was
+                                                                                   ters of novel classes (“excavators,” “dump trucks,” and “mixer trucks”)
+about 21.5% on the average, and the peak value was 31.6% at n = 5.
+                                                                                   overlaid different object classes substantially. This indicates that the
+Moreover, the performance disparity had become more significant, as
+                                                                                   model might face difficulties in extracting class-specific visual features
+the number of novel classes increased and the few-shot problem became
+                                                                                   and classifying different object classes each other, resulting in frequent
+more challenging. Indeed, when k was changed from 1 to 3, the novel
+                                                                                   misclassifications and performance decrease.
+mAP of the supervised learning approach dropped from 36.4% to 9.1%
+at n = 1, whereas the performance loss of few-shot learning was
+                                                                                   6. Research contributions and future works
+comparatively insignificant (40.0% ➔ 27.7%). The performance of few-
+shot learning even recovered to 53.1% once the value of n became 2, and
+                                                                                       In this section, the authors discuss theoretical findings and contri­
+it finally peaked the novel mAP of 78.0% when 30 image samples were
+                                                                                   butions of this study, and research challenges and future works are also
+provided. In contrast, the novel mAP of supervised learning remained in
+                                                                                   suggested in the perspective of practical applicability.
+a maximum of 29.5% although 30 images were used, and this eventually
+                                                                                       First, this study revealed that it is possible to build a promising deep
+resulted in the performance difference of 38.8% on the average. These
+                                                                                   learning model only using a few training data. These findings can bring a
+findings imply that the proposed approach can fully leverage labeled
+                                                                                   positive impact on implementing vision-based monitoring in real-world
+data for base classes to learn meta-knowledge, and successfully transfer
+                                                                                   construction sites. To be specific, regardless of any new types of con­
+the knowledge to detect novel classes with very few given examples, i.e.,
+                                                                                   struction resources appeared during different construction phases, the
+less than 30 images. It also seems that the few-shot learning performs
+                                                                                   proposed few-shot learning approach can quickly adapt to such dynamic
+well even in the situation that many novel classes (i.e., more than the half
+                                                                                   conditions and monitor new objects for which a sufficient amount of
+of total number of given object classes) need to be detected.
+                                                                                   training data are not necessary. This nature can allow site managers to
+     The aforementioned performance differences between the few-shot
+                                                                                   reduce their efforts and time required for additional data collection and
+and supervised learning can be qualitatively explained with t-distrib­
+                                                                                   annotation, which would be very labor-intensive and time-consuming.
+uted Stochastic Neighbor Embedding (t-SNE) [58]. The t-SNE visualizes
+                                                                                   Even for a particular object (e.g., excavators) having many training
+the semantic class-attention vectors for each object class, and it can be
+
+
+Table 1
+Experimental results of the proposed approach.
+  k-way n-shot scenarios                    n: number of support images
+
+  k: number of novel classes                1-shot            2-shot           3-shot            5-shot           10-shot            20-shot             30-shot
+
+  1-way              Novel mAP              40.0%             65.0%            54.7%             68.1%             65.4%              74.3%               74.5%
+                     Base mAP               78.7%             85.7%            80.3%             73.9%             77.9%              81.9%               81.4%
+                     All mAP                71.0%             81.6%            75.1%             72.7%             75.1%              80.4%               80.1%
+  2-way              Novel mAP              25.1%             56.6%            44.7%             63.2%             65.4%              73.1%               75.5%
+                     Base mAP               68.9%             85.3%            69.8%             74.0%             77.7%              80.5%               80.9%
+                     All mAP                51.4%             73.9%            59.7%             69.7%             72.3%              77.5%               78.8%
+  3-way              Novel mAP              27.7%             53.1%            40.6%             64.8%             62.5%              71.8%               78.0%
+                     Base mAP               61.6%             70.6%            65.7%             71.1%             72.8%              77.1%               78.1%
+                     All mAP                41.3%             60.1%            50.6%             67.3%             66.6%              73.9%               78.0%
+
+
+                                                                               7
+J. Kim and S. Chi                                                                                                             Automation in Construction 124 (2021) 103566
+
+
+Table 2
+Experimental results of few-shot and supervised learning.
+                                        1-shot              2-shot           3-shot               5-shot            10-shot                20-shot              30-shot
+
+  Few-shot Learning                     35.2%               42.7%            49.9%                56.1%             64.7%                  68.5%                72.5%
+  Supervised Learning_YOLOv2            13.2%               15.1%            16.8%                18.5%             22.5%                  32.8%                43.2%
+
+
+
+samples available, the proposed approach can also reduce human efforts                their localization networks with each other. This means that the local­
+required to annotate a target object and/or their operational informa­                ization network pretrained by a different domain dataset (e.g., Image­
+tion (e.g., object types and locations). These technical advantages would             Net) can be used for construction object localization without or with
+be beneficial when developing and updating a training DB phase-by-                    little fine-tuning. By adopting such domain adaptation technique, it
+phase, and site managers can perform vision-based monitoring more                     would be possible to address the localization problem more effectively.
+efficiently. According to the authors’ interviews with construction ex­                    It was also observed that the performance of few-shot learning was
+perts, it was reported that the DB development and update is one of the               sensitive to the support images sampled and used in the stage of meta-
+most crucial obstacles that limit the use of vision systems in their pro­             learning. In the authors’ experiments, the model performance dropped
+jects. In this regard, it is believed that the ability to reduce the required         from 58.2% to 46.7% when the number of support images varied from 2
+number of training images to 1/15 compared to previous methods would                  to 3 (Fig. 4). This observation was inconsistent with common sense that
+be very effective and helpful. Further, the theoretical findings of this              the more number of images are used, the more powerful model is
+study can provide valuable insights and future directions to researchers              learned. It might be because the support images (that were randomly
+in the field of vision-based construction monitoring.                                 sampled for meta-learning) did not provide rich and meaningful infor­
+    Next, when considering on-site applications of these findings, it                 mation about target objects. Fig. 7(b) shows that three support images,
+should be carefully concerned that there was a technical limitation to                which were used in the authors’ experiment (n = 3), included visual
+train a very robust model. For instance, the research team faced diffi­               information only about rear side of dump trucks, and therefore the
+culty in maximizing the model performance with the mAP over 90% only                  model could not learn their diverse characteristics. In this case, detec­
+using few images. It was also reported that the proposed few-shot                     tion errors mainly occurred when dump trucks were captured from other
+learning approach (all mAP: 87.8%) was not able to outperform the                     viewpoints, such as front and/or side views. To address this issue, future
+existing supervised learning (all mAP: 91.6%) when using all available                studies can adopt an active learning scheme that can select the most
+training data in the AIMDataset (2044 image frames). It may be because                meaningful-to-learn instances from a given training dataset. In the prior
+the goal of existing supervised learning is to obtain the maximum per­                example, it would be more effective if examining the visual similarities
+formance by using a large amount of training data, whereas the few-shot               of given images and selecting the three most representative and visually
+learning focuses on training a comparable model given limited number                  distinct instances (e.g., left-hand side, front-view, rear side). One recent
+of images. Particularly, the few-shot model occasionally faced difficulty             study also reported that an active learning scheme is effective in training
+in precisely localizing multiple objects (more than three) in crowded                 a deep learning model more stably and powerfully [60].
+scene images; as can be seen in Fig. 7(a), the model could predict the
+types of construction objects (e.g., “dump trucks,” “loaders”) that exist             7. Conclusions
+in the image, but the localization was incorrect. One effective alternative
+for this localization issue is to adopt a domain adaptation technique.                    This paper presented a few-shot learning approach to achieve DB-
+According to transfer learning theory [59] and the findings of existing               free vision-based monitoring on construction sites. The approach in­
+empirical studies [22,25], object detection models (composed of two                   cludes few-shot model design and meta-learning processes. As observed
+different modules of object localization and classification) can share                in the experiments, the few-shot model was able to learn the meta-
+
+
+
+
+                                        Fig. 5. Examples of the experimental results in the construction object detection.
+
+                                                                                8
+J. Kim and S. Chi                                                                                                          Automation in Construction 124 (2021) 103566
+
+
+
+
+                          Fig. 6. t-SNE plot of the semantic class-attention vectors: (a) Few-shot learning; (b) Supervised learning.
+
+
+
+
+                                             Fig. 7. Errors examples: (a) localization errors; (b) sampling bias.
+
+
+knowledge from training data labeled only with base classes, and the               For developing a deep learning model, future studies can combine it
+meta-learning enabled to successfully transfer such knowledge to detect            with the few-shot learning when only few training data are available.
+novel classes when a few images are given. In the 3-way 30-shot scenario,
+the few-shot detector localized the novel classes with the novel mAP over
+                                                                                   Declaration of Competing Interest
+78.0%, while the performance of supervised learning was limited to only
+29.5%. It means that the proposed approach can train a much more
+                                                                                       The authors declare that they have no known competing financial
+powerful object detector than the existing method, given the same
+                                                                                   interests or personal relationships that could have appeared to influence
+number of training data. This performance difference was also qualita­
+                                                                                   the work reported in this paper.
+tively explained with the t-SNE visualization (Fig. 6). The semantic
+class-attention vectors of few-shot learning were evenly distributed and
+helped to classify various types of objects, but those of supervised               Acknowledgements
+learning had large overlapping areas and thus classification errors
+occurred frequently. With the benefits of the proposed approach, this                  The authors would like to thank you to Dr. Hongjo Kim and his
+study made the following contributions. First, this research introduced a          research team who provided the construction benchmark dataset used in
+novel technical framework that can significantly reduce the required               this study. This research was supported by a grant (21CTAP-C151784-
+number of training images while maintaining the performance of vision-             03) from Technology Advancement Research Program funded by Min­
+based monitoring. Second, the framework can save time and costs                    istry of Land, Infrastructure and Transport of Korean government. This
+required for data labeling, thereby enhancing the practical acceptability          work is supported by the Korea Agency for Infrastructure Technology
+of vision systems on construction sites. Third, to the best of authors’            Advancement (KAIA) grant funded by the Ministry of Land, Infrastruc­
+knowledge, this was the first attempt to apply few-shot learning, which            ture and Transport (National Research for Smart Construction Tech­
+is one of the most attracting and emerging pattern recognition algo­               nology: Grant 21SMIP-A158708-02).
+rithms, in the construction domain. The authors customized the few-shot
+learning to be applicable to construction environments, and provided               References
+quantitative results to demonstrate its technical feasibility. Last, the
+                                                                                   [1] J. Kim, Automated Construction Site Monitoring: Multi Vision-Based Operational
+findings of this study can build the foundation for future research in the             Context Analysis for Enhancing Earthmoving Productivity, Seoul National
+area of not only vision-based construction monitoring but also other                   University, 2019. http://hdl.handle.net/10371/161874. accessed May 14, 2020.
+research fields, e.g., signal processing [61–63] and text-mining [64–66].          [2] J. Yang, M.W. Park, P.A. Vela, M. Golparvar-Fard, Construction performance
+                                                                                       monitoring via still images, time-lapse photos, and video streams: now, tomorrow,
+
+
+                                                                               9
+J. Kim and S. Chi                                                                                                                            Automation in Construction 124 (2021) 103566
+
+     and the future, Adv. Eng. Inform. 29 (2015) 211–224, https://doi.org/10.1016/j.             [27] Y. Pi, N.D. Nath, A.H. Behzadan, Convolutional neural networks for object
+     aei.2015.01.011.                                                                                 detection in aerial imagery for disaster response and recovery, Adv. Eng. Inform.
+ [3] E. Rezazadeh Azar, Semantic annotation of videos from equipment-intensive                        43 (2020) 101009, https://doi.org/10.1016/j.aei.2019.101009.
+     construction operations by shot recognition and probabilistic reasoning, J. Comput.         [28] H. Kim, S. Bang, H. Jeong, Y. Ham, H. Kim, Analyzing context and productivity of
+     Civ. Eng. 31 (2017), 04017042, https://doi.org/10.1061/(ASCE)CP.1943-                            tunnel earthmoving processes using imaging and simulation, Autom. Constr. 92
+     5487.0000693.                                                                                    (2018) 188–198, https://doi.org/10.1016/j.autcon.2018.04.002.
+ [4] D. Roberts, W.T. Calderon, S. Tang, M. Golparvar-fard, Vision-based construction            [29] H. Kim, Y. Ham, W. Kim, S. Park, H. Kim, Vision-based nonintrusive context
+     worker activity analysis informed by body posture, J. Comput. Civ. Eng. 34 (2020),               documentation for earthmoving productivity simulation, Autom. Constr. 102
+     04020017, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000898.                                    (2019) 135–147, https://doi.org/10.1016/j.autcon.2019.02.006.
+ [5] J. Seo, S. Han, S. Lee, H. Kim, Computer vision techniques for construction safety          [30] X. Luo, H. Li, D. Cao, F. Dai, J. Seo, S. Lee, Recognizing diverse construction
+     and health monitoring, Adv. Eng. Inform. 29 (2015) 239–251, https://doi.org/                     activities in site images via relevance networks of construction-related objects
+     10.1016/J.AEI.2015.02.001.                                                                       detected by convolutional neural networks, J. Comput. Civ. Eng. 32 (2018),
+ [6] Y. Ham, K.K. Han, J.J. Lin, M. Golparvar-Fard, Visual monitoring of civil                        04018012, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000756.
+     infrastructure systems via camera-equipped unmanned aerial vehicles (UAVs): a               [31] X. Luo, H. Li, X. Yang, Y. Yu, D. Cao, Capturing and understanding workers’
+     review of related works, Visual. Eng. 4 (2016) 1–8, https://doi.org/10.1186/                     activities in far-field surveillance videos with deep action recognition and bayesian
+     s40327-015-0029-z.                                                                               nonparametric learning, Comput.-Aided Civ. Infrastruct. Eng. 34 (2019) 333–351,
+ [7] J. Kim, Y. Ham, Y. Chung, S. Chi, Camera placement optimization for vision-based                 https://doi.org/10.1111/mice.12419.
+     monitoring on construction sites, in: 2018 Proceedings of the 35th International            [32] J. Kim, S. Chi, Action recognition of earthmoving excavators based on sequential
+     Symposium on Automation and Robotics in Construction, International Association                  pattern analysis of visual features and operation cycles, Autom. Constr. 104 (2019)
+     for Automation and Robotics in Construction, Berlin, Germany, 2018, pp. 748–752,                 255–264, https://doi.org/10.1016/j.autcon.2019.03.025.
+     https://doi.org/10.22260/ISARC2018/0102.                                                    [33] C. Chen, Z. Zhu, A. Hammad, Automated excavators activity recognition and
+ [8] J. Kim, Y. Ham, Y. Chung, S. Chi, Systematic camera placement framework for                      productivity analysis from construction site surveillance videos, Autom. Constr.
+     operation-level visual monitoring on construction jobsites, J. Constr. Eng. Manag.               110 (2020) 103045, https://doi.org/10.1016/j.autcon.2019.103045.
+     145 (2019), 04019019, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001636.                   [34] J. Cai, Y. Zhang, H. Cai, Two-step long short-term memory method for identifying
+ [9] J. Gong, C.H. Caldas, Computer vision-based video interpretation model for                       construction activities through positional and attentional cues, Autom. Constr. 106
+     automated productivity analysis of construction operations, J. Comput. Civ. Eng.                 (2019) 102886, https://doi.org/10.1016/j.autcon.2019.102886.
+     24 (2010) 252–263, https://doi.org/10.1061/(ASCE)CP.1943-5487.0000027.                      [35] S. Bang, H. Kim, Context-based information generation for managing UAV-
+[10] J. Yang, P. Vela, J. Teizer, Z. Shi, Vision-based tower crane tracking for                       acquired data using image captioning, Autom. Constr. 112 (2020) 103116, https://
+     understanding construction activity, J. Comput. Civ. Eng. 28 (2014) 103–112,                     doi.org/10.1016/j.autcon.2020.103116.
+     https://doi.org/10.1061/(ASCE)CP.1943-5487.0000242.                                         [36] D. Kim, M. Liu, S. Lee, V.R. Kamat, Remote proximity monitoring between mobile
+[11] Korea Construction Technology Promotion Act, Enforcement decree article 98 and                   construction resources using camera-mounted UAVs, Autom. Constr. 99 (2019)
+     99, statutes of the Republic of Korea. http://law.go.kr/법령/건설기술관리법, 2016                         168–182, https://doi.org/10.1016/j.autcon.2018.12.014.
+     (accessed January 28, 2019).                                                                [37] H. Son, H. Seong, H. Choi, C. Kim, Real-time vision-based warning system for
+[12] D. Roberts, M. Golparvar-Fard, End-to-end vision-based detection, tracking and                   prevention of collisions between workers and heavy equipment, J. Comput. Civ.
+     activity analysis of earthmoving equipment filmed at ground level, Autom. Constr.                Eng. 33 (2019), 04019029, https://doi.org/10.1061/(ASCE)CP.1943-
+     105 (2019) 102811, https://doi.org/10.1016/j.autcon.2019.04.006.                                 5487.0000845.
+[13] X. Luo, H. Li, D. Cao, Y. Yu, X. Yang, T. Huang, Towards efficient and objective            [38] J. Wu, N. Cai, W. Chen, H. Wang, G. Wang, Automatic detection of hardhats worn
+     work sampling: recognizing workers’ activities in site surveillance videos with two-             by construction personnel: a deep learning approach and benchmark dataset,
+     stream convolutional networks, Autom. Constr. 94 (2018) 360–370, https://doi.                    Autom. Constr. 106 (2019) 102894, https://doi.org/10.1016/j.
+     org/10.1016/j.autcon.2018.07.011.                                                                autcon.2019.102894.
+[14] W. Fang, L. Ding, H. Luo, P.E.D. Love, Falls from heights: a computer vision-based          [39] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, C. Li, Computer vision aided inspection on
+     approach for safety harness detection, Autom. Constr. 91 (2018) 53–61, https://                  falling prevention measures for steeplejacks in an aerial environment, Autom.
+     doi.org/10.1016/j.autcon.2018.02.018.                                                            Constr. 93 (2018) 148–164, https://doi.org/10.1016/j.autcon.2018.05.022.
+[15] Q. Fang, H. Li, X. Luo, L. Ding, H. Luo, T.M. Rose, W. An, Detecting non-hardhat-           [40] Q. Fang, H. Li, X. Luo, L. Ding, T.M. Rose, W. An, Y. Yu, A deep learning-based
+     use by a deep learning method from far-field surveillance videos, Autom. Constr.                 method for detecting non-certified work on construction sites, Adv. Eng. Inform. 35
+     85 (2018) 1–9, https://doi.org/10.1016/J.AUTCON.2017.09.018.                                     (2018) 56–68, https://doi.org/10.1016/j.aei.2018.01.001.
+[16] M.-W. Park, N. Elsafty, Z. Zhu, Hardhat-wearing detection for enhancing on-site             [41] L. Ding, W. Fang, H. Luo, P.E.D. Love, B. Zhong, X. Ouyang, A deep hybrid learning
+     safety of construction workers, J. Constr. Eng. Manag. 141 (2015), 04015024,                     model to detect unsafe behavior: integrating convolution neural networks and long
+     https://doi.org/10.1061/(ASCE)CO.1943-7862.0000974.                                              short-term memory, Autom. Constr. 86 (2018) 118–124, https://doi.org/10.1016/
+[17] A. Dimitrov, M. Golparvar-Fard, Vision-based material recognition for automated                  j.autcon.2017.11.002.
+     monitoring of construction progress and generating building information modeling            [42] M.M. Soltani, Z. Zhu, A. Hammad, Automated annotation for visual recognition of
+     from unordered site image collections, Adv. Eng. Inform. 28 (2014) 37–49, https://               construction resources using synthetic images, Autom. Constr. 62 (2016) 14–23,
+     doi.org/10.1016/j.aei.2013.11.002.                                                               https://doi.org/10.1016/j.autcon.2015.10.002.
+[18] J. Kim, S. Chi, Adaptive detector and tracker on construction sites using functional        [43] A. Braun, A. Borrmann, Combining inverse photogrammetry and BIM for
+     integration and online learning, J. Comput. Civ. Eng. 31 (2017), 04017026,                       automated labeling of construction site images for machine learning, Autom.
+     https://doi.org/10.1061/(ASCE)CP.1943-5487.0000677.                                              Constr. 106 (2019) 102879, https://doi.org/10.1016/j.autcon.2019.102879.
+[19] Y. Wang, P.C. Liao, C. Zhang, Y. Ren, X. Sun, P. Tang, Crowdsourced reliable                [44] B. Kang, Z. Liu, X. Wang, F. Yu, J. Feng, T. Darrell, Few-shot object detection via
+     labeling of safety-rule violations on images of complex construction scenes for                  feature reweighting, in: Proceedings of 2019 IEEE International Conference on
+     advanced vision-based workplace safety, Adv. Eng. Inform. 42 (2019) 101001,                      Computer Vision 2019, IEEE, Seoul, Republic of Korea, 2019, pp. 8420–8429. http
+     https://doi.org/10.1016/j.aei.2019.101001.                                                       s://openaccess.thecvf.com/content_ICCV_2019/papers/Kang_Few-Shot_Object_
+[20] K. Liu, M. Golparvar-Fard, Crowdsourcing construction activity analysis from                     Detection_via_Feature_Reweighting_ICCV_2019_paper.pdf. (Accessed 16 November
+     jobsite video streams, J. Constr. Eng. Manag. 141 (2015), 04015035, https://doi.                 2020).
+     org/10.1061/(ASCE)CO.1943-7862.0001010.                                                     [45] P. Brazdil, C.G. Carrier, C. Soares, R. Vilalta, Metalearning, Springer, 2009. https://
+[21] J. Kim, Visual analytics for operation-level construction monitoring and                         www.springer.com/gp/book/9783540732624 (accessed Nov 16, 2020) (ISBN:
+     documentation: state-of-the-art technologies, research challenges, and future                    978-3-540-73263-1).
+     directions, Front. Built. Environ 6 (2020) 575738, https://doi.org/10.3398/                 [46] A. Rivolli, L.P.F. Garcia, C. Soares, J. Vanschoren, A.C.P.L.F. de Carvalho,
+     fbuil.2020.575738.                                                                               Characterizing Classification Datasets: A Study of Meta-features for Meta-learning.
+[22] H. Kim, H. Kim, Y.W. Hong, H. Byun, Detecting construction equipment using a                     http://arxiv.org/abs/1808.10406, 2018 (accessed Nov 11, 2020).
+     region-based fully convolutional network and transfer learning, J. Comput. Civ.             [47] F. Pinto, C. Soares, J. Mendes-Moreira, Towards Automatic Generation of
+     Eng. 32 (2018), 04017082, https://doi.org/10.1061/(ASCE)CP.1943-                                 Metafeatures, in: Proceedings of 20th Pacific-Asia Conference on Knowledge
+     5487.0000731.                                                                                    Discovery and Data Mining 2016, Springer, Auckland, New Zealand, 2016,
+[23] H. Son, H. Choi, H. Seong, C. Kim, Detection of construction workers under varying               pp. 215–226, https://doi.org/10.1007/978-3-319-31753-3_18.
+     poses and changing background in image sequences via very deep residual                     [48] J. Redmon, A. Farhadi, YOLO9000: Better, Faster, Stronger, in: Proceedings of the
+     networks, Autom. Constr. 99 (2019) 27–38, https://doi.org/10.1016/j.                             30th IEEE Conference on Computer Vision and Pattern Recognition, IEEE, Los
+     autcon.2018.11.033.                                                                              Alamitos, U.S., 2017, pp. 6517–6525, https://doi.org/10.1109/CVPR.2017.690.
+[24] W. Fang, L. Ding, B. Zhong, P.E.D. Love, H. Luo, Automated detection of workers             [49] S. Bang, F. Baek, S. Park, W. Kim, H. Kim, Image augmentation to improve
+     and heavy equipment on construction sites: a convolutional neural network                        construction resource detection using generative adversarial networks, cut-and-
+     approach, Adv. Eng. Inform. 37 (2018) 139–149, https://doi.org/10.1016/j.                        paste, and image transformation techniques, Autom. Constr. 115 (2020) 103198,
+     aei.2018.05.003.                                                                                 https://doi.org/10.1016/j.autcon.2020.103198.
+[25] N.D. Nath, A.H. Behzadan, S.G. Paal, Deep learning for site safety: real-time               [50] O. Russakovsky, J. Deng, H. Su, J. Krause, S. Satheesh, S. Ma, Z. Huang,
+     detection of personal protective equipment, Autom. Constr. 112 (2020) 103085,                    A. Karpathy, A. Khosla, M. Bernstein, A.C. Berg, L. Fei-Fei, ImageNet large scale
+     https://doi.org/10.1016/j.autcon.2020.103085.                                                    visual recognition challenge, Int. J. Comput. Vis. 115 (2015) 211–252, https://doi.
+[26] X. Luo, H. Li, H. Wang, Z. Wu, F. Dai, D. Cao, Vision-based detection and                        org/10.1007/s11263-015-0816-y.
+     visualization of dynamic workspaces, Autom. Constr. 104 (2019) 1–13, https://               [51] Y.X. Wang, D. Ramanan, M. Hebert, Meta-learning to detect rare objects, in:
+     doi.org/10.1016/j.autcon.2019.04.001.                                                            Proceedings of the IEEE International Conference on Computer Vision, IEEE, Seoul,
+
+
+
+
+                                                                                            10
+J. Kim and S. Chi                                                                                                                              Automation in Construction 124 (2021) 103566
+
+     Republic of Korea, 2019, pp. 9924–9933, https://doi.org/10.1109/                                [60] J. Kim, J. Hwang, S. Chi, J. Seo, Towards database-free vision-based monitoring on
+     ICCV.2019.01002.                                                                                     construction sites: a deep active learning approach, Autom. Constr. 120 (2020)
+[52] X. Yan, Z. Chen, A. Xu, X. Wang, X. Liang, L. Lin, Meta R-CNN: Towards general                       103376, https://doi.org/10.1016/j.autcon.2020.103376.
+     solver for instance-level low-shot learning, in: Proceedings of 2019 IEEE                       [61] K. Min, M. Jung, J. Kim, S. Chi, Sound event recognition-based classification model
+     International Conference on Computer Vision, IEEE, Seoul, Republic of Korea,                         for automated emergency detection in indoor environment, in: Advances in
+     2019, pp. 9576–9585, https://doi.org/10.1109/ICCV.2019.00967.                                        Informatics and Computing in Civil and Construction Engineering, Springer,
+[53] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman, The pascal                       Chicago, U.S., 2018, pp. 529–535, https://doi.org/10.1007/978-3-030-00220-6_
+     visual object classes (VOC) challenge, Int. J. Comput. Vis. 88 (2010) 303–338,                       63.
+     https://doi.org/10.1007/s11263-009-0275-4.                                                      [62] H. Kim, C.R. Ahn, D. Engelhaupt, S. Lee, Application of dynamic time warping to
+[54] J. Kim, S. Chi, Multi-camera vision-based productivity monitoring of earthmoving                     the recognition of mixed equipment activities in cycle time measurement, Autom.
+     operations, Autom. Constr. 112 (2020) 103121, https://doi.org/10.1016/j.                             Constr. 87 (2018) 225–234, https://doi.org/10.1016/J.AUTCON.2017.12.014.
+     autcon.2020.103121.                                                                             [63] J. Kim, K. Min, M. Jung, S. Chi, Occupant behavior monitoring and emergency
+[55] J. Kim, S. Chi, M. Choi, Sequential pattern learning of visual features and operation                event detection in single-person households using deep learning-based sound
+     cycles for vision-based action recognition of earthmoving excavators, in:                            recognition, Build. Environ. 181 (2020) 107092, https://doi.org/10.1016/j.
+     Computing in Civil Engineering 2019: Data, Sensing, and Analytics, American                          buildenv.2020.107092.
+     Society of Civil Engineers, Atlanta, U.S., 2019, pp. 298–304, https://doi.org/                  [64] T. Kim, S. Chi, Accident case retrieval and analyses: using natural language
+     10.1061/9780784479247.083.                                                                           processing in the construction industry, J. Constr. Eng. Manag. 145 (2019),
+[56] J. Kim, S. Chi, B.-G. Hwang, Vision-based activity analysis framework considering                    04019004, https://doi.org/10.1061/(ASCE)CO.1943-7862.0001625.
+     interactive operation of construction equipment, in: ASCE International Workshop                [65] S. Moon, G. Lee, S. Chi, H. Oh, Automated construction specification review with
+     on Computing in Civil Engineering 2017, American Society of Civil Engineers,                         named entity recognition using natural language processing, J. Constr. Eng.
+     Seattle, U.S., 2017, pp. 162–170, https://doi.org/10.1061/9780784480830.021.                         Manag. 147 (2021), 04020147, https://doi.org/10.1061/(asce)co.1943-
+[57] J. Kim, S. Chi, J. Seo, Interaction analysis for vision-based activity identification of             7862.0001953.
+     earthmoving excavators and dump trucks, Autom. Constr. 87 (2018) 297–308,                       [66] S. Moon, S. Chung, S. Chi, Bridge damage recognition from inspection reports using
+     https://doi.org/10.1016/J.AUTCON.2017.12.016.                                                        NER based on recurrent neural network with active learning, J. Perform. Constr.
+[58] L. van der Maaten, G. Hinton, Visualizing Data using t-SNE, J. Mach. Learn. Res. 9                   Facil. 34 (2020), 04020119, https://doi.org/10.1061/(asce)cf.1943-
+     (2008) 2579–2605, doi:10.1.1.457.7213.                                                               5509.0001530.
+[59] L. Yang, S. Hanneke, J. Carbonell, A theory of transfer learning with applications to
+     active learning, Mach. Learn. 90 (2013) 161–189, https://doi.org/10.1007/
+     s10994-012-5310-y.
+
+
+
+
+                                                                                                11
+
